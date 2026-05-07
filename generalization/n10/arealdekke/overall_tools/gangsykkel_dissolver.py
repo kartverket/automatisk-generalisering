@@ -578,11 +578,3 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
     )
 
     partition_gangsykkel_dissolve.run()
-
-
-if __name__ == "__main__":
-    partition_call(
-        input_fc=Arealdekke_N10.elim_output.value,
-        output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
-        map_scale="N10",
-    )

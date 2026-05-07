@@ -1,6 +1,7 @@
 # Libraries
 
 import os
+from pathlib import Path
 
 import arcpy
 
@@ -79,9 +80,9 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
 
     print(f"✂️ Clips data according to municipality: {area}")
     clip_lyr = "clip_lyr"
-    arcpy.management.MakeFeatureLayer(
+    """arcpy.management.MakeFeatureLayer(
         input_n100.AdminFlate, clip_lyr, f"NAVN = '{area}'"
-    )
+    )"""
     arcpy.analysis.Clip(
         in_features=input_fc,
         clip_features=clip_lyr,
@@ -229,7 +230,9 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
-    rule_set = load_rules(attribute_csv_file)
+    rule_set = load_rules(
+        Path.joinpath(Path(__file__).parent, "attribute_prioritizing.csv")
+    )
 
     def match(rule, a, h, u, g):
         return (

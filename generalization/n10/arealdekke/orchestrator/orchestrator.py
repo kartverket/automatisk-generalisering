@@ -12,9 +12,18 @@ def main():
     environment_setup.main()
 
     # Creates an instance of the arealdekke object.
-    input_data = input_test_data.arealdekke_1
+    input_data = input_n10.arealdekkeflate
     map_scale = "N10"
-    arealdekke = Arealdekke(input_data=input_data, map_scale=map_scale)
+
+    # If True = only final output will be available after generalization
+    # If False = all intermediate files not deleted by wfm will be available (default)
+    only_keep_final_output = False
+
+    arealdekke = Arealdekke(
+        input_data=input_data,
+        map_scale=map_scale,
+        only_keep_final_output=only_keep_final_output,
+    )
 
     arealdekke.preprocess()
 

@@ -22,11 +22,12 @@ arcpy.env.overwriteOutput = True
 @timing_decorator
 def buff_small_polygon_segments(
     target: str, input_fc: str, output_fc: str, locked_fc: set, map_scale: str
-):
+) -> None:
     """
-    Function that detects and buffers small polygon segments from input_fc, having
-    land use type equal target. Finally, the funtion dissolves the buffered
-    geometries into the input data.
+    What:
+        Function that detects and buffers small polygon segments from input_fc, having
+        land use type equal target. Finally, the funtion dissolves the buffered
+        geometries into the input data.
 
     Args:
         target (str): The land use type of the segments to be buffered
@@ -40,14 +41,7 @@ def buff_small_polygon_segments(
     wfm = WorkFileManager(config=config)
     files = files_setup(wfm=wfm)
 
-    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-    scale_parameters = initialize_params(
-        params_path=params_path,
-        class_name="BuffSmallPolygonSegments",
-        map_scale=map_scale,
-        dataclass=buff_small_polygon_segments_parameters,
-    )
-    min_width = scale_parameters.min_width[target]
+    min_width = get_min_width(map_scale=map_scale, target=target)
 
     extract_data(files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc)
     find_segments_under_min(files=files, min_width=min_width)
@@ -65,6 +59,11 @@ def buff_small_polygon_segments(
 
 
 class fc(Enum):
+    """
+    What:
+        Enum class used to easier spot when a filepath does not exist in the files dictionary.
+    """
+
     target_fc = "target_fc"
     locked_fc = "locked_fc"
     locked_areas_outside_buffer = "locked_areas_outside_buffer"
@@ -94,109 +93,114 @@ class fc(Enum):
 
 @timing_decorator
 def files_setup(wfm: WorkFileManager) -> dict:
+    """
+    Creates all the temporary files that are going to
+    be used during the process of buffer thin areas.
 
-    # Extract data
-    target_fc = wfm.build_file_path(file_name="target_fc", file_type="gdb")
-    locked_fc = wfm.build_file_path(file_name="locked_fc", file_type="gdb")
+    Args:
+        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files
 
-    # Get shared boundary
-    locked_areas_outside_buffer = wfm.build_file_path(
-        file_name="locked_areas_outside_buffer", file_type="gdb"
-    )
-    locked_fc_line = wfm.build_file_path(file_name="locked_fc_line", file_type="gdb")
-    locked_fc_line_clipped = wfm.build_file_path(
-        file_name="locked_fc_line_clipped", file_type="gdb"
-    )
-    locked_fc_line_intersecting = wfm.build_file_path(
-        file_name="locked_fc_line_intersecting", file_type="gdb"
-    )
-    locked_fc_outward_buffer = wfm.build_file_path(
-        file_name="locked_fc_outward_buffer", file_type="gdb"
-    )
-
-    # Find segments under min
-    input_polygon_edge = wfm.build_file_path(
-        file_name="input_polygon_edge", file_type="gdb"
-    )
-    input_polygon_minus_buffer = wfm.build_file_path(
-        file_name="input_polygon_minus_buffer", file_type="gdb"
-    )
-    core_of_segments_wide_enough = wfm.build_file_path(
-        file_name="core_of_segments_wide_enough", file_type="gdb"
-    )
-    segments_wide_enough = wfm.build_file_path(
-        file_name="segments_wide_enough", file_type="gdb"
-    )
-    core_wide_enough_segments_singlepart = wfm.build_file_path(
-        file_name="core_wide_enough_segments_singlepart", file_type="gdb"
-    )
-    segments_too_small = wfm.build_file_path(
-        file_name="segments_too_small", file_type="gdb"
-    )
-    segments_too_small_single = wfm.build_file_path(
-        file_name="segments_too_small_single", file_type="gdb"
-    )
-
-    # Choose target areas
-    overkill_buffer = wfm.build_file_path(file_name="overkill_buffer", file_type="gdb")
-    areas_chosen = wfm.build_file_path(file_name="areas_chosen", file_type="gdb")
-
-    # Buff small segments
-    only_small_segments_centre = wfm.build_file_path(
-        file_name="only_small_segments_centre", file_type="gdb"
-    )
-    centre_line = wfm.build_file_path(file_name="centre_line", file_type="gdb")
-    small_segments_centre = wfm.build_file_path(
-        file_name="small_segments_centre", file_type="gdb"
-    )
-    small_segments_enlarged = wfm.build_file_path(
-        file_name="small_segments_enlarged", file_type="gdb"
-    )
-    small_segments_locked_buffed_merged = wfm.build_file_path(
-        file_name="small_segments_locked_buffed_merged", file_type="gdb"
-    )
-    small_segments_locked_buffed_dissolved = wfm.build_file_path(
-        file_name="small_segments_locked_buffed_dissolved", file_type="gdb"
-    )
-
-    # Other
-    test = wfm.build_file_path(file_name="test", file_type="gdb")
-    work_fc = wfm.build_file_path(file_name="work_fc", file_type="gdb")
-    output_fc = wfm.build_file_path(file_name="output_fc", file_type="gdb")
-
+    Returns:
+        dict: A dictionary with all the files as variables
+    """
     return {
-        fc.target_fc: target_fc,
-        fc.locked_fc: locked_fc,
-        fc.locked_areas_outside_buffer: locked_areas_outside_buffer,
-        fc.locked_fc_line: locked_fc_line,
-        fc.locked_fc_line_clipped: locked_fc_line_clipped,
-        fc.input_polygon_edge: input_polygon_edge,
-        fc.input_polygon_minus_buffer: input_polygon_minus_buffer,
-        fc.core_of_segments_wide_enough: core_of_segments_wide_enough,
-        fc.segments_wide_enough: segments_wide_enough,
-        fc.core_wide_enough_segments_singlepart: core_wide_enough_segments_singlepart,
-        fc.segments_too_small: segments_too_small,
-        fc.segments_too_small_single: segments_too_small_single,
-        fc.overkill_buffer: overkill_buffer,
-        fc.areas_chosen: areas_chosen,
-        fc.locked_fc_line_intersecting: locked_fc_line_intersecting,
-        fc.locked_fc_outward_buffer: locked_fc_outward_buffer,
-        fc.only_small_segments_centre: only_small_segments_centre,
-        fc.centre_line: centre_line,
-        fc.small_segments_centre: small_segments_centre,
-        fc.small_segments_enlarged: small_segments_enlarged,
-        fc.small_segments_locked_buffed_merged: small_segments_locked_buffed_merged,
-        fc.small_segments_locked_buffed_dissolved: small_segments_locked_buffed_dissolved,
-        fc.test: test,
-        fc.work_fc: work_fc,
-        fc.output_fc: output_fc,
+        fc.target_fc: wfm.build_file_path(file_name="target_fc", file_type="gdb"),
+        fc.locked_fc: wfm.build_file_path(file_name="locked_fc", file_type="gdb"),
+        fc.locked_areas_outside_buffer: wfm.build_file_path(
+            file_name="locked_areas_outside_buffer", file_type="gdb"
+        ),
+        fc.locked_fc_line: wfm.build_file_path(
+            file_name="locked_fc_line", file_type="gdb"
+        ),
+        fc.locked_fc_line_clipped: wfm.build_file_path(
+            file_name="locked_fc_line_clipped", file_type="gdb"
+        ),
+        fc.input_polygon_edge: wfm.build_file_path(
+            file_name="input_polygon_edge", file_type="gdb"
+        ),
+        fc.input_polygon_minus_buffer: wfm.build_file_path(
+            file_name="input_polygon_minus_buffer", file_type="gdb"
+        ),
+        fc.core_of_segments_wide_enough: wfm.build_file_path(
+            file_name="core_of_segments_wide_enough", file_type="gdb"
+        ),
+        fc.segments_wide_enough: wfm.build_file_path(
+            file_name="segments_wide_enough", file_type="gdb"
+        ),
+        fc.core_wide_enough_segments_singlepart: wfm.build_file_path(
+            file_name="core_wide_enough_segments_singlepart", file_type="gdb"
+        ),
+        fc.segments_too_small: wfm.build_file_path(
+            file_name="segments_too_small", file_type="gdb"
+        ),
+        fc.segments_too_small_single: wfm.build_file_path(
+            file_name="segments_too_small_single", file_type="gdb"
+        ),
+        fc.overkill_buffer: wfm.build_file_path(
+            file_name="overkill_buffer", file_type="gdb"
+        ),
+        fc.areas_chosen: wfm.build_file_path(file_name="areas_chosen", file_type="gdb"),
+        fc.locked_fc_line_intersecting: wfm.build_file_path(
+            file_name="locked_fc_line_intersecting", file_type="gdb"
+        ),
+        fc.locked_fc_outward_buffer: wfm.build_file_path(
+            file_name="locked_fc_outward_buffer", file_type="gdb"
+        ),
+        fc.only_small_segments_centre: wfm.build_file_path(
+            file_name="only_small_segments_centre", file_type="gdb"
+        ),
+        fc.centre_line: wfm.build_file_path(file_name="centre_line", file_type="gdb"),
+        fc.small_segments_centre: wfm.build_file_path(
+            file_name="small_segments_centre", file_type="gdb"
+        ),
+        fc.small_segments_enlarged: wfm.build_file_path(
+            file_name="small_segments_enlarged", file_type="gdb"
+        ),
+        fc.small_segments_locked_buffed_merged: wfm.build_file_path(
+            file_name="small_segments_locked_buffed_merged", file_type="gdb"
+        ),
+        fc.small_segments_locked_buffed_dissolved: wfm.build_file_path(
+            file_name="small_segments_locked_buffed_dissolved", file_type="gdb"
+        ),
+        fc.test: wfm.build_file_path(file_name="test", file_type="gdb"),
+        fc.work_fc: wfm.build_file_path(file_name="work_fc", file_type="gdb"),
+        fc.output_fc: wfm.build_file_path(file_name="output_fc", file_type="gdb"),
     }
 
 
 @timing_decorator
-def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
+def get_min_width(map_scale: str, target: str) -> int:
+    """
+    Extracts the minimum width for the target land use from the parameters.yml file in the parameters folder.
 
-    # Extract the target fc from the data layer.
+    Args:
+        map_scale (str): Scale for current map
+        target (str): Name of land use type to consider
+
+    Returns:
+        int: Minimum width for relevant land use type
+    """
+    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
+
+    scale_parameters = initialize_params(
+        params_path=params_path,
+        class_name="BuffSmallPolygonSegments",
+        map_scale=map_scale,
+        dataclass=buff_small_polygon_segments_parameters,
+    )
+
+    return scale_parameters.min_width[target]
+
+
+@timing_decorator
+def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
+    """
+    What:
+        Extracts data for the program from the parameters and insert them into the files dictionary.
+        For locked files, only the areas that share a boundry with the target polygons are selected and
+        stored.
+    """
+
     target_fc_lyr = "target_fc_lyr"
     where = f"arealdekke='{target_fc}'"
     arcpy.management.MakeFeatureLayer(
@@ -206,7 +210,6 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
         in_features=target_fc_lyr, out_feature_class=files[fc.target_fc]
     )
 
-    # Extract the locked areas from the data layer that share a line with the target fc.
     if locked_fc:
         locked_fc_lyr = "locked_fc_lyr"
         arcpy.management.MakeFeatureLayer(
@@ -227,8 +230,18 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
 
 @timing_decorator
 def find_segments_under_min(files: dict, min_width: int) -> None:
+    """
+    What:
+        Finds areas under a minimum criteria set in the parameters folder.
+    How:
+        - Create a lyr with the outline of the input polygon
+        - Use polygon outline to create a negative buffer
+        - Areas not intersecting the minus buffer are large enough. Extract them into its own layer.
+        - Create a full buffer for the core of the wide enough segments to get them back to their
+            original size
+        - Remove the large enough segments from the original polyon
+    """
 
-    # Create a lyr with the outline of the input polygon
     input_polygon_lyr = "input_polygon_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.target_fc], out_layer=input_polygon_lyr
@@ -237,7 +250,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         in_features=input_polygon_lyr, out_feature_class=files[fc.input_polygon_edge]
     )
 
-    # Use polygon outline to create a negative buffer
     input_polygon_edge_lyr = "input_polygon_edge_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.input_polygon_edge], out_layer=input_polygon_edge_lyr
@@ -250,7 +262,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         line_side="FULL",
     )
 
-    # Areas not intersecting the minus buffer are large enough. Extract them into its own layer.
     input_polygon_minus_buffer_lyr = "input_polygon_minus_buffer_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.input_polygon_minus_buffer],
@@ -262,7 +273,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.core_of_segments_wide_enough],
     )
 
-    # Create a full buffer for the core of the wide enough segments to get them back to their original size
     core_of_segments_wide_enough_lyr = "core_of_segments_wide_enough_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.core_of_segments_wide_enough],
@@ -291,7 +301,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         buffer_distance_or_field=f"{min_width/2} Meters",
     )
 
-    # Remove the large enough segments from the original polyon
     segments_wide_enough_lyr = "segments_wide_enough_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.segments_wide_enough], out_layer=segments_wide_enough_lyr
@@ -305,8 +314,14 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
 
 @timing_decorator
 def choose_target_areas(files: dict) -> None:
+    """
+    What:
+        Clips the original polygon to only include 15 meters around the too small segments.
+    How:
+    - Creates an overkill buffer that includes the small segments and some of the area around.
+    - Clip original polygon to get area with the too small segments.
+    """
 
-    # Create an overkill buffer that includes the small segments and some of the area around.
     segments_too_small_single_lyr = "segments_too_small_single_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.segments_too_small],
@@ -320,7 +335,6 @@ def choose_target_areas(files: dict) -> None:
         line_side="FULL",
     )
 
-    # Clip original polygon to get area with the too small segments
     overkill_buffer_lyr = "overkill_buffer_lyr"
     original_polygon_lyr = "original_polygon_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -346,8 +360,12 @@ def choose_target_areas(files: dict) -> None:
 
 @timing_decorator
 def get_shared_locked_boundary(files: dict, min_width: int) -> None:
+    """
+    What:
+        Finds the boundaries between the target polygon and the locked polygons. Then, it creates a
+        buffer going outwards from the locked areas.
+    """
 
-    # Select all locked polygons who intersect the overkill buffer
     overkill_lyr = "overkill_lyr"
     locked_fc_lyr = "locked_fc_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -363,12 +381,10 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         selection_type="NEW_SELECTION",
     )
 
-    # Make the selected polygons into polylines
     arcpy.management.PolygonToLine(
         in_features=locked_fc_lyr, out_feature_class=files[fc.locked_fc_line]
     )
 
-    # Clip the polylines to the overkill buffer
     locked_fc_line_lyr = "locked_fc_line_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_fc_line], out_layer=locked_fc_line_lyr
@@ -392,7 +408,6 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
             out_feature_class=files[fc.locked_fc_line_clipped],
         )
 
-    # Find the intersection between the target polygon and the locked fc
     locked_fc_line_clipped_lyr = "locked_fc_line_clipped_lyr"
     areas_chosen_lyr = "areas_chosen_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -464,7 +479,6 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         buffer_distance_or_field=f"{min_width/2} Meter",
     )
 
-    # Erase the original locked fc from the new buffer.
     locked_areas_outside_buffer_lyr = "locked_areas_outside_buffer_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_areas_outside_buffer],
@@ -479,8 +493,13 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
 
 @timing_decorator
 def buff_small_segments(files: dict, min_width: int) -> None:
+    """
+    What:
+        Finds the centre line of the small polygon segments. Then erases large enough areas and
+        buffed locked areas from them. Lastly, the line segments are buffed to the minimum width
+        requirement for the target polygon and dissolved with the locked areas buffers.
+    """
 
-    # Use collapse hydro polygon to find the centre line of the segments
     chosen_areas_lyr = "chosen_areas_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.areas_chosen], out_layer=chosen_areas_lyr
@@ -492,7 +511,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         merge_adjacent_input_polygons="NO_MERGE",
     )
 
-    # Erase large enough areas from the centre line and the locked area buffer
     centre_line_lyr = "centre_line_lyr"
     large_segments_lyr = "large_segments_lyr"
     locked_fc_outward_buffer_lyr = "locked_fc_outward_buffer_lyr"
@@ -523,7 +541,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.only_small_segments_centre],
     )
 
-    # Buff the centre line to min width
     only_small_segments_centre_lyr = "only_small_segments_centre_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.only_small_segments_centre],
@@ -544,7 +561,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
             buffer_distance_or_field=f"{min_width/2} Meters",
         )
 
-    # Dissolve the locked fc buffed segments with the rest of the target polygon.
     small_segments_enlarged_lyr = "small_segments_enlarged_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.small_segments_enlarged],
@@ -563,14 +579,4 @@ def buff_small_segments(files: dict, min_width: int) -> None:
     arcpy.management.Dissolve(
         in_features=small_segments_locked_buffed_merged_lyr,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
-    )
-
-
-if __name__ == "__main__":
-    buff_small_polygon_segments(
-        target_fc="Ferskvann_elv_bekk",
-        input_fc=input_n10.Arealdekke_Buskerud,
-        locked_fc=["Samferdsel"],
-        output_fc="output",
-        map_scale="N10",
     )

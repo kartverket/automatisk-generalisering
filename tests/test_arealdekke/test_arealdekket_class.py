@@ -12,13 +12,11 @@ from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
 )
 
-# TO RUN TEST IN TERMINAL USE: & "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pytest
-
 
 class test_arealdekket_class(unittest.TestCase):
 
     def setUp(self):
-        # Mock the yml file and filepath
+
         data_pre_comp: dict = {
             "newest_version": "path",
             "map_scale": "N10",
@@ -166,11 +164,6 @@ class test_arealdekket_class(unittest.TestCase):
         temp_obj_with_locked.categories = []
         temp_obj_with_locked.files = {"arealdekke_fc": "path"}
 
-        # What happens if we have no locked categories?
-
-    def test_add_categories(self) -> None:
-        pass
-
     def test_process_categories(self) -> None:
 
         # What happens if we run through the process as normal?
@@ -240,11 +233,6 @@ class test_arealdekket_class(unittest.TestCase):
             for cat in arealdekke_no_pre_comp.categories:
                 assert cat.get_accessibility() == False
                 assert cat.get_reinserts_completed() == 2
-
-        # What happens if we previously fully completed all operations for one category but did not reinsert it?
-        # What happens if we run through the process as normal?
-
-        # What happens if we previously fully completed all opeations and reinsertions for one category?
 
     def tearDown(self):
         # Tear down the mocked yml files

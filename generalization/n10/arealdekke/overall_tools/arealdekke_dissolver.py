@@ -448,11 +448,3 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
     )
 
     partition_areal_dissolve.run()
-
-
-if __name__ == "__main__":
-    partition_call(
-        input_fc=input_n10.Arealdekke_Oslo,
-        output_fc=Arealdekke_N10.dissolve_arealdekke.value,
-        map_scale="N10",
-    )

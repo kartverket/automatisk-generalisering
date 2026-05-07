@@ -11,17 +11,15 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
-dissolve_file = "dissolve"
-elim_file = "eliminate"
-gangsykkel_file = "gangsykkel"
-attribute_file = "attribute_changer"
+dissolve_file = "B_dissolve"
+elim_file = "D_eliminate"
+gangsykkel_file = "E_gangsykkel"
+attribute_file = "A_attribute_changer"
 overlap_remover = "overlap_remover"
-island_merger = "island_merger"
+island_merger = "C_island_merger"
 passability = "passability"
-simplify_polygon = "simplify_polygon"
-expansion_controller = "expansion_controller"
-buff_polygon_segments = "buff_polygon_segments"
-river_file = "river_file"
+simplify_polygon = "G_simplify_polygon"
+buff_polygon_segments = "F_buff_polygon_segments"
 innsjo_file = "innsjo_file"
 arealdekke_class = "arealdekke_class"
 category_class = "category_class"
@@ -50,9 +48,6 @@ class Arealdekke_N10(Enum):
     dissolve_arealdekke = file_manager.generate_file_name_gdb(
         script_source_name=dissolve_file, description="arealdekke"
     )
-    dissolve_arealdekke_docu = file_manager.generate_file_name_gdb(
-        script_source_name=dissolve_file, description="arealdekke_docu"
-    )
 
     # ========================================
     #                     gangsykkel dissolver
@@ -64,12 +59,6 @@ class Arealdekke_N10(Enum):
 
     dissolve_gangsykkel = file_manager.generate_file_name_gdb(
         script_source_name=gangsykkel_file, description="gangsykkel"
-    )
-    dissolve_gangsykkel2 = file_manager.generate_file_name_gdb(
-        script_source_name=gangsykkel_file, description="gangsykkel2"
-    )
-    dissolve_gangsykkel3 = file_manager.generate_file_name_gdb(
-        script_source_name=gangsykkel_file, description="gangsykkel3"
     )
 
     # ========================================
@@ -121,16 +110,8 @@ class Arealdekke_N10(Enum):
     #                          OVERLAP REMOVER
     # ========================================
 
-    overlap_remover_start__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=overlap_remover, description="overlap_remover_start"
-    )
-
     overlap_remover__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=overlap_remover, description="overlap_remover"
-    )
-
-    overlap_remover_output__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=overlap_remover, description="overlap_remover_output"
     )
 
     # ========================================
@@ -163,27 +144,6 @@ class Arealdekke_N10(Enum):
 
     simplified_polygons__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=simplify_polygon, description="simplified_polygons"
-    )
-
-    # ========================================
-    #
-    # ========================================
-
-    expansion_controller__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=expansion_controller, description="expansion_controller"
-    )
-
-    expansion_controller_output__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=expansion_controller,
-        description="expansion_controller_output",
-    )
-
-    # ========================================
-    #                              BUFF RIVERS
-    # ========================================
-
-    generalise_rivers__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=river_file, description="buffed_small_rivers"
     )
 
     # ========================================
