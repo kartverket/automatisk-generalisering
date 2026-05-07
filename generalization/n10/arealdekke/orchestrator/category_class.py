@@ -5,16 +5,16 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.orchestrator.enum_variables import (
-    history_keys as keys,
+from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
+    buff_small_polygon_segments,
 )
 
 # Category tools:
 from generalization.n10.arealdekke.category_tools.simplify_polygon import (
     simplify_and_smooth_polygon,
 )
-from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
-    buff_small_polygon_segments,
+from generalization.n10.arealdekke.orchestrator.enum_variables import (
+    history_keys as keys,
 )
 
 

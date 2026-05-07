@@ -1,17 +1,17 @@
-import arcpy
 import os
 import time
-
 from collections import defaultdict
 from itertools import combinations
 
+import arcpy
+
 from composition_configs import core_config, logic_config
-from custom_tools.general_tools.partition_iterator import PartitionIterator
 from constants.n100_constants import FieldNames_str, MediumAlias, NvdbAlias
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.custom_arcpy import OverlapType, SelectionType
 from custom_tools.general_tools.graph import GISGraph
+from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
@@ -19,7 +19,6 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
 from file_manager.n250.file_manager_roads import Road_N250
-
 from generalization.n100.road.dam import get_endpoints
 
 

@@ -1,10 +1,10 @@
 from pathlib import Path
 
 from arealdekke_class import Arealdekke
-from env_setup import environment_setup
-from custom_tools.decorators.timing_decorator import timing_decorator
 
-from input_data import input_n10
+from custom_tools.decorators.timing_decorator import timing_decorator
+from env_setup import environment_setup
+from input_data import input_test_data
 
 
 @timing_decorator

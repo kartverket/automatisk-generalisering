@@ -1,7 +1,7 @@
-import geopandas as gpd
-import networkx as nx
-import matplotlib.pyplot as plt
 import config
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import networkx as nx
 
 
 def load_shapefile(shapefile_path):

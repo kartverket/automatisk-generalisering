@@ -1,17 +1,14 @@
 import arcpy
 
-from custom_tools.general_tools import file_utilities
-from file_manager import WorkFileManager
 from composition_configs import core_config, logic_config
+from constants.n100_constants import FieldNames, MediumAlias
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
 from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
-
-from constants.n100_constants import FieldNames, MediumAlias
+from file_manager import WorkFileManager
 
 
 class ThinRoadNetwork:

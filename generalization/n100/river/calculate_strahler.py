@@ -1,5 +1,6 @@
-import arcpy
 from collections import deque
+
+import arcpy
 import networkx as nx
 
 from composition_configs import core_config, logic_config

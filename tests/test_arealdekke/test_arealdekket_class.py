@@ -1,14 +1,16 @@
-import unittest
-import tempfile
-import yaml
 import os
+import tempfile
+import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import yaml
+
 from generalization.n10.arealdekke.orchestrator.arealdekke_class import Arealdekke
+from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
 )
-from generalization.n10.arealdekke.orchestrator.category_class import Category
 
 
 class test_arealdekket_class(unittest.TestCase):

@@ -1,5 +1,4 @@
 import arcpy
-from typing import List, Dict
 
 from composition_configs import logic_config
 

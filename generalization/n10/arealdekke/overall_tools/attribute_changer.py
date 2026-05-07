@@ -1,12 +1,15 @@
 # Libraries
 
-import arcpy
 import os
 from pathlib import Path
+
+import arcpy
 
 arcpy.env.overwriteOutput = True
 
 from collections import Counter
+
+from config import attribute_csv_file
 from tqdm import tqdm
 
 from composition_configs import core_config, logic_config
@@ -15,11 +18,10 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
-    sort_results,
     load_rules,
+    sort_results,
 )
-
-# from input_data import input_n100
+from input_data import input_n100
 
 # ========================
 # Program

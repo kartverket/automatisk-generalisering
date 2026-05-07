@@ -1,0 +1,23 @@
+# Production runtime dependencies.
+# Install with: pip install --no-deps -r requirements.txt
+#
+# Packages are intentionally unpinned: the project defers to the versions
+# shipped by the arcpy conda environment (ArcGIS Pro 3.6 / Python 3.13).
+# Pin a version only when there is a specific reason to control it,
+# and verify arcpy still works after pinning anything arcpy uses internally
+# (numpy, matplotlib, lxml, requests in particular).
+#
+# arcpy is not listed: it ships with the ArcGIS Pro conda environment
+# and is not available on PyPI.
+
+geopandas
+lxml
+matplotlib
+networkx
+numpy
+pydantic
+PyYAML
+pyvis
+requests
+shapely
+tqdm
