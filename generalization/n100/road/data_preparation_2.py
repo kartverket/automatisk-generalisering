@@ -1,6 +1,8 @@
 # Importing packages
 import arcpy
 
+import config
+
 # Importing custom input files modules
 from input_data import input_area, input_building, input_railway, input_road
 from input_data.input_datasets import DatasetNamespace
@@ -51,10 +53,6 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 )
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
-
-# Importing custom input files modules
-from input_data import input_n100, input_roads
-from input_data.input_symbology import SymbologyN100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 

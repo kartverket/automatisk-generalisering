@@ -47,7 +47,7 @@ class BaseFileManager:
         self.script_source_name = script_source_name
         self.description = description
 
-        layout = ProjectLayout(output_root=Path(config.output_folder))
+        layout = ProjectLayout(output_root=Path(config.input_data_folder).parent)
         self._gdb_dir = layout.gdb(self.scale, self.object)
         self._general_dir = layout.general_files_dir(self.scale)
         self._lyrx_dir = layout.lyrx_dir(self.scale)
