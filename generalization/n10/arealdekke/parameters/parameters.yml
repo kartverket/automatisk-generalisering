@@ -15,7 +15,7 @@ EliminateSmallPolygons:
     - dont_remove_spikes is list of arealdekke values wont be buffered for spike selection
     - integrate_tolerance is cluster tolerance in meters on integrate run in the end to fix small holes
 
-  N10:
+  N10g:
     min_area: 100
     min_iq_area: 150   
     max_area_b_iq: 1500 
@@ -26,16 +26,67 @@ EliminateSmallPolygons:
       - Samferdsel
       - ElvFlate
       - Kanal
+      - Hav
       - Bane
     spike_size: 2
     dont_remove_spikes:
       - Samferdsel
       - ElvFlate
       - Kanal
+      - Hav
       - InnsjoRegulert
       - Innsjo
       - Bane
     integrate_tolerance: 0.09
+
+  N10:
+    min_area: 
+      Snaumark: 225
+      grøntområde: 900
+      Skog: 225
+      Jordbruk: 2500
+      Innmarksbeite: 2500
+      GravUrnelund: 900
+      Parkering: 900
+      Park: 900
+      Alpinbakke: 900
+      Golfbane: 900
+      IdrettsOmr: 900
+      Industri: 900
+      Bergverk: 900
+      LufthavnOmr: 2500
+      Tekniskanlegg: 2500
+      Bebygd: 4900
+      Høyblokkbebyggelse: 4900
+      Innsjo: 100
+      InnsjoRegulert: 100
+      Snøisbre: 3600
+      Myr: 225
+      
+
+    min_iq_area: 150   
+    max_area_b_iq: 1500 
+    exclude: 
+      - Samferdsel
+      - Bane
+    dont_eliminate:
+      - Samferdsel
+      - ElvFlate
+      - Kanal
+      - Hav
+      - Bane
+    spike_size: 2
+    dont_remove_spikes:
+      - Samferdsel
+      - ElvFlate
+      - Kanal
+      - Hav
+      - InnsjoRegulert
+      - Innsjo
+      - Bane
+    integrate_tolerance: 0.09
+
+
 
   N100:
     min_area: 0000

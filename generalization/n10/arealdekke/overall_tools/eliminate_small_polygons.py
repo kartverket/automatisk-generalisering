@@ -40,6 +40,7 @@ class EliminateSmallPolygons:
             map_scale=self.map_scale,
             dataclass=EliminateSmallPolygonsParameters,
         )
+       
 
         self.files = self._create_wfm_gdbs(self.wfm)
 
@@ -228,6 +229,50 @@ class EliminateSmallPolygons:
         self.geometry_validator.check_repair_sequence(
             input_fc=output_fc, max_iterations=5
         )
+    
+    @timing_decorator
+    def eliminate_multiple_minimums(self, input_fc: str, output_fc: str, run: int) -> None:
+        layer = "eliminate_layer"
+        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        exclusion_sql = f"arealdekke NOT IN ({quoted})"
+
+        temp_in = input_fc
+        for arealdekke, min_area in self.scale_parameters.min_area.items():
+            print(f"eliminating: {arealdekke} min area: {min_area}")
+            clauses = []
+            clauses.append(f"arealdekke = '{arealdekke}'")
+            clauses.append(f"area < {min_area}")
+
+            where_parts = [exclusion_sql] + clauses
+            where_clause = " AND ".join(where_parts)
+            temp_out = f"in_memory\\elim_pass_{arealdekke}"
+
+            if arcpy.Exists(layer):
+                arcpy.management.Delete(layer)
+            
+            arcpy.management.MakeFeatureLayer(
+                in_features=temp_in, out_layer=layer, where_clause=where_clause
+            )
+            if arcpy.Exists(rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}"):
+                arcpy.management.CopyFeatures(layer, r"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons_tmp")
+                arcpy.management.Append(r"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons_tmp", rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}")
+            else:
+                arcpy.management.CopyFeatures(layer, rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}")
+        
+            arcpy.management.Eliminate(
+                in_features=layer,
+                out_feature_class=temp_out,
+                selection="LENGTH",
+            )
+
+            temp_in = temp_out
+        
+        arcpy.management.CopyFeatures(temp_out, output_fc)
+
+        self.geometry_validator.check_repair_sequence(
+            input_fc=output_fc, max_iterations=5
+        )
+    
 
     @timing_decorator
     def _buffer_potential_spikes(self):
@@ -298,7 +343,7 @@ class EliminateSmallPolygons:
         quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
-        numeric_clauses.append(f"area < {self.scale_parameters.min_area}")
+        numeric_clauses.append(f"area < 100")
         where_parts = [exclusion_sql] + numeric_clauses
         where_clause = " AND ".join(where_parts)
 
@@ -437,14 +482,17 @@ class EliminateSmallPolygons:
         self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
         self._exlude()
-        self.eliminate(
-            self.files["eliminate_input_include"], self.files["eliminate_after_elim"]
+        self.eliminate_multiple_minimums(
+            self.files["eliminate_input_include"],
+            self.files["eliminate_after_elim"], 
+            1,
         )
         self._buffer_potential_spikes()
         self._clip_and_erase()
-        self.eliminate(
+        self.eliminate_multiple_minimums(
             self.files["eliminate_clip_erase_eliminated"],
             self.files["eliminate_final_elim"],
+            2,
         )
         self._merge_excluded()
         self._integrate(self.files["eliminate_final_elim_merged"])

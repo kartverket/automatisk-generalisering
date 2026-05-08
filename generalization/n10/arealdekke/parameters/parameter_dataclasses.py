@@ -3,7 +3,7 @@ from pydantic.dataclasses import dataclass
 
 @dataclass(frozen=True)
 class EliminateSmallPolygonsParameters:
-    min_area: int
+    min_area: dict[str, int]
     min_iq_area: int
     max_area_b_iq: int
     exclude: list[str]
