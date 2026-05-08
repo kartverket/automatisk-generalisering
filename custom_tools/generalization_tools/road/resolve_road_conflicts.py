@@ -1,9 +1,11 @@
 import arcpy
 from typing import List
 from dataclasses import dataclass
+from typing import List
 
-from file_manager import WorkFileManager
-from env_setup import environment_setup
+import arcpy
+
+from composition_configs import logic_config
 from custom_tools.general_tools import custom_arcpy
 from composition_configs import logic_config
 

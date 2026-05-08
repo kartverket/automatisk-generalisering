@@ -1,14 +1,15 @@
 # Importing modules
 import arcpy
 
-# Importing custom files
-from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Values
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 # Import custom modules
 from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup
-from custom_tools.decorators.timing_decorator import timing_decorator
+
+# Importing custom files
+from file_manager.n100.file_manager_buildings import Building_N100
 
 
 @timing_decorator

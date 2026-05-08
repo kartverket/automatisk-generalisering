@@ -1,8 +1,9 @@
 # Imports
 from enum import Enum
+
 from env_setup import global_config
-from file_manager.base_file_manager import BaseFileManager
 from file_manager import WorkFileManager
+from file_manager.base_file_manager import BaseFileManager
 
 # Initialize BaseFileManager
 scale = global_config.scale_n100

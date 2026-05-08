@@ -1,25 +1,27 @@
 # Libraries
 
-import arcpy
 import os
+from pathlib import Path
+
+import arcpy
 
 arcpy.env.overwriteOutput = True
 
 from collections import Counter
+
+from config import attribute_csv_file
 from tqdm import tqdm
 
 from composition_configs import core_config, logic_config
-from config import attribute_csv_file
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
-    sort_results,
-    write_to_file,
     load_rules,
+    sort_results,
 )
-from input_data import input_n10, input_n100
+from input_data import input_n100
 
 # ========================
 # Program
@@ -78,9 +80,9 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
 
     print(f"✂️ Clips data according to municipality: {area}")
     clip_lyr = "clip_lyr"
-    arcpy.management.MakeFeatureLayer(
+    """arcpy.management.MakeFeatureLayer(
         input_n100.AdminFlate, clip_lyr, f"NAVN = '{area}'"
-    )
+    )"""
     arcpy.analysis.Clip(
         in_features=input_fc,
         clip_features=clip_lyr,
@@ -228,7 +230,9 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
-    rule_set = load_rules(attribute_csv_file)
+    rule_set = load_rules(
+        Path.joinpath(Path(__file__).parent, "attribute_prioritizing.csv")
+    )
 
     def match(rule, a, h, u, g):
         return (

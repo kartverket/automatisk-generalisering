@@ -2,9 +2,10 @@
 generaliser_anleggspunkt.py
 """
 
-import arcpy
-import os
 import math
+import os
+
+import arcpy
 
 # =============================================================================
 # STIER

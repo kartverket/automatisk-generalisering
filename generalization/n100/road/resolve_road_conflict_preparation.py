@@ -1,9 +1,9 @@
 # Libraries
 
-import arcpy
-import numpy as np
 import os
 
+import arcpy
+import numpy as np
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True

@@ -1,10 +1,9 @@
+from typing import Dict, Union
+
 import arcpy
-from typing import Union, Dict
 
-from xarray.backends.common import NONE_VAR_NAME
-
-from custom_tools.general_tools import custom_arcpy
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
+from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 
 

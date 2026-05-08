@@ -1,12 +1,13 @@
-import arcpy
 import multiprocessing
-from multiprocessing import Pool, Manager
+from multiprocessing import Manager, Pool
 
+import arcpy
 import config
-from env_setup import environment_setup
-from input_data import input_n50
+
 from custom_tools.general_tools import custom_arcpy
+from env_setup import environment_setup
 from file_manager.n100.file_manager_rivers import River_N100
+from input_data import input_n50
 
 
 def main():

@@ -1,10 +1,14 @@
 import arcpy
 import config
+
+from composition_configs import core_config, logic_config
+from constants.n100_constants import N100_SQLResources, N100_Symbology
+
+# Importing timing decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from composition_configs import core_config, logic_config
-
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
@@ -12,14 +16,10 @@ from input_data.input_orchestrator import InputDataOrchestrator
 
 # Importing environment settings
 from env_setup import environment_setup
-from constants.n100_constants import N100_SQLResources, N100_Symbology
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
-
-# Importing timing decorator
-
-from custom_tools.decorators.timing_decorator import timing_decorator
+from input_data import input_symbology
 
 
 @timing_decorator

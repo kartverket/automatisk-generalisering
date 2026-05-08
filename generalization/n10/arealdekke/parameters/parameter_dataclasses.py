@@ -1,12 +1,4 @@
 from pydantic.dataclasses import dataclass
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    Any,
-)
 
 
 @dataclass(frozen=True)
@@ -25,11 +17,6 @@ class EliminateSmallPolygonsParameters:
 class GangSykkelDissolverParameters:
     buffer_distance: int
     length_divide: int
-
-
-@dataclass(frozen=True)
-class LandUseParameters:
-    elvFlate: dict
 
 
 @dataclass(frozen=True)

@@ -1,15 +1,16 @@
 # Importing custom files relative to the root path
-from custom_tools.general_tools import custom_arcpy
-from env_setup import environment_setup
-from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_SQLResources
+from collections import Counter
 
 # Importing general packages
 import arcpy
-from collections import Counter
+
+from constants.n100_constants import N100_SQLResources
 
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
+from env_setup import environment_setup
+from file_manager.n100.file_manager_buildings import Building_N100
 
 
 @timing_decorator

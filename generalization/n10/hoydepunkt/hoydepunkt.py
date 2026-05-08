@@ -1,3 +1,8 @@
+import copy
+import os
+import re
+from typing import Dict
+
 import arcpy
 import arcpy.cim
 import arcpy.cim.CIMEnum as cimenum
@@ -8,11 +13,6 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_hoydepunkt import Hoydepunkt_N10
 from input_data import input_n10
-
-import re
-from typing import Dict
-import os
-import copy
 
 arcpy.env.overwriteOutput = True
 

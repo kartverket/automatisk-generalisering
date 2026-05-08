@@ -4,8 +4,8 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
-from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
+from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -139,7 +139,6 @@ def find_holes(files: dict, target: str) -> None:
         files (dict): Dictionary with all the working files
         target (str): Land use category that is being processed
     """
-
     # Collect the holes and store them in a separate feature class
     arcpy.analysis.Erase(
         in_features=files["complete_without_locked"],

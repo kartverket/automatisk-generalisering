@@ -2,11 +2,11 @@
 Script to build the network of rivers that can be traversed.
 """
 
-import geopandas as gpd
-import networkx as nx
-import matplotlib.pyplot as plt
-from shapely.geometry import Point
 import config
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import networkx as nx
+from shapely.geometry import Point
 
 bias = 0  # Bias for flowing "down"
 height_river_path = config.output_folder + r"\river_basin_combined_3D.shp"

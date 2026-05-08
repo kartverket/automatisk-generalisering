@@ -1,7 +1,8 @@
-import arcpy
-from collections import defaultdict
-import networkx as nx
 import os
+from collections import defaultdict
+
+import arcpy
+import networkx as nx
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import FieldNames_str, RiverObjecttypes_str

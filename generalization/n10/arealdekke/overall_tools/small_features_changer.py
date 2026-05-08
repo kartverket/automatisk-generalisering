@@ -1,9 +1,9 @@
 # Libraries
 
-import arcpy
 import os
-
 from pathlib import Path
+
+import arcpy
 
 arcpy.env.overwriteOutput = True
 

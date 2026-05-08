@@ -1,5 +1,6 @@
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+
 from custom_tools.general_tools.file_utilities import get_all_fields
 
 

@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 
 
