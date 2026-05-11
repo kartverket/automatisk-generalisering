@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -68,7 +69,7 @@ class WorkFileManager:
             )
 
         self.file_location = (
-            "\\memory\\" if self.write_to_memory else f"{self.root_file}_"
+            f"memory{os.sep}" if self.write_to_memory else f"{self.root_file}_"
         )
 
     def _modify_path(self) -> tuple[Path, str]:
