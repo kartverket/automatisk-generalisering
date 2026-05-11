@@ -4,7 +4,10 @@ from arealdekke_class import Arealdekke
 
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
-from input_data import input_test_data
+
+from input_data import input_area, input_test_data
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 
 @timing_decorator
@@ -12,8 +15,11 @@ def main():
     environment_setup.main()
 
     # Creates an instance of the arealdekke object.
-    input_data = input_n10.arealdekkeflate
     map_scale = "N10"
+    data_orc = InputDataOrchestrator(map_scale=map_scale)
+    data_orc.set_input_dataset(input_area)
+    area_data = data_orc.get_dataset("AREA")
+    input_data = area_data.Arealdekke_Begrenset_1
 
     # If True = only final output will be available after generalization
     # If False = all intermediate files not deleted by wfm will be available (default)
@@ -21,6 +27,7 @@ def main():
 
     arealdekke = Arealdekke(
         input_data=input_data,
+        data_orc=data_orc,
         map_scale=map_scale,
         only_keep_final_output=only_keep_final_output,
     )

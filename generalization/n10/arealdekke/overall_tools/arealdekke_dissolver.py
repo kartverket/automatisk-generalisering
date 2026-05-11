@@ -9,7 +9,8 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10
+
+from input_data.input_orchestrator import InputDataOrchestrator
 
 
 class ArealdekkeDissolver:
@@ -349,11 +350,14 @@ class ArealdekkeDissolver:
         self.wfm.delete_created_files()
 
 
-def normal_call(input_fc: str, output_fc: str):
+def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
     identity = "in_memory\\arealdekke_identity"
+    
+    fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
+
     arcpy.analysis.Identity(
         in_features=input_fc,
-        identity_features=input_n10.Fishnet_500m,
+        identity_features=fishnet,
         out_feature_class=identity,
         join_attributes="ONLY_FID",
     )
@@ -369,11 +373,14 @@ def normal_call(input_fc: str, output_fc: str):
     ArealdekkeDissolver(areal_dekke_dissolver_config=areal_dekke_config).run()
 
 
-def partition_call(input_fc: str, output_fc: str, map_scale: str):
+def partition_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator, map_scale: str):
     identity = "in_memory\\arealdekke_identity"
+    
+    fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
+
     arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.
         in_features=input_fc,
-        identity_features=input_n10.Fishnet_500m,
+        identity_features=fishnet,
         out_feature_class=identity,
         join_attributes="ONLY_FID",
     )

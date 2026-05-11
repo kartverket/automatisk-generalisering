@@ -8,6 +8,7 @@ import arcpy
 from composition_configs import logic_config
 from custom_tools.general_tools import custom_arcpy
 from composition_configs import logic_config
+from file_manager import WorkFileManager
 
 
 @dataclass
@@ -134,7 +135,6 @@ class ResolveRoadConflicts:
 
     def run(self) -> None:
         arcpy.env.referenceScale = self.cfg.map_scale
-        environment_setup.main()
 
         self.copy_input_layers()
         self.apply_symbology()
@@ -142,7 +142,3 @@ class ResolveRoadConflicts:
         self.displacement_feature_processing()
 
         self.wfm.delete_created_files()
-
-
-if __name__ == "__main__":
-    environment_setup.main()

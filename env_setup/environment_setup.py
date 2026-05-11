@@ -146,7 +146,9 @@ class ProjectDirectorySetup:
     _setup_done_globally = False
 
     def __init__(self, layout: ProjectLayout | None = None):
-        self.layout = layout or ProjectLayout(output_root=Path(config.input_data_folder).parent)
+        self.layout = layout or ProjectLayout(
+            output_root=Path(config.input_data_folder).parent
+        )
         self.scales = [
             scale_n10,
             scale_n50,

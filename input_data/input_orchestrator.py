@@ -22,8 +22,8 @@ class InputDataOrchestrator:
     Params:
         path (Path): The path to the input data folder
         map_scale (str): The map scale to fetch data for, e.g. "n100"
-        data (Path): The path to the input datasets
-        symbology (Path): The path to the symbology files for the given map scale
+        data_path (Path): The path to the input datasets
+        symbology_path (Path): The path to the symbology files for the given map scale
         datasets (dict): A dictionary to store the fetched datasets
         symbology (dict): A dictionary to store the fetched symbology files
     """
@@ -42,8 +42,10 @@ class InputDataOrchestrator:
 
         self.map_scale: str = map_scale.lower()
 
-        self.data: Path = Path.joinpath(self.path, "raw_data")
-        self.symbology: Path = Path.joinpath(self.path, "symbology", self.map_scale)
+        self.data_path: Path = Path.joinpath(self.path, "raw_data")
+        self.symbology_path: Path = Path.joinpath(
+            self.path, "symbology", self.map_scale
+        )
 
         self.datasets: dict = {}
         self.set_symbology()
@@ -152,6 +154,15 @@ class InputDataOrchestrator:
     # ========================
     # Getters
     # ========================
+
+    def get_datasets(self) -> list[str]:
+        """
+        Returns a list of strings, where each string represents a dataset name.
+
+        Returns:
+            list[str]: List of dataset names
+        """
+        return [str(key) for key in self.datasets.keys()]
 
     def get_dataset(self, dataset_name: str) -> DatasetNamespace:
         """
