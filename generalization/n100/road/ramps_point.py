@@ -138,7 +138,7 @@ def create_buffer(
         buffer_type (str): String describing if it should be FLAT or ROUND ends
         output (arcpy.Geometry | str): The output layer to save the results
     """
-    intermediate_fc = r"in_memory\intermediate"
+    intermediate_fc = os.path.join("in_memory", "intermediate")
     arcpy.analysis.Buffer(
         in_features=input,
         out_feature_class=intermediate_fc,
@@ -291,7 +291,7 @@ def combine_intersecting_buffers(buffer_fc, out_fc, max_per_cluster=4):
     )
 
     # if CreateFeatureclass returned a full path different from out_fc, use that path for insert
-    out_fc_final = "in_memory\\" + out_fc
+    out_fc_final = os.path.join("in_memory", out_fc)
 
     # add component ID field
     arcpy.management.AddField(out_fc_final, "ClusterID", "LONG")
@@ -319,7 +319,7 @@ def remove_endpoints_points(endpoints_layer, fc):
     """
     Removes points in fc that intersect with endpoints in endpoints_layer
     """
-    endpoints_fc = "in_memory\\collected_endpoints"
+    endpoints_fc = os.path.join("in_memory", "collected_endpoints")
 
     sr = arcpy.Describe(endpoints_layer).spatialReference
     arcpy.CreateFeatureclass_management(
@@ -356,7 +356,7 @@ def create_near_map(
     """
     Creates a near table and returns it in a map with only near rank 1 entries and the key is oid of in fc
     """
-    near_table = "in_memory\\near_table"
+    near_table = os.path.join("in_memory", "near_table")
     arcpy.GenerateNearTable_analysis(
         in_features=in_fc,
         near_features=near_fc,
@@ -493,15 +493,15 @@ def merge_ramps() -> None:
         for line in splitted_geometries:
             insert_cursor.insertRow([line])
 
-    arcpy.analysis.Buffer(intermediate_fc, "in_memory\\buffer_ramps_50m", "50 Meters")
+    arcpy.analysis.Buffer(intermediate_fc, os.path.join("in_memory", "buffer_ramps_50m"), "50 Meters")
     combine_intersecting_buffers(
-        "in_memory\\buffer_ramps_50m", "buffer_ramps_50m_dissolved"
+        os.path.join("in_memory", "buffer_ramps_50m"), "buffer_ramps_50m_dissolved"
     )
 
-    joined_output = "in_memory\\lines_with_group_id"
+    joined_output = os.path.join("in_memory", "lines_with_group_id")
     arcpy.analysis.SpatialJoin(
         target_features=intermediate_fc,
-        join_features="in_memory\\buffer_ramps_50m_dissolved",
+        join_features=os.path.join("in_memory", "buffer_ramps_50m_dissolved"),
         out_feature_class=joined_output,
         join_type="KEEP_ALL",
         match_option="INTERSECT",
@@ -634,7 +634,7 @@ def build_adjecency(lines):
     Creates adjecency graph of roads that intersect using near table 1 meter
     """
     adjecency = defaultdict(set)
-    near_table = "in_memory\\near_table_adjecency"
+    near_table = os.path.join("in_memory", "near_table_adjecency")
     arcpy.analysis.GenerateNearTable(
         in_features=lines,
         near_features=lines,
@@ -772,7 +772,7 @@ def connect_roads_to_points():
         search_distance="1 Meters",
     )
 
-    near_table_ramp_road = "in_memory\\near_table_ramp_road"
+    near_table_ramp_road = os.path.join("in_memory", "near_table_ramp_road")
     arcpy.analysis.GenerateNearTable(
         in_features=ramp_points_lyr,
         near_features=roads_lyr,
@@ -808,7 +808,7 @@ def connect_roads_to_points():
     )
 
     sr = arcpy.Describe(ramp_points_fc).spatialReference
-    endpoints_fc = "in_memory\\collected_endpoints"
+    endpoints_fc = os.path.join("in_memory", "collected_endpoints")
     arcpy.CreateFeatureclass_management(
         "in_memory", "collected_endpoints", "POINT", spatial_reference=sr
     )
@@ -843,7 +843,7 @@ def connect_roads_to_points():
             roadID[int(pid)] = rid
 
     # create near table between endpoints and ramp points, then build a map of endpoint oid to (nx, ny, dist, priority, roadID, ramp_point_oid) for near rank 1 entries
-    near_table = "in_memory\\near_table"
+    near_table = os.path.join("in_memory", "near_table")
     arcpy.GenerateNearTable_analysis(
         in_features=endpoints_lyr,
         near_features=ramp_points_fc,
@@ -1001,13 +1001,13 @@ class MovePointsToCrossings:
 
     def make_priority_points(self):
         # in memory
-        buffer_500m = "in_memory\\buffer_500m"
-        buffer_100m = "in_memory\\buffer_ramps_100m"
-        buffer_100m_dissolved = "in_memory\\buffer_ramps_100m_dissolved"
-        self.priority1 = "in_memory\\priority1"
-        self.priority1_5 = "in_memory\\priority1_5"
-        self.priority2 = "in_memory\\priority2"
-        self.piority2_5 = "in_memory\\priority2_5"
+        buffer_500m = os.path.join("in_memory", "buffer_500m")
+        buffer_100m = os.path.join("in_memory", "buffer_ramps_100m")
+        buffer_100m_dissolved = os.path.join("in_memory", "buffer_ramps_100m_dissolved")
+        self.priority1 = os.path.join("in_memory", "priority1")
+        self.priority1_5 = os.path.join("in_memory", "priority1_5")
+        self.priority2 = os.path.join("in_memory", "priority2")
+        self.piority2_5 = os.path.join("in_memory", "priority2_5")
 
         # Feature layers
         roads_lyr = "roads_lyr"
@@ -1190,7 +1190,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 self.priority1,
                 all_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near1_map = self.create_near_map_unmatched(
@@ -1204,7 +1204,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 self.priority1_5,
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near1_5_map = self.create_near_map_unmatched(
@@ -1223,7 +1223,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 self.priority2,
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near2_map = self.create_near_map_unmatched(
@@ -1261,7 +1261,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 "motorveg_lyr",
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near3_map = self.create_near_map_unmatched(
@@ -1285,7 +1285,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 "ikke_motorveg_lyr",
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near3_5_map = self.create_near_map_unmatched(
@@ -1304,7 +1304,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 "roads_lyr",
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved",
+                os.path.join("in_memory", "buffer_ramps_100m_dissolved"),
             )
         else:
             self.near4_map = self.create_near_map_unmatched(
@@ -1417,8 +1417,8 @@ class MovePointsToCrossings:
         """
         priority 1 is where intersects crosses motorveg
         """
-        intersect = "in_memory\\intersect8"
-        intersect2 = "in_memory\\intersect9"
+        intersect = os.path.join("in_memory", "intersect8")
+        intersect2 = os.path.join("in_memory", "intersect9")
 
         arcpy.Intersect_analysis(
             [motorveg_t_lyr, motorveg_l_lyr],
@@ -1459,11 +1459,11 @@ class MovePointsToCrossings:
         """
         priority 1_5 is where motorveg intersects non motorveg with different medium
         """
-        intersect1 = "in_memory\\intersect1"
-        intersect2 = "in_memory\\intersect2"
-        intersect3 = "in_memory\\intersect3"
-        intersect4 = "in_memory\\intersect4"
-        intersect5 = "in_memory\\intersect5"
+        intersect1 = os.path.join("in_memory", "intersect1")
+        intersect2 = os.path.join("in_memory", "intersect2")
+        intersect3 = os.path.join("in_memory", "intersect3")
+        intersect4 = os.path.join("in_memory", "intersect4")
+        intersect5 = os.path.join("in_memory", "intersect5")
 
         arcpy.Intersect_analysis(
             [motorveg_t_lyr, ikke_motorveg_l_lyr],
@@ -1520,8 +1520,8 @@ class MovePointsToCrossings:
         """
         Priority 2 is where any road intersects another road with different mediums
         """
-        intersect1 = "in_memory\\intersect1"
-        intersect2 = "in_memory\\intersect2"
+        intersect1 = os.path.join("in_memory", "intersect1")
+        intersect2 = os.path.join("in_memory", "intersect2")
 
         arcpy.Intersect_analysis(
             [roads_t_lyr, roads_l_lyr],
@@ -1623,7 +1623,7 @@ class MovePointsToCrossings:
 
             arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
 
-            near_table = "in_memory\\near_table"
+            near_table = os.path.join("in_memory", "near_table")
             arcpy.GenerateNearTable_analysis(
                 in_features=points_lyr,
                 near_features=buffer_fc,
@@ -1648,7 +1648,7 @@ class MovePointsToCrossings:
 
             arcpy.management.Delete(near_table)
 
-            near_table = "in_memory\\near_table"
+            near_table = os.path.join("in_memory", "near_table")
             arcpy.GenerateNearTable_analysis(
                 in_features=near_fc,
                 near_features=buffer_fc,
@@ -1673,7 +1673,7 @@ class MovePointsToCrossings:
 
             arcpy.management.Delete(near_table)
 
-            near_table = "in_memory\\near_table"
+            near_table = os.path.join("in_memory", "near_table")
             arcpy.GenerateNearTable_analysis(
                 in_features=points_lyr,
                 near_features=near_fc,
