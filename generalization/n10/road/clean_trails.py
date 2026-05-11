@@ -1,7 +1,7 @@
 import arcpy
+import config
 
 from composition_configs import core_config, logic_config
-import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup

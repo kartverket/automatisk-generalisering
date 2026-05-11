@@ -1,17 +1,17 @@
 # Import packages
 import os
-import arcpy
 from collections import defaultdict
+
+import arcpy
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
 # Importing custom modules
-from file_manager.n100.file_manager_roads import Road_N100
+from dam import calculate_angle, get_endpoints
+
 from custom_tools.decorators.timing_decorator import timing_decorator
-
-
-from dam import get_endpoints, calculate_angle
+from file_manager.n100.file_manager_roads import Road_N100
 
 """
 Purpose:

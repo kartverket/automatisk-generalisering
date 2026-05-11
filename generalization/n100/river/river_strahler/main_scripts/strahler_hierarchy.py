@@ -16,12 +16,13 @@ Instructions:
      potentially less accurate Strahler values in cases of divergence and rejoining.
 """
 
-import networkx as nx
-import geopandas as gpd
-from shapely.geometry import Point
-import arcpy
 import re
+
+import arcpy
 import config
+import geopandas as gpd
+import networkx as nx
+from shapely.geometry import Point
 
 
 def main():

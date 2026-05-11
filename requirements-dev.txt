@@ -1,0 +1,10 @@
+# Developer-only dependencies (not needed at production runtime).
+# Install with: pip install -r requirements-dev.txt
+#
+# pyperclip is used only by custom_tools/development_tools/gpt_file_path_masker.py
+# and would not function in a headless container.
+# sphinx + sphinx-rtd-theme are needed only to build the docs.
+
+pyperclip
+sphinx
+sphinx-rtd-theme

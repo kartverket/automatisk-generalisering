@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import (
+    Any,
     Dict,
     List,
     Optional,
     Tuple,
     Union,
-    Any,
 )
 
 from composition_configs import core_config, io_types

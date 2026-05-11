@@ -1,23 +1,18 @@
 # Importing packages
 import arcpy
-
-# Importing custom input files modules
-from input_data import input_n100
-from input_data import input_roads
+import config
 
 from composition_configs import core_config, logic_config, type_defs
-
-# Importing custom modules
-from file_manager.n100.file_manager_roads import Road_N100
-from env_setup import environment_setup
-import config
+from constants.n100_constants import (
+    FieldNames,
+    MediumAlias,
+    NvdbAlias,
+)
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy, file_utilities
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
-from custom_tools.general_tools.geometry_tools import GeometryValidator
-from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools import file_utilities
-from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.remove_road_triangles import (
     generalize_road_triangles,
@@ -25,27 +20,29 @@ from custom_tools.generalization_tools.road.remove_road_triangles import (
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
 )
-from input_data.input_symbology import SymbologyN100
-from constants.n100_constants import (
-    FieldNames,
-    NvdbAlias,
-    MediumAlias,
-)
+from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
+from env_setup import environment_setup
+from file_manager import WorkFileManager
+from file_manager.n100.file_manager_buildings import Building_N100
+
+# Importing custom modules
+from file_manager.n100.file_manager_roads import Road_N100
 from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
     categories_major_road_crossings,
 )
-from generalization.n100.road.roundabouts import generalize_roundabouts
-from generalization.n100.road.vegsperring import remove_roadblock
-from generalization.n100.road.ramps_point import ramp_points
-from generalization.n100.road.ramps_point import MovePointsToCrossings
+from generalization.n100.road.ramps_point import MovePointsToCrossings, ramp_points
 from generalization.n100.road.resolve_road_conflict_preparation import (
-    split_polyline_featureclass,
     remove_road_points_in_water,
     run_dissolve_with_intersections,
+    split_polyline_featureclass,
 )
-from file_manager import WorkFileManager
-from file_manager.n100.file_manager_buildings import Building_N100
+from generalization.n100.road.roundabouts import generalize_roundabouts
+from generalization.n100.road.vegsperring import remove_roadblock
+
+# Importing custom input files modules
+from input_data import input_n100, input_roads
+from input_data.input_symbology import SymbologyN100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 

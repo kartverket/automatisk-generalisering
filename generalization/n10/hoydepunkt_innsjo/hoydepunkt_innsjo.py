@@ -1,5 +1,7 @@
-import arcpy
 from enum import Enum
+
+import arcpy
+
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup

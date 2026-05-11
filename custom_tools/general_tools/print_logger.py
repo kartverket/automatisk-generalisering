@@ -1,8 +1,9 @@
 import logging
 import os
 
-import env_setup.global_config
 import config
+
+import env_setup.global_config
 
 # Local root directory
 local_root_directory = config.output_folder

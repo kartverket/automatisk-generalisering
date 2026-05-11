@@ -1,10 +1,11 @@
-import arcpy
 import os
 import statistics
 
+import arcpy
+
+import generalization.n100.river.config as config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
-import generalization.n100.river.config as config
 
 
 class RiverElevator:

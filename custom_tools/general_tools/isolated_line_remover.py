@@ -1,6 +1,4 @@
 import arcpy
-from file_manager.work_file_manager import WorkFileManager
-from composition_configs import core_config
 
 
 class IsolatedLineRemover:

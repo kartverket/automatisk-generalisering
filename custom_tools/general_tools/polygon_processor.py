@@ -1,15 +1,15 @@
-import numpy as np
-import arcpy
 import os
-from tqdm import tqdm
 import random
 from multiprocessing import Pool, cpu_count
 
+import arcpy
 import config
-from env_setup import environment_setup
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
-from file_manager.n100.file_manager_buildings import Building_N100
+import numpy as np
+
 from constants.n100_constants import N100_Symbology
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
+from env_setup import environment_setup
+from file_manager.n100.file_manager_buildings import Building_N100
 
 
 class PolygonProcessor:

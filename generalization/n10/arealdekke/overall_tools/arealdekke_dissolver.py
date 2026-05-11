@@ -1,19 +1,15 @@
+from collections import defaultdict
+
 import arcpy
 
+from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-
-from composition_configs import core_config
+from custom_tools.general_tools.geometry_tools import GeometryValidator
+from custom_tools.general_tools.partition_iterator import PartitionIterator
+from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10
-from env_setup import environment_setup
-
-from custom_tools.general_tools.partition_iterator import PartitionIterator
-from custom_tools.general_tools.geometry_tools import GeometryValidator
-
-from collections import defaultdict
-
-from composition_configs import core_config, logic_config
 
 
 class ArealdekkeDissolver:
@@ -452,11 +448,3 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
     )
 
     partition_areal_dissolve.run()
-
-
-if __name__ == "__main__":
-    partition_call(
-        input_fc=input_n10.Arealdekke_Oslo,
-        output_fc=Arealdekke_N10.dissolve_arealdekke.value,
-        map_scale="N10",
-    )

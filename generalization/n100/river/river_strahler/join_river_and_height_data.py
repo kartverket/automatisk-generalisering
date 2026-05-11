@@ -3,9 +3,9 @@ This script extracts height data for river points, reconstructs 3D river lines, 
 """
 
 import arcpy
-import geopandas as gpd
-from shapely.geometry import Point, LineString
 import config
+import geopandas as gpd
+from shapely.geometry import LineString, Point
 
 raster_path = config.raster_path
 output_fc = config.output_folder + r"\river_basin_combined.shp"

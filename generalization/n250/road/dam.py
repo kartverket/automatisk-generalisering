@@ -1,20 +1,21 @@
 # Importing packages
-from collections import defaultdict
-import arcpy
-import numpy as np
 import math
 import os
+from collections import defaultdict
+
+import arcpy
+import numpy as np
 
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from input_data import input_n100
+from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
+from env_setup import environment_setup
 
 # Importing custom modules
 from file_manager.n250.file_manager_roads import Road_N250
-from env_setup import environment_setup
-from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools import custom_arcpy
+from input_data import input_n100
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file

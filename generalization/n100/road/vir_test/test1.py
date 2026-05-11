@@ -1,21 +1,18 @@
 # har tester ViR
 import arcpy
 
-from input_data import input_n50, input_n100
-from file_manager.n100.file_manager_roads import Road_N100
-from env_setup import environment_setup
+from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
+from env_setup import environment_setup
+from file_manager.n100.file_manager_roads import Road_N100
 
 # from custom_tools.generalization_tools.road import DissolveWithIntersections
 # from custom_tools.generalization_tools.road.dissolve_with_intersections import (
 #     DissolveWithIntersections,
 # )
-
 # from input_data import input_elveg
 # from input_data import input_veg
-from input_data import input_roads
-
-from custom_tools.decorators.timing_decorator import timing_decorator
+from input_data import input_n50, input_roads
 
 
 @timing_decorator

@@ -4,9 +4,9 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
-import numpy as np
 import os
 
+import numpy as np
 from tqdm import tqdm
 
 from composition_configs import core_config
