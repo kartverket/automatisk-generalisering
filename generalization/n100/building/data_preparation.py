@@ -36,10 +36,6 @@ from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
 
-# Importing custom input files modules
-from input_data import input_n50, input_n100, input_other, input_roads
-from input_data.input_symbology import SymbologyN100
-
 
 @timing_decorator
 def main() -> InputDataOrchestrator:

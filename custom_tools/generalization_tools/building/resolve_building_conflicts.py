@@ -1,30 +1,26 @@
 # Importing modules
 from dataclasses import dataclass
 from typing import (
+    Iterable,
     List,
     Optional,
     Set,
     Union,
-    Set,
 )
 
 import arcpy
 
 # Importing custom files
-import config
 from custom_tools.general_tools import custom_arcpy
 
-from file_manager.n100.file_manager_buildings import Building_N100
 
 from file_manager import WorkFileManager
 from composition_configs import logic_config
-from constants.n100_constants import N100_Symbology, N100_Values
+from constants.n100_constants import N100_Values
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_symbology
 
 # Importing timing decorator
 
@@ -574,97 +570,3 @@ class ResolveBuildingConflictsPolygon:
         self.apply_symbology()
         self.resolve_building_conflicts()
         self.invisibility_selections()
-
-
-if __name__ == "__main__":
-    input_data_structure = [
-        {
-            "unique_alias": "building_points",
-            "input_feature": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
-            "lyrx_file": input_symbology.SymbologyN100.squares.value,
-            "grouped_lyrx": False,
-            "target_layer_name": "",
-        },
-        {
-            "unique_alias": "building_polygons",
-            "input_feature": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
-            "lyrx_file": input_symbology.SymbologyN100.building_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": "",
-        },
-        {
-            "unique_alias": "road",
-            "input_feature": Building_N100.data_preparation___unsplit_roads___n100_building.value,
-            "lyrx_file": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_veg_bru_L2",
-        },
-        {
-            "unique_alias": "railroad",
-            "input_feature": input_data.input_n100.Bane,
-            "lyrx_file": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
-        },
-        {
-            "unique_alias": "railroad_station",
-            "input_feature": Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-            "lyrx_file": input_symbology.SymbologyN100.railway_station_squares.value,
-            "grouped_lyrx": False,
-            "target_layer_name": "",
-        },
-        {
-            "unique_alias": "begrensningskurve",
-            "input_feature": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
-            "lyrx_file": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": "",
-        },
-        {
-            "unique_alias": "power_grid_lines",
-            "input_feature": Building_N100.data_preparation___power_grid_lines___n100_building.value,
-            "lyrx_file": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "AnleggsLinje_maske_sort",
-        },
-    ]
-
-    resolve_building_conflicts = ResolveBuildingConflictsPoints(
-        input_list_of_dicts_data_structure=input_data_structure,
-        building_inputs={
-            "building_points": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
-            "building_polygons": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
-        },
-        building_gap_distance=30,
-        barrier_inputs={
-            "begrensningskurve": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
-            "road": Building_N100.data_preparation___unsplit_roads___n100_building.value,
-            "railway_station": Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-            "railway": input_data.input_n100.Bane,
-        },
-        barrier_gap_distances={
-            "begrensningskurve": 45,
-            "road": 45,
-            "railway_station": 45,
-            "railway": 45,
-        },
-        building_symbol_dimension=N100_Symbology.building_symbol_dimensions.value,
-        lyrx_files={
-            "building_squares": input_symbology.SymbologyN100.squares.value,
-            "building_polygons": input_symbology.SymbologyN100.building_polygon.value,
-            "begrensningskurve": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
-            "road": input_symbology.SymbologyN100.road.value,
-            "railway_station": input_symbology.SymbologyN100.railway_station_squares.value,
-            "railway": input_symbology.SymbologyN100.railway.value,
-        },
-        base_path_for_lyrx=Building_N100.point_resolve_building_conflicts___lyrx_root___n100_building.value,
-        root_path=Building_N100.point_resolve_building_conflicts___root_path___n100_building.value,
-        output_files={
-            "building_points": Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
-            "building_polygons": Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
-        },
-        map_scale="100000",
-    )
-
-    resolve_building_conflicts.run()
-    # resolve_building_conflicts.barriers_for_rbc()

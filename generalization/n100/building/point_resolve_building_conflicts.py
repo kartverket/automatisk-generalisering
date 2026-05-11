@@ -17,9 +17,6 @@ from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
 from input_data import input_symbology
 
-iteration_fc = config.resolve_building_conflicts_iteration_feature
-
-
 @timing_decorator
 def main():
     """

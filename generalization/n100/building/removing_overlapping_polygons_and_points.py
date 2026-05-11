@@ -5,17 +5,15 @@ import arcpy
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology
 
-# Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
 
-# Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data.input_symbology import SymbologyN100
 
+from input_data.input_orchestrator import InputDataOrchestrator
 
 @timing_decorator
 def main(data_orc: InputDataOrchestrator):
@@ -468,7 +466,3 @@ def merging_final_points_together():
         ],
         output=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
     )
-
-
-if __name__ == "__main__":
-    main()
