@@ -1553,7 +1553,7 @@ class MovePointsToCrossings:
         """
         priority 2_5 is where the endpoints of 4 different roads or more intersect
         """
-        endpoints_fc = "in_memory\\collected_endpoints"
+        endpoints_fc = os.path.join("in_memory", "collected_endpoints")
 
         sr = arcpy.Describe(roads_lyr).spatialReference
         arcpy.CreateFeatureclass_management(

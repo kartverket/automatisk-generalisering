@@ -279,11 +279,15 @@ def write_dict_to_json(path: str, dict_data: dict) -> None:
 
 
 def feature_has_rows(feature: Union[str, io_types.GdbIOArg]) -> bool:
+    # GetCount instead of Exists+count: on Linux arcpy, Exists fails to find
+    # session-layer aliases (e.g. "memory/foo" produced by MakeFeatureLayer),
+    # whereas GetCount accepts them. Treat a raised ExecuteError as "not found".
     if not feature:
         return False
-    if not arcpy.Exists(feature):
+    try:
+        return int(arcpy.management.GetCount(feature).getOutput(0)) > 0
+    except arcpy.ExecuteError:
         return False
-    return count_objects(input_layer=feature) > 0
 
 
 def print_feature_info(file_path: io_types.GdbIOArg, description: str) -> None:
