@@ -1,12 +1,12 @@
 # Libraries
 
-from config import input_data_folder
+from paths import GIS_FILES_ROOT
 
 from pathlib import Path
 
 # Setup main symbology path
 
-symbology_path = Path.joinpath(Path(input_data_folder), "symbology")
+symbology_path = Path.joinpath(Path(GIS_FILES_ROOT), "symbology")
 
 # Getter function for symbology paths corresponding to map scale
 

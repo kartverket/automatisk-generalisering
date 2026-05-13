@@ -1,12 +1,12 @@
 # Libraries
 
-from config import input_data_folder
+from paths import GIS_FILES_ROOT
 
 from pathlib import Path
 
 # Setup main road path
 
-road_path = Path.joinpath(Path(input_data_folder), "raw_data", "road.gdb")
+road_path = Path.joinpath(Path(GIS_FILES_ROOT), "raw_data", "road.gdb")
 
 # Setup feature class paths
 

@@ -1,12 +1,12 @@
 # Libraries
 
-from config import input_data_folder
+from paths import GIS_FILES_ROOT
 
 from pathlib import Path
 
 # Setup main area path
 
-area_path = Path.joinpath(Path(input_data_folder), "raw_data", "area.gdb")
+area_path = Path.joinpath(Path(GIS_FILES_ROOT), "raw_data", "area.gdb")
 
 # Setup feature class paths
 

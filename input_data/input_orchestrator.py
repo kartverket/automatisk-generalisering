@@ -5,7 +5,7 @@ import arcpy
 from pathlib import Path
 from types import ModuleType
 
-from config import input_data_folder
+from paths import GIS_FILES_ROOT
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_setup import EXPECTED, FolderSpec
 from input_data.input_symbology import get_symbology_paths
@@ -36,7 +36,7 @@ class InputDataOrchestrator:
         Args:
             map_scale (str): The map scale to fetch data for, e.g. "n100"
         """
-        self.path: Path = Path(input_data_folder)
+        self.path: Path = GIS_FILES_ROOT
 
         self.assert_valid_structure(self.path)
 
@@ -254,3 +254,6 @@ class InputDataOrchestrator:
             raise RuntimeError(f"Missing symbologies found: {missing}")
 
         self.symbology = content
+
+if __name__ == "__main__":
+    data_orc = InputDataOrchestrator(map_scale="n10")

@@ -1,12 +1,12 @@
 # Libraries
 
-from config import input_data_folder
+from paths import GIS_FILES_ROOT
 
 from pathlib import Path
 
 # Setup main train path
 
-train_path = Path.joinpath(Path(input_data_folder), "raw_data", "railway.gdb")
+train_path = Path.joinpath(Path(GIS_FILES_ROOT), "raw_data", "railway.gdb")
 
 # Setup feature class paths
 

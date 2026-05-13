@@ -1,8 +1,6 @@
 # Importing packages
 import arcpy
 
-import config
-
 # Importing custom input files modules
 from input_data import input_area, input_building, input_railway, input_road
 from input_data.input_datasets import DatasetNamespace
@@ -35,6 +33,7 @@ from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing custom modules
+from env_load import load_env, require
 from file_manager.n100.file_manager_roads import Road_N100
 from constants.n100_constants import (
     FieldNames,
@@ -54,11 +53,16 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 
+load_env()
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
+SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
 
 AREA_SELECTOR = "navn IN ('Kvitsøy')"
 SCALE = "n100"
 
+SEARCH_DISTANCE = 5000
+OBJECT_LIMIT = 100_000
 
 @timing_decorator
 def main():
@@ -98,10 +102,6 @@ def main():
         )
 
 
-SEARCH_DISTANCE = 5000
-OBJECT_LIMIT = 100_000
-
-
 @timing_decorator
 def data_selection_and_validation(
     area_selection: str, data_orc: InputDataOrchestrator
@@ -125,7 +125,7 @@ def data_selection_and_validation(
         },
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
-        select_local=config.select_study_area,
+        select_local=SELECT_STUDY_AREA,
     )
 
     selector.run()
