@@ -92,6 +92,9 @@ class EliminateSmallPolygons:
         eliminate_final_elim_merged = wfm.build_file_path(
             file_name="eliminate_final_elim_merged", file_type="gdb"
         )
+        eliminated_polygons = wfm.build_file_path(
+            file_name="eliminated_polygons", file_type="gdb"
+        )
 
         return {
             "eliminate_input": eliminate_input,
@@ -109,6 +112,7 @@ class EliminateSmallPolygons:
             "eliminate_clip_erase_eliminated": eliminate_clip_erase_eliminated,
             "eliminate_final_elim": eliminate_final_elim,
             "eliminate_final_elim_merged": eliminate_final_elim_merged,
+            "eliminated_polygons": eliminated_polygons,
         }
 
     def _fetch_data(self):
@@ -253,11 +257,11 @@ class EliminateSmallPolygons:
             arcpy.management.MakeFeatureLayer(
                 in_features=temp_in, out_layer=layer, where_clause=where_clause
             )
-            if arcpy.Exists(rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}"):
-                arcpy.management.CopyFeatures(layer, r"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons_tmp")
-                arcpy.management.Append(r"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons_tmp", rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}")
+            if arcpy.Exists(rf"{self.files["eliminated_polygons"]}{run}"):
+                arcpy.management.CopyFeatures(layer, rf"{self.files["eliminated_polygons"]}_tmp")
+                arcpy.management.Append(rf"{self.files["eliminated_polygons"]}_tmp", rf"{self.files["eliminated_polygons"]}{run}")
             else:
-                arcpy.management.CopyFeatures(layer, rf"C:\temp\arealdekke\arealdekke_output.gdb\eliminated_polygons{run}")
+                arcpy.management.CopyFeatures(layer, rf"{self.files["eliminated_polygons"]}{run}")
         
             arcpy.management.Eliminate(
                 in_features=layer,
@@ -393,14 +397,10 @@ class EliminateSmallPolygons:
         potential_holes_polygons = wfm.build_file_path(
             file_name="eliminate_holes_potential_holes_polygons", file_type="gdb"
         )
-        eliminated = wfm.build_file_path(
-            file_name="eliminate_holes_eliminated", file_type="gdb"
-        )
         input_copy_layer_selection = "eliminate_holes_input_copy_layer_selection"
         input_copy_layer_potential_elims = (
             "eliminate_holes_input_copy_layer_potential_elims"
         )
-        singlepart_layer = "eliminate_holes_singlepart_layer"
 
         arcpy.management.CopyFeatures(
             in_features=input_fc, out_feature_class=input_copy
@@ -415,9 +415,6 @@ class EliminateSmallPolygons:
             in_features=input_copy_layer_selection,
             out_feature_class=lines,
             neighbor_option="IGNORE_NEIGHBORS",
-        )
-        arcpy.management.MultipartToSinglepart(
-            in_features=lines, out_feature_class=singlepart
         )
 
         sr = arcpy.Describe(lines).spatialReference
