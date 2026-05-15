@@ -15,30 +15,6 @@ EliminateSmallPolygons:
     - dont_remove_spikes is list of arealdekke values wont be buffered for spike selection
     - integrate_tolerance is cluster tolerance in meters on integrate run in the end to fix small holes
 
-  N10g:
-    min_area: 100
-    min_iq_area: 150   
-    max_area_b_iq: 1500 
-    exclude: 
-      - Samferdsel
-      - Bane
-    dont_eliminate:
-      - Samferdsel
-      - ElvFlate
-      - Kanal
-      - Hav
-      - Bane
-    spike_size: 2
-    dont_remove_spikes:
-      - Samferdsel
-      - ElvFlate
-      - Kanal
-      - Hav
-      - InnsjoRegulert
-      - Innsjo
-      - Bane
-    integrate_tolerance: 0.09
-
   N10:
     min_area: 
       Snaumark: 225
