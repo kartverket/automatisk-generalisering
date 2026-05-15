@@ -40,7 +40,6 @@ class EliminateSmallPolygons:
             map_scale=self.map_scale,
             dataclass=EliminateSmallPolygonsParameters,
         )
-       
 
         self.files = self._create_wfm_gdbs(self.wfm)
 
@@ -233,9 +232,11 @@ class EliminateSmallPolygons:
         self.geometry_validator.check_repair_sequence(
             input_fc=output_fc, max_iterations=5
         )
-    
+
     @timing_decorator
-    def eliminate_multiple_minimums(self, input_fc: str, output_fc: str, run: int) -> None:
+    def eliminate_multiple_minimums(
+        self, input_fc: str, output_fc: str, run: int
+    ) -> None:
         layer = "eliminate_layer"
         quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
@@ -253,16 +254,23 @@ class EliminateSmallPolygons:
 
             if arcpy.Exists(layer):
                 arcpy.management.Delete(layer)
-            
+
             arcpy.management.MakeFeatureLayer(
                 in_features=temp_in, out_layer=layer, where_clause=where_clause
             )
             if arcpy.Exists(rf"{self.files["eliminated_polygons"]}{run}"):
-                arcpy.management.CopyFeatures(layer, rf"{self.files["eliminated_polygons"]}_tmp")
-                arcpy.management.Append(rf"{self.files["eliminated_polygons"]}_tmp", rf"{self.files["eliminated_polygons"]}{run}")
+                arcpy.management.CopyFeatures(
+                    layer, rf"{self.files["eliminated_polygons"]}_tmp"
+                )
+                arcpy.management.Append(
+                    rf"{self.files["eliminated_polygons"]}_tmp",
+                    rf"{self.files["eliminated_polygons"]}{run}",
+                )
             else:
-                arcpy.management.CopyFeatures(layer, rf"{self.files["eliminated_polygons"]}{run}")
-        
+                arcpy.management.CopyFeatures(
+                    layer, rf"{self.files["eliminated_polygons"]}{run}"
+                )
+
             arcpy.management.Eliminate(
                 in_features=layer,
                 out_feature_class=temp_out,
@@ -270,13 +278,12 @@ class EliminateSmallPolygons:
             )
 
             temp_in = temp_out
-        
+
         arcpy.management.CopyFeatures(temp_out, output_fc)
 
         self.geometry_validator.check_repair_sequence(
             input_fc=output_fc, max_iterations=5
         )
-    
 
     @timing_decorator
     def _buffer_potential_spikes(self):
@@ -478,7 +485,7 @@ class EliminateSmallPolygons:
         self._exlude()
         self.eliminate_multiple_minimums(
             self.files["eliminate_input_include"],
-            self.files["eliminate_after_elim"], 
+            self.files["eliminate_after_elim"],
             1,
         )
         self._buffer_potential_spikes()
