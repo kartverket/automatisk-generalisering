@@ -75,7 +75,7 @@ EliminateSmallPolygons:
       - Kanal
       - Hav
       - Bane
-    spike_size: 2
+    spike_size: 3
     dont_remove_spikes:
       - Samferdsel
       - ElvFlate

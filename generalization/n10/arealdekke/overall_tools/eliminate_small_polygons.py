@@ -388,9 +388,6 @@ class EliminateSmallPolygons:
             file_name="eliminate_holes_input_copy", file_type="gdb"
         )
         lines = wfm.build_file_path(file_name="eliminate_holes_lines", file_type="gdb")
-        singlepart = wfm.build_file_path(
-            file_name="eliminate_holes_singlepart", file_type="gdb"
-        )
         potential_holes_lines = wfm.build_file_path(
             file_name="eliminate_holes_potential_holes_lines", file_type="gdb"
         )
