@@ -534,13 +534,13 @@ class Arealdekke:
                 input_fc=Arealdekke_N10.dissolve_arealdekke.value,
                 output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
             ),
+            lambda: change_attribute_value_main(
+                working_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+            ),
             lambda: eliminate_small_polygons(
                 input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.elim_output.value,
                 map_scale=self.__map_scale,
-            ),
-            lambda: change_attribute_value_main(
-                working_fc=Arealdekke_N10.elim_output.value,
             ),
             lambda: gangsykkel_dissolver(
                 input_fc=Arealdekke_N10.elim_output.value,
