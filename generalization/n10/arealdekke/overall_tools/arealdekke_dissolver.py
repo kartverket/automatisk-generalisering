@@ -352,7 +352,7 @@ class ArealdekkeDissolver:
 
 def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
     identity = "in_memory\\arealdekke_identity"
-    
+
     fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
 
     arcpy.analysis.Identity(
@@ -373,9 +373,11 @@ def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
     ArealdekkeDissolver(areal_dekke_dissolver_config=areal_dekke_config).run()
 
 
-def partition_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator, map_scale: str):
+def partition_call(
+    input_fc: str, output_fc: str, data_orc: InputDataOrchestrator, map_scale: str
+):
     identity = "in_memory\\arealdekke_identity"
-    
+
     fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
 
     arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.

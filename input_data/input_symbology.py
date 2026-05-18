@@ -27,6 +27,7 @@ def get_symbology_paths(map_scale: str) -> dict:
 
 DATA = {
     "n100": {
+        "anleggslinje": "AnleggsLinje_maske_sort.lyrx",
         "begrensnings_kurve_buffer": "begrensningskurve_buffer_water_features_n100.lyrx",
         "begrensnings_kurve_line": "N100_Arealdekke_grense_blå_maske.lyrx",
         "bygning_areal": "grunnriss_symbology_n100.lyrx",

@@ -3,7 +3,6 @@ from pathlib import Path
 from pathlib import Path
 
 import arcpy
-import config
 
 from env_setup.global_config import (
     final_outputs,
@@ -22,6 +21,7 @@ from env_setup.global_config import (
     scale_n500,
 )
 from env_setup.project_layout import ProjectLayout
+from paths import require, DEFAULT_PROJECT_WORKSPACE, GIS_FILES_ROOT
 
 project_spatial_reference = 25833
 
@@ -94,7 +94,7 @@ class ArcGisEnvironmentSetup:
 
     def __init__(
         self,
-        workspace=config.default_project_workspace,
+        workspace=str(DEFAULT_PROJECT_WORKSPACE),
         spatial_reference=25833,
     ):
         self.workspace = workspace
@@ -111,7 +111,7 @@ class ArcGisEnvironmentSetup:
         )
         arcpy.env.XYTolerance = "0.02 Meters"
         arcpy.env.XYResolution = "0.01 Meters"
-        arcpy.env.parallelProcessingFactor = config.cpu_percentage
+        arcpy.env.parallelProcessingFactor = require("CPU_PERCENTAGE")
 
         ArcGisEnvironmentSetup._setup_done_globally = True
 
@@ -147,7 +147,7 @@ class ProjectDirectorySetup:
 
     def __init__(self, layout: ProjectLayout | None = None):
         self.layout = layout or ProjectLayout(
-            output_root=Path(config.input_data_folder).parent
+            output_root=GIS_FILES_ROOT.parent
         )
         self.scales = [
             scale_n10,

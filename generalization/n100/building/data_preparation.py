@@ -16,7 +16,7 @@ from input_data.input_orchestrator import InputDataOrchestrator
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
-import config
+from paths import require
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology, N100_Values
@@ -141,7 +141,7 @@ def data_selection(area_selector: str, map_scale: str) -> InputDataOrchestrator:
         input_output_file_dict=input_output_file_dict,
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selector,
-        select_local=config.select_study_area,
+        select_local=require("SELECT_STUDY_AREA")
     )
 
     selector.run()

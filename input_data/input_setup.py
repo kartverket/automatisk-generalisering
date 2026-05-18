@@ -27,6 +27,7 @@ EXPECTED = FolderSpec(
             folders={
                 "n100": FolderSpec(
                     files={
+                        "AnleggsLinje_maske_sort.lyrx",
                         "begrensningskurve_buffer_water_features_n100.lyrx",
                         "building_points_symbology_n100.lyrx",
                         "building_polygons_drawn_from_points.lyrx",

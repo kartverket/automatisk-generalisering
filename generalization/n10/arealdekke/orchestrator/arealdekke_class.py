@@ -52,7 +52,11 @@ arcpy.env.overwriteOutput = True
 class Arealdekke:
 
     def __init__(
-        self, input_data: str, data_orc: InputDataOrchestrator, map_scale: str, only_keep_final_output: bool = False
+        self,
+        input_data: str,
+        data_orc: InputDataOrchestrator,
+        map_scale: str,
+        only_keep_final_output: bool = False,
     ) -> None:
         """
         What:

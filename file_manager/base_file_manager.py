@@ -1,10 +1,8 @@
 import re
-from pathlib import Path
-
-import config
 
 from composition_configs import type_defs
 from env_setup.project_layout import ProjectLayout
+from paths import GIS_FILES_ROOT
 
 
 class BaseFileManager:
@@ -47,7 +45,7 @@ class BaseFileManager:
         self.script_source_name = script_source_name
         self.description = description
 
-        layout = ProjectLayout(output_root=Path(config.input_data_folder).parent)
+        layout = ProjectLayout(output_root=GIS_FILES_ROOT.parent)
         self._gdb_dir = layout.gdb(self.scale, self.object)
         self._general_dir = layout.general_files_dir(self.scale)
         self._lyrx_dir = layout.lyrx_dir(self.scale)

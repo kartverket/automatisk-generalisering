@@ -255,5 +255,6 @@ class InputDataOrchestrator:
 
         self.symbology = content
 
+
 if __name__ == "__main__":
     data_orc = InputDataOrchestrator(map_scale="n10")

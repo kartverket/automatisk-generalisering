@@ -15,6 +15,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 from input_data.input_orchestrator import InputDataOrchestrator
 
+
 @timing_decorator
 def main(data_orc: InputDataOrchestrator):
     """

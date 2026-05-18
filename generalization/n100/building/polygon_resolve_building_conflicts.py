@@ -1,5 +1,4 @@
 import arcpy
-import config
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology
@@ -19,7 +18,6 @@ from env_setup import environment_setup
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_symbology
 
 
 @timing_decorator

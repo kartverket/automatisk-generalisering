@@ -33,7 +33,7 @@ from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing custom modules
-from env_load import load_env, require
+from paths import require
 from file_manager.n100.file_manager_roads import Road_N100
 from constants.n100_constants import (
     FieldNames,
@@ -53,8 +53,6 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 
-load_env()
-
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
 
@@ -63,6 +61,7 @@ SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
+
 
 @timing_decorator
 def main():

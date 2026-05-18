@@ -100,7 +100,7 @@ def main():
     point_propogate_displacement.main()
     hospital_church_clusters.main()
     point_displacement_with_buffer.main()
-    point_resolve_building_conflicts.main()
+    point_resolve_building_conflicts.main(data_orc=data_orc)
     removing_points_and_erasing_polygons_in_water_features.main()
     removing_overlapping_polygons_and_points.main(data_orc=data_orc)
     finalizing_buildings.main()
