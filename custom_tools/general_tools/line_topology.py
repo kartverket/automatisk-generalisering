@@ -1947,6 +1947,23 @@ class FillLineGaps:
             expression_type="PYTHON3",
         )
 
+    def _ensure_original_id_field(self, fc_path: str) -> None:
+        """Ensure ``ORIGINAL_ID`` (LONG) exists on ``fc_path`` and equals the OID.
+
+        Idempotent: ``AddField`` is skipped when the column already exists;
+        ``CalculateField`` re-assigns regardless (cheap, deterministic).
+        """
+        existing = {f.name for f in arcpy.ListFields(fc_path)}
+        if self.ORIGINAL_ID not in existing:
+            arcpy.management.AddField(fc_path, self.ORIGINAL_ID, "LONG")
+        oid_field = arcpy.Describe(fc_path).OIDFieldName
+        arcpy.management.CalculateField(
+            fc_path,
+            self.ORIGINAL_ID,
+            expression=f"!{oid_field}!",
+            expression_type="PYTHON3",
+        )
+
     def _ensure_gap_generated_field(self) -> None:
         """Idempotently provision ``FIELD_GAP_GENERATED`` on ``lines_copy``.
 
@@ -2253,60 +2270,10 @@ class FillLineGaps:
         for index, feature_path in enumerate(self.connect_to_features):
             output_name = self.wfm.build_file_path(file_name=f"target_feature_{index}")
 
-            # Polygon connect_to_features get a one-shot PolygonToLine on the
-            # source FC.  Running before the tolerance filter is mandatory:
-            # LEFT_FID / RIGHT_FID in the polyline output reference the source
-            # polygon FC's OIDs, which is the same space TopologyBuilder uses
-            # for connectivity_id_by_optional.  Filtering the polygon first
-            # would re-key those FIDs to a staged copy and break the anchor.
-            #
-            # Default flags on PolygonToLine — the neighbor option varies by
-            # ArcGIS version, so the mapping reads both LEFT_FID and RIGHT_FID
-            # and skips -1, which is correct under either neighbor mode.
             if self._is_polygon_fc(feature_path):
-                polyline_work_path = self.wfm.build_file_path(
-                    file_name=f"target_feature_{index}_polylines"
+                staging_input = self._stage_polygon_target_as_polyline(
+                    feature_path, index
                 )
-                arcpy.management.PolygonToLine(
-                    in_features=feature_path,
-                    out_feature_class=polyline_work_path,
-                )
-
-                poly_to_lines: dict[int, set[int]] = {}
-                polyline_oid_field = arcpy.Describe(polyline_work_path).OIDFieldName
-                with arcpy.da.SearchCursor(
-                    polyline_work_path,
-                    [polyline_oid_field, "LEFT_FID", "RIGHT_FID"],
-                ) as cur:
-                    for line_oid, left, right in cur:
-                        for poly_oid in (left, right):
-                            if poly_oid is None or int(poly_oid) < 0:
-                                continue
-                            poly_to_lines.setdefault(int(poly_oid), set()).add(
-                                int(line_oid)
-                            )
-                self._polygon_to_polyline_oid[self._dataset_key(feature_path)] = (
-                    poly_to_lines
-                )
-
-                # Stamp ORIGINAL_ID on the polyline work FC so the value
-                # carries through the tolerance-filter copy below and (when
-                # segmentation is enabled) into each segment.  Under the
-                # polygon path ORIGINAL_ID is therefore the polyline_work_path
-                # OID — the same space _polygon_to_polyline_oid maps into.
-                existing = {f.name for f in arcpy.ListFields(polyline_work_path)}
-                if self.ORIGINAL_ID not in existing:
-                    arcpy.management.AddField(
-                        polyline_work_path, self.ORIGINAL_ID, "LONG"
-                    )
-                arcpy.management.CalculateField(
-                    polyline_work_path,
-                    self.ORIGINAL_ID,
-                    expression=f"!{polyline_oid_field}!",
-                    expression_type="PYTHON3",
-                )
-
-                staging_input = polyline_work_path
                 already_stamped = True
             else:
                 staging_input = feature_path
@@ -2345,16 +2312,7 @@ class FillLineGaps:
                 # (on the polyline work FC) and the value is preserved by the
                 # tolerance-filter copy, so we only stamp here for non-polygon
                 # sources.
-                existing = {f.name for f in arcpy.ListFields(output_name)}
-                if self.ORIGINAL_ID not in existing:
-                    arcpy.management.AddField(output_name, self.ORIGINAL_ID, "LONG")
-                oid_field = arcpy.Describe(output_name).OIDFieldName
-                arcpy.management.CalculateField(
-                    output_name,
-                    self.ORIGINAL_ID,
-                    expression=f"!{oid_field}!",
-                    expression_type="PYTHON3",
-                )
+                self._ensure_original_id_field(output_name)
 
             self.external_target_layers.append(output_name)
 
@@ -2381,6 +2339,59 @@ class FillLineGaps:
                 mode = logic_config.AngleTargetMode(raw_mode)
 
             self._angle_mode_by_external_ds_key[str(out_key)] = mode
+
+    def _stage_polygon_target_as_polyline(
+        self, feature_path: str, index: int
+    ) -> str:
+        """Convert a polygon ``connect_to_features`` entry to a polyline work FC.
+
+        Runs ``PolygonToLine`` on the *source* polygon FC (not a
+        tolerance-filtered copy): ``LEFT_FID`` / ``RIGHT_FID`` in the
+        polyline output reference the source polygon FC's OIDs, which is
+        the same space ``TopologyBuilder`` uses for
+        ``connectivity_id_by_optional``.  Filtering the polygon first
+        would re-key those FIDs to a staged copy and break the anchor.
+
+        Records the source-polygon-OID → polyline-OID map into
+        ``self._polygon_to_polyline_oid`` so ``_build_plan`` can lift
+        topology cids into candidate-space, then stamps ``ORIGINAL_ID``
+        on the polyline work FC so the value carries through the
+        tolerance-filter copy and (when segmentation is enabled) into
+        each segment.
+
+        Returns the polyline work FC path, which the caller passes to
+        the tolerance filter as ``staging_input``.
+        """
+        polyline_work_path = self.wfm.build_file_path(
+            file_name=f"target_feature_{index}_polylines"
+        )
+        # Default flags on PolygonToLine — the neighbor option varies by
+        # ArcGIS version, so the mapping reads both LEFT_FID and RIGHT_FID
+        # and skips -1, which is correct under either neighbor mode.
+        arcpy.management.PolygonToLine(
+            in_features=feature_path,
+            out_feature_class=polyline_work_path,
+        )
+
+        poly_to_lines: dict[int, set[int]] = {}
+        polyline_oid_field = arcpy.Describe(polyline_work_path).OIDFieldName
+        with arcpy.da.SearchCursor(
+            polyline_work_path,
+            [polyline_oid_field, "LEFT_FID", "RIGHT_FID"],
+        ) as cur:
+            for line_oid, left, right in cur:
+                for poly_oid in (left, right):
+                    if poly_oid is None or int(poly_oid) < 0:
+                        continue
+                    poly_to_lines.setdefault(int(poly_oid), set()).add(
+                        int(line_oid)
+                    )
+        self._polygon_to_polyline_oid[self._dataset_key(feature_path)] = (
+            poly_to_lines
+        )
+
+        self._ensure_original_id_field(polyline_work_path)
+        return polyline_work_path
 
     def _setup_segmentation(self) -> None:
         """Build internal segmented twins of ``lines_copy`` and line-like
