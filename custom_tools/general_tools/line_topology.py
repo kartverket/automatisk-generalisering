@@ -1497,13 +1497,21 @@ class FillLineGaps:
 
         self.external_target_layers: list[str] = []
         # FCs to use as against_fcs in the connector-crossing pre-filter.
-        # Polyline connect_to_features are reused as-is; polygon
-        # connect_to_features contribute their boundary as a polyline FC
-        # built once via PolygonToLine in
-        # _build_external_target_layers_once.  Populated only when
-        # reject_crossing_connectors is True; entries are pure paths so
-        # the existing line-vs-line crossing path applies uniformly.
+        # Populated only when reject_crossing_connectors is True.  Polygon
+        # connect_to_features are converted to a polyline FC upfront in
+        # _build_external_target_layers_once, so external_target_layers
+        # already contains the polyline form and this list reuses those
+        # entries — the line-vs-line crossing path applies uniformly.
         self.external_target_crossing_layers: list[str] = []
+
+        # Per polygon connect_to_features entry: maps source-polygon OID to
+        # the set of polyline OIDs that PolygonToLine produced for it
+        # (LEFT_FID/RIGHT_FID can each contribute, with -1 skipped, so the
+        # relation is 1-to-many whenever polygons share edges).  Keyed by
+        # the *source polygon FC's* dataset key — the same space that
+        # TopologyBuilder uses for connectivity_id_by_optional — so
+        # _build_plan can lift topology OIDs into candidate-space OIDs.
+        self._polygon_to_polyline_oid: dict[DatasetKey, dict[int, set[int]]] = {}
 
         self.work_file_list = [
             self.lines_copy,
@@ -2226,8 +2234,16 @@ class FillLineGaps:
         output layer's angle mode is resolved from
         ``connect_to_features_angle_mode`` (keyed by source path, source
         dataset key, or output dataset key) and recorded in
-        ``_angle_mode_by_external_ds_key``.  Idempotent — skips work on
-        re-entry.
+        ``_angle_mode_by_external_ds_key``.
+
+        Polygon ``connect_to_features`` entries are converted to their
+        boundary polyline via ``PolygonToLine`` before the tolerance
+        filter runs, so every entry in ``external_target_layers`` is a
+        polyline (or whatever non-polygon type the caller passed in).
+        The polygon→polyline OID lookup recorded here lets
+        ``_build_plan`` lift topology connectivity ids (keyed in source
+        polygon space) into candidate-space optional ids.  Idempotent —
+        skips work on re-entry.
         """
         if self.external_target_layers:
             return
@@ -2236,6 +2252,65 @@ class FillLineGaps:
 
         for index, feature_path in enumerate(self.connect_to_features):
             output_name = self.wfm.build_file_path(file_name=f"target_feature_{index}")
+
+            # Polygon connect_to_features get a one-shot PolygonToLine on the
+            # source FC.  Running before the tolerance filter is mandatory:
+            # LEFT_FID / RIGHT_FID in the polyline output reference the source
+            # polygon FC's OIDs, which is the same space TopologyBuilder uses
+            # for connectivity_id_by_optional.  Filtering the polygon first
+            # would re-key those FIDs to a staged copy and break the anchor.
+            #
+            # Default flags on PolygonToLine — the neighbor option varies by
+            # ArcGIS version, so the mapping reads both LEFT_FID and RIGHT_FID
+            # and skips -1, which is correct under either neighbor mode.
+            if self._is_polygon_fc(feature_path):
+                polyline_work_path = self.wfm.build_file_path(
+                    file_name=f"target_feature_{index}_polylines"
+                )
+                arcpy.management.PolygonToLine(
+                    in_features=feature_path,
+                    out_feature_class=polyline_work_path,
+                )
+
+                poly_to_lines: dict[int, set[int]] = {}
+                polyline_oid_field = arcpy.Describe(polyline_work_path).OIDFieldName
+                with arcpy.da.SearchCursor(
+                    polyline_work_path,
+                    [polyline_oid_field, "LEFT_FID", "RIGHT_FID"],
+                ) as cur:
+                    for line_oid, left, right in cur:
+                        for poly_oid in (left, right):
+                            if poly_oid is None or int(poly_oid) < 0:
+                                continue
+                            poly_to_lines.setdefault(int(poly_oid), set()).add(
+                                int(line_oid)
+                            )
+                self._polygon_to_polyline_oid[self._dataset_key(feature_path)] = (
+                    poly_to_lines
+                )
+
+                # Stamp ORIGINAL_ID on the polyline work FC so the value
+                # carries through the tolerance-filter copy below and (when
+                # segmentation is enabled) into each segment.  Under the
+                # polygon path ORIGINAL_ID is therefore the polyline_work_path
+                # OID — the same space _polygon_to_polyline_oid maps into.
+                existing = {f.name for f in arcpy.ListFields(polyline_work_path)}
+                if self.ORIGINAL_ID not in existing:
+                    arcpy.management.AddField(
+                        polyline_work_path, self.ORIGINAL_ID, "LONG"
+                    )
+                arcpy.management.CalculateField(
+                    polyline_work_path,
+                    self.ORIGINAL_ID,
+                    expression=f"!{polyline_oid_field}!",
+                    expression_type="PYTHON3",
+                )
+
+                staging_input = polyline_work_path
+                already_stamped = True
+            else:
+                staging_input = feature_path
+                already_stamped = False
 
             # Segmentation needs to stamp ORIGINAL_ID on the output FC so the
             # segmented twin can map back to a stable parent identifier;
@@ -2246,7 +2321,7 @@ class FillLineGaps:
             )
             if use_memory_layer:
                 custom_arcpy.select_location_and_make_feature_layer(
-                    input_layer=feature_path,
+                    input_layer=staging_input,
                     overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
                     select_features=self.dangles,
                     output_name=output_name,
@@ -2254,19 +2329,22 @@ class FillLineGaps:
                 )
             else:
                 custom_arcpy.select_location_and_make_permanent_feature(
-                    input_layer=feature_path,
+                    input_layer=staging_input,
                     overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
                     select_features=self.dangles,
                     output_name=output_name,
                     search_distance=self._tolerance_linear_unit(),
                 )
 
-            if self.segmentation is not None:
+            if self.segmentation is not None and not already_stamped:
                 # Stamp ORIGINAL_ID = OID on the staged target FC so the
                 # segmented twin's segments can carry their parent's OID
                 # via segment_line's field-preservation, giving a clean
                 # segmented_oid -> parent_id mapping in the candidate near
-                # table reader.
+                # table reader.  Polygon entries are already stamped above
+                # (on the polyline work FC) and the value is preserved by the
+                # tolerance-filter copy, so we only stamp here for non-polygon
+                # sources.
                 existing = {f.name for f in arcpy.ListFields(output_name)}
                 if self.ORIGINAL_ID not in existing:
                     arcpy.management.AddField(output_name, self.ORIGINAL_ID, "LONG")
@@ -2281,23 +2359,12 @@ class FillLineGaps:
             self.external_target_layers.append(output_name)
 
             # Companion entry for the connector-crossing pre-filter.
-            # Polyline sources reuse output_name; polygon sources are
-            # converted to their boundary polyline once via PolygonToLine
-            # so the line-vs-line crossing path handles them uniformly.
-            # Other shape types (points) are skipped — a connector cannot
-            # cross a point.
-            if self.reject_crossing_connectors:
-                if self._is_polyline_fc(output_name):
-                    self.external_target_crossing_layers.append(output_name)
-                elif self._is_polygon_fc(output_name):
-                    outline_name = self.wfm.build_file_path(
-                        file_name=f"target_feature_{index}_polygon_outline"
-                    )
-                    arcpy.management.PolygonToLine(
-                        in_features=output_name,
-                        out_feature_class=outline_name,
-                    )
-                    self.external_target_crossing_layers.append(outline_name)
+            # Every entry in external_target_layers is now either a polyline
+            # (including polygon sources, converted above) or a non-polyline
+            # type like points; the latter cannot host a crossing connector,
+            # so they are skipped.
+            if self.reject_crossing_connectors and self._is_polyline_fc(output_name):
+                self.external_target_crossing_layers.append(output_name)
 
             out_key = self._dataset_key(output_name)
 
@@ -2328,11 +2395,12 @@ class FillLineGaps:
         each segment carries its parent's ORIGINAL_ID and the OID lookup
         reduces to the existing ``_oid_to_original_id_lookup`` helper.
 
-        Polygon ``connect_to_features`` are not supported with segmentation
-        enabled — callers should convert polygons to polylines before
-        passing them in. Geometry types other than polygon and polyline
-        (e.g. points) pass through unsegmented; the candidate near table
-        reads them directly.
+        Polygon ``connect_to_features`` are converted to a polyline
+        boundary in ``_build_external_target_layers_once`` before
+        reaching here, so every entry in ``external_target_layers`` is
+        either a polyline (segmented) or a non-polyline type like points
+        (passed through unsegmented; the candidate near table reads them
+        directly).
 
         No-op when ``self.segmentation`` is None.
         """
@@ -2356,18 +2424,10 @@ class FillLineGaps:
         print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _setup_segmentation lines_copy END (rows={int(arcpy.management.GetCount(self.lines_copy_segmented)[0])})")  # [DBG_LINEGAP]
 
         for index, ext_path in enumerate(self.external_target_layers):
-            if self._is_polygon_fc(ext_path):
-                raise ValueError(
-                    f"connect_to_features[{index}] is a polygon feature class. "
-                    f"Segmentation only supports polyline connect_to_features. "
-                    f"Convert polygons to polylines (e.g. via PolygonToLine) "
-                    f"before passing them to FillLineGaps when segmentation "
-                    f"is enabled."
-                )
             if not self._is_polyline_fc(ext_path):
-                # Non-line, non-polygon (e.g. point) — segmentation does
-                # not apply. Pass the source path through so the segmented
-                # list aligns with external_target_layers.
+                # Non-polyline (e.g. point) — segmentation does not apply.
+                # Pass the source path through so the segmented list aligns
+                # with external_target_layers.
                 self.external_target_layers_segmented.append(ext_path)
                 continue
 
@@ -3200,6 +3260,82 @@ class FillLineGaps:
     # Planning: choose closest legal + detect pairs
     # ----------------------------
 
+    def _build_cid_by_optional_candidate(
+        self, *, topology: TopologyModel
+    ) -> dict[tuple[DatasetKey, int], int]:
+        """Lift topology's source-space optional cids into candidate-space.
+
+        Topology keys optionals by ``(source_path_dataset_key, source_oid)``.
+        After ``_build_external_target_layers_once``:
+
+          - polyline sources stage to a tolerance-filtered polyline FC whose
+            OIDs equal the source OIDs (the existing staging contract);
+          - polygon sources stage to a tolerance-filtered polyline FC whose
+            OIDs were assigned by ``PolygonToLine`` (see
+            ``self._polygon_to_polyline_oid`` for the source-polygon-OID →
+            polyline-OID mapping; the relation is 1-to-many whenever
+            polygons share edges).
+
+        The candidate near table emits ``cand.near_fc_key`` as either the
+        staged FC's dataset key (segmentation off) or the segmented twin's
+        dataset key (segmentation on), with ``cand.near_fid`` already lifted
+        to staged-FC-OID space by ``_read_near_table_grouped``.  Both keys
+        are populated with the same cid so the lookup hits in either mode.
+        Returns an empty dict when topology has no ``connectivity_id_by_optional``
+        (scope = NONE / DIRECT_CONNECTION / INPUT_LINES, or no optionals to
+        unify).
+        """
+        out: dict[tuple[DatasetKey, int], int] = {}
+        source_cid_by_optional = topology.connectivity_id_by_optional
+        if not source_cid_by_optional:
+            return out
+        if not self.connect_to_features:
+            return out
+
+        topology_by_ds: dict[DatasetKey, list[tuple[int, int]]] = {}
+        for (opt_ds_key, opt_oid), cid in source_cid_by_optional.items():
+            topology_by_ds.setdefault(str(opt_ds_key), []).append(
+                (int(opt_oid), int(cid))
+            )
+
+        seg_layers = (
+            self.external_target_layers_segmented
+            if self.segmentation is not None
+            else []
+        )
+
+        for idx, src_path in enumerate(self.connect_to_features):
+            if idx >= len(self.external_target_layers):
+                continue
+            src_ds_key = self._dataset_key(src_path)
+            entries = topology_by_ds.get(src_ds_key)
+            if not entries:
+                continue
+
+            staged_path = self.external_target_layers[idx]
+            candidate_ds_keys = {self._dataset_key(staged_path)}
+            if idx < len(seg_layers):
+                seg_path = seg_layers[idx]
+                if seg_path != staged_path:
+                    candidate_ds_keys.add(self._dataset_key(seg_path))
+
+            poly_to_lines = self._polygon_to_polyline_oid.get(src_ds_key)
+
+            if poly_to_lines is not None:
+                for opt_oid, cid in entries:
+                    line_oids = poly_to_lines.get(opt_oid)
+                    if not line_oids:
+                        continue
+                    for line_oid in line_oids:
+                        for cds in candidate_ds_keys:
+                            out[(cds, int(line_oid))] = cid
+            else:
+                for opt_oid, cid in entries:
+                    for cds in candidate_ds_keys:
+                        out[(cds, opt_oid)] = cid
+
+        return out
+
     def _candidate_is_legal(
         self,
         *,
@@ -3213,6 +3349,7 @@ class FillLineGaps:
         base_tol: float,
         dangle_candidate_tol: float,
         topology: TopologyModel | None = None,
+        cid_by_optional_candidate: dict[tuple[DatasetKey, int], int] | None = None,
     ) -> bool:
         ds_key = cand.near_fc_key
         oid = cand.near_fid
@@ -3266,6 +3403,24 @@ class FillLineGaps:
         ):
             return False
 
+        # External-optional same-network rejection. Covers the case where the
+        # source parent and an external optional (polygon-as-topology or
+        # polyline) already share a connectivity component — those candidates
+        # are redundant fills and must be rejected at candidate scope.
+        # Replaces the Kruskal optional_candidate UF seed; under polygon
+        # connect_to_features that seed could not align OID spaces.
+        if (
+            ds_key != lines_fc_key
+            and topology is not None
+            and topology.connectivity_id_by_parent is not None
+            and cid_by_optional_candidate
+        ):
+            src_cid = topology.connectivity_id_by_parent.get(int(parent_id))
+            if src_cid is not None:
+                tgt_cid = cid_by_optional_candidate.get((ds_key, int(oid)))
+                if tgt_cid is not None and int(tgt_cid) == int(src_cid):
+                    return False
+
         if self._is_illegal(
             illegal=illegal,
             parent_id=parent_id,
@@ -3289,6 +3444,7 @@ class FillLineGaps:
         base_tol: float,
         dangle_candidate_tol: float,
         topology: "TopologyModel | None",
+        cid_by_optional_candidate: dict[tuple[DatasetKey, int], int] | None = None,
     ) -> str:
         """Return the legality-failure reason for a candidate, mirroring _candidate_is_legal."""
         ds_key = cand.near_fc_key
@@ -3327,6 +3483,17 @@ class FillLineGaps:
             )
         ):
             return "same_network"
+        if (
+            ds_key != lines_fc_key
+            and topology is not None
+            and topology.connectivity_id_by_parent is not None
+            and cid_by_optional_candidate
+        ):
+            src_cid = topology.connectivity_id_by_parent.get(int(parent_id))
+            if src_cid is not None:
+                tgt_cid = cid_by_optional_candidate.get((ds_key, int(oid)))
+                if tgt_cid is not None and int(tgt_cid) == int(src_cid):
+                    return "same_network"
         if self._is_illegal(
             illegal=illegal, parent_id=parent_id, target_fc_key=ds_key, target_oid=oid
         ):
@@ -4313,6 +4480,17 @@ class FillLineGaps:
         # Step 2 - Legality gates (distance / network / illegal-target)
         # Collects legal (dangle, target) candidate rows.
         # ----------------------------
+        # Lift topology's source-space connectivity_id_by_optional into
+        # candidate-space. Polygon sources are expanded through
+        # _polygon_to_polyline_oid (1-to-many); polyline sources use the
+        # identity expansion. Both the staged FC's key and the segmented
+        # twin's key (when segmentation is enabled) receive the same cid
+        # value, so the lookup hits regardless of which key cand.near_fc_key
+        # ends up with after _read_near_table_grouped.
+        cid_by_optional_candidate: dict[tuple[DatasetKey, int], int] = (
+            self._build_cid_by_optional_candidate(topology=topology)
+        )
+
         print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_legal_candidates START (grouped={len(grouped)})")  # [DBG_LINEGAP]
         legal_rows_by_dangle, parent_id_by_dangle, _step1a_illegal = (
             self._filter_legal_candidates(
@@ -4327,6 +4505,7 @@ class FillLineGaps:
                 topology=topology,
                 collect_diags=collect_diags,
                 directed_source_illegal_oids=directed_start_dangles,
+                cid_by_optional_candidate=cid_by_optional_candidate,
             )
         )
         print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_legal_candidates END (legal_dangles={len(legal_rows_by_dangle)}, illegal_rows={len(_step1a_illegal)})")  # [DBG_LINEGAP]
@@ -4650,6 +4829,7 @@ class FillLineGaps:
         topology: TopologyModel,
         collect_diags: bool,
         directed_source_illegal_oids: set[DangleOid],
+        cid_by_optional_candidate: dict[tuple[DatasetKey, int], int],
     ) -> tuple[
         dict[DangleOid, list[NearCandidate]],
         dict[DangleOid, ParentId],
@@ -4705,6 +4885,7 @@ class FillLineGaps:
                     base_tol=base_tol,
                     dangle_candidate_tol=dangle_tol,
                     topology=topology,
+                    cid_by_optional_candidate=cid_by_optional_candidate,
                 )
                 if is_legal:
                     legal_rows.append(cand)
@@ -4720,6 +4901,7 @@ class FillLineGaps:
                         base_tol=base_tol,
                         dangle_candidate_tol=dangle_tol,
                         topology=topology,
+                        cid_by_optional_candidate=cid_by_optional_candidate,
                     )
                     _step1a_illegal.append(
                         _CandidateIllegalA(dangle_oid, parent_id, cand, reason)
@@ -5402,22 +5584,12 @@ class FillLineGaps:
             logic_config.ConnectivityScope.TRANSITIVE,
         ):
             uf = _UnionFind()
-            # Map topology ds_keys (from original connect_to_features paths) to the
-            # candidate ds_keys (from work layer paths) so seeded nodes match tgt_node.
-            topo_to_cand_ds_key: dict[str, str] = {
-                self._dataset_key(orig): self._dataset_key(work)
-                for orig, work in zip(
-                    self.connect_to_features or [], self.external_target_layers
-                )
-            }
-            for (ds_key, oid), cid in (
-                topology.connectivity_id_by_optional or {}
-            ).items():
-                cand_ds_key = topo_to_cand_ds_key.get(ds_key, ds_key)
-                uf.union(
-                    ("component", int(cid)),
-                    ("optional_candidate", str(cand_ds_key), int(oid)),
-                )
+            # Optional-candidate ↔ component pre-merging used to live here but
+            # has moved to the candidate scope (see _candidate_is_legal's
+            # cid_by_optional_candidate check). Under polygon connect_to_features
+            # the old seed could not align OID spaces (polygon-vs-polyline);
+            # the candidate-scope check resolves both polygon and polyline
+            # entries uniformly through _build_cid_by_optional_candidate.
             for prop in sorted(global_winners, key=lambda p: p.sort_key()):
                 if uf.find(prop.ctx.src_node) == uf.find(prop.ctx.tgt_node):
                     continue

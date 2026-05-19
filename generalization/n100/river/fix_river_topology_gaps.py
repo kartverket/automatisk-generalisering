@@ -59,10 +59,8 @@ def fix_river_orientation(raster_list: list[type_defs.RasterFilePath]):
 
 @timing_decorator
 def prepare_segmented_inputs():
-    arcpy.management.PolygonToLine(
-        in_features=River_N100.data_preparation___river_polygons___n100_river.value,
-        out_feature_class=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
-    )
+    # FillLineGaps now converts polygon connect_to_features to their
+    # boundary polyline internally; no upstream PolygonToLine needed.
 
     # segment_line(
     #     input_fc=River_N100.river_topology___fixed_river_orientation___n100_river.value,
@@ -77,6 +75,7 @@ def prepare_segmented_inputs():
     #     segment_interval=20,
     #     even_segments=True,
     # )
+    pass
 
 
 @timing_decorator
@@ -86,16 +85,14 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
         root_file=River_N100.river_topology___root___n100_river.value,
     )
 
-    segmented_polygon_lines = (
-        River_N100.river_topology___river_polygons_as_lines___n100_river.value
-    )
+    river_polygons = River_N100.data_preparation___river_polygons___n100_river.value
 
     line_fix_config = logic_config.FillLineGapsConfig(
         input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
         gap_tolerance_meters=300,
-        connect_to_features=[segmented_polygon_lines],
+        connect_to_features=[river_polygons],
         best_fit_weights=logic_config.BestFitWeightsConfig(
             distance=0.5,
             angle=0.25,
@@ -113,7 +110,7 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             lines_are_directed=True,
             connector_angle_diff_required_above_meters=5,
             connect_to_features_angle_mode={
-                segmented_polygon_lines: logic_config.AngleTargetMode.FORCE_NON_LINE,
+                river_polygons: logic_config.AngleTargetMode.FORCE_NON_LINE,
             },
         ),
         z_config=logic_config.FillLineGapsZConfig(
