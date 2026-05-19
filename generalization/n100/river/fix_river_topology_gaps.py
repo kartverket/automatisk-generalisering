@@ -31,16 +31,16 @@ def main():
     # fill_raod_gaps()
 
 
-def compute_raster_extent() -> list[type_defs.RasterFilePath]:
+def compute_raster_extent() -> tuple[type_defs.RasterFilePath, ...]:
 
     rasters = find_rasters_for_vector_extent(
         raster_dir=config.raster_directory,
         input_features=River_N100.data_preparation___river_lines___n100_river.value,
     )
-    return rasters
+    return tuple(rasters)
 
 
-def fix_river_orientation(raster_list: list[type_defs.RasterFilePath]):
+def fix_river_orientation(raster_list: tuple[type_defs.RasterFilePath, ...]):
     arcpy.management.CopyFeatures(
         in_features=River_N100.data_preparation___river_lines___n100_river.value,
         out_feature_class=River_N100.river_topology___fixed_river_orientation___n100_river.value,
@@ -79,7 +79,7 @@ def prepare_segmented_inputs():
 
 
 @timing_decorator
-def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
+def fill_line_topology_gaps(raster_list: tuple[type_defs.RasterFilePath, ...]):
 
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
