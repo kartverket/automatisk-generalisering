@@ -146,9 +146,7 @@ class ProjectDirectorySetup:
     _setup_done_globally = False
 
     def __init__(self, layout: ProjectLayout | None = None):
-        self.layout = layout or ProjectLayout(
-            output_root=GIS_FILES_ROOT.parent
-        )
+        self.layout = layout or ProjectLayout(output_root=GIS_FILES_ROOT.parent)
         self.scales = [
             scale_n10,
             scale_n50,

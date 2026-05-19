@@ -141,7 +141,7 @@ def data_selection(area_selector: str, map_scale: str) -> InputDataOrchestrator:
         input_output_file_dict=input_output_file_dict,
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selector,
-        select_local=require("SELECT_STUDY_AREA")
+        select_local=require("SELECT_STUDY_AREA"),
     )
 
     selector.run()

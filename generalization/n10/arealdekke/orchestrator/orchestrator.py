@@ -5,8 +5,7 @@ from arealdekke_class import Arealdekke
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 
-from input_data import input_area, input_test_data
-from input_data.input_datasets import DatasetNamespace
+from input_data import input_area
 from input_data.input_orchestrator import InputDataOrchestrator
 
 

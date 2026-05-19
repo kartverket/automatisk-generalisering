@@ -413,12 +413,12 @@ class Arealdekke:
             # Feature classes
             for fc in arcpy.ListFeatureClasses():
                 if fc not in keep:
-                    arcpy.Delete_management(fc)
+                    arcpy.management.Delete(fc)
 
             # Tabels
             for tbl in arcpy.ListTables():
                 if tbl not in keep:
-                    arcpy.Delete_management(tbl)
+                    arcpy.management.Delete(tbl)
 
         self.program_history.delete_history()
 
