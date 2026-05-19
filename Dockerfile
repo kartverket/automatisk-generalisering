@@ -7,6 +7,10 @@ WORKDIR /app
 # Copy project files
 COPY . /app
 
+#Change where arcpy writes temp files to avoid read-only issues
+#After changing environment variable for the server it needs to be restarted for the change to take effect
+ENV SERVER_TEMP_DIR=/tmp
+RUN /arcgis/server/startserver.sh
 
 # Make the project script the container entrypoint
 ENV SCALE=scale OBJECT=object
