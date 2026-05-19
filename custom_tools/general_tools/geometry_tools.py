@@ -1,8 +1,3 @@
-from typing import Dict, Union
-
-import arcpy
-from __future__ import annotations
-
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -25,11 +20,8 @@ from composition_configs.logic_config import (
 )
 from composition_configs.type_defs import RasterFilePath
 
-from xarray.backends.common import NONE_VAR_NAME
-
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
-from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 
 
@@ -1148,7 +1140,9 @@ class LineZValueTool:
         dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
         dict[int, str],
     ]:
-        valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]] = {}
+        valid_endpoints: dict[
+            int, dict[_ConcreteLineZValueMode, tuple[float, float]]
+        ] = {}
         issues_by_oid: dict[int, str] = {}
 
         with arcpy.da.SearchCursor(lines_fc, ["OID@", "SHAPE@"]) as cursor:
@@ -1167,7 +1161,9 @@ class LineZValueTool:
                     issues_by_oid[oid] = "too_few_vertices"
                     continue
 
-                endpoints_for_oid: dict[_ConcreteLineZValueMode, tuple[float, float]] = {}
+                endpoints_for_oid: dict[
+                    _ConcreteLineZValueMode, tuple[float, float]
+                ] = {}
 
                 for mode in self.resolved_modes:
                     if mode == _ConcreteLineZValueMode.START_POINT:
@@ -1183,11 +1179,7 @@ class LineZValueTool:
         self,
         valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
     ) -> list[Optional[RasterHandle]]:
-        all_xy = [
-            xy
-            for ep in valid_endpoints.values()
-            for xy in ep.values()
-        ]
+        all_xy = [xy for ep in valid_endpoints.values() for xy in ep.values()]
 
         if not all_xy:
             return [None] * len(self.config.input_rasters)
@@ -1223,7 +1215,9 @@ class LineZValueTool:
         valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
         raster_handles: list[Optional[RasterHandle]],
     ) -> dict[int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]]:
-        z_by_oid: dict[int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]] = {}
+        z_by_oid: dict[
+            int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]
+        ] = {}
 
         for oid, endpoints_for_oid in valid_endpoints.items():
             z_by_slot: dict[tuple[int, _ConcreteLineZValueMode], Optional[float]] = {}
@@ -1987,7 +1981,8 @@ class LineZOrientTool:
                 dangle_z = end_z if dangle_ep == end_key else start_z
 
                 upstream_oids = [
-                    o for o in ep_to_oids.get(non_dangle_ep, [])
+                    o
+                    for o in ep_to_oids.get(non_dangle_ep, [])
                     if o != oid and o in component
                 ]
 
@@ -2009,7 +2004,8 @@ class LineZOrientTool:
                             # If one does, the dangle is a side branch and that other
                             # line is the true downstream continuation.
                             competing_oids = [
-                                o for o in ep_to_oids.get(non_dangle_ep, [])
+                                o
+                                for o in ep_to_oids.get(non_dangle_ep, [])
                                 if o != oid and o != longest_up and o in component
                             ]
                             true_outlet = True
@@ -2244,7 +2240,12 @@ class LineZOrientTool:
             # Phase 2 — uncertain lines.
             dangle_eps = self._find_dangle_endpoints(component, oid_to_eps, ep_to_oids)
             flips_p2, raw_z, unresolved = self._propagate_to_uncertain(
-                uncertain, certain, oriented_eps, oid_to_eps, ep_to_oids, z_by_oid,
+                uncertain,
+                certain,
+                oriented_eps,
+                oid_to_eps,
+                ep_to_oids,
+                z_by_oid,
                 dangle_eps,
             )
             all_flips.update(flips_p2)

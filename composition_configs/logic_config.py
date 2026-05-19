@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -9,7 +10,7 @@ from typing import (
     Union,
 )
 
-from composition_configs import core_config, io_types
+from composition_configs import core_config, io_types, type_defs
 
 RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
@@ -383,7 +384,6 @@ class FillLineGapsAngleConfig:
     # 0..1, prefer line alignment a bit more than connector transition
     line_alignment_weight: float = 0.6
 
-    best_fit_weights: BestFitWeightsConfig = field(default_factory=BestFitWeightsConfig)
     best_fit_weights: BestFitWeightsConfig = field(default_factory=BestFitWeightsConfig)
 
     # Passed to local_line_angle_at_xy(desired_half_window_m=...)
