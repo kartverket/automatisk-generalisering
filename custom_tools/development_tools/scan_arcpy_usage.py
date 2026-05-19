@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-
 EXCLUDE_DIRS = {
     ".git",
     "__pycache__",

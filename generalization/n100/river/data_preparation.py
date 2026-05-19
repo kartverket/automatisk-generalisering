@@ -18,7 +18,6 @@ from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
 
-
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 AREA_SELECTOR = "vassOmrNr IN ('198')"

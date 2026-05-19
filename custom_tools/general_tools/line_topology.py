@@ -16,7 +16,6 @@ from composition_configs import logic_config
 from composition_configs.logic_config import ConnectivityScope, LineConnectivityMode
 from custom_tools.general_tools import geometry_tools
 
-
 OptionalKey = tuple[str, int]  # (dataset_key, oid)  -- oid is SOURCE oid
 ParentEntityKey = tuple[str, int]  # ("parent", parent_id)
 OptionalEntityKey = tuple[str, str, int]  # ("optional", dataset_key, oid)
@@ -1951,12 +1950,8 @@ class FillLineGaps:
         if self.FIELD_GAP_GENERATED in existing:
             return
 
-        arcpy.management.AddField(
-            self.lines_copy, self.FIELD_GAP_GENERATED, "SHORT"
-        )
-        with arcpy.da.UpdateCursor(
-            self.lines_copy, [self.FIELD_GAP_GENERATED]
-        ) as cur:
+        arcpy.management.AddField(self.lines_copy, self.FIELD_GAP_GENERATED, "SHORT")
+        with arcpy.da.UpdateCursor(self.lines_copy, [self.FIELD_GAP_GENERATED]) as cur:
             for _ in cur:
                 cur.updateRow((0,))
 
@@ -2315,9 +2310,7 @@ class FillLineGaps:
 
             self._angle_mode_by_external_ds_key[str(out_key)] = mode
 
-    def _stage_polygon_target_as_polyline(
-        self, feature_path: str, index: int
-    ) -> str:
+    def _stage_polygon_target_as_polyline(self, feature_path: str, index: int) -> str:
         """Convert a polygon ``connect_to_features`` entry to a polyline work FC.
 
         Runs ``PolygonToLine`` on the *source* polygon FC (not a
@@ -2358,12 +2351,8 @@ class FillLineGaps:
                 for poly_oid in (left, right):
                     if poly_oid is None or int(poly_oid) < 0:
                         continue
-                    poly_to_lines.setdefault(int(poly_oid), set()).add(
-                        int(line_oid)
-                    )
-        self._polygon_to_polyline_oid[self._dataset_key(feature_path)] = (
-            poly_to_lines
-        )
+                    poly_to_lines.setdefault(int(poly_oid), set()).add(int(line_oid))
+        self._polygon_to_polyline_oid[self._dataset_key(feature_path)] = poly_to_lines
 
         self._ensure_original_id_field(polyline_work_path)
         return polyline_work_path
@@ -2426,9 +2415,9 @@ class FillLineGaps:
                 tail_tolerance=float(seg_cfg.tail_tolerance_meters),
             )
             self.external_target_layers_segmented.append(seg_path)
-            self._segmented_oid_to_parent_id[
-                self._dataset_key(seg_path)
-            ] = self._oid_to_original_id_lookup(seg_path)
+            self._segmented_oid_to_parent_id[self._dataset_key(seg_path)] = (
+                self._oid_to_original_id_lookup(seg_path)
+            )
 
     def _select_targets_within_tolerance_of_dangles(self) -> list[str]:
         """Return the global target layer list for connectivity-side queries.
@@ -3420,9 +3409,8 @@ class FillLineGaps:
         endpoint_snap = is_dangle_pair or is_dangle_parent_line
 
         if not self.lines_are_directed:
-            if (
-                src_poly_for_norm is not None
-                and self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y)
+            if src_poly_for_norm is not None and self._xy_is_at_line_start(
+                src_poly_for_norm, dangle_x, dangle_y
             ):
                 src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
             if not self._xy_is_at_line_start(tgt_poly, tgt_snap_x, tgt_snap_y):
@@ -3824,9 +3812,8 @@ class FillLineGaps:
                     )
                     else None
                 )
-                if (
-                    _parent_dist is not None
-                    and float(_parent_dist) <= float(connector_diff_threshold)
+                if _parent_dist is not None and float(_parent_dist) <= float(
+                    connector_diff_threshold
                 ):
                     metric = float(src_target_diff)
                 else:
@@ -3854,9 +3841,7 @@ class FillLineGaps:
         blocks = block_thr is not None and metric > float(block_thr)
         extra_thr = self.angle_extra_dangle_threshold_degrees
         allow_extra = (
-            ds_key != dangles_fc_key
-            or extra_thr is None
-            or metric <= float(extra_thr)
+            ds_key != dangles_fc_key or extra_thr is None or metric <= float(extra_thr)
         )
 
         return AngleAssessment(
@@ -4393,9 +4378,7 @@ class FillLineGaps:
             else None
         )
 
-        def _apply_filter(
-            reject_keys: set[tuple[int, str, int]], reason: str
-        ) -> None:
+        def _apply_filter(reject_keys: set[tuple[int, str, int]], reason: str) -> None:
             for _dangle_oid in list(legal_rows_by_dangle.keys()):
                 _parent_id = parent_id_by_dangle[_dangle_oid]
                 _remaining: list[NearCandidate] = []
@@ -5059,9 +5042,7 @@ class FillLineGaps:
         Returns (_global_winners, global_norm_z_by_dangle).
         """
         _all_end_z_global = [p.ctx.end_z for p in connection_proposals]
-        _all_eff_dist_global = [
-            p.ctx.effective_distance for p in connection_proposals
-        ]
+        _all_eff_dist_global = [p.ctx.effective_distance for p in connection_proposals]
         _global_winners: list[_GlobalProposal] = []
         global_norm_z_by_dangle: _NormZByDangle = {}
         for n_prop in connection_proposals:
@@ -5182,7 +5163,11 @@ class FillLineGaps:
                 rank_counter += 1
                 d_oid = int(prop.ctx.dangle_oid)
                 kruskal_rank_by_dangle_oid[d_oid] = rank_counter
-                _key = (d_oid, str(prop.ctx.near_fc_key_raw), int(prop.ctx.near_fid_raw))
+                _key = (
+                    d_oid,
+                    str(prop.ctx.near_fc_key_raw),
+                    int(prop.ctx.near_fid_raw),
+                )
                 accepted_keys.add(_key)
                 accepted_connector_raw.append(
                     AcceptedConnectorRaw(
@@ -6379,10 +6364,11 @@ class FillLineGaps:
                     if pid in needed_parent_ids and pid not in parent_attrs:
                         parent_attrs[pid] = tuple(row[1:])
 
-        insert_fields = (
-            copyable_fields
-            + [self.ORIGINAL_ID, self.FIELD_GAP_GENERATED, "SHAPE@"]
-        )
+        insert_fields = copyable_fields + [
+            self.ORIGINAL_ID,
+            self.FIELD_GAP_GENERATED,
+            "SHAPE@",
+        ]
 
         epsilon_sq = 1e-10
         with arcpy.da.InsertCursor(self.lines_copy, insert_fields) as icur:
