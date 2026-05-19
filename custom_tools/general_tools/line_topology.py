@@ -103,8 +103,7 @@ class PlanEntryMeta:
 @dataclass
 class PlanEntry:
     """One scheduled edit for a parent line. Mutable so _apply_plan can flip
-    ``processed`` and _apply_pair_symmetric_skip / _recheck_resnap_crossings can
-    flip ``skip``."""
+    ``processed`` and _recheck_resnap_crossings can flip ``skip``."""
 
     dangle_oid: DangleOid
     dangle_x: float
@@ -1542,10 +1541,6 @@ class FillLineGaps:
     def _expanded_dangle_tolerance_linear_unit(self) -> str:
         return f"{int(self._expanded_dangle_tolerance_meters())} Meters"
 
-    def _connectivity_tolerance_linear_unit(self) -> str:
-        meters = max(0.0, float(self.connectivity_tolerance_meters))
-        return f"{meters} Meters"
-
     def _dataset_key(self, value: str) -> str:
         text = str(value).replace("\\", "/")
         return text.split("/")[-1]
@@ -1731,22 +1726,6 @@ class FillLineGaps:
         Isolated behind a function so it can be upgraded later if SOURCE_OID becomes available.
         """
         return ("optional_candidate", str(dataset_key), int(near_fid))
-
-    def _best_legal_line_target_parent(
-        self,
-        *,
-        legal_rows: list[NearCandidate],
-        lines_fc_key: str,
-    ) -> Optional[int]:
-        """
-        Return the parent line id of the closest legal line target for this dangle.
-
-        `legal_rows` must already be sorted by raw candidate order.
-        """
-        for cand in legal_rows:
-            if cand.near_fc_key == lines_fc_key:
-                return cand.near_fid
-        return None
 
     def _mutual_dangle_preference(
         self,
@@ -3094,53 +3073,6 @@ class FillLineGaps:
             return False
         return int(target_oid) in ds.get(str(target_fc_key), set())
 
-    def _parents_share_illegal_target(
-        self,
-        *,
-        illegal: _IllegalTargets,
-        a_parent: ParentId,
-        b_parent: ParentId,
-    ) -> bool:
-        """
-        Your constraint: dangle-pairs must not share an illegal target object.
-
-        Interpreted as:
-          there exists any (dataset_key, oid) that is illegal for both parents.
-        """
-        a = illegal.get(int(a_parent), {})
-        b = illegal.get(int(b_parent), {})
-        if not a or not b:
-            return False
-
-        for ds_key, a_set in a.items():
-            b_set = b.get(ds_key)
-            if not b_set:
-                continue
-            if a_set.intersection(b_set):
-                return True
-        return False
-
-    def _find_specific_line_candidate(
-        self,
-        *,
-        candidates_sorted: list[NearCandidate],
-        lines_fc_keys: set[DatasetKey],
-        other_parent_id: ParentId,
-        base_tol: float,
-    ) -> Optional[NearCandidate]:
-        """
-        Find the row that explicitly targets the other *parent line* (lines_copy),
-        within base_tol.
-        """
-        for cand in candidates_sorted:
-            if cand.near_fc_key not in lines_fc_keys:
-                continue
-            if cand.near_fid != int(other_parent_id):
-                continue
-            if cand.near_dist <= float(base_tol):
-                return cand
-        return None
-
     # ----------------------------
     # Near table reading
     # ----------------------------
@@ -3950,213 +3882,6 @@ class FillLineGaps:
             src_target_diff=float(src_target_diff),
             connector_transition_diff=float(connector_transition_diff),
         )
-
-    def _pair_token_from_candidate(
-        self,
-        *,
-        dangle_parent: dict[DangleOid, ParentId],
-        dangles_fc_key: DatasetKey,
-        lines_fc_keys: set[DatasetKey],
-        cand: NearCandidate,
-    ) -> Optional[ParentId]:
-        """
-        Returns the *other parent line id* if this candidate represents “the other side”
-        of a potential dangle pair (either via dangle feature or via line feature).
-        """
-        ds_key = cand.near_fc_key
-        oid = cand.near_fid
-
-        if ds_key == dangles_fc_key:
-            other_parent = dangle_parent.get(oid)
-            return int(other_parent) if other_parent is not None else None
-
-        if ds_key in lines_fc_keys:
-            return int(oid)
-
-        return None
-
-    def _select_first_legal_candidate(
-        self,
-        *,
-        candidates_sorted: list[NearCandidate],
-        illegal: _IllegalTargets,
-        dangle_parent: dict[DangleOid, ParentId],
-        dangles_fc_key: DatasetKey,
-        lines_fc_key: DatasetKey,
-        parent_id: ParentId,
-        base_tol: float,
-        topology: TopologyModel | None = None,
-    ) -> Optional[NearCandidate]:
-        for cand in candidates_sorted:
-            reason = self._candidate_legality_reason(
-                illegal=illegal,
-                dangle_parent=dangle_parent,
-                dangles_fc_key=dangles_fc_key,
-                lines_fc_key=lines_fc_key,
-                line_like_ds_keys=set(),  # no expanded tolerance in this context
-                parent_id=parent_id,
-                cand=cand,
-                base_tol=base_tol,
-                dangle_candidate_tol=base_tol,
-                topology=topology,
-            )
-            if reason is None:
-                return cand
-        return None
-
-    def _find_best_dangle_candidate_to_parent(
-        self,
-        *,
-        candidates_sorted: list[NearCandidate],
-        dangles_fc_key: DatasetKey,
-        dangle_parent: dict[DangleOid, ParentId],
-        target_parent_id: ParentId,
-        dangle_tol: float,
-    ) -> Optional[NearCandidate]:
-        """
-        From A's candidate rows, find the closest dangle feature that belongs to target_parent_id.
-        This handles "target parent has 2 dangles" correctly by selecting the closest.
-        """
-        best: Optional[NearCandidate] = None
-        best_dist = float("inf")
-
-        for cand in candidates_sorted:
-            if cand.near_fc_key != dangles_fc_key:
-                continue
-
-            other_dangle_oid = cand.near_fid
-            other_parent = dangle_parent.get(other_dangle_oid)
-            if other_parent is None:
-                continue
-            if int(other_parent) != int(target_parent_id):
-                continue
-
-            dist = cand.near_dist
-            if dist <= float(dangle_tol) and dist < best_dist:
-                best = cand
-                best_dist = dist
-
-        return best
-
-    def _best_dangle_for_parent_towards_target_parent(
-        self,
-        *,
-        parent_id: ParentId,
-        target_parent_id: ParentId,
-        parent_to_dangles: dict[ParentId, list[DangleOid]],
-        per_dangle: dict[DangleOid, dict],
-    ) -> DangleOid | None:
-        """
-        Choose the dangle on `parent_id` that is most suitable for pairing with `target_parent_id`.
-
-        Rule:
-        - Only consider dangles whose pair_token_parent == target_parent_id
-        - Pick the one with the smallest first_legal near_dist
-        """
-        dangles = parent_to_dangles.get(int(parent_id), [])
-        if not dangles:
-            return None
-
-        best_dangle = None
-        best_dist = float("inf")
-
-        for d_oid in dangles:
-            info = per_dangle.get(int(d_oid))
-            if not info:
-                continue
-
-            if int(info.get("pair_token_parent") or -1) != int(target_parent_id):
-                continue
-
-            first_legal = info.get("first_legal")
-            if not first_legal:
-                continue
-
-            dist = float(first_legal.get("near_dist", float("inf")))
-            if dist < best_dist:
-                best_dist = dist
-                best_dangle = int(d_oid)
-
-        return best_dangle
-
-    def _find_specific_dangle_candidate(
-        self,
-        *,
-        candidates_sorted: list[NearCandidate],
-        dangles_fc_key: DatasetKey,
-        other_dangle_oid: DangleOid,
-        dangle_tol: float,
-    ) -> Optional[NearCandidate]:
-        """
-        Find candidate row that targets a specific dangle OID (within dangle_tol).
-        """
-        for cand in candidates_sorted:
-            if cand.near_fc_key != dangles_fc_key:
-                continue
-            if cand.near_fid != int(other_dangle_oid):
-                continue
-
-            dist = cand.near_dist
-            if dist <= float(dangle_tol):
-                return cand
-        return None
-
-    def _best_dangle_for_parent(
-        self,
-        *,
-        parent_id: ParentId,
-        parent_to_dangles: dict[ParentId, list[DangleOid]],
-        per_dangle: dict[DangleOid, dict],
-    ) -> DangleOid | None:
-        """
-        Choose which dangle (of possibly many on the same parent line) should represent
-        this parent for default / non-pair behavior.
-
-        Rule: choose the dangle whose first_legal candidate is closest (smallest near_dist).
-        """
-        dangles = parent_to_dangles.get(int(parent_id), [])
-        if not dangles:
-            return None
-
-        best = None
-        best_dist = float("inf")
-        for d_oid in dangles:
-            info = per_dangle.get(int(d_oid))
-            if not info:
-                continue
-            cand = info.get("first_legal")
-            if not cand:
-                continue
-            dist = float(cand.get("near_dist", float("inf")))
-            if dist < best_dist:
-                best_dist = dist
-                best = int(d_oid)
-
-        return best
-
-    def _build_component_ids(
-        self, *, adjacency: dict[int, set[int]], nodes: set[int]
-    ) -> dict[int, int]:
-        comp_id: dict[int, int] = {}
-        visited: set[int] = set()
-        cid = 0
-
-        for start in nodes | set(adjacency.keys()):
-            start = int(start)
-            if start in visited:
-                continue
-            cid += 1
-            stack = [start]
-            while stack:
-                cur = int(stack.pop())
-                if cur in visited:
-                    continue
-                visited.add(cur)
-                comp_id[cur] = cid
-                for nb in adjacency.get(cur, set()):
-                    if nb not in visited:
-                        stack.append(int(nb))
-        return comp_id
 
     def _compute_best_line_parent_by_dangle(
         self,
@@ -6104,31 +5829,6 @@ class FillLineGaps:
             edit_op=edit_op,
             meta=meta,
         )
-
-    def _apply_pair_symmetric_skip(
-        self, decided_by_parent: dict[int, PlanEntry]
-    ) -> None:
-        """
-        If A and B are marked as pair parents, move only one of them.
-        Keep the smaller parent id by default.
-        """
-        for a_parent, entry in list(decided_by_parent.items()):
-            b_parent = entry.pair_parent
-            if b_parent is None:
-                continue
-            b_parent = int(b_parent)
-
-            other = decided_by_parent.get(b_parent)
-            if other is None:
-                continue
-            if (other.pair_parent or -1) != a_parent:
-                continue
-
-            keep = min(int(a_parent), int(b_parent))
-            drop = max(int(a_parent), int(b_parent))
-
-            decided_by_parent[drop].skip = True
-            decided_by_parent[keep].skip = False
 
     # ----------------------------
     # Resnap pass
