@@ -3347,7 +3347,7 @@ class FillLineGaps:
 
         return out
 
-    def _candidate_is_legal(
+    def _candidate_legality_reason(
         self,
         *,
         illegal: _IllegalTargets,
@@ -3361,25 +3361,31 @@ class FillLineGaps:
         dangle_candidate_tol: float,
         topology: TopologyModel | None = None,
         cid_by_optional_candidate: dict[tuple[DatasetKey, int], int] | None = None,
-    ) -> bool:
+    ) -> Optional[str]:
+        """Return ``None`` if the candidate is legal, else a reason string.
+
+        Reasons are one of ``'beyond_distance_tolerance'``,
+        ``'same_network'``, ``'illegal_target'``.  Callers wanting a
+        boolean check use ``self._candidate_legality_reason(...) is None``.
+        """
         ds_key = cand.near_fc_key
         oid = cand.near_fid
         dist = cand.near_dist
 
         if ds_key == dangles_fc_key:
             if dist > float(dangle_candidate_tol):
-                return False
+                return "beyond_distance_tolerance"
 
             other_parent = dangle_parent.get(int(oid))
             if other_parent is None:
-                return False
+                return "illegal_target"
 
             if topology is not None and self._same_network(
                 a_parent=int(parent_id),
                 b_parent=int(other_parent),
                 topology=topology,
             ):
-                return False
+                return "same_network"
 
             # Dangle->dangle illegal-checks against the other parent line id
             if self._is_illegal(
@@ -3388,9 +3394,9 @@ class FillLineGaps:
                 target_fc_key=lines_fc_key,
                 target_oid=int(other_parent),
             ):
-                return False
+                return "illegal_target"
 
-            return True
+            return None
 
         # Line-like targets (self-lines and connect_to_features polylines) use the
         # expanded tolerance so true-dangle connections beyond base_tol are reachable.
@@ -3398,10 +3404,14 @@ class FillLineGaps:
             dangle_candidate_tol if ds_key in line_like_ds_keys else base_tol
         )
         if dist > float(effective_tol):
-            return False
+            return "beyond_distance_tolerance"
 
+        # Self-target rejection (candidate is the parent line itself).
+        # _filter_legal_candidates already pre-filters this case via an
+        # early `continue`, so this branch is defensive — kept to keep the
+        # function self-contained for any future caller.
         if ds_key == lines_fc_key and int(oid) == int(parent_id):
-            return False
+            return "illegal_target"
 
         if (
             ds_key == lines_fc_key
@@ -3412,7 +3422,7 @@ class FillLineGaps:
                 topology=topology,
             )
         ):
-            return False
+            return "same_network"
 
         # External-optional same-network rejection. Covers the case where the
         # source parent and an external optional (polygon-as-topology or
@@ -3430,7 +3440,7 @@ class FillLineGaps:
             if src_cid is not None:
                 tgt_cid = cid_by_optional_candidate.get((ds_key, int(oid)))
                 if tgt_cid is not None and int(tgt_cid) == int(src_cid):
-                    return False
+                    return "same_network"
 
         if self._is_illegal(
             illegal=illegal,
@@ -3438,78 +3448,9 @@ class FillLineGaps:
             target_fc_key=ds_key,
             target_oid=oid,
         ):
-            return False
-
-        return True
-
-    def _candidate_rejection_reason(
-        self,
-        *,
-        illegal: _IllegalTargets,
-        dangle_parent: dict[DangleOid, ParentId],
-        dangles_fc_key: DatasetKey,
-        lines_fc_key: DatasetKey,
-        line_like_ds_keys: set[DatasetKey],
-        parent_id: ParentId,
-        cand: NearCandidate,
-        base_tol: float,
-        dangle_candidate_tol: float,
-        topology: "TopologyModel | None",
-        cid_by_optional_candidate: dict[tuple[DatasetKey, int], int] | None = None,
-    ) -> str:
-        """Return the legality-failure reason for a candidate, mirroring _candidate_is_legal."""
-        ds_key = cand.near_fc_key
-        oid = cand.near_fid
-        dist = cand.near_dist
-
-        if ds_key == dangles_fc_key:
-            if dist > float(dangle_candidate_tol):
-                return "beyond_distance_tolerance"
-            other_parent = dangle_parent.get(int(oid))
-            if other_parent is None:
-                return "illegal_target"
-            if topology is not None and self._same_network(
-                a_parent=int(parent_id), b_parent=int(other_parent), topology=topology
-            ):
-                return "same_network"
-            if self._is_illegal(
-                illegal=illegal,
-                parent_id=parent_id,
-                target_fc_key=lines_fc_key,
-                target_oid=int(other_parent),
-            ):
-                return "illegal_target"
             return "illegal_target"
 
-        effective_tol = (
-            dangle_candidate_tol if ds_key in line_like_ds_keys else base_tol
-        )
-        if dist > float(effective_tol):
-            return "beyond_distance_tolerance"
-        if (
-            topology is not None
-            and ds_key == lines_fc_key
-            and self._same_network(
-                a_parent=int(parent_id), b_parent=int(oid), topology=topology
-            )
-        ):
-            return "same_network"
-        if (
-            ds_key != lines_fc_key
-            and topology is not None
-            and topology.connectivity_id_by_parent is not None
-            and cid_by_optional_candidate
-        ):
-            src_cid = topology.connectivity_id_by_parent.get(int(parent_id))
-            if src_cid is not None:
-                tgt_cid = cid_by_optional_candidate.get((ds_key, int(oid)))
-                if tgt_cid is not None and int(tgt_cid) == int(src_cid):
-                    return "same_network"
-        if self._is_illegal(
-            illegal=illegal, parent_id=parent_id, target_fc_key=ds_key, target_oid=oid
-        ):
-            return "illegal_target"
-        return "illegal_target"
+        return None
 
     def _resolve_target_parent_id(
         self,
@@ -4047,7 +3988,7 @@ class FillLineGaps:
         topology: TopologyModel | None = None,
     ) -> Optional[NearCandidate]:
         for cand in candidates_sorted:
-            if self._candidate_is_legal(
+            reason = self._candidate_legality_reason(
                 illegal=illegal,
                 dangle_parent=dangle_parent,
                 dangles_fc_key=dangles_fc_key,
@@ -4058,7 +3999,8 @@ class FillLineGaps:
                 base_tol=base_tol,
                 dangle_candidate_tol=base_tol,
                 topology=topology,
-            ):
+            )
+            if reason is None:
                 return cand
         return None
 
@@ -4885,7 +4827,7 @@ class FillLineGaps:
                 if cand.near_fc_key == lines_key and cand.near_fid == parent_id:
                     continue
 
-                is_legal = self._candidate_is_legal(
+                reason = self._candidate_legality_reason(
                     illegal=illegal,
                     dangle_parent=dangle_parent,
                     dangles_fc_key=dangles_key,
@@ -4898,22 +4840,9 @@ class FillLineGaps:
                     topology=topology,
                     cid_by_optional_candidate=cid_by_optional_candidate,
                 )
-                if is_legal:
+                if reason is None:
                     legal_rows.append(cand)
                 elif collect_diags:
-                    reason = self._candidate_rejection_reason(
-                        illegal=illegal,
-                        dangle_parent=dangle_parent,
-                        dangles_fc_key=dangles_key,
-                        lines_fc_key=lines_key,
-                        line_like_ds_keys=line_like_ds_keys,
-                        parent_id=parent_id,
-                        cand=cand,
-                        base_tol=base_tol,
-                        dangle_candidate_tol=dangle_tol,
-                        topology=topology,
-                        cid_by_optional_candidate=cid_by_optional_candidate,
-                    )
                     _step1a_illegal.append(
                         _CandidateIllegalA(dangle_oid, parent_id, cand, reason)
                     )
@@ -5596,7 +5525,7 @@ class FillLineGaps:
         ):
             uf = _UnionFind()
             # Optional-candidate ↔ component pre-merging used to live here but
-            # has moved to the candidate scope (see _candidate_is_legal's
+            # has moved to the candidate scope (see _candidate_legality_reason's
             # cid_by_optional_candidate check). Under polygon connect_to_features
             # the old seed could not align OID spaces (polygon-vs-polyline);
             # the candidate-scope check resolves both polygon and polyline
