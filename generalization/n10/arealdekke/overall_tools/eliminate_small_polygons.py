@@ -91,6 +91,9 @@ class EliminateSmallPolygons:
         eliminate_final_elim_merged = wfm.build_file_path(
             file_name="eliminate_final_elim_merged", file_type="gdb"
         )
+        eliminated_polygons = wfm.build_file_path(
+            file_name="eliminated_polygons", file_type="gdb"
+        )
 
         return {
             "eliminate_input": eliminate_input,
@@ -108,6 +111,7 @@ class EliminateSmallPolygons:
             "eliminate_clip_erase_eliminated": eliminate_clip_erase_eliminated,
             "eliminate_final_elim": eliminate_final_elim,
             "eliminate_final_elim_merged": eliminate_final_elim_merged,
+            "eliminated_polygons": eliminated_polygons,
         }
 
     def _fetch_data(self):
@@ -230,6 +234,58 @@ class EliminateSmallPolygons:
         )
 
     @timing_decorator
+    def eliminate_multiple_minimums(
+        self, input_fc: str, output_fc: str, run: int
+    ) -> None:
+        layer = "eliminate_layer"
+        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        exclusion_sql = f"arealdekke NOT IN ({quoted})"
+
+        temp_in = input_fc
+        for arealdekke, min_area in self.scale_parameters.min_area.items():
+            print(f"eliminating: {arealdekke} min area: {min_area}")
+            clauses = []
+            clauses.append(f"arealdekke = '{arealdekke}'")
+            clauses.append(f"area < {min_area}")
+
+            where_parts = [exclusion_sql] + clauses
+            where_clause = " AND ".join(where_parts)
+            temp_out = f"in_memory\\elim_pass_{arealdekke}"
+
+            if arcpy.Exists(layer):
+                arcpy.management.Delete(layer)
+
+            arcpy.management.MakeFeatureLayer(
+                in_features=temp_in, out_layer=layer, where_clause=where_clause
+            )
+            if arcpy.Exists(rf"{self.files["eliminated_polygons"]}{run}"):
+                arcpy.management.CopyFeatures(
+                    layer, rf"{self.files["eliminated_polygons"]}_tmp"
+                )
+                arcpy.management.Append(
+                    rf"{self.files["eliminated_polygons"]}_tmp",
+                    rf"{self.files["eliminated_polygons"]}{run}",
+                )
+            else:
+                arcpy.management.CopyFeatures(
+                    layer, rf"{self.files["eliminated_polygons"]}{run}"
+                )
+
+            arcpy.management.Eliminate(
+                in_features=layer,
+                out_feature_class=temp_out,
+                selection="LENGTH",
+            )
+
+            temp_in = temp_out
+
+        arcpy.management.CopyFeatures(temp_out, output_fc)
+
+        self.geometry_validator.check_repair_sequence(
+            input_fc=output_fc, max_iterations=5
+        )
+
+    @timing_decorator
     def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
         layer = "eliminate_after_elim_layer"
@@ -298,7 +354,7 @@ class EliminateSmallPolygons:
         quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
-        numeric_clauses.append(f"area < {self.scale_parameters.min_area}")
+        numeric_clauses.append(f"area < 100")
         where_parts = [exclusion_sql] + numeric_clauses
         where_clause = " AND ".join(where_parts)
 
@@ -339,23 +395,16 @@ class EliminateSmallPolygons:
             file_name="eliminate_holes_input_copy", file_type="gdb"
         )
         lines = wfm.build_file_path(file_name="eliminate_holes_lines", file_type="gdb")
-        singlepart = wfm.build_file_path(
-            file_name="eliminate_holes_singlepart", file_type="gdb"
-        )
         potential_holes_lines = wfm.build_file_path(
             file_name="eliminate_holes_potential_holes_lines", file_type="gdb"
         )
         potential_holes_polygons = wfm.build_file_path(
             file_name="eliminate_holes_potential_holes_polygons", file_type="gdb"
         )
-        eliminated = wfm.build_file_path(
-            file_name="eliminate_holes_eliminated", file_type="gdb"
-        )
         input_copy_layer_selection = "eliminate_holes_input_copy_layer_selection"
         input_copy_layer_potential_elims = (
             "eliminate_holes_input_copy_layer_potential_elims"
         )
-        singlepart_layer = "eliminate_holes_singlepart_layer"
 
         arcpy.management.CopyFeatures(
             in_features=input_fc, out_feature_class=input_copy
@@ -370,9 +419,6 @@ class EliminateSmallPolygons:
             in_features=input_copy_layer_selection,
             out_feature_class=lines,
             neighbor_option="IGNORE_NEIGHBORS",
-        )
-        arcpy.management.MultipartToSinglepart(
-            in_features=lines, out_feature_class=singlepart
         )
 
         sr = arcpy.Describe(lines).spatialReference
@@ -437,14 +483,17 @@ class EliminateSmallPolygons:
         self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
         self._exlude()
-        self.eliminate(
-            self.files["eliminate_input_include"], self.files["eliminate_after_elim"]
+        self.eliminate_multiple_minimums(
+            self.files["eliminate_input_include"],
+            self.files["eliminate_after_elim"],
+            1,
         )
         self._buffer_potential_spikes()
         self._clip_and_erase()
-        self.eliminate(
+        self.eliminate_multiple_minimums(
             self.files["eliminate_clip_erase_eliminated"],
             self.files["eliminate_final_elim"],
+            2,
         )
         self._merge_excluded()
         self._integrate(self.files["eliminate_final_elim_merged"])

@@ -91,6 +91,8 @@ class ArcGisEnvironmentSetup:
     """
 
     _setup_done_globally = False
+    XY_TOLERANCE = 0.02
+    XY_RESOLUTION = 0.01
 
     def __init__(
         self,
@@ -109,8 +111,8 @@ class ArcGisEnvironmentSetup:
         arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(
             self.spatial_reference
         )
-        arcpy.env.XYTolerance = "0.02 Meters"
-        arcpy.env.XYResolution = "0.01 Meters"
+        arcpy.env.XYTolerance = f"{self.XY_TOLERANCE} Meters"
+        arcpy.env.XYResolution = f"{self.XY_RESOLUTION} Meters"
         arcpy.env.parallelProcessingFactor = require("CPU_PERCENTAGE")
 
         ArcGisEnvironmentSetup._setup_done_globally = True
