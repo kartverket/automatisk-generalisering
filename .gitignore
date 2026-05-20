@@ -1,5 +1,4 @@
 # Exclude user-specific config file
-config.py
 personal_testing.py
 .vscode
 .env
