@@ -47,6 +47,7 @@ from input_data.input_symbology import SymbologyN100
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 AREA_SELECTOR = "navn IN ('Oslo', 'Hamar')"
+AREA_SELECTOR = "navn IN ('Ringerike', 'Oslo')"
 SCALE = "n100"
 
 
