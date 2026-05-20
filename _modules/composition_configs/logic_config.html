@@ -75,17 +75,21 @@
            <div itemprop="articleBody">
              
   <h1>Source code for composition_configs.logic_config</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">TypeAlias</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">io_types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">io_types</span><span class="p">,</span> <span class="n">type_defs</span>
+
+<span class="n">RasterPathList</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">type_defs</span><span class="o">.</span><span class="n">RasterFilePath</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="SymbologyLayerSpec">
@@ -378,6 +382,43 @@
 
 
 
+<div class="viewcode-block" id="EditMethod">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.EditMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EditMethod</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">AUTO</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="n">FORCED_SNAP</span> <span class="o">=</span> <span class="s2">&quot;forced_snap&quot;</span>
+    <span class="n">FORCED_EXTEND</span> <span class="o">=</span> <span class="s2">&quot;forced_extend&quot;</span>
+    <span class="n">NEW_LINE</span> <span class="o">=</span> <span class="s2">&quot;new_line&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ConnectivityScope">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.ConnectivityScope">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConnectivityScope</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">DIRECT_CONNECTION</span> <span class="o">=</span> <span class="s2">&quot;direct&quot;</span>
+    <span class="n">INPUT_LINES</span> <span class="o">=</span> <span class="s2">&quot;input_lines&quot;</span>
+    <span class="n">ONE_DEGREE</span> <span class="o">=</span> <span class="s2">&quot;one_degree&quot;</span>
+    <span class="n">TRANSITIVE</span> <span class="o">=</span> <span class="s2">&quot;transitive&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineConnectivityMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineConnectivityMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineConnectivityMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">ENDPOINTS</span> <span class="o">=</span> <span class="s2">&quot;endpoints&quot;</span>
+    <span class="n">INTERSECT</span> <span class="o">=</span> <span class="s2">&quot;intersect&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AngleTargetMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.AngleTargetMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AngleTargetMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">AUTO</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="n">FORCE_NON_LINE</span> <span class="o">=</span> <span class="s2">&quot;force_non_line&quot;</span></div>
+
+
+
 <div class="viewcode-block" id="AttributeChangerInitKwargs">
 <a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -397,6 +438,487 @@
     <span class="n">input_feature</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">output_feature</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">map_scale</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="BestFitWeightsConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BestFitWeightsConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BestFitWeightsConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalized weights for composite best-fit candidate scoring.</span>
+
+<span class="sd">    Each weight is a non-negative scalar. The composite score for a candidate is:</span>
+
+<span class="sd">        score = distance * norm_dist + angle * norm_angle + z * norm_z</span>
+
+<span class="sd">    where norm_* are each normalized to [0, 1] relative to their natural range</span>
+<span class="sd">    (distance: gap_tolerance_meters; angle: 90 degrees; z: reserved).</span>
+
+<span class="sd">    distance: weight applied to normalized distance. Default 1.0.</span>
+<span class="sd">    angle: weight applied to normalized angle difference. Has no scoring effect unless</span>
+<span class="sd">        FillLineGapsAngleConfig is active. Default 0.0.</span>
+<span class="sd">    z: weight applied to normalized Z difference. Has no scoring effect unless</span>
+<span class="sd">        FillLineGapsZConfig is active. Default 0.0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">z</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+
+<div class="viewcode-block" id="DiagnosticDetail">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.DiagnosticDetail">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiagnosticDetail</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fidelity tier for the candidate diagnostics output.</span>
+
+<span class="sd">    OFF: skip per-candidate diagnostic collection entirely. Equivalent in</span>
+<span class="sd">        effect to setting candidate_connections_output=None, but lets a</span>
+<span class="sd">        caller keep the output path configured (e.g. wired via the file</span>
+<span class="sd">        manager) while disabling diagnostics for a specific run.</span>
+<span class="sd">    FULL: current behavior — one record per evaluated dangle/target pair,</span>
+<span class="sd">        with scoring detail.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">OFF</span> <span class="o">=</span> <span class="s2">&quot;off&quot;</span>
+    <span class="n">FULL</span> <span class="o">=</span> <span class="s2">&quot;full&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsOutputConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsOutputConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Optional diagnostic and metadata outputs produced alongside the main result.</span>
+
+<span class="sd">    line_changes_output: path to write a feature class recording each connector added.</span>
+<span class="sd">        Each row carries gap_dist_m and gap_source fields. None disables this output.</span>
+<span class="sd">    write_output_metadata: when True, appends a metadata summary record to the output</span>
+<span class="sd">        feature class after the run completes.</span>
+<span class="sd">    candidate_connections_output: path to write the full candidate diagnostics feature</span>
+<span class="sd">        class (one POLYLINE row per evaluated dangle/target pair, with scoring detail).</span>
+<span class="sd">        None disables candidate collection entirely, skipping all diagnostic assembly.</span>
+<span class="sd">    diagnostic_detail: fidelity tier when candidate_connections_output is set. Default</span>
+<span class="sd">        FULL preserves prior behavior. OFF skips collection entirely even if an output</span>
+<span class="sd">        path is configured, useful for callers that want to keep the path wired but</span>
+<span class="sd">        disable diagnostics for a specific run.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">line_changes_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">write_output_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">candidate_connections_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">diagnostic_detail</span><span class="p">:</span> <span class="n">DiagnosticDetail</span> <span class="o">=</span> <span class="n">DiagnosticDetail</span><span class="o">.</span><span class="n">FULL</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsAngleConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsAngleConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Angle-based candidate filtering, scoring, and directional behaviour.</span>
+
+<span class="sd">    angle_block_threshold_degrees: candidates whose connector-to-source angle exceeds</span>
+<span class="sd">        this threshold are rejected at Step 1b as illegal. None disables the angle gate.</span>
+<span class="sd">    angle_extra_dangle_threshold_degrees: relaxed angle threshold applied to dangle-pair</span>
+<span class="sd">        candidates that qualify for the edge-case distance bonus. None falls back to</span>
+<span class="sd">        angle_block_threshold_degrees.</span>
+<span class="sd">    angle_local_half_window_m: half-window in metres passed to local_line_angle_at_xy</span>
+<span class="sd">        when computing the source angle at a dangle endpoint.</span>
+<span class="sd">    connect_to_features_angle_mode: optional per-dataset override controlling how angles</span>
+<span class="sd">        are measured for external target features. Keys are the original</span>
+<span class="sd">        connect_to_features path or its dataset_key. Values are AngleTargetMode members.</span>
+<span class="sd">    lines_are_directed: when True the caller guarantees all input lines are pre-oriented</span>
+<span class="sd">        (flow runs start to end). Angle comparisons use directional difference (0 to 180</span>
+<span class="sd">        degrees) and src_target_diff as the primary metric for line-to-line pairs.</span>
+<span class="sd">        Requires best_fit_weights.angle &gt; 0 on FillLineGapsConfig (enforced at init).</span>
+<span class="sd">    connector_angle_diff_required_above_meters: when set, the angle metric at a</span>
+<span class="sd">        valid end-to-start dangle endpoint snap uses</span>
+<span class="sd">        max(src_target_diff, src_connector_diff, connector_target_diff) instead</span>
+<span class="sd">        of src_target_diff alone, but only when the source dangle is farther</span>
+<span class="sd">        than this many metres from the target&#39;s parent line. The endpoint snap</span>
+<span class="sd">        covers both dangle-pair targets (target is another dangle) and</span>
+<span class="sd">        dangle-parent-line targets (target is a line whose snap point coincides</span>
+<span class="sd">        with one of its own dangle endpoints), since both expose the same</span>
+<span class="sd">        end-to-start geometry. Within the threshold src_target_diff alone is</span>
+<span class="sd">        used. Set to 0 to always apply the penalty. None (default) disables the</span>
+<span class="sd">        penalty entirely. Has no effect when lines_are_directed is False, and</span>
+<span class="sd">        is independent of the default</span>
+<span class="sd">        max(src_target_diff, src_connector_diff, connector_target_diff) metric</span>
+<span class="sd">        used for line-like targets that are not endpoint snaps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">angle_block_threshold_degrees</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">angle_extra_dangle_threshold_degrees</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># 0..1, prefer line alignment a bit more than connector transition</span>
+    <span class="n">line_alignment_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+    <span class="n">best_fit_weights</span><span class="p">:</span> <span class="n">BestFitWeightsConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BestFitWeightsConfig</span><span class="p">)</span>
+
+    <span class="c1"># Passed to local_line_angle_at_xy(desired_half_window_m=...)</span>
+    <span class="n">angle_local_half_window_m</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
+    <span class="n">connect_to_features_angle_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AngleTargetMode</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lines_are_directed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">connector_angle_diff_required_above_meters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsZConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsZConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsZConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Z/elevation-based candidate filtering and scoring.</span>
+
+<span class="sd">    raster_paths: ordered tuple of pre-scoped raster tile paths (e.g. from</span>
+<span class="sd">        find_rasters_for_vector_extent). FillLineGaps builds RasterHandle objects from</span>
+<span class="sd">        these at run() start. None disables all Z-based logic including z_drop_threshold.</span>
+<span class="sd">    z_drop_threshold: legality gate on Z drop along a candidate connector. A candidate is</span>
+<span class="sd">        rejected when (end_z - start_z) &gt; z_drop_threshold. None disables the gate.</span>
+<span class="sd">        Set to 0 to reject any uphill candidate; set to -10 to require a drop of at</span>
+<span class="sd">        least 10 m.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">raster_paths</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RasterPathList</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">z_drop_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsCrossingConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsCrossingConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsCrossingConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Connector crossing rejection and impassable barrier layer settings.</span>
+
+<span class="sd">    reject_crossing_connectors: when True, candidates whose connector geometry crosses</span>
+<span class="sd">        an existing feature (self-lines or connect_to_features) are rejected at Step 1a.</span>
+<span class="sd">        Accepted connectors are also checked against each other during Kruskal selection,</span>
+<span class="sd">        and resnap captures are re-checked after their final geometry is resolved.</span>
+<span class="sd">        Requires crossing_check_spatial_reference.</span>
+<span class="sd">    crossing_check_spatial_reference: spatial reference used to construct temporary</span>
+<span class="sd">        connector geometries for crossing checks. Accepts an integer WKID or a .prj</span>
+<span class="sd">        file path (passed directly to arcpy.SpatialReference()). Required when</span>
+<span class="sd">        reject_crossing_connectors is True or barrier_layers is set.</span>
+<span class="sd">    barrier_layers: feature layers that act as impassable barriers. Any candidate whose</span>
+<span class="sd">        trimmed connector crosses one of these layers is rejected at Step 1a regardless</span>
+<span class="sd">        of the reject_crossing_connectors setting. These layers are never used as snap</span>
+<span class="sd">        targets. Requires crossing_check_spatial_reference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">reject_crossing_connectors</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">crossing_check_spatial_reference</span><span class="p">:</span> <span class="s2">&quot;int | str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">barrier_layers</span><span class="p">:</span> <span class="s2">&quot;list[str] | None&quot;</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reject_crossing_connectors</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">barrier_layers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossing_check_spatial_reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;crossing_check_spatial_reference is required when &quot;</span>
+                <span class="s2">&quot;reject_crossing_connectors is True or barrier_layers is set&quot;</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsConnectivityConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsConnectivityConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsConnectivityConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controls how the tool detects existing connections between line endpoints.</span>
+
+<span class="sd">    An existing connection between two endpoints means they should not receive a new</span>
+<span class="sd">    connector, even if their distance is within gap_tolerance_meters.</span>
+
+<span class="sd">    connectivity_scope: determines how far the tool traverses the endpoint graph when</span>
+<span class="sd">        deciding whether two endpoints are already connected. NONE skips the check;</span>
+<span class="sd">        DIRECT_CONNECTION considers only the immediate pair; INPUT_LINES, ONE_DEGREE,</span>
+<span class="sd">        and TRANSITIVE widen the traversal progressively.</span>
+<span class="sd">    connectivity_tolerance_meters: snapping tolerance used when building the endpoint</span>
+<span class="sd">        connectivity graph.</span>
+<span class="sd">    line_connectivity_mode: controls which part of each line participates in connectivity</span>
+<span class="sd">        detection. ENDPOINTS checks only start/end vertices; INTERSECT includes any</span>
+<span class="sd">        geometric intersection along the line.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">connectivity_scope</span><span class="p">:</span> <span class="n">ConnectivityScope</span> <span class="o">=</span> <span class="n">ConnectivityScope</span><span class="o">.</span><span class="n">DIRECT_CONNECTION</span>
+    <span class="n">connectivity_tolerance_meters</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span>
+    <span class="n">line_connectivity_mode</span><span class="p">:</span> <span class="n">LineConnectivityMode</span> <span class="o">=</span> <span class="n">LineConnectivityMode</span><span class="o">.</span><span class="n">ENDPOINTS</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsAdvancedConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsAdvancedConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Residual tuning parameters that do not belong to a specific themed sub-config.</span>
+
+<span class="sd">    edit_method: controls how connectors are applied to input lines. AUTO selects snap</span>
+<span class="sd">        or extend based on geometry; FORCED_SNAP always snaps; FORCED_EXTEND always</span>
+<span class="sd">        extends. NEW_LINE leaves all parent geometries untouched and instead inserts</span>
+<span class="sd">        each connector as a new 2-vertex feature in the output, copying the parent</span>
+<span class="sd">        line&#39;s attributes (except geometry/OID) and setting fill_line_gap_generated=1.</span>
+<span class="sd">        Original (non-generated) rows carry fill_line_gap_generated=0. The field is</span>
+<span class="sd">        preserved across re-runs: when the input already has it, existing values are</span>
+<span class="sd">        not overwritten.</span>
+<span class="sd">    increased_tolerance_edge_case_distance_meters: additional distance added to</span>
+<span class="sd">        gap_tolerance_meters when searching for dangle-pair candidates that qualify for</span>
+<span class="sd">        the edge-case bonus. Zero disables the expanded search radius.</span>
+<span class="sd">    require_mutual_dangle_preference_for_bonus: when True the edge-case distance bonus</span>
+<span class="sd">        is only applied when both source and target dangles mutually prefer each other&#39;s</span>
+<span class="sd">        parent line. When False (default) the angle gate</span>
+<span class="sd">        (angle_extra_dangle_threshold_degrees) is the sole guard.</span>
+<span class="sd">    candidate_closest_count: caps the number of near targets retained per source</span>
+<span class="sd">        dangle when generating the candidate near table (and the resnap near table,</span>
+<span class="sd">        which is conceptually the same kind of query against forced-parent line</span>
+<span class="sd">        segments). Default 100. Under heavy segmentation at a large search radius</span>
+<span class="sd">        the cap is often saturated; raise to capture more candidates at memory cost,</span>
+<span class="sd">        lower to bound near-table size on memory-constrained systems.</span>
+<span class="sd">    connectivity_closest_count: caps adjacencies per endpoint for the connectivity</span>
+<span class="sd">        near table. The connectivity tolerance is typically tiny (xy_tolerance), so</span>
+<span class="sd">        the cap is rarely hit; included for symmetry with candidate_closest_count and</span>
+<span class="sd">        for future-proofing. Default 100.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">edit_method</span><span class="p">:</span> <span class="n">EditMethod</span> <span class="o">=</span> <span class="n">EditMethod</span><span class="o">.</span><span class="n">AUTO</span>
+    <span class="n">increased_tolerance_edge_case_distance_meters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">require_mutual_dangle_preference_for_bonus</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">candidate_closest_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">connectivity_closest_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span></div>
+
+
+
+<div class="viewcode-block" id="SegmentationMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.SegmentationMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SegmentationMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">EVEN</span> <span class="o">=</span> <span class="s2">&quot;even&quot;</span>
+    <span class="n">FIXED</span> <span class="o">=</span> <span class="s2">&quot;fixed&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SegmentationConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.SegmentationConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SegmentationConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Internal segmentation of input_lines and line-like connect_to_features for</span>
+<span class="sd">    use in the candidate near table only. Other phases (TopologyBuilder,</span>
+<span class="sd">    connectivity, crossing checks, polyline caches, edits, output) operate on</span>
+<span class="sd">    the unsegmented originals.</span>
+
+<span class="sd">    The candidate near table benefits from short segments because GenerateNearTable</span>
+<span class="sd">    measures distance to the closest segment; on long target features the closest</span>
+<span class="sd">    point on the whole feature can be far from the actual best connection point.</span>
+<span class="sd">    Segmenting only the targets used by that table preserves the precision win</span>
+<span class="sd">    without paying the segmentation cost in every other phase.</span>
+
+<span class="sd">    Polygon connect_to_features are NOT supported when segmentation is enabled.</span>
+<span class="sd">    Convert polygons to polylines (e.g. via PolygonToLine) before passing them</span>
+<span class="sd">    to FillLineGaps in that case. Polyline and other geometry types pass through;</span>
+<span class="sd">    only polylines are actually segmented.</span>
+
+<span class="sd">    Setting segmentation=None on FillLineGapsConfig disables internal segmentation</span>
+<span class="sd">    entirely; FillLineGaps then uses caller-provided feature classes as today.</span>
+
+<span class="sd">    interval_meters: maximum segment length in the input&#39;s linear units. Must be &gt; 0.</span>
+<span class="sd">    mode: EVEN divides each long line into ceil(L / interval) equal-length pieces.</span>
+<span class="sd">        FIXED cuts at fixed interval and emits the remainder as a final segment</span>
+<span class="sd">        (subject to tail_tolerance_meters).</span>
+<span class="sd">    tail_tolerance_meters: FIXED mode only. When the remainder of a fixed split</span>
+<span class="sd">        is &lt;= this value, it is absorbed into the preceding segment instead of</span>
+<span class="sd">        emitted on its own. Default 0.0 disables absorption.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">interval_meters</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">SegmentationMode</span> <span class="o">=</span> <span class="n">SegmentationMode</span><span class="o">.</span><span class="n">EVEN</span>
+    <span class="n">tail_tolerance_meters</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+
+<div class="viewcode-block" id="FillLineGapsConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.FillLineGapsConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FillLineGapsConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Top-level configuration for FillLineGaps.</span>
+
+<span class="sd">    input_lines: path to the input line feature class.</span>
+<span class="sd">    output_lines: path where the edited gap-filled line feature class will be written.</span>
+<span class="sd">    work_file_manager_config: controls scratch/work file behaviour (root_file,</span>
+<span class="sd">        write_to_memory, keep_files).</span>
+<span class="sd">    gap_tolerance_meters: maximum connector length in metres; candidates beyond this</span>
+<span class="sd">        distance are never considered.</span>
+<span class="sd">    connect_to_features: optional list of external feature class paths that act as</span>
+<span class="sd">        additional snap targets. When provided, dangles on input_lines may connect to</span>
+<span class="sd">        these features as well as to other input_lines dangles.</span>
+<span class="sd">    fill_gaps_on_self: when True (default) dangles on input_lines are allowed to connect</span>
+<span class="sd">        to other dangles on input_lines. Set to False only when connect_to_features</span>
+<span class="sd">        provides all intended targets.</span>
+<span class="sd">    best_fit_weights: composite scoring weights controlling how distance, angle, and Z</span>
+<span class="sd">        contribute to candidate ranking. The default (distance=1.0, angle=0.0, z=0.0)</span>
+<span class="sd">        ranks purely by nearest distance. Angle and Z weights have no scoring effect</span>
+<span class="sd">        unless the corresponding sub-configs are also provided.</span>
+<span class="sd">    output_config: optional diagnostic and metadata output settings.</span>
+<span class="sd">    angle_config: optional angle filtering, scoring, and directional behaviour.</span>
+<span class="sd">    z_config: optional Z/elevation filtering and scoring.</span>
+<span class="sd">    crossing_config: optional connector crossing rejection and barrier layer settings.</span>
+<span class="sd">    connectivity_config: optional connectivity detection settings.</span>
+<span class="sd">    advanced_config: residual tuning parameters (edit method and edge-case bonus).</span>
+<span class="sd">    segmentation: optional internal segmentation of input_lines and line-like</span>
+<span class="sd">        connect_to_features for use in the candidate near table only. When set,</span>
+<span class="sd">        the engine builds segmented copies internally; the caller passes the</span>
+<span class="sd">        original (unsegmented) inputs. Polygon connect_to_features are not</span>
+<span class="sd">        supported when segmentation is set — convert polygons to polylines</span>
+<span class="sd">        externally first. None (default) disables this and uses caller-provided</span>
+<span class="sd">        feature classes for all phases.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">input_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">output_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+    <span class="n">gap_tolerance_meters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">connect_to_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fill_gaps_on_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">best_fit_weights</span><span class="p">:</span> <span class="n">BestFitWeightsConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BestFitWeightsConfig</span><span class="p">)</span>
+    <span class="n">output_config</span><span class="p">:</span> <span class="n">FillLineGapsOutputConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsOutputConfig</span>
+    <span class="p">)</span>
+    <span class="n">angle_config</span><span class="p">:</span> <span class="n">FillLineGapsAngleConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsAngleConfig</span>
+    <span class="p">)</span>
+    <span class="n">z_config</span><span class="p">:</span> <span class="n">FillLineGapsZConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsZConfig</span><span class="p">)</span>
+    <span class="n">crossing_config</span><span class="p">:</span> <span class="n">FillLineGapsCrossingConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsCrossingConfig</span>
+    <span class="p">)</span>
+    <span class="n">connectivity_config</span><span class="p">:</span> <span class="n">FillLineGapsConnectivityConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsConnectivityConfig</span>
+    <span class="p">)</span>
+    <span class="n">advanced_config</span><span class="p">:</span> <span class="n">FillLineGapsAdvancedConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">FillLineGapsAdvancedConfig</span>
+    <span class="p">)</span>
+    <span class="n">segmentation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SegmentationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="LineAngleMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineAngleMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineAngleMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">WHOLE_LINE</span> <span class="o">=</span> <span class="s2">&quot;whole_line&quot;</span>
+    <span class="n">START_SEGMENT</span> <span class="o">=</span> <span class="s2">&quot;start_segment&quot;</span>
+    <span class="n">END_SEGMENT</span> <span class="o">=</span> <span class="s2">&quot;end_segment&quot;</span>
+    <span class="n">BOTH_ENDPOINT_SEGMENTS</span> <span class="o">=</span> <span class="s2">&quot;both_endpoint_segments&quot;</span>
+    <span class="n">START_TO_MIDPOINT</span> <span class="o">=</span> <span class="s2">&quot;start_to_midpoint&quot;</span>
+    <span class="n">END_TO_MIDPOINT</span> <span class="o">=</span> <span class="s2">&quot;end_to_midpoint&quot;</span>
+    <span class="n">BOTH_ENDPOINT_TO_MIDPOINT</span> <span class="o">=</span> <span class="s2">&quot;both_endpoint_to_midpoint&quot;</span>
+    <span class="n">ALL_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;all_angles&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AngleToolConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.AngleToolConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AngleToolConfig</span><span class="p">:</span>
+    <span class="n">input_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">angle_modes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LineAngleMode</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">output_lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">field_name_by_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">LineAngleMode</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">return_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">write_fields</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="LineEndpointMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineEndpointMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineEndpointMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">START_POINT</span> <span class="o">=</span> <span class="s2">&quot;start_point&quot;</span>
+    <span class="n">END_POINT</span> <span class="o">=</span> <span class="s2">&quot;end_point&quot;</span>
+    <span class="n">BOTH_ENDPOINTS</span> <span class="o">=</span> <span class="s2">&quot;both_endpoints&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineEndpointFieldNameConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineEndpointFieldNameConfig</span><span class="p">:</span>
+    <span class="n">start_x</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;start_x&quot;</span>
+    <span class="n">start_y</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;start_y&quot;</span>
+    <span class="n">end_x</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;end_x&quot;</span>
+    <span class="n">end_y</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;end_y&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineEndpointToolConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineEndpointToolConfig</span><span class="p">:</span>
+    <span class="n">input_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">endpoint_modes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LineEndpointMode</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">output_lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">field_names</span><span class="p">:</span> <span class="n">LineEndpointFieldNameConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">LineEndpointFieldNameConfig</span>
+    <span class="p">)</span>
+    <span class="n">return_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">write_fields</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="LineZValueMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineZValueMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineZValueMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">START_POINT</span> <span class="o">=</span> <span class="s2">&quot;start_point&quot;</span>
+    <span class="n">END_POINT</span> <span class="o">=</span> <span class="s2">&quot;end_point&quot;</span>
+    <span class="n">BOTH_ENDPOINTS</span> <span class="o">=</span> <span class="s2">&quot;both_endpoints&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineZOrientMode">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineZOrientMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineZOrientMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">INDIVIDUAL</span> <span class="o">=</span> <span class="s2">&quot;individual&quot;</span>
+    <span class="n">NETWORK</span> <span class="o">=</span> <span class="s2">&quot;network&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineZValueFieldNameConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineZValueFieldNameConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineZValueFieldNameConfig</span><span class="p">:</span>
+    <span class="n">start_z</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;start_z&quot;</span>
+    <span class="n">end_z</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;end_z&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LineZValueToolConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineZValueToolConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineZValueToolConfig</span><span class="p">:</span>
+    <span class="n">input_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">input_rasters</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">endpoint_modes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LineZValueMode</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">output_lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">field_names_per_raster</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">LineZValueFieldNameConfig</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># If None and one raster: defaults (&quot;start_z&quot;, &quot;end_z&quot;).</span>
+    <span class="c1"># If None and multiple rasters: auto &quot;start_z_1&quot;, &quot;end_z_1&quot;, &quot;start_z_2&quot;, &quot;end_z_2&quot; …</span>
+    <span class="n">return_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">write_fields</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="LineZOrientConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineZOrientConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineZOrientConfig</span><span class="p">:</span>
+    <span class="n">input_lines</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">raster_paths</span><span class="p">:</span> <span class="n">RasterPathList</span>
+    <span class="n">orientation_mode</span><span class="p">:</span> <span class="n">LineZOrientMode</span> <span class="o">=</span> <span class="n">LineZOrientMode</span><span class="o">.</span><span class="n">INDIVIDUAL</span>
+    <span class="n">min_anchor_z_drop_meters</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">min_confident_flip_meters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">connectivity_tolerance_meters</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span></div>
 
 </pre></div>
 

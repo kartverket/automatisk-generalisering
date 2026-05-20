@@ -91,6 +91,9 @@
 
 <span class="c1"># All file and function names in correct order</span>
 
+<span class="n">data_selection</span> <span class="o">=</span> <span class="s2">&quot;data_selection&quot;</span>
+<span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
+<span class="n">river_topology</span> <span class="o">=</span> <span class="s2">&quot;river_topology&quot;</span>
 <span class="n">selecting_water_polygons</span> <span class="o">=</span> <span class="s2">&quot;selecting_water_polygons&quot;</span>
 <span class="n">unconnected_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;unconnected_river_geometry&quot;</span>
 <span class="n">extending_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;extending_river_geometry&quot;</span>
@@ -141,6 +144,117 @@
     <span class="c1">###########################################</span>
     <span class="c1">########### RIVER DATA PREPARATION ##########</span>
     <span class="c1">###########################################</span>
+
+    <span class="n">data_selection___water_lines___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_lines&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___water_polygons___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_polygons&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___water_points___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_points&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___geometry_validation___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;geometry_validation&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___river_lines___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_lines&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___river_polygons___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_polygons&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___river_polygon_outline___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_polygon_outline&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___fixed_river_gaps___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fixed_river_gaps&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_gaps_changes___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_gaps_changes&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_gaps_diagnostic___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_gaps_diagnostic&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_angles___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_angles&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___fixed_river_orientation___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fixed_river_orientation&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_angles_2___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_angles_2&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_xy_endpoints___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_xy_endpoints&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">river_topology___root___n100_river</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___river_polygons_as_lines___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_polygons_as_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___segmented_river_lines___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;segmented_river_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_topology___segmented_river_polygon_lines___n100_river</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_topology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;segmented_river_polygon_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="n">selecting_water_polygons__centerline__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_water_polygons</span><span class="p">,</span>

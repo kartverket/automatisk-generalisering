@@ -28,6 +28,14 @@ custom\_tools.development\_tools.gpt\_file\_path\_masker module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.development\_tools.scan\_arcpy\_usage module
+----------------------------------------------------------
+
+.. automodule:: custom_tools.development_tools.scan_arcpy_usage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

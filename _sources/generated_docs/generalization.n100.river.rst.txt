@@ -20,6 +20,14 @@ generalization.n100.river.connect\_river\_lines module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.river.data\_preparation module
+--------------------------------------------------
+
+.. automodule:: generalization.n100.river.data_preparation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.river.elevate\_river\_lines module
 ------------------------------------------------------
 
@@ -32,6 +40,22 @@ generalization.n100.river.extend\_river\_line module
 ----------------------------------------------------
 
 .. automodule:: generalization.n100.river.extend_river_line
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n100.river.fix\_river\_topology\_gaps module
+-----------------------------------------------------------
+
+.. automodule:: generalization.n100.river.fix_river_topology_gaps
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n100.river.main module
+-------------------------------------
+
+.. automodule:: generalization.n100.river.main
    :members:
    :show-inheritance:
    :undoc-members:

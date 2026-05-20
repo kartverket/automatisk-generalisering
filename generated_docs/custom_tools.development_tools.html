@@ -53,6 +53,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools.clean_data">custom_tools.development_tools.clean_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools.find_unused_files">custom_tools.development_tools.find_unused_files module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-development-tools-gpt-file-path-masker-module">custom_tools.development_tools.gpt_file_path_masker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools.scan_arcpy_usage">custom_tools.development_tools.scan_arcpy_usage module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools">Module contents</a></li>
 </ul>
 </li>
@@ -161,6 +162,40 @@ Then deletes all unspecified fields.</p>
 </section>
 <section id="custom-tools-development-tools-gpt-file-path-masker-module">
 <h2>custom_tools.development_tools.gpt_file_path_masker module<a class="headerlink" href="#custom-tools-development-tools-gpt-file-path-masker-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-custom_tools.development_tools.scan_arcpy_usage">
+<span id="custom-tools-development-tools-scan-arcpy-usage-module"></span><h2>custom_tools.development_tools.scan_arcpy_usage module<a class="headerlink" href="#module-custom_tools.development_tools.scan_arcpy_usage" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.Occurrence">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.scan_arcpy_usage.</span></span><span class="sig-name descname"><span class="pre">Occurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/development_tools/scan_arcpy_usage.html#Occurrence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.Occurrence" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.Occurrence.file">
+<span class="sig-name descname"><span class="pre">file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.Occurrence.file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.Occurrence.line">
+<span class="sig-name descname"><span class="pre">line</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.Occurrence.line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.iter_python_files">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.scan_arcpy_usage.</span></span><span class="sig-name descname"><span class="pre">iter_python_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_git</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/custom_tools/development_tools/scan_arcpy_usage.html#iter_python_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.iter_python_files" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.scan_file">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.scan_arcpy_usage.</span></span><span class="sig-name descname"><span class="pre">scan_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#custom_tools.development_tools.scan_arcpy_usage.Occurrence" title="custom_tools.development_tools.scan_arcpy_usage.Occurrence"><span class="pre">Occurrence</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/custom_tools/development_tools/scan_arcpy_usage.html#scan_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.scan_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.scan_arcpy_usage.main">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.scan_arcpy_usage.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/custom_tools/development_tools/scan_arcpy_usage.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.scan_arcpy_usage.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </section>
 <section id="module-custom_tools.development_tools">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-custom_tools.development_tools" title="Link to this heading"></a></h2>

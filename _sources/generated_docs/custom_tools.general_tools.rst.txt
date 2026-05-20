@@ -52,10 +52,26 @@ custom\_tools.general\_tools.isolated\_line\_remover module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.line\_segmenter module
+---------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.line_segmenter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.line\_to\_buffer\_symbology module
 ---------------------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.line_to_buffer_symbology
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+custom\_tools.general\_tools.line\_topology module
+--------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.line_topology
    :members:
    :show-inheritance:
    :undoc-members:

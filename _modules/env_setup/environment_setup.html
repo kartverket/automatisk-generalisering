@@ -178,6 +178,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">XY_TOLERANCE</span> <span class="o">=</span> <span class="mf">0.02</span>
+    <span class="n">XY_RESOLUTION</span> <span class="o">=</span> <span class="mf">0.01</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -198,8 +200,8 @@
         <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">outputCoordinateSystem</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span>
         <span class="p">)</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span> <span class="o">=</span> <span class="s2">&quot;0.02 Meters&quot;</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span> <span class="o">=</span> <span class="s2">&quot;0.01 Meters&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">XY_TOLERANCE</span><span class="si">}</span><span class="s2"> Meters&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">XY_RESOLUTION</span><span class="si">}</span><span class="s2"> Meters&quot;</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">parallelProcessingFactor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">cpu_percentage</span>
 
         <span class="n">ArcGisEnvironmentSetup</span><span class="o">.</span><span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">True</span>
