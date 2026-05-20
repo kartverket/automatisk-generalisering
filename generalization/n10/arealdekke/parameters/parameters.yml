@@ -101,7 +101,32 @@ BuffSmallPolygonSegments:
   description:
     - Buffs parts of polygons that are below a specified minimum value.
   N10:
-    min_width: {"ElvFlate":6, "Innsjo":6}
+    min_width: {
+      "Alpinbakke": 6,
+      "Bebygd": 10,
+      "Bergverk": 6,
+      "ElvFlate": 6,
+      "Golfbane": 6,
+      "GravUrnelund": 6,
+      "Grøntområde": 6,
+      "Hav": 6,
+      "Høyblokkbebyggelse": 10,
+      "IdrettsOmr": 6,
+      "Industri": 20,
+      "Innmarksbeite": 6,
+      "Innsjo": 6,
+      "InnsjoRegulert": 6,
+      "Jordbruk": 6,
+      "Kanal": 6,
+      "LufthavnOmr": 10,
+      "Myr": 6,
+      "Park": 6,
+      "Parkering": 6,
+      "Skog": 6,
+      "Snaumark": 6,
+      "Snøisbre": 20,
+      "TekniskAnlegg": 6
+    }
 
 
 SmallFeatures:
