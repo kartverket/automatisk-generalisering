@@ -1,5 +1,4 @@
 import arcpy
-import config
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology
@@ -12,17 +11,17 @@ from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
+from input_data.input_orchestrator import InputDataOrchestrator
 
 # Importing environment settings
 from env_setup import environment_setup
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_symbology
 
 
 @timing_decorator
-def main():
+def main(data_orc: InputDataOrchestrator):
     """
     What:
         This script processes spatial data to resolve conflicts between building polygons and nearby
@@ -46,8 +45,8 @@ def main():
     """
 
     environment_setup.main()
-    hospital_church_points_to_squares()
-    resolve_building_conflicts_polygon()
+    hospital_church_points_to_squares(data_orc=data_orc)
+    resolve_building_conflicts_polygon(data_orc=data_orc)
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
     check_if_building_polygons_are_big_enough()
@@ -55,7 +54,7 @@ def main():
 
 
 @timing_decorator
-def hospital_church_points_to_squares():
+def hospital_church_points_to_squares(data_orc: InputDataOrchestrator):
     """
     Selects hospital and church points, processes them into squares, and applies the appropriate symbology.
     """
@@ -98,12 +97,12 @@ def hospital_church_points_to_squares():
     # Applying symbology to polygonprocessed hospital and churches
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.building_polygon.value,
+        in_symbology_layer=data_orc.get_symbology("bygning_areal"),
         output_name=Building_N100.polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx.value,
     )
 
 
-def resolve_building_conflicts_polygon():
+def resolve_building_conflicts_polygon(data_orc: InputDataOrchestrator):
     """RBC = ResolveBuildingConflicts"""
 
     building = "building"
@@ -176,44 +175,44 @@ def resolve_building_conflicts_polygon():
         logic_config.SymbologyLayerSpec(
             unique_name=building,
             input_feature=core_config.InjectIO(object=building, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.building_polygon.value,
+            input_lyrx=data_orc.get_symbology("bygning_areal"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            input_lyrx=data_orc.get_symbology("vei_buffer"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
             input_feature=core_config.InjectIO(object=railroad, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.railway.value,
+            input_lyrx=data_orc.get_symbology("jernbane"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad_station,
             input_feature=core_config.InjectIO(object=railroad_station, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            input_lyrx=data_orc.get_symbology("vei_buffer"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
             input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            input_lyrx=data_orc.get_symbology("begrensnings_kurve_buffer"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=power_grid_lines,
             input_feature=core_config.InjectIO(object=power_grid_lines, tag="input"),
-            input_lyrx=config.symbology_samferdsel,
+            input_lyrx=data_orc.get_symbology("samferdsel"),
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=hospital_churches,
             input_feature=core_config.InjectIO(object=hospital_churches, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.building_polygon.value,
+            input_lyrx=data_orc.get_symbology("bygning_areal"),
             grouped_lyrx=False,
         ),
     ]

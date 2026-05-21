@@ -1,6 +1,22 @@
 # Importing packages
 import arcpy
-import config
+
+# Importing custom input files modules
+from input_data import (
+    input_area,
+    input_building,
+    input_matrikkel,
+    input_railway,
+    input_road,
+)
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
+
+# Importing custom modules
+from file_manager.n100.file_manager_buildings import Building_N100
+from file_manager.n100.file_manager_roads import Road_N100
+from env_setup import environment_setup
+from paths import require
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology, N100_Values
@@ -20,13 +36,9 @@ from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
 
-# Importing custom input files modules
-from input_data import input_n50, input_n100, input_other, input_roads
-from input_data.input_symbology import SymbologyN100
-
 
 @timing_decorator
-def main():
+def main() -> InputDataOrchestrator:
     """
     What:
         Prepares the input data for future building generalization processes, does spatial selections and coverts.
@@ -58,11 +70,16 @@ def main():
         Prepares the input data and files used in future processing steps.
     """
 
+    AREA_SELECTOR = "navn IN ('Kvitsøy')"
+    SCALE = "n100"
+
     environment_setup.main()
-    data_selection()
+    data_orc: InputDataOrchestrator = data_selection(
+        area_selector=AREA_SELECTOR, map_scale=SCALE
+    )
     begrensningskurve_land_and_water_bodies()
     unsplit_roads_and_make_buffer()
-    railway_station_points_to_polygons()
+    railway_station_points_to_polygons(data_orc=data_orc)
     selecting_power_grid_lines()
     selecting_urban_areas_by_sql()
     adding_matrikkel_points_to_areas_that_are_no_longer_urban()
@@ -72,9 +89,11 @@ def main():
     reclassifying_polygon_values()
     polygon_selections_based_on_size()
 
+    return data_orc
+
 
 @timing_decorator
-def data_selection():
+def data_selection(area_selector: str, map_scale: str) -> InputDataOrchestrator:
     """
     What:
         Selects and copies the input data for the building generalization process.
@@ -86,30 +105,43 @@ def data_selection():
         Makes sure that the input data is never modified, and that all future I/O's use the same paths regardless if
         the script is run for global data or smaller subselection for logic testing.
     """
-    print(input_roads.road_output_1)
-    input_output_file_dict = {
-        input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
-        input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        input_n100.VegSti: Building_N100.data_selection___road_n100_input_data___n100_building.value,
-        input_n100.JernbaneStasjon: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
-        input_n100.Bane: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        input_n50.ArealdekkeFlate: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
-        input_n50.BygningsPunkt: Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
-        input_n50.Grunnriss: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
-        input_n50.TuristHytte: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
-        input_other.matrikkel_bygningspunkt: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
-        Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value: Building_N100.data_selection___displacement_feature___n100_building.value,
-        input_n100.AnleggsLinje: Building_N100.data_selection___anleggslinje___n100_building.value,
-    }
+    data_orc = InputDataOrchestrator(map_scale=map_scale)
 
-    small_local_selection = "navn IN ('Asker', 'Oslo', 'Ringerike')"
-    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
+    for dataset in [
+        input_area,
+        input_building,
+        input_matrikkel,
+        input_railway,
+        input_road,
+    ]:
+        data_orc.set_input_dataset(dataset=dataset)
+
+    area: DatasetNamespace = data_orc.get_dataset("AREA")
+    building: DatasetNamespace = data_orc.get_dataset("BUILDING")
+    matrikkel: DatasetNamespace = data_orc.get_dataset("MATRIKKEL")
+    railway: DatasetNamespace = data_orc.get_dataset("RAILWAY")
+    road: DatasetNamespace = data_orc.get_dataset("ROAD")
+
+    input_output_file_dict = {
+        area.Begrensningskurve_N50: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        area.ArealdekkeFlate_N50: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        road.VegSti_N50: Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        railway.JernbaneStasjon_N50: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        railway.Bane_N50: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        area.ArealdekkeFlate_N10: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
+        building.BygningsPunkt_N10: Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        building.Grunnriss_N10: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        building.TuristHytte_N10: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        matrikkel.bygning: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value: Building_N100.data_selection___displacement_feature___n100_building.value,
+        building.AnleggsLinje_N50: Building_N100.data_selection___anleggslinje___n100_building.value,
+    }
 
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
-        selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=small_local_selection,
-        select_local=config.select_study_area,
+        selecting_file=area.AdminFlate_N50,
+        selecting_sql_expression=area_selector,
+        select_local=require("SELECT_STUDY_AREA"),
     )
 
     selector.run()
@@ -128,10 +160,6 @@ def data_selection():
         "anleggslinje": Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
-    data_validation = GeometryValidator(
-        input_features=input_features_validation,
-        output_table_path=Building_N100.data_preparation___geometry_validation___n100_building.value,
-    )
     # data_validation.check_repair_sequence()
 
     begrensningskurve = "begrensningskurve"
@@ -218,17 +246,7 @@ def data_selection():
         },
     }
 
-    # partiotion_data_validation = PartitionIterator(
-    #     alias_path_data=inputs,
-    #     alias_path_outputs=outputs,
-    #     custom_functions=[process_data_validation],
-    #     root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-    #     dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-    #     feature_count="5000",
-    #     delete_final_outputs=False,
-    # )
-
-    # partiotion_data_validation.run()
+    return data_orc
 
 
 @timing_decorator
@@ -350,7 +368,7 @@ def unsplit_roads_and_make_buffer():
 
 
 @timing_decorator
-def railway_station_points_to_polygons():
+def railway_station_points_to_polygons(data_orc: InputDataOrchestrator):
     """
     Transforms the train station points to polygons representing their symbology size.
     """
@@ -388,7 +406,7 @@ def railway_station_points_to_polygons():
     # Applying symbology to polygonprocessed railwaystations
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-        in_symbology_layer=SymbologyN100.railway_station_squares.value,
+        in_symbology_layer=data_orc.get_symbology(symbology_name="jernbanestasjon"),
         output_name=Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
     )
 

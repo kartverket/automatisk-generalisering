@@ -3,7 +3,7 @@ import random
 from multiprocessing import Pool, cpu_count
 
 import arcpy
-import config
+from paths import require
 import numpy as np
 
 from constants.n100_constants import N100_Symbology
@@ -68,7 +68,7 @@ class PolygonProcessor:
         self.origin_id_field = None
 
         # Constants and configurations
-        self.IN_MEMORY_WORKSPACE = config.default_project_workspace
+        self.IN_MEMORY_WORKSPACE = require("DEFAULT_PROJECT_WORKSPACE")
         self.TEMPORARY_FEATURE_CLASS_NAME = "temporary_polygon_feature_class"
         self.BATCH_PERCENTAGE = None
         self.NUMBER_OF_SUBSETS = None

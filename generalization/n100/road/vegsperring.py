@@ -6,7 +6,7 @@ arcpy.env.overwriteOutput = True
 # Importing custom modules
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_roads import Road_N100
-from input_data import input_n100
+from input_data.input_datasets import DatasetNamespace
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
@@ -45,7 +45,7 @@ for example, a forest having a small gap in the middle. The road has a roadblock
 
 
 @timing_decorator
-def remove_roadblock():
+def remove_roadblock(data: DatasetNamespace):
     """
     Identifies every road having some kind of roadblock 2 m from the
     centre line and marks them with either "ja" (yes) or "nei" (no).
@@ -97,7 +97,7 @@ def remove_roadblock():
 
     # Create layer with urban areas
     arcpy.management.MakeFeatureLayer(
-        in_features=input_n100.ArealdekkeFlate,
+        in_features=data.ArealdekkeFlate_N50,
         out_layer="urban_areas_lyr",
         where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')",
     )

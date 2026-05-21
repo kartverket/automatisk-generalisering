@@ -1,7 +1,3 @@
-# Importing modules
-
-# Importing custom files
-
 # Import custom modules
 # Importing general packages
 import arcpy
@@ -9,20 +5,19 @@ import arcpy
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology
 
-# Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
 
-# Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data.input_symbology import SymbologyN100
+
+from input_data.input_orchestrator import InputDataOrchestrator
 
 
 @timing_decorator
-def main():
+def main(data_orc: InputDataOrchestrator):
     """
     What:
         Resolves graphic conflicts and overlaps between building features which persist after RBC,
@@ -73,7 +68,7 @@ def main():
     polygons_overlapping_roads_to_points()
     adding_new_hierarchy_value_to_points()
     remove_points_that_are_overlapping_roads()
-    detecting_graphic_conflicts()
+    detecting_graphic_conflicts(data_orc=data_orc)
     selecting_points_close_to_graphic_conflict_polygons()
     finding_clusters_amongst_the_points()
     selecting_points_in_a_cluster_and_not_in_a_cluster()
@@ -293,13 +288,13 @@ def remove_points_that_are_overlapping_roads():
 
 
 @timing_decorator
-def detecting_graphic_conflicts():
+def detecting_graphic_conflicts(data_orc: InputDataOrchestrator):
     """
     Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
     """
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
-        in_symbology_layer=SymbologyN100.building_point.value,
+        in_symbology_layer=data_orc.get_symbology("bygningspunkt"),
         output_name=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building_lyrx.value,
     )
 
@@ -472,7 +467,3 @@ def merging_final_points_together():
         ],
         output=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
     )
-
-
-if __name__ == "__main__":
-    main()

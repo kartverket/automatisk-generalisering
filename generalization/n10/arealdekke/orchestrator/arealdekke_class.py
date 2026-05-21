@@ -44,13 +44,19 @@ from generalization.n10.arealdekke.overall_tools.small_features_changer import (
     change_attribute_value_main,
 )
 
+from input_data.input_orchestrator import InputDataOrchestrator
+
 arcpy.env.overwriteOutput = True
 
 
 class Arealdekke:
 
     def __init__(
-        self, input_data: str, map_scale: str, only_keep_final_output: bool = False
+        self,
+        input_data: str,
+        data_orc: InputDataOrchestrator,
+        map_scale: str,
+        only_keep_final_output: bool = False,
     ) -> None:
         """
         What:
@@ -98,6 +104,8 @@ class Arealdekke:
                 file_name="intermediate_fixed_fc", file_type="gdb"
             ),
         }
+
+        self.data_orc: InputDataOrchestrator = data_orc
 
         # Fetches history if it exists
         self.program_history: History_class = History_class(
@@ -405,12 +413,12 @@ class Arealdekke:
             # Feature classes
             for fc in arcpy.ListFeatureClasses():
                 if fc not in keep:
-                    arcpy.Delete_management(fc)
+                    arcpy.management.Delete(fc)
 
             # Tabels
             for tbl in arcpy.ListTables():
                 if tbl not in keep:
-                    arcpy.Delete_management(tbl)
+                    arcpy.management.Delete(tbl)
 
         self.program_history.delete_history()
 
@@ -528,6 +536,7 @@ class Arealdekke:
             lambda: arealdekke_dissolver(
                 input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.dissolve_arealdekke.value,
+                data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
             lambda: island_controller(
@@ -558,6 +567,7 @@ class Arealdekke:
             lambda: arealdekke_dissolver(
                 input_fc=self.final_categories_fc,
                 output_fc=self.final_output_fc,
+                data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
         ]

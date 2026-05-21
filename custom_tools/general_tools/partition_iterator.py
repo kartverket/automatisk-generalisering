@@ -1888,6 +1888,8 @@ class PartitionIterator:
                 iteration_partition=iteration_partition, object_id=partition_id
             )
 
+            inputs_present_in_partition = False
+
             try:
                 self._append_iteration_partition_to_output(
                     iteration_partition=iteration_partition, partition_id=partition_id

@@ -374,7 +374,7 @@ def fetch_data(files: dict, area: list = None) -> None:
         ("railroad_lyr", input_n50.Bane, None, files["out_of_bounds_polylines"], False),
         (
             "road_lyr",
-            input_roads.road_output_1,
+            input_road.road_output_1,
             None,
             files["out_of_bounds_polylines"],
             True,

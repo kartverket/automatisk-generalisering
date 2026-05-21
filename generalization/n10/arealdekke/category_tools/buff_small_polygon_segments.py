@@ -14,7 +14,6 @@ from generalization.n10.arealdekke.overall_tools.overlap_merger import (
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     buff_small_polygon_segments_parameters,
 )
-from input_data import input_n10
 
 arcpy.env.overwriteOutput = True
 

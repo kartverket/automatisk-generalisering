@@ -39,7 +39,7 @@ def main():
 @timing_decorator
 def adding_fields_to_roads():
     arcpy.management.CopyFeatures(
-        input_roads.roads,
+        input_road.roads,
         Road_N100.testing_file___roads_copy___n100_road.value,
     )
     arcpy.management.AddFields(
