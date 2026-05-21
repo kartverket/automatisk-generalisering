@@ -1,6 +1,4 @@
 from datetime import datetime
-from pathlib import Path
-from pathlib import Path
 
 import arcpy
 

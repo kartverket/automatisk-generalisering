@@ -351,7 +351,7 @@ class ArealdekkeDissolver:
 
 
 def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
-    identity = "in_memory\\arealdekke_identity"
+    identity = Arealdekke_N10.identity.value
 
     fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
 
@@ -376,7 +376,7 @@ def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
 def partition_call(
     input_fc: str, output_fc: str, data_orc: InputDataOrchestrator, map_scale: str
 ):
-    identity = "in_memory\\arealdekke_identity"
+    identity = Arealdekke_N10.identity.value
 
     fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
 
