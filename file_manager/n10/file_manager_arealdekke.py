@@ -34,6 +34,10 @@ class Arealdekke_N10(Enum):
     #                     arealdekke dissolver
     # ========================================
 
+    identity = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="identity"
+    )
+
     dissolve_arealdekke_root = file_manager.generate_file_name_gdb(
         script_source_name=dissolve_file, description="dissolve_arealdekke_root"
     )

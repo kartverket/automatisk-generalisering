@@ -258,17 +258,17 @@ class EliminateSmallPolygons:
             arcpy.management.MakeFeatureLayer(
                 in_features=temp_in, out_layer=layer, where_clause=where_clause
             )
-            if arcpy.Exists(rf"{self.files["eliminated_polygons"]}{run}"):
+            if arcpy.Exists(rf"{self.files['eliminated_polygons']}{run}"):
                 arcpy.management.CopyFeatures(
-                    layer, rf"{self.files["eliminated_polygons"]}_tmp"
+                    layer, rf"{self.files['eliminated_polygons']}_tmp"
                 )
                 arcpy.management.Append(
-                    rf"{self.files["eliminated_polygons"]}_tmp",
-                    rf"{self.files["eliminated_polygons"]}{run}",
+                    rf"{self.files['eliminated_polygons']}_tmp",
+                    rf"{self.files['eliminated_polygons']}{run}",
                 )
             else:
                 arcpy.management.CopyFeatures(
-                    layer, rf"{self.files["eliminated_polygons"]}{run}"
+                    layer, rf"{self.files['eliminated_polygons']}{run}"
                 )
 
             arcpy.management.Eliminate(

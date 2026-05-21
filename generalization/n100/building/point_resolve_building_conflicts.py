@@ -1,6 +1,4 @@
 # Importing custom files
-import config
-
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_Symbology, N100_Values
 
@@ -15,13 +13,11 @@ from custom_tools.generalization_tools.building.resolve_building_conflicts impor
 )
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_symbology
-
-iteration_fc = config.resolve_building_conflicts_iteration_feature
+from input_data.input_orchestrator import InputDataOrchestrator
 
 
 @timing_decorator
-def main():
+def main(data_orc: InputDataOrchestrator):
     """
     This script resolves building conflicts, both building polygons and points
     """
@@ -29,7 +25,7 @@ def main():
     transforming_points_squares()
     fixing_potential_geometry_errors()
 
-    resolve_building_conflicts()
+    resolve_building_conflicts(data_orc=data_orc)
 
 
 def transforming_points_squares():
@@ -61,7 +57,7 @@ def fixing_potential_geometry_errors():
     data_validation.check_repair_sequence()
 
 
-def resolve_building_conflicts():
+def resolve_building_conflicts(data_orc: InputDataOrchestrator):
     building_points = "building_points"
     building_polygons = "building_polygons"
 
@@ -132,45 +128,45 @@ def resolve_building_conflicts():
         logic_config.SymbologyLayerSpec(
             unique_name=building_points,
             input_feature=core_config.InjectIO(object=building_points, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.squares.value,
+            input_lyrx=data_orc.get_symbology("vei_buffer"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=building_polygons,
             input_feature=core_config.InjectIO(object=building_polygons, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.building_polygon.value,
+            input_lyrx=data_orc.get_symbology("bygning_areal"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=config.symbology_samferdsel,
+            input_lyrx=data_orc.get_symbology("samferdsel"),
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railway,
             input_feature=core_config.InjectIO(object=railway, tag="input"),
-            input_lyrx=config.symbology_samferdsel,
+            input_lyrx=data_orc.get_symbology("samferdsel"),
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railway_station,
             input_feature=core_config.InjectIO(object=railway_station, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.railway_station_squares.value,
+            input_lyrx=data_orc.get_symbology("jernbanestasjon"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
             input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            input_lyrx=data_orc.get_symbology("begrensnings_kurve_buffer"),
             grouped_lyrx=False,
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=power_grid_lines,
             input_feature=core_config.InjectIO(object=power_grid_lines, tag="input"),
-            input_lyrx=config.anleggslinje,
+            input_lyrx=data_orc.get_symbology("anleggslinje"),
             grouped_lyrx=False,
         ),
     ]

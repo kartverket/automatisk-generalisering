@@ -1,6 +1,10 @@
 # Importing packages
 import arcpy
-import config
+
+# Importing custom input files modules
+from input_data import input_area, input_building, input_railway, input_road
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 from composition_configs import core_config, logic_config, type_defs
 from constants.n100_constants import (
@@ -13,6 +17,9 @@ from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
+from custom_tools.general_tools.geometry_tools import GeometryValidator
+from custom_tools.general_tools import custom_arcpy, file_utilities
+from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.remove_road_triangles import (
     generalize_road_triangles,
@@ -26,7 +33,13 @@ from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing custom modules
+from paths import require
 from file_manager.n100.file_manager_roads import Road_N100
+from constants.n100_constants import (
+    FieldNames,
+    NvdbAlias,
+    MediumAlias,
+)
 from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
     categories_major_road_crossings,
@@ -40,25 +53,31 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 
-# Importing custom input files modules
-from input_data import input_n100, input_roads
-from input_data.input_symbology import SymbologyN100
-
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
+SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
 
-AREA_SELECTOR = "navn IN ('Oslo', 'Hamar')"
+AREA_SELECTOR = "navn IN ('Kvitsøy')"
 SCALE = "n100"
+
+SEARCH_DISTANCE = 5000
+OBJECT_LIMIT = 100_000
 
 
 @timing_decorator
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation(AREA_SELECTOR)
+
+    data_orc = InputDataOrchestrator(map_scale=SCALE)
+
+    area_data, building_data = data_selection_and_validation(
+        area_selection=AREA_SELECTOR, data_orc=data_orc
+    )
+
     reclassify_medium()
     categories_major_road_crossings()
     generalize_roundabouts()
-    remove_roadblock()
+    remove_roadblock(data=area_data)
     trim_road_details()
     ramp_points()
     admin_boarder()
@@ -69,10 +88,10 @@ def main():
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
-    generalize_road_triangles(SCALE)
-    pre_resolve_road_conflicts(AREA_SELECTOR)
-    resolve_road_conflicts()
-    generalize_dam()
+    generalize_road_triangles(scale=SCALE)
+    pre_resolve_road_conflicts(area_selection=AREA_SELECTOR, area_data=area_data)
+    resolve_road_conflicts(data_orc=data_orc)
+    generalize_dam(area_data=area_data, building_data=building_data)
     final_output()
     final_ramp_points()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
@@ -82,31 +101,30 @@ def main():
         )
 
 
-SEARCH_DISTANCE = 5000
-OBJECT_LIMIT = 100_000
-
-
 @timing_decorator
-def data_selection_and_validation(area_selection: str):
-    """
-    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Hole')"
-    small_plot_area = "navn IN ('Oslo', 'Ringerike')"
-    smallest_plot_area = "navn IN ('Ringerike')"
-    presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
-    """
+def data_selection_and_validation(
+    area_selection: str, data_orc: InputDataOrchestrator
+) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
+
+    for data in [input_area, input_building, input_railway, input_road]:
+        data_orc.set_input_dataset(data)
+
+    area: DatasetNamespace = data_orc.get_dataset("AREA")
+    building: DatasetNamespace = data_orc.get_dataset("BUILDING")
+    road: DatasetNamespace = data_orc.get_dataset("ROAD")
+    railway: DatasetNamespace = data_orc.get_dataset("RAILWAY")
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
-            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
-            input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
-            input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
-            input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
+            road.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            road.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
+            railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
+            area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
+            area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
-        selecting_file=input_n100.AdminFlate,
+        selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
-        select_local=config.select_study_area,
+        select_local=SELECT_STUDY_AREA,
     )
 
     selector.run()
@@ -121,6 +139,8 @@ def data_selection_and_validation(area_selection: str):
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
+
+    return area, building
 
 
 def reclassify_medium():
@@ -607,11 +627,12 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts(area_selection: str):
+def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace):
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
         area_selection=area_selection,
+        area=area_data,
     )
 
     split_polyline_featureclass(
@@ -648,7 +669,7 @@ def pre_resolve_road_conflicts(area_selection: str):
     road_data_validation.check_repair_sequence()
 
 
-def resolve_road_conflicts():
+def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
     road_hierarchy = """def Reclass(vegklasse, typeveg):
         if typeveg in ('bilferje', 'ramps'):
@@ -726,25 +747,29 @@ def resolve_road_conflicts():
     )
 
     # --- Symbology specs -------------------------------------------------------
+    symbology_samferdsel = data_orc.get_symbology("samferdsel")
+    symbology_begrensnings_kurve_line = data_orc.get_symbology(
+        "begrensnings_kurve_line"
+    )
     rrc_specs = [
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=symbology_samferdsel,
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
             input_feature=core_config.InjectIO(object=railroad, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=symbology_samferdsel,
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
             input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
-            input_lyrx=SymbologyN100.begrensnings_kurve_line.value,
+            input_lyrx=symbology_begrensnings_kurve_line,
             grouped_lyrx=False,
         ),
     ]

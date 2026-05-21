@@ -9,7 +9,6 @@ arcpy.env.overwriteOutput = True
 
 from collections import Counter
 
-from config import attribute_csv_file
 from tqdm import tqdm
 
 from composition_configs import core_config, logic_config
@@ -21,7 +20,6 @@ from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     load_rules,
     sort_results,
 )
-from input_data import input_n100
 
 # ========================
 # Program

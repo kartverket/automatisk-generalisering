@@ -70,7 +70,7 @@ def kommune_buffer():
 @timing_decorator
 def elveg_and_sti_kommune():
     arcpy.analysis.Clip(
-        in_features=input_roads.vegsenterlinje,
+        in_features=input_road.vegsenterlinje,
         clip_features=Road_N100.test1___kommune_buffer___n100_road.value,
         out_feature_class=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
     )
