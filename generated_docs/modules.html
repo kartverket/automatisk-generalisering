@@ -60,6 +60,7 @@
 <li class="toctree-l2"><a class="reference internal" href="generalization.html">generalization package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html">input_data package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
 </ul>
 </li>
@@ -95,483 +96,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="composition_configs.html">composition_configs package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="composition_configs.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs.core_config">composition_configs.core_config module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.WorkFileConfig"><code class="docutils literal notranslate"><span class="pre">WorkFileConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.WorkFileConfig.root_file"><code class="docutils literal notranslate"><span class="pre">WorkFileConfig.root_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.WorkFileConfig.write_to_memory"><code class="docutils literal notranslate"><span class="pre">WorkFileConfig.write_to_memory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.WorkFileConfig.keep_files"><code class="docutils literal notranslate"><span class="pre">WorkFileConfig.keep_files</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputType"><code class="docutils literal notranslate"><span class="pre">InputType</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputType.PROCESSING"><code class="docutils literal notranslate"><span class="pre">InputType.PROCESSING</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputType.CONTEXT"><code class="docutils literal notranslate"><span class="pre">InputType.CONTEXT</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.DataType"><code class="docutils literal notranslate"><span class="pre">DataType</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.DataType.VECTOR"><code class="docutils literal notranslate"><span class="pre">DataType.VECTOR</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry"><code class="docutils literal notranslate"><span class="pre">InputEntry</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.object"><code class="docutils literal notranslate"><span class="pre">InputEntry.object</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.input_type"><code class="docutils literal notranslate"><span class="pre">InputEntry.input_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.data_type"><code class="docutils literal notranslate"><span class="pre">InputEntry.data_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.tag"><code class="docutils literal notranslate"><span class="pre">InputEntry.tag</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.path"><code class="docutils literal notranslate"><span class="pre">InputEntry.path</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.processing_input"><code class="docutils literal notranslate"><span class="pre">InputEntry.processing_input()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InputEntry.context_input"><code class="docutils literal notranslate"><span class="pre">InputEntry.context_input()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry"><code class="docutils literal notranslate"><span class="pre">OutputEntry</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry.object"><code class="docutils literal notranslate"><span class="pre">OutputEntry.object</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry.data_type"><code class="docutils literal notranslate"><span class="pre">OutputEntry.data_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry.tag"><code class="docutils literal notranslate"><span class="pre">OutputEntry.tag</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry.path"><code class="docutils literal notranslate"><span class="pre">OutputEntry.path</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.OutputEntry.vector_output"><code class="docutils literal notranslate"><span class="pre">OutputEntry.vector_output()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO"><code class="docutils literal notranslate"><span class="pre">InjectIO</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO.object"><code class="docutils literal notranslate"><span class="pre">InjectIO.object</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO.tag"><code class="docutils literal notranslate"><span class="pre">InjectIO.tag</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry.object"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry.object</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry.tag"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry.tag</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry.path"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry.path</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry.input_type"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry.input_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry.data_type"><code class="docutils literal notranslate"><span class="pre">ResolvedInputEntry.data_type</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry"><code class="docutils literal notranslate"><span class="pre">ResolvedOutputEntry</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry.object"><code class="docutils literal notranslate"><span class="pre">ResolvedOutputEntry.object</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry.tag"><code class="docutils literal notranslate"><span class="pre">ResolvedOutputEntry.tag</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry.path"><code class="docutils literal notranslate"><span class="pre">ResolvedOutputEntry.path</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry.data_type"><code class="docutils literal notranslate"><span class="pre">ResolvedOutputEntry.data_type</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionInputConfig"><code class="docutils literal notranslate"><span class="pre">PartitionInputConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionInputConfig.entries"><code class="docutils literal notranslate"><span class="pre">PartitionInputConfig.entries</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionOutputConfig"><code class="docutils literal notranslate"><span class="pre">PartitionOutputConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionOutputConfig.entries"><code class="docutils literal notranslate"><span class="pre">PartitionOutputConfig.entries</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionIOConfig"><code class="docutils literal notranslate"><span class="pre">PartitionIOConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionIOConfig.input_config"><code class="docutils literal notranslate"><span class="pre">PartitionIOConfig.input_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionIOConfig.output_config"><code class="docutils literal notranslate"><span class="pre">PartitionIOConfig.output_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionIOConfig.documentation_directory"><code class="docutils literal notranslate"><span class="pre">PartitionIOConfig.documentation_directory</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionMethod"><code class="docutils literal notranslate"><span class="pre">PartitionMethod</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionMethod.FEATURES"><code class="docutils literal notranslate"><span class="pre">PartitionMethod.FEATURES</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionMethod.VERTICES"><code class="docutils literal notranslate"><span class="pre">PartitionMethod.VERTICES</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.FuncMethodEntryConfig"><code class="docutils literal notranslate"><span class="pre">FuncMethodEntryConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.FuncMethodEntryConfig.func"><code class="docutils literal notranslate"><span class="pre">FuncMethodEntryConfig.func</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.FuncMethodEntryConfig.params"><code class="docutils literal notranslate"><span class="pre">FuncMethodEntryConfig.params</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig"><code class="docutils literal notranslate"><span class="pre">ClassMethodEntryConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig.class_"><code class="docutils literal notranslate"><span class="pre">ClassMethodEntryConfig.class_</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig.method"><code class="docutils literal notranslate"><span class="pre">ClassMethodEntryConfig.method</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig.init_params"><code class="docutils literal notranslate"><span class="pre">ClassMethodEntryConfig.init_params</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig.method_params"><code class="docutils literal notranslate"><span class="pre">ClassMethodEntryConfig.method_params</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig"><code class="docutils literal notranslate"><span class="pre">MethodEntriesConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig.entries"><code class="docutils literal notranslate"><span class="pre">MethodEntriesConfig.entries</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig.max_elements_per_partition"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig.max_elements_per_partition</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig.context_radius_meters"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig.context_radius_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig.run_partition_optimization"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig.run_partition_optimization</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig.partition_method"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig.partition_method</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig.object_id_column"><code class="docutils literal notranslate"><span class="pre">PartitionRunConfig.object_id_column</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs.io_types">composition_configs.io_types module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs.logic_config">composition_configs.logic_config module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec.unique_name"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec.unique_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec.input_feature"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec.input_lyrx"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec.input_lyrx</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec.grouped_lyrx"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec.grouped_lyrx</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec.target_layer_name"><code class="docutils literal notranslate"><span class="pre">SymbologyLayerSpec.target_layer_name</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierRule"><code class="docutils literal notranslate"><span class="pre">BarrierRule</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierRule.name"><code class="docutils literal notranslate"><span class="pre">BarrierRule.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierRule.gap_meters"><code class="docutils literal notranslate"><span class="pre">BarrierRule.gap_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierRule.use_turn_orientation"><code class="docutils literal notranslate"><span class="pre">BarrierRule.use_turn_orientation</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierDefault"><code class="docutils literal notranslate"><span class="pre">BarrierDefault</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierDefault.gap_meters"><code class="docutils literal notranslate"><span class="pre">BarrierDefault.gap_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierDefault.use_turn_orientation"><code class="docutils literal notranslate"><span class="pre">BarrierDefault.use_turn_orientation</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierOverride"><code class="docutils literal notranslate"><span class="pre">BarrierOverride</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierOverride.gap_meters"><code class="docutils literal notranslate"><span class="pre">BarrierOverride.gap_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BarrierOverride.use_turn_orientation"><code class="docutils literal notranslate"><span class="pre">BarrierOverride.use_turn_orientation</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.input_data_structure"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.input_data_structure</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.output_building_polygons"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.output_building_polygons</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.output_collapsed_polygon_points"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.output_collapsed_polygon_points</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.building_unique_name"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.building_unique_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.barrier_default"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.barrier_default</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs.barrier_overrides"><code class="docutils literal notranslate"><span class="pre">RbcPolygonInitKwargs.barrier_overrides</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.input_data_structure"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.input_data_structure</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.building_points_unique_name"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.building_points_unique_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.building_polygons_unique_name"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.building_polygons_unique_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.building_gap_distance_m"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.building_gap_distance_m</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.output_points_after_rbc"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.output_points_after_rbc</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.output_polygons_after_rbc"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.output_polygons_after_rbc</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.building_symbol_dimension"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.building_symbol_dimension</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.barrier_default"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.barrier_default</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.barrier_overrides"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.barrier_overrides</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">RbcPointsInitKwargs.map_scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.input_begrensningskurve"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.input_begrensningskurve</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.input_land_cover_features"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.input_land_cover_features</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.output_begrensningskurve"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.output_begrensningskurve</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.water_feature_buffer_width"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.water_feature_buffer_width</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.water_barrier_buffer_width"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.water_barrier_buffer_width</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">BegrensningskurveLandWaterKwargs.work_file_manager_config</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.input_line"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.input_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.output_line"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.output_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.sql_selection_query"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.sql_selection_query</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.buffer_distance_factor"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.buffer_distance_factor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs.buffer_distance_addition"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs.buffer_distance_addition</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.input_road_line"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.input_road_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.input_building_points"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.input_building_points</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.input_line_barriers"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.input_line_barriers</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.output_building_points"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.output_building_points</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.sql_selection_query"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.sql_selection_query</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.building_symbol_dimension"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.building_symbol_dimension</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.displacement_distance_m"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.displacement_distance_m</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs.work_file_manager_config</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.input_road_line"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.input_road_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.output_road_line"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.output_road_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.minimum_length"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.minimum_length</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.invisibility_field_name"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.invisibility_field_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.hierarchy_field_name"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.hierarchy_field_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs.special_selection_sql"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs.special_selection_sql</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.input_line_feature"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.input_line_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.maximum_length"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.maximum_length</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.root_file"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.root_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.output_processed_feature"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.output_processed_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.hierarchy_field"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.hierarchy_field</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.write_to_memory"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.write_to_memory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs.keep_work_files"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs.keep_work_files</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesRunParams"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesRunParams</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesRunParams.scale"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesRunParams.scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CleanTrailsKwargs"><code class="docutils literal notranslate"><span class="pre">CleanTrailsKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CleanTrailsKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">CleanTrailsKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CleanTrailsKwargs.maximum_length"><code class="docutils literal notranslate"><span class="pre">CleanTrailsKwargs.maximum_length</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CleanTrailsKwargs.root_file"><code class="docutils literal notranslate"><span class="pre">CleanTrailsKwargs.root_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CleanTrailsKwargs.sql_expressions"><code class="docutils literal notranslate"><span class="pre">CleanTrailsKwargs.sql_expressions</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs.input_road_line"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs.input_road_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs.output_road_line"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs.output_road_line</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs.merge_distnace_m"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs.merge_distnace_m</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs.collapse_field_name"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs.collapse_field_name</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.input_data_structure"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.input_data_structure</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.primary_road_unique_name"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.primary_road_unique_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.output_road_feature"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.output_road_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.output_displacement_feature"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.output_displacement_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.map_scale</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RrcInitKwargs.hierarchy_field"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs.hierarchy_field</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs.input_line_feature"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs.input_line_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs.output_processed_feature"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs.output_processed_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs.dissolve_fields"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs.dissolve_fields</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DissolveInitKwargs.sql_expressions"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs.sql_expressions</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs.input_feature"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs.output_feature"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs.output_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs.index_column_name"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs.index_column_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ArealDekkeDissolverInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">ArealDekkeDissolverInitKwargs.map_scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs.input_feature"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs.output_feature"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs.output_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs.index_column_name"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs.index_column_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.GangSykkelDissolverInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">GangSykkelDissolverInitKwargs.map_scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs"><code class="docutils literal notranslate"><span class="pre">EliminateSmallPolygonsInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs.input_feature"><code class="docutils literal notranslate"><span class="pre">EliminateSmallPolygonsInitKwargs.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs.output_feature"><code class="docutils literal notranslate"><span class="pre">EliminateSmallPolygonsInitKwargs.output_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">EliminateSmallPolygonsInitKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">EliminateSmallPolygonsInitKwargs.map_scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectRiverLinesKwargs"><code class="docutils literal notranslate"><span class="pre">ConnectRiverLinesKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectRiverLinesKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">ConnectRiverLinesKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectRiverLinesKwargs.output_processed_feature"><code class="docutils literal notranslate"><span class="pre">ConnectRiverLinesKwargs.output_processed_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectRiverLinesKwargs.basin"><code class="docutils literal notranslate"><span class="pre">ConnectRiverLinesKwargs.basin</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveCyclesKwargs"><code class="docutils literal notranslate"><span class="pre">RemoveCyclesKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveCyclesKwargs.input_line_feature"><code class="docutils literal notranslate"><span class="pre">RemoveCyclesKwargs.input_line_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveCyclesKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RemoveCyclesKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RemoveCyclesKwargs.output_processed_feature"><code class="docutils literal notranslate"><span class="pre">RemoveCyclesKwargs.output_processed_feature</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RiverStrahlerKwargs"><code class="docutils literal notranslate"><span class="pre">RiverStrahlerKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RiverStrahlerKwargs.input_line_feature"><code class="docutils literal notranslate"><span class="pre">RiverStrahlerKwargs.input_line_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RiverStrahlerKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">RiverStrahlerKwargs.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RiverStrahlerKwargs.output_processed_feature"><code class="docutils literal notranslate"><span class="pre">RiverStrahlerKwargs.output_processed_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.RiverStrahlerKwargs.havflate_feature"><code class="docutils literal notranslate"><span class="pre">RiverStrahlerKwargs.havflate_feature</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EditMethod"><code class="docutils literal notranslate"><span class="pre">EditMethod</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EditMethod.AUTO"><code class="docutils literal notranslate"><span class="pre">EditMethod.AUTO</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EditMethod.FORCED_SNAP"><code class="docutils literal notranslate"><span class="pre">EditMethod.FORCED_SNAP</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EditMethod.FORCED_EXTEND"><code class="docutils literal notranslate"><span class="pre">EditMethod.FORCED_EXTEND</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EditMethod.NEW_LINE"><code class="docutils literal notranslate"><span class="pre">EditMethod.NEW_LINE</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope.NONE"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope.NONE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope.DIRECT_CONNECTION"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope.DIRECT_CONNECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope.INPUT_LINES"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope.INPUT_LINES</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope.ONE_DEGREE"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope.ONE_DEGREE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.ConnectivityScope.TRANSITIVE"><code class="docutils literal notranslate"><span class="pre">ConnectivityScope.TRANSITIVE</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineConnectivityMode"><code class="docutils literal notranslate"><span class="pre">LineConnectivityMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineConnectivityMode.ENDPOINTS"><code class="docutils literal notranslate"><span class="pre">LineConnectivityMode.ENDPOINTS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineConnectivityMode.INTERSECT"><code class="docutils literal notranslate"><span class="pre">LineConnectivityMode.INTERSECT</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleTargetMode"><code class="docutils literal notranslate"><span class="pre">AngleTargetMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleTargetMode.AUTO"><code class="docutils literal notranslate"><span class="pre">AngleTargetMode.AUTO</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleTargetMode.FORCE_NON_LINE"><code class="docutils literal notranslate"><span class="pre">AngleTargetMode.FORCE_NON_LINE</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs.input_feature"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs.output_feature"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs.output_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs.new_field"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs.new_field</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs.new_type"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs.new_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">AttributeChangerInitKwargs.work_file_manager_config</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LandUseInitKwargs"><code class="docutils literal notranslate"><span class="pre">LandUseInitKwargs</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LandUseInitKwargs.input_feature"><code class="docutils literal notranslate"><span class="pre">LandUseInitKwargs.input_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LandUseInitKwargs.output_feature"><code class="docutils literal notranslate"><span class="pre">LandUseInitKwargs.output_feature</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LandUseInitKwargs.map_scale"><code class="docutils literal notranslate"><span class="pre">LandUseInitKwargs.map_scale</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BestFitWeightsConfig"><code class="docutils literal notranslate"><span class="pre">BestFitWeightsConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BestFitWeightsConfig.distance"><code class="docutils literal notranslate"><span class="pre">BestFitWeightsConfig.distance</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BestFitWeightsConfig.angle"><code class="docutils literal notranslate"><span class="pre">BestFitWeightsConfig.angle</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.BestFitWeightsConfig.z"><code class="docutils literal notranslate"><span class="pre">BestFitWeightsConfig.z</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DiagnosticDetail"><code class="docutils literal notranslate"><span class="pre">DiagnosticDetail</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DiagnosticDetail.OFF"><code class="docutils literal notranslate"><span class="pre">DiagnosticDetail.OFF</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.DiagnosticDetail.FULL"><code class="docutils literal notranslate"><span class="pre">DiagnosticDetail.FULL</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsOutputConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig.line_changes_output"><code class="docutils literal notranslate"><span class="pre">FillLineGapsOutputConfig.line_changes_output</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig.write_output_metadata"><code class="docutils literal notranslate"><span class="pre">FillLineGapsOutputConfig.write_output_metadata</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig.candidate_connections_output"><code class="docutils literal notranslate"><span class="pre">FillLineGapsOutputConfig.candidate_connections_output</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsOutputConfig.diagnostic_detail"><code class="docutils literal notranslate"><span class="pre">FillLineGapsOutputConfig.diagnostic_detail</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.angle_block_threshold_degrees"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.angle_block_threshold_degrees</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.angle_extra_dangle_threshold_degrees"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.angle_extra_dangle_threshold_degrees</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.line_alignment_weight"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.line_alignment_weight</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.best_fit_weights"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.best_fit_weights</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.angle_local_half_window_m"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.angle_local_half_window_m</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.connect_to_features_angle_mode"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.connect_to_features_angle_mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.lines_are_directed"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.lines_are_directed</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAngleConfig.connector_angle_diff_required_above_meters"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAngleConfig.connector_angle_diff_required_above_meters</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsZConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsZConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsZConfig.raster_paths"><code class="docutils literal notranslate"><span class="pre">FillLineGapsZConfig.raster_paths</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsZConfig.z_drop_threshold"><code class="docutils literal notranslate"><span class="pre">FillLineGapsZConfig.z_drop_threshold</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsCrossingConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsCrossingConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsCrossingConfig.reject_crossing_connectors"><code class="docutils literal notranslate"><span class="pre">FillLineGapsCrossingConfig.reject_crossing_connectors</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsCrossingConfig.crossing_check_spatial_reference"><code class="docutils literal notranslate"><span class="pre">FillLineGapsCrossingConfig.crossing_check_spatial_reference</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsCrossingConfig.barrier_layers"><code class="docutils literal notranslate"><span class="pre">FillLineGapsCrossingConfig.barrier_layers</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConnectivityConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConnectivityConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConnectivityConfig.connectivity_scope"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConnectivityConfig.connectivity_scope</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConnectivityConfig.connectivity_tolerance_meters"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConnectivityConfig.connectivity_tolerance_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConnectivityConfig.line_connectivity_mode"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConnectivityConfig.line_connectivity_mode</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig.edit_method"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig.edit_method</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig.increased_tolerance_edge_case_distance_meters"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig.increased_tolerance_edge_case_distance_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig.require_mutual_dangle_preference_for_bonus"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig.require_mutual_dangle_preference_for_bonus</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig.candidate_closest_count"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig.candidate_closest_count</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsAdvancedConfig.connectivity_closest_count"><code class="docutils literal notranslate"><span class="pre">FillLineGapsAdvancedConfig.connectivity_closest_count</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationMode"><code class="docutils literal notranslate"><span class="pre">SegmentationMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationMode.EVEN"><code class="docutils literal notranslate"><span class="pre">SegmentationMode.EVEN</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationMode.FIXED"><code class="docutils literal notranslate"><span class="pre">SegmentationMode.FIXED</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationConfig"><code class="docutils literal notranslate"><span class="pre">SegmentationConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationConfig.interval_meters"><code class="docutils literal notranslate"><span class="pre">SegmentationConfig.interval_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationConfig.mode"><code class="docutils literal notranslate"><span class="pre">SegmentationConfig.mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.SegmentationConfig.tail_tolerance_meters"><code class="docutils literal notranslate"><span class="pre">SegmentationConfig.tail_tolerance_meters</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.input_lines"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.input_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.output_lines"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.output_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.work_file_manager_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.work_file_manager_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.gap_tolerance_meters"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.gap_tolerance_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.connect_to_features"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.connect_to_features</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.fill_gaps_on_self"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.fill_gaps_on_self</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.best_fit_weights"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.best_fit_weights</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.output_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.output_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.angle_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.angle_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.z_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.z_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.crossing_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.crossing_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.connectivity_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.connectivity_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.advanced_config"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.advanced_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.FillLineGapsConfig.segmentation"><code class="docutils literal notranslate"><span class="pre">FillLineGapsConfig.segmentation</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode"><code class="docutils literal notranslate"><span class="pre">LineAngleMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.WHOLE_LINE"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.WHOLE_LINE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.START_SEGMENT"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.START_SEGMENT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.END_SEGMENT"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.END_SEGMENT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.BOTH_ENDPOINT_SEGMENTS"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.BOTH_ENDPOINT_SEGMENTS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.START_TO_MIDPOINT"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.START_TO_MIDPOINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.END_TO_MIDPOINT"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.END_TO_MIDPOINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.BOTH_ENDPOINT_TO_MIDPOINT"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.BOTH_ENDPOINT_TO_MIDPOINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineAngleMode.ALL_ANGLES"><code class="docutils literal notranslate"><span class="pre">LineAngleMode.ALL_ANGLES</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.input_lines"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.input_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.angle_modes"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.angle_modes</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.output_lines"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.output_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.field_name_by_mode"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.field_name_by_mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.return_results"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.return_results</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.AngleToolConfig.write_fields"><code class="docutils literal notranslate"><span class="pre">AngleToolConfig.write_fields</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointMode"><code class="docutils literal notranslate"><span class="pre">LineEndpointMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointMode.START_POINT"><code class="docutils literal notranslate"><span class="pre">LineEndpointMode.START_POINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointMode.END_POINT"><code class="docutils literal notranslate"><span class="pre">LineEndpointMode.END_POINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointMode.BOTH_ENDPOINTS"><code class="docutils literal notranslate"><span class="pre">LineEndpointMode.BOTH_ENDPOINTS</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig"><code class="docutils literal notranslate"><span class="pre">LineEndpointFieldNameConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig.start_x"><code class="docutils literal notranslate"><span class="pre">LineEndpointFieldNameConfig.start_x</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig.start_y"><code class="docutils literal notranslate"><span class="pre">LineEndpointFieldNameConfig.start_y</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig.end_x"><code class="docutils literal notranslate"><span class="pre">LineEndpointFieldNameConfig.end_x</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointFieldNameConfig.end_y"><code class="docutils literal notranslate"><span class="pre">LineEndpointFieldNameConfig.end_y</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.input_lines"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.input_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.endpoint_modes"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.endpoint_modes</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.output_lines"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.output_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.field_names"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.field_names</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.return_results"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.return_results</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineEndpointToolConfig.write_fields"><code class="docutils literal notranslate"><span class="pre">LineEndpointToolConfig.write_fields</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueMode"><code class="docutils literal notranslate"><span class="pre">LineZValueMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueMode.START_POINT"><code class="docutils literal notranslate"><span class="pre">LineZValueMode.START_POINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueMode.END_POINT"><code class="docutils literal notranslate"><span class="pre">LineZValueMode.END_POINT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueMode.BOTH_ENDPOINTS"><code class="docutils literal notranslate"><span class="pre">LineZValueMode.BOTH_ENDPOINTS</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientMode"><code class="docutils literal notranslate"><span class="pre">LineZOrientMode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientMode.INDIVIDUAL"><code class="docutils literal notranslate"><span class="pre">LineZOrientMode.INDIVIDUAL</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientMode.NETWORK"><code class="docutils literal notranslate"><span class="pre">LineZOrientMode.NETWORK</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueFieldNameConfig"><code class="docutils literal notranslate"><span class="pre">LineZValueFieldNameConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueFieldNameConfig.start_z"><code class="docutils literal notranslate"><span class="pre">LineZValueFieldNameConfig.start_z</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueFieldNameConfig.end_z"><code class="docutils literal notranslate"><span class="pre">LineZValueFieldNameConfig.end_z</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.input_lines"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.input_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.input_rasters"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.input_rasters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.endpoint_modes"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.endpoint_modes</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.output_lines"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.output_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.field_names_per_raster"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.field_names_per_raster</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.return_results"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.return_results</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZValueToolConfig.write_fields"><code class="docutils literal notranslate"><span class="pre">LineZValueToolConfig.write_fields</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.input_lines"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.input_lines</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.raster_paths"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.raster_paths</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.orientation_mode"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.orientation_mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.min_anchor_z_drop_meters"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.min_anchor_z_drop_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.min_confident_flip_meters"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.min_confident_flip_meters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineZOrientConfig.connectivity_tolerance_meters"><code class="docutils literal notranslate"><span class="pre">LineZOrientConfig.connectivity_tolerance_meters</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#composition-configs-core-config-module">composition_configs.core_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#composition-configs-io-types-module">composition_configs.io_types module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#composition-configs-logic-config-module">composition_configs.logic_config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs.type_defs">composition_configs.type_defs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.type_defs.GdbFilePath"><code class="docutils literal notranslate"><span class="pre">GdbFilePath</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.type_defs.GeneralFilePath"><code class="docutils literal notranslate"><span class="pre">GeneralFilePath</span></code></a></li>
@@ -580,8 +107,8 @@
 <li class="toctree-l3"><a class="reference internal" href="composition_configs.html#composition_configs.type_defs.RasterFilePath"><code class="docutils literal notranslate"><span class="pre">RasterFilePath</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs.wrapper_config">composition_configs.wrapper_config module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-composition_configs">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#composition-configs-wrapper-config-module">composition_configs.wrapper_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="conf.html">conf module</a></li>
@@ -591,14 +118,14 @@
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html">custom_tools.decorators package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.decorators.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators.partition_io_decorator">custom_tools.decorators.partition_io_decorator module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators.timing_decorator">custom_tools.decorators.timing_decorator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.decorators.html#custom-tools-decorators-timing-decorator-module">custom_tools.decorators.timing_decorator module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.development_tools.html">custom_tools.development_tools package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#module-custom_tools.development_tools.clean_data">custom_tools.development_tools.clean_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#module-custom_tools.development_tools.find_unused_files">custom_tools.development_tools.find_unused_files module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#custom-tools-development-tools-clean-data-module">custom_tools.development_tools.clean_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#custom-tools-development-tools-find-unused-files-module">custom_tools.development_tools.find_unused_files module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#custom-tools-development-tools-gpt-file-path-masker-module">custom_tools.development_tools.gpt_file_path_masker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#module-custom_tools.development_tools.scan_arcpy_usage">custom_tools.development_tools.scan_arcpy_usage module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.development_tools.html#module-custom_tools.development_tools">Module contents</a></li>
@@ -635,29 +162,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.environment_setup">env_setup.environment_setup module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.StartTimePrinter"><code class="docutils literal notranslate"><span class="pre">StartTimePrinter</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.StartTimePrinter.print_start_time"><code class="docutils literal notranslate"><span class="pre">StartTimePrinter.print_start_time()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.workspace"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.workspace</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.spatial_reference</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.XY_TOLERANCE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.XY_RESOLUTION"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.XY_RESOLUTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.setup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.setup()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.layout"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.layout</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.scales"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.scales</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.gdb_names"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.gdb_names</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.setup()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="env_setup.html#env-setup-environment-setup-module">env_setup.environment_setup module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.global_config">env_setup.global_config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.project_layout">env_setup.project_layout module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout"><code class="docutils literal notranslate"><span class="pre">ProjectLayout</span></code></a><ul>
@@ -682,86 +187,35 @@
 <li class="toctree-l2"><a class="reference internal" href="file_manager.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="file_manager.n10.html">file_manager.n10 package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10.file_manager_arealdekke">file_manager.n10.file_manager_arealdekke module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10.file_manager_facilities">file_manager.n10.file_manager_facilities module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10.file_manager_hoydepunkt">file_manager.n10.file_manager_hoydepunkt module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10.file_manager_landforms">file_manager.n10.file_manager_landforms module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10.file_manager_roads">file_manager.n10.file_manager_roads module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-file_manager.n10">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#file-manager-n10-file-manager-arealdekke-module">file_manager.n10.file_manager_arealdekke module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#file-manager-n10-file-manager-facilities-module">file_manager.n10.file_manager_facilities module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#file-manager-n10-file-manager-hoydepunkt-module">file_manager.n10.file_manager_hoydepunkt module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#file-manager-n10-file-manager-landforms-module">file_manager.n10.file_manager_landforms module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#file-manager-n10-file-manager-roads-module">file_manager.n10.file_manager_roads module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n10.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="file_manager.n100.html">file_manager.n100 package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-file_manager.n100.file_manager_buildings">file_manager.n100.file_manager_buildings module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-file_manager.n100.file_manager_land_use">file_manager.n100.file_manager_land_use module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-file_manager.n100.file_manager_rivers">file_manager.n100.file_manager_rivers module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-file_manager.n100.file_manager_roads">file_manager.n100.file_manager_roads module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-file_manager.n100">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#file-manager-n100-file-manager-buildings-module">file_manager.n100.file_manager_buildings module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#file-manager-n100-file-manager-land-use-module">file_manager.n100.file_manager_land_use module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#file-manager-n100-file-manager-rivers-module">file_manager.n100.file_manager_rivers module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#file-manager-n100-file-manager-roads-module">file_manager.n100.file_manager_roads module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n100.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="file_manager.n250.html">file_manager.n250 package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.n250.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n250.html#module-file_manager.n250.file_manager_roads">file_manager.n250.file_manager_roads module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.n250.html#module-file_manager.n250">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n250.html#file-manager-n250-file-manager-roads-module">file_manager.n250.file_manager_roads module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_manager.n250.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="file_manager.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="file_manager.html#module-file_manager.base_file_manager">file_manager.base_file_manager module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager"><code class="docutils literal notranslate"><span class="pre">BaseFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.script_source_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.script_source_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.validate_inputs"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_inputs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_gdb()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_general_files()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_lyrx()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_lyrx_directory_deprecated"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_lyrx_directory_deprecated()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_final_outputs"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_final_outputs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_general_subdirectory"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_general_subdirectory()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="file_manager.html#module-file_manager.work_file_manager">file_manager.work_file_manager module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager"><code class="docutils literal notranslate"><span class="pre">WorkFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.general_files_directory_name"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.lyrx_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.build_file_path"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.build_file_path()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.generate_output"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.generate_output()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.setup_work_file_paths"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.setup_work_file_paths()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.delete_created_files"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.delete_created_files()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.list_contents"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.list_contents()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.apply_to_structure"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.apply_to_structure()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.extract_key_by_alias"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.extract_key_by_alias()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.extract_key_all"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.extract_key_all()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager.set_key_by_alias"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.set_key_by_alias()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.PartitionWorkFileManager"><code class="docutils literal notranslate"><span class="pre">PartitionWorkFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.PartitionWorkFileManager.generate_partition_path"><code class="docutils literal notranslate"><span class="pre">PartitionWorkFileManager.generate_partition_path()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="file_manager.html#module-file_manager">Module contents</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager"><code class="docutils literal notranslate"><span class="pre">WorkFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.general_files_directory_name"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.lyrx_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.created_paths"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.created_paths</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.build_file_path"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.build_file_path()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.generate_output"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.generate_output()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.setup_work_file_paths"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.setup_work_file_paths()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.delete_created_files"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.delete_created_files()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.list_contents"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.list_contents()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.apply_to_structure"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.apply_to_structure()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.extract_key_by_alias"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.extract_key_by_alias()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.extract_key_all"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.extract_key_all()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.WorkFileManager.set_key_by_alias"><code class="docutils literal notranslate"><span class="pre">WorkFileManager.set_key_by_alias()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="file_manager.html#file-manager-base-file-manager-module">file_manager.base_file_manager module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_manager.html#file-manager-work-file-manager-module">file_manager.work_file_manager module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_manager.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="generalization.html">generalization package</a><ul>
@@ -789,24 +243,29 @@
 <li class="toctree-l1"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="input_data.html">input_data package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-elveg-module">input_data.input_elveg module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-fkb-module">input_data.input_fkb module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-n10-module">input_data.input_n10 module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_n100">input_data.input_n100 module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_n100.check_paths"><code class="docutils literal notranslate"><span class="pre">check_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-area-module">input_data.input_area module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-building-module">input_data.input_building module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_datasets">input_data.input_datasets module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_datasets.DatasetNamespace"><code class="docutils literal notranslate"><span class="pre">DatasetNamespace</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_n50">input_data.input_n50 module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_n50.check_paths"><code class="docutils literal notranslate"><span class="pre">check_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-matrikkel-module">input_data.input_matrikkel module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-orchestrator-module">input_data.input_orchestrator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-railway-module">input_data.input_railway module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-road-module">input_data.input_road module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_setup">input_data.input_setup module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec"><code class="docutils literal notranslate"><span class="pre">FolderSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec.files"><code class="docutils literal notranslate"><span class="pre">FolderSpec.files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec.folders"><code class="docutils literal notranslate"><span class="pre">FolderSpec.folders</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-other-module">input_data.input_other module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-roads-module">input_data.input_roads module</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-symbology-module">input_data.input_symbology module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-veg-module">input_data.input_veg module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests.html">tests package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tests.test_arealdekke.html">tests.test_arealdekke package</a><ul>

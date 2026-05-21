@@ -69,6 +69,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html">input_data package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
 </ul>
 </li>
@@ -118,100 +119,8 @@
 <section id="generalization-n100-river-elevate-river-lines-module">
 <h2>generalization.n100.river.elevate_river_lines module<a class="headerlink" href="#generalization-n100-river-elevate-river-lines-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n100.river.extend_river_line">
-<span id="generalization-n100-river-extend-river-line-module"></span><h2>generalization.n100.river.extend_river_line module<a class="headerlink" href="#module-generalization.n100.river.extend_river_line" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.processing_preparation">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">processing_preparation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#processing_preparation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.processing_preparation" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.exclude_originating_line">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">exclude_originating_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dangle_oid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_field</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#exclude_originating_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.exclude_originating_line" title="Link to this definition"></a></dt>
-<dd><p>Create a feature layer that excludes the line from which the dangle originates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>all_rivers</strong> – The feature class containing all river line features.</p></li>
-<li><p><strong>dangle_oid</strong> – The OID of the dangle point.</p></li>
-<li><p><strong>id_field</strong> – The field name that holds the original OID of the river lines.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A feature layer that excludes the originating line of the dangle.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.generate_near_table">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">generate_near_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dangle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_polygon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#generate_near_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.generate_near_table" title="Link to this definition"></a></dt>
-<dd><p>Generate a near table for a dangle point to find the nearest feature’s closest point,
-considering both river and water polygon features.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>dangle</strong> – A point geometry representing the dangle.</p></li>
-<li><p><strong>excluded_rivers_layer</strong> – The feature layer containing all river line features excluding the originating line.</p></li>
-<li><p><strong>water_polygon</strong> – The feature class containing water polygon features.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The path to the near table generated.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.get_xy_coordinates">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">get_xy_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">near_table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#get_xy_coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.get_xy_coordinates" title="Link to this definition"></a></dt>
-<dd><p>Extract the XY coordinates from the near table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>near_table</strong> – The near table to extract coordinates from.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple of XY coordinates for the dangle and the nearest feature.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.create_lines_from_coordinates">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">create_lines_from_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_rivers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#create_lines_from_coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.create_lines_from_coordinates" title="Link to this definition"></a></dt>
-<dd><p>Create new line features from the pairs of XY coordinates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>line_points</strong> – A list of tuples containing pairs of XY coordinates.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of arcpy.Polyline objects representing the new lines.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.river.extend_river_line.process_new_lines">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.river.extend_river_line.</span></span><span class="sig-name descname"><span class="pre">process_new_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_rivers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/river/extend_river_line.html#process_new_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.river.extend_river_line.process_new_lines" title="Link to this definition"></a></dt>
-<dd><p>Merge new line features with original river features and remove duplicates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>new_lines</strong> – A list of arcpy.Polyline objects representing new lines to be added.</p></li>
-<li><p><strong>all_rivers</strong> – The feature class containing all river line features.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The feature class path of the final river network with new lines merged in.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="generalization-n100-river-extend-river-line-module">
+<h2>generalization.n100.river.extend_river_line module<a class="headerlink" href="#generalization-n100-river-extend-river-line-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n100-river-fix-river-topology-gaps-module">
 <h2>generalization.n100.river.fix_river_topology_gaps module<a class="headerlink" href="#generalization-n100-river-fix-river-topology-gaps-module" title="Link to this heading"></a></h2>

@@ -58,23 +58,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-finalizing-buildings-module">generalization.n100.building.finalizing_buildings module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-hospital-church-clusters-module">generalization.n100.building.hospital_church_clusters module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-displacement-with-buffer-module">generalization.n100.building.point_displacement_with_buffer module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.point_propogate_displacement">generalization.n100.building.point_propogate_displacement module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.point_propogate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points"><code class="docutils literal notranslate"><span class="pre">propagate_displacement_building_points()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-propogate-displacement-module">generalization.n100.building.point_propogate_displacement module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-resolve-building-conflicts-module">generalization.n100.building.point_resolve_building_conflicts module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.polygon_propogate_displacement">generalization.n100.building.polygon_propogate_displacement module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_propogate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons"><code class="docutils literal notranslate"><span class="pre">propagate_displacement_building_polygons()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-polygon-propogate-displacement-module">generalization.n100.building.polygon_propogate_displacement module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-polygon-resolve-building-conflicts-module">generalization.n100.building.polygon_resolve_building_conflicts module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.polygon_to_point">generalization.n100.building.polygon_to_point module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_to_point.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_to_point.building_polygons_to_points"><code class="docutils literal notranslate"><span class="pre">building_polygons_to_points()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-polygon-to-point-module">generalization.n100.building.polygon_to_point module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-removing-overlapping-polygons-and-points-module">generalization.n100.building.removing_overlapping_polygons_and_points module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-removing-points-and-erasing-polygons-in-water-features-module">generalization.n100.building.removing_points_and_erasing_polygons_in_water_features module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-simplify-polygons-module">generalization.n100.building.simplify_polygons module</a></li>
@@ -138,70 +126,20 @@
 <section id="generalization-n100-building-point-displacement-with-buffer-module">
 <h2>generalization.n100.building.point_displacement_with_buffer module<a class="headerlink" href="#generalization-n100-building-point-displacement-with-buffer-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n100.building.point_propogate_displacement">
-<span id="generalization-n100-building-point-propogate-displacement-module"></span><h2>generalization.n100.building.point_propogate_displacement module<a class="headerlink" href="#module-generalization.n100.building.point_propogate_displacement" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.point_propogate_displacement.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.point_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/point_propogate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.point_propogate_displacement.main" title="Link to this definition"></a></dt>
-<dd><p>Propagates displacement for building points to ensure their alignment with roads is adjusted
-after the road generalization process.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.point_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/point_propogate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
-<dd><p>First copies the data to be able to compare the changes due to PropagateDisplacement modifies input. Then propagates
-displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</p>
-</dd></dl>
-
+<section id="generalization-n100-building-point-propogate-displacement-module">
+<h2>generalization.n100.building.point_propogate_displacement module<a class="headerlink" href="#generalization-n100-building-point-propogate-displacement-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n100-building-point-resolve-building-conflicts-module">
 <h2>generalization.n100.building.point_resolve_building_conflicts module<a class="headerlink" href="#generalization-n100-building-point-resolve-building-conflicts-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n100.building.polygon_propogate_displacement">
-<span id="generalization-n100-building-polygon-propogate-displacement-module"></span><h2>generalization.n100.building.polygon_propogate_displacement module<a class="headerlink" href="#module-generalization.n100.building.polygon_propogate_displacement" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.main" title="Link to this definition"></a></dt>
-<dd><p>Propagates displacement for building polygons to ensure their alignment with roads is adjusted
-after the road generalization process.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#propagate_displacement_building_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons" title="Link to this definition"></a></dt>
-<dd><p>First selects displacement features within a specified distance (500 meters) from the building polygons, then propagates
-displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</p>
-</dd></dl>
-
+<section id="generalization-n100-building-polygon-propogate-displacement-module">
+<h2>generalization.n100.building.polygon_propogate_displacement module<a class="headerlink" href="#generalization-n100-building-polygon-propogate-displacement-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n100-building-polygon-resolve-building-conflicts-module">
 <h2>generalization.n100.building.polygon_resolve_building_conflicts module<a class="headerlink" href="#generalization-n100-building-polygon-resolve-building-conflicts-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n100.building.polygon_to_point">
-<span id="generalization-n100-building-polygon-to-point-module"></span><h2>generalization.n100.building.polygon_to_point module<a class="headerlink" href="#module-generalization.n100.building.polygon_to_point" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.polygon_to_point.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_to_point.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_to_point.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_to_point.main" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>What:</dt><dd><p>Merges all points originating from building polygons to a single point feature.</p>
-</dd>
-<dt>How:</dt><dd><dl class="simple">
-<dt>building_polygons_to_points:</dt><dd><p>First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
-to a single point feature.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.polygon_to_point.building_polygons_to_points">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_to_point.</span></span><span class="sig-name descname"><span class="pre">building_polygons_to_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_to_point.html#building_polygons_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_to_point.building_polygons_to_points" title="Link to this definition"></a></dt>
-<dd><p>First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
-to a single point feature.</p>
-</dd></dl>
-
+<section id="generalization-n100-building-polygon-to-point-module">
+<h2>generalization.n100.building.polygon_to_point module<a class="headerlink" href="#generalization-n100-building-polygon-to-point-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n100-building-removing-overlapping-polygons-and-points-module">
 <h2>generalization.n100.building.removing_overlapping_polygons_and_points module<a class="headerlink" href="#generalization-n100-building-removing-overlapping-polygons-and-points-module" title="Link to this heading"></a></h2>

@@ -4,58 +4,66 @@ input\_data package
 Submodules
 ----------
 
-input\_data.input\_elveg module
--------------------------------
-
-.. automodule:: input_data.input_elveg
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-input\_data.input\_fkb module
------------------------------
-
-.. automodule:: input_data.input_fkb
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-input\_data.input\_n10 module
------------------------------
-
-.. automodule:: input_data.input_n10
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-input\_data.input\_n100 module
+input\_data.input\_area module
 ------------------------------
 
-.. automodule:: input_data.input_n100
+.. automodule:: input_data.input_area
    :members:
    :show-inheritance:
    :undoc-members:
 
-input\_data.input\_n50 module
------------------------------
+input\_data.input\_building module
+----------------------------------
 
-.. automodule:: input_data.input_n50
+.. automodule:: input_data.input_building
    :members:
    :show-inheritance:
    :undoc-members:
 
-input\_data.input\_other module
+input\_data.input\_datasets module
+----------------------------------
+
+.. automodule:: input_data.input_datasets
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_matrikkel module
+-----------------------------------
+
+.. automodule:: input_data.input_matrikkel
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_orchestrator module
+--------------------------------------
+
+.. automodule:: input_data.input_orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_railway module
+---------------------------------
+
+.. automodule:: input_data.input_railway
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_road module
+------------------------------
+
+.. automodule:: input_data.input_road
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_setup module
 -------------------------------
 
-.. automodule:: input_data.input_other
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-input\_data.input\_roads module
--------------------------------
-
-.. automodule:: input_data.input_roads
+.. automodule:: input_data.input_setup
    :members:
    :show-inheritance:
    :undoc-members:
@@ -64,14 +72,6 @@ input\_data.input\_symbology module
 -----------------------------------
 
 .. automodule:: input_data.input_symbology
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-input\_data.input\_veg module
------------------------------
-
-.. automodule:: input_data.input_veg
    :members:
    :show-inheritance:
    :undoc-members:

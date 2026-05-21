@@ -51,21 +51,25 @@
 <li class="toctree-l1"><a class="reference internal" href="generalization.n100.building.html">generalization.n100.building package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">input_data package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-elveg-module">input_data.input_elveg module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-fkb-module">input_data.input_fkb module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-n10-module">input_data.input_n10 module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-input_data.input_n100">input_data.input_n100 module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#input_data.input_n100.check_paths"><code class="docutils literal notranslate"><span class="pre">check_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-area-module">input_data.input_area module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-building-module">input_data.input_building module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-input_data.input_datasets">input_data.input_datasets module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input_data.input_datasets.DatasetNamespace"><code class="docutils literal notranslate"><span class="pre">DatasetNamespace</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-input_data.input_n50">input_data.input_n50 module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#input_data.input_n50.check_paths"><code class="docutils literal notranslate"><span class="pre">check_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-matrikkel-module">input_data.input_matrikkel module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-orchestrator-module">input_data.input_orchestrator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-railway-module">input_data.input_railway module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-data-input-road-module">input_data.input_road module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-input_data.input_setup">input_data.input_setup module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input_data.input_setup.FolderSpec"><code class="docutils literal notranslate"><span class="pre">FolderSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#input_data.input_setup.FolderSpec.files"><code class="docutils literal notranslate"><span class="pre">FolderSpec.files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#input_data.input_setup.FolderSpec.folders"><code class="docutils literal notranslate"><span class="pre">FolderSpec.folders</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-other-module">input_data.input_other module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-roads-module">input_data.input_roads module</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#input-data-input-symbology-module">input_data.input_symbology module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#input-data-input-veg-module">input_data.input_veg module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-input_data">Module contents</a></li>
 </ul>
 </li>
@@ -101,42 +105,65 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="input-data-input-elveg-module">
-<h2>input_data.input_elveg module<a class="headerlink" href="#input-data-input-elveg-module" title="Link to this heading"></a></h2>
+<section id="input-data-input-area-module">
+<h2>input_data.input_area module<a class="headerlink" href="#input-data-input-area-module" title="Link to this heading"></a></h2>
 </section>
-<section id="input-data-input-fkb-module">
-<h2>input_data.input_fkb module<a class="headerlink" href="#input-data-input-fkb-module" title="Link to this heading"></a></h2>
+<section id="input-data-input-building-module">
+<h2>input_data.input_building module<a class="headerlink" href="#input-data-input-building-module" title="Link to this heading"></a></h2>
 </section>
-<section id="input-data-input-n10-module">
-<h2>input_data.input_n10 module<a class="headerlink" href="#input-data-input-n10-module" title="Link to this heading"></a></h2>
-</section>
-<section id="module-input_data.input_n100">
-<span id="input-data-input-n100-module"></span><h2>input_data.input_n100 module<a class="headerlink" href="#module-input_data.input_n100" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="input_data.input_n100.check_paths">
-<span class="sig-prename descclassname"><span class="pre">input_data.input_n100.</span></span><span class="sig-name descname"><span class="pre">check_paths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/input_data/input_n100.html#check_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#input_data.input_n100.check_paths" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<section id="module-input_data.input_datasets">
+<span id="input-data-input-datasets-module"></span><h2>input_data.input_datasets module<a class="headerlink" href="#module-input_data.input_datasets" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="input_data.input_datasets.DatasetNamespace">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">input_data.input_datasets.</span></span><span class="sig-name descname"><span class="pre">DatasetNamespace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/input_data/input_datasets.html#DatasetNamespace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#input_data.input_datasets.DatasetNamespace" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lightweight container class that exposes dataset feature classes as attributes.</p>
+<p>The class dynamically assigns each key/value pair from the input dictionary
+as an attribute on the instance. Keys become attribute names, and values
+(f.ex. Path objects or strings) become attribute values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">&lt;dynamic&gt;</span></span></dt>
+<dd><p>Each key in the provided dictionary becomes an attribute
+on the instance, pointing to the corresponding dataset path.</p>
+</dd></dl>
+
+</dd></dl>
 
 </section>
-<section id="module-input_data.input_n50">
-<span id="input-data-input-n50-module"></span><h2>input_data.input_n50 module<a class="headerlink" href="#module-input_data.input_n50" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="input_data.input_n50.check_paths">
-<span class="sig-prename descclassname"><span class="pre">input_data.input_n50.</span></span><span class="sig-name descname"><span class="pre">check_paths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/input_data/input_n50.html#check_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#input_data.input_n50.check_paths" title="Link to this definition"></a></dt>
+<section id="input-data-input-matrikkel-module">
+<h2>input_data.input_matrikkel module<a class="headerlink" href="#input-data-input-matrikkel-module" title="Link to this heading"></a></h2>
+</section>
+<section id="input-data-input-orchestrator-module">
+<h2>input_data.input_orchestrator module<a class="headerlink" href="#input-data-input-orchestrator-module" title="Link to this heading"></a></h2>
+</section>
+<section id="input-data-input-railway-module">
+<h2>input_data.input_railway module<a class="headerlink" href="#input-data-input-railway-module" title="Link to this heading"></a></h2>
+</section>
+<section id="input-data-input-road-module">
+<h2>input_data.input_road module<a class="headerlink" href="#input-data-input-road-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-input_data.input_setup">
+<span id="input-data-input-setup-module"></span><h2>input_data.input_setup module<a class="headerlink" href="#module-input_data.input_setup" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="input_data.input_setup.FolderSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">input_data.input_setup.</span></span><span class="sig-name descname"><span class="pre">FolderSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folders</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ForwardRef('FolderSpec')]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/input_data/input_setup.html#FolderSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#input_data.input_setup.FolderSpec" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="input_data.input_setup.FolderSpec.files">
+<span class="sig-name descname"><span class="pre">files</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#input_data.input_setup.FolderSpec.files" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-</section>
-<section id="input-data-input-other-module">
-<h2>input_data.input_other module<a class="headerlink" href="#input-data-input-other-module" title="Link to this heading"></a></h2>
-</section>
-<section id="input-data-input-roads-module">
-<h2>input_data.input_roads module<a class="headerlink" href="#input-data-input-roads-module" title="Link to this heading"></a></h2>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="input_data.input_setup.FolderSpec.folders">
+<span class="sig-name descname"><span class="pre">folders</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#input_data.input_setup.FolderSpec" title="input_data.input_setup.FolderSpec"><span class="pre">FolderSpec</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#input_data.input_setup.FolderSpec.folders" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="input-data-input-symbology-module">
 <h2>input_data.input_symbology module<a class="headerlink" href="#input-data-input-symbology-module" title="Link to this heading"></a></h2>
-</section>
-<section id="input-data-input-veg-module">
-<h2>input_data.input_veg module<a class="headerlink" href="#input-data-input-veg-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-input_data">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-input_data" title="Link to this heading"></a></h2>
