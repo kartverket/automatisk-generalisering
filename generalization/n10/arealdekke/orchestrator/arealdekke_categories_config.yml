@@ -8,7 +8,9 @@ Categories :
     map_scale: N10
 
   - title : Innsjo
-    operations : 
+    operations :
+      - buff_small_segments
+      - simplify_and_smooth
     accessibility : true
     order: 2
     map_scale: N10

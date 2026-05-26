@@ -11,22 +11,23 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
-dissolve_file = "B_dissolve"
-elim_file = "D_eliminate"
-gangsykkel_file = "E_gangsykkel"
 attribute_file = "A_attribute_changer"
-overlap_remover = "overlap_remover"
+dissolve_file = "B_dissolve"
 island_merger = "C_island_merger"
+area_aggregator = "D_area_aggregator"
+elim_file = "E_eliminate"
+gangsykkel_file = "F_gangsykkel"
+buff_polygon_segments = "G_buff_polygon_segments"
+simplify_polygon = "H_simplify_polygon"
+
+overlap_remover = "overlap_remover"
 passability = "passability"
-simplify_polygon = "G_simplify_polygon"
-buff_polygon_segments = "F_buff_polygon_segments"
 innsjo_file = "innsjo_file"
 arealdekke_class = "arealdekke_class"
 category_class = "category_class"
 overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
-area_aggregator = "area_aggregator"
 
 
 class Arealdekke_N10(Enum):
@@ -221,4 +222,8 @@ class Arealdekke_N10(Enum):
 
     area_aggregator__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=area_aggregator, description="area_aggregator"
+    )
+
+    area_aggregator_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=area_aggregator, description="area_aggregator_output"
     )
