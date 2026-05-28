@@ -66,7 +66,7 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
         remove_overlaps(
             input_fc=files["copy_of_input"],
             buffered_fc=files["aggregated_features"],
-            locked_fc=None,
+            locked_fc="",
             output_fc=files["processed_features"],
             changed_area=feature,
         )
@@ -219,8 +219,8 @@ def data_selection(files: dict, feature: str, area_tol: int, tol: int) -> None:
 
     print(
         f"📡 Relevant data fetched for feature '{feature}' with specific tolerances:\n"
-        f"   • 🟦 area = {area_tol} m²\n"
-        f"   • 📏 proximity = {tol} m"
+        f"   • 🟦 Area = {area_tol} m²\n"
+        f"   • 📏 Proximity = {tol} m"
     )
 
 
@@ -238,9 +238,7 @@ def aggregate_small_features(files: dict, tol: int) -> None:
         aggregation_distance=tol,
     )
 
-    print(
-        f"🧩  Small polygons aggregated together with proximity tolerance of {tol} m"
-    )
+    print(f"🧩  Small polygons aggregated together with proximity tolerance of {tol} m")
 
 
 def combine_datasets(files: dict) -> None:

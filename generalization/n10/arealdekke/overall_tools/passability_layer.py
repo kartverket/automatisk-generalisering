@@ -156,7 +156,7 @@ def update_passability_for_buffer(buffered_fc: str, target: str) -> None:
         where_clause=sql,
     )
 
-    arcpy.analysis.Erase(
+    arcpy.analysis.PairwiseErase(
         in_features=passability_lyr,
         erase_features=buffered_fc,
         out_feature_class=passability_fc,

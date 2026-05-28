@@ -181,7 +181,9 @@ def change_attribute_value_category(
                 selection_type="NEW_SELECTION",
                 where_clause=f"OBJECTID IN ({OIDS})",
             )
-            with arcpy.da.UpdateCursor(work_lyr, relevant_fields[new_category]) as update:
+            with arcpy.da.UpdateCursor(
+                work_lyr, relevant_fields[new_category]
+            ) as update:
                 for _ in update:
                     update.updateRow(updated_fields[category])
 
