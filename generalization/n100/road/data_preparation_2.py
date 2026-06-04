@@ -43,7 +43,13 @@ from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
     categories_major_road_crossings,
 )
-from generalization.n100.road.ramps_point import MovePointsToCrossings, ramp_points
+from generalization.n100.road.roundabouts import generalize_roundabouts
+from generalization.n100.road.vegsperring import remove_roadblock
+from generalization.n100.road.ramps_point import ramp_points
+from generalization.n100.road.ramps import main as ramps
+from generalization.n100.road.ramps import main_part_2 as ramps_part_2
+from generalization.n100.road.ramps import correct_ramp_id_after_merge_divided_roads
+from generalization.n100.road.ramps_point import MovePointsToCrossings
 from generalization.n100.road.resolve_road_conflict_preparation import (
     remove_road_points_in_water,
     run_dissolve_with_intersections,
@@ -56,7 +62,7 @@ from data_orchestrator.data_names import DataNames as dn
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
 
-AREA_SELECTOR = "navn IN ('Ås', 'Nordre Follo')"
+AREA_SELECTOR = "navn IN ('Oslo')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -80,7 +86,12 @@ def main():
     generalize_roundabouts()
     remove_roadblock(data=area_data)
     trim_road_details()
-    ramp_points()
+    #ramp_points()
+    ramps(
+        input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
+        output_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+    )
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -94,7 +105,12 @@ def main():
     resolve_road_conflicts(data_orc=data_orc)
     generalize_dam(area_data=area_data, building_data=building_data)
     final_output()
-    final_ramp_points()
+    ramps_part_2(
+        input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+        input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+        output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+    )
+    #final_ramp_points()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
         f.write(
             f"Total amount of work files created: "
@@ -601,6 +617,14 @@ def merge_divided_roads():
         out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
+        out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
+    )
+
+    # we need to correct ramp ids after merge divided roads to ensure all possible ramps points are included in the output
+    correct_ramp_id_after_merge_divided_roads(
+        merge_input = Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        merge_output = Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        merge_out_table = Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
     )
 
 
@@ -833,7 +857,7 @@ def final_output():
         inverted=True,
     )
 
-
+"""
 def final_ramp_points():
     f = MovePointsToCrossings(
         Road_N100.data_preparation___road_final_output___n100_road.value,
@@ -843,6 +867,7 @@ def final_ramp_points():
         with_ramps=False,
     )
     f.run()
+    """
 
 
 if __name__ == "__main__":
