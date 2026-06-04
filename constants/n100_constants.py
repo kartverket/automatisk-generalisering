@@ -160,6 +160,7 @@ class FieldNames(Enum):
         ["hierarchy", "SHORT"],
         ["character", "SHORT"],
         ["merge_divided_id", "LONG"],
+        ["ramp_id", "TEXT"],
     ]
 
     @classmethod

@@ -319,6 +319,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___merge_divided_roads_out_table___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merge_divided_roads_out_table",
+        )
+    )
+
     data_preparation___divided_roads_merged_outputs___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -891,6 +898,14 @@ class Road_N100(Enum):
     # ========================================
     #                                    RAMPS
     # ========================================
+    ramps__potential_points__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="potential_points"
+    )
+
+    ramps__final_points__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="final_points"
+    )
+
 
     ramps__ramps__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="ramps"
