@@ -19,7 +19,7 @@ def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
     relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400) #1000 and above gets an error about falling outside of geometry domain?
     dissolve_relevant_roads(relevant_roads=relevant_roads_layer, output_fc=files["relevant_roads_dissolved"])
     make_potential_points(files=files)
-    remove_points_without_ramp_connection(files=files)
+    remove_points_without_ramp_connection(files=files, max_path_length=2000)
     give_points_score(files=files)
     give_points_ramp_id(files=files)
     give_roads_ramp_id_2(files=files)
@@ -301,9 +301,10 @@ def get_line_endpoints(line_geom):
     end_pg = arcpy.PointGeometry(arcpy.Point(last_pt.X, last_pt.Y), sr)
     return start_pg, end_pg
 
-def remove_points_without_ramp_connection(files: dict):
+def remove_points_without_ramp_connection(files: dict, max_path_length: int):
     """
     Removes potential points that arent on top of 2 roads connected by ramps
+    max_path_length: maximum legnth of path in meters, paths longer than this dont count as a connection
     """
     adjacency = build_adjacency_with_medium(files, files["relevant_roads_dissolved"])
     ramp_oids = set()
@@ -340,7 +341,20 @@ def remove_points_without_ramp_connection(files: dict):
             road_b = int(row[2])
             near_set = valid_oids.get(point_oid, set())
             all_paths = bfs_all_paths_with_prevous_neighbour_rule(adjacency=adjacency, start=road_a, target=road_b, max_steps=10, valid_oids=near_set)
-            has_ramp = any(node in ramp_oids for path in all_paths for node in path)
+            
+            paths_with_ramps = [
+                path for path in all_paths
+                if any(node in ramp_oids for node in path)
+            ]
+            
+            paths_with_ramps = [
+                path
+                for path in paths_with_ramps
+                if path_lenght(path, files["relevant_roads_dissolved"]) <= max_path_length
+            ]
+
+            has_ramp = bool(paths_with_ramps)
+
             if not has_ramp:
                 remove_points.add(point_oid)
 
@@ -370,7 +384,7 @@ def build_adjacency_with_medium(files: dict, lines, medium_field="medium"):
         in_features=lines,
         near_features=lines,
         out_table=near_table,
-        search_radius="1 Meters",
+        search_radius="0 Meters",
         closest="ALL",
     )
 
@@ -569,6 +583,73 @@ def bfs_all_paths_with_prevous_neighbour_rule(
                 queue.append(new_path)
 
     return results
+
+def path_lenght(path: List[int], lines_fc: str) -> int:
+    """
+    The lines making up the path have parts that are not part of the path,
+    so to find the actual length of the path we measure the distance between the intersections
+    like this: path = [1,2,3,4,5]
+    we start at the intersection of 1 and 5
+    then we go to the intersection between 1 and 2
+    then 2 and 3
+    etc and we end at the intersection between 5 and 1
+    """
+    geom_dict = defaultdict(set)
+    with arcpy.da.SearchCursor(lines_fc, ["OID@", "SHAPE@"]) as s_cur:
+        for row in s_cur:
+            oid = row[0]
+            geom = row[1]
+            geom_dict[oid] = geom
+    
+    start_inter = None
+    total_length = 0
+    prev_inter = None
+    for n in range(len(path)):
+        current_geom = geom_dict[path[n]]
+        previous_geom = geom_dict[path[n-1]]
+        inter = current_geom.intersect(previous_geom, 1)
+        
+        
+        inter_pts = []
+        for p in inter:
+            inter_pts.append(p)
+        
+        if len(inter_pts) == 0:
+            print(f"No intersection!!!!!!!!!!!!!!!")
+            continue
+        
+        inter = inter_pts[0] 
+        inter = arcpy.PointGeometry(inter, previous_geom.spatialReference)
+
+
+       
+
+        if prev_inter is None:
+            start_inter = inter
+            prev_inter = inter
+            continue
+
+        # measure distance from prev_inter to inter along current_geom
+        
+        m1 = previous_geom.measureOnLine(prev_inter)
+        m2 = previous_geom.measureOnLine(inter)
+        total_length += abs(m2 - m1)
+
+        prev_inter = inter
+
+    
+    # Close the loop:
+    # from last intersection (path[-1], path[-2]) to start intersection (path[-1], path[0])
+    last_geom = geom_dict[path[-1]]
+    m1 = last_geom.measureOnLine(prev_inter)
+    m2 = last_geom.measureOnLine(start_inter)
+    total_length += abs(m2 - m1)
+
+    return total_length
+
+
+
+    
 
 def give_points_score(files: dict):
     """
