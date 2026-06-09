@@ -378,6 +378,8 @@ def partition_call(
 ):
     identity = Arealdekke_N10.identity.value
 
+    GeometryValidator().check_repair_sequence(input_fc=input_fc, max_iterations=5)
+
     fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
 
     arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.
