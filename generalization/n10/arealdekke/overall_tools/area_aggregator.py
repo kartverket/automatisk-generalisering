@@ -49,7 +49,7 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
         f"\n{'====='*15}\nAggregating small polygons at map scale '{map_scale}'\n{'====='*15}\n"
     )
 
-    features = ["Innsjo"]
+    features = {"Innsjo": 1/2}
 
     files = create_wfm_gdbs(wfm=wfm)
 
@@ -57,11 +57,13 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
         in_features=input_fc, out_feature_class=files["copy_of_input"]
     )
 
-    for feature in features:
+    for feature in features.keys():
         area, width = fetch_parameters(feature=feature, map_scale=map_scale)
 
-        data_selection(files=files, feature=feature, area_tol=area, tol=width / 2)
-        aggregate_small_features(files=files, tol=width / 2)
+        tol = width * features[feature]
+
+        data_selection(files=files, feature=feature, area_tol=area, tol=tol)
+        aggregate_small_features(files=files, tol=tol)
         combine_datasets(files=files)
         remove_overlaps(
             input_fc=files["copy_of_input"],

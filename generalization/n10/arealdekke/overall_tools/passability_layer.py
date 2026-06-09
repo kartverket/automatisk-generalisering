@@ -6,6 +6,7 @@ arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.validation import check_valid_feature_class
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -52,6 +53,10 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     print(
         "\nStarting post-processing of the passability layer by checking for match with geometries in the final feature class."
     )
+
+    if not check_valid_feature_class(passability_fc, level=2):
+        print("Passability feature class does not contain any data.")
+        return
 
     # Sets up work file manager to take care of temporary files
     fc = Arealdekke_N10.passability_work_file__n10_land_use.value
