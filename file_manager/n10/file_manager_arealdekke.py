@@ -28,6 +28,7 @@ category_class = "category_class"
 overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
+category_aggregator = "category_aggregator"
 
 
 class Arealdekke_N10(Enum):
@@ -226,4 +227,16 @@ class Arealdekke_N10(Enum):
 
     area_aggregator_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=area_aggregator, description="area_aggregator_output"
+    )
+
+    # ========================================
+    #                      CATEGORY AGGREGATOR
+    # ========================================
+
+    category_aggregator__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=category_aggregator, description="category_aggregator"
+    )
+
+    category_aggregator_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=category_aggregator, description="category_aggregator_output"
     )
