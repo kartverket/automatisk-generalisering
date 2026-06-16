@@ -36,7 +36,9 @@ def buff_small_polygon_segments(
         locked_fc (set): A set of feature classes representing locked areas
         map_scale (str): The map scale for the operation
     """
-    print(f"\n{'====='*15}\nBuffering small segments of '{target}' at map scale '{map_scale}'\n{'====='*15}\n")
+    print(
+        f"\n{'====='*15}\nBuffering small segments of '{target}' at map scale '{map_scale}'\n{'====='*15}\n"
+    )
 
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -59,9 +61,7 @@ def buff_small_polygon_segments(
             output_fc=output_fc,
         )
     else:
-        arcpy.management.CopyFeatures(
-            in_features=input_fc, out_feature_class=output_fc
-        )
+        arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
     wfm.delete_created_files()
 
@@ -343,12 +343,12 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_fc_line], out_layer=locked_fc_line_lyr
     )
-    
+
     arcpy.analysis.PairwiseClip(
-            in_features=files[fc.locked_fc_line],
-            clip_features=files[fc.overkill_buffer],
-            out_feature_class=files[fc.locked_fc_line_clipped],
-        )
+        in_features=files[fc.locked_fc_line],
+        clip_features=files[fc.overkill_buffer],
+        out_feature_class=files[fc.locked_fc_line_clipped],
+    )
 
     locked_fc_line_clipped_lyr = "locked_fc_line_clipped_lyr"
     areas_chosen_lyr = "areas_chosen_lyr"

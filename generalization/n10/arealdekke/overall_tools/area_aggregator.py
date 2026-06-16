@@ -49,7 +49,7 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
         f"\n{'====='*15}\nAggregating small polygons at map scale '{map_scale}'\n{'====='*15}\n"
     )
 
-    features = {"Innsjo": 1/2}
+    features = {"Innsjo": 1 / 2}
 
     files = create_wfm_gdbs(wfm=wfm)
 

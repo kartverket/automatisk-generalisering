@@ -8,6 +8,7 @@ import arcpy
 # Functionality
 ############################
 
+
 def check_valid_feature_class(feature_class: str, level: int) -> bool:
     """
     Checks if the given feature class is valid.
@@ -15,7 +16,7 @@ def check_valid_feature_class(feature_class: str, level: int) -> bool:
     Args:
         feature_class (str): The path to the feature class to check
         level (int): The level of validation to perform, need to pass #level of controls
-    
+
     Returns:
         bool: True if the feature class is valid, False otherwise
     """
@@ -31,9 +32,11 @@ def check_valid_feature_class(feature_class: str, level: int) -> bool:
 
     return all(levels[:level])
 
+
 ############################
 # Helpers
 ############################
+
 
 def feature_class_exists(feature_class: str) -> bool:
     """
@@ -49,6 +52,7 @@ def feature_class_exists(feature_class: str) -> bool:
         return arcpy.Exists(dataset=feature_class)
     except:
         return False
+
 
 def has_data(feature_class: str) -> bool:
     """

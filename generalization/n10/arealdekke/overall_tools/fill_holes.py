@@ -186,7 +186,9 @@ def match_holes_with_surrounding_features(files: dict, output_fc: str) -> None:
 
     existing_fields = [f.name for f in arcpy.ListFields(files["holes"])]
     if match_attribute in existing_fields:
-        arcpy.management.DeleteField(in_table=files["holes"], drop_field=match_attribute)
+        arcpy.management.DeleteField(
+            in_table=files["holes"], drop_field=match_attribute
+        )
 
     arcpy.management.CalculateField(
         in_table=files["intersecting_features"],

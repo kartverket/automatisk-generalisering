@@ -15,10 +15,11 @@ attribute_file = "A_attribute_changer"
 dissolve_file = "B_dissolve"
 island_merger = "C_island_merger"
 area_aggregator = "D_area_aggregator"
-elim_file = "E_eliminate"
-gangsykkel_file = "F_gangsykkel"
-buff_polygon_segments = "G_buff_polygon_segments"
-simplify_polygon = "H_simplify_polygon"
+category_aggregator = "E_category_aggregator"
+elim_file = "F_eliminate"
+gangsykkel_file = "G_gangsykkel"
+buff_polygon_segments = "H_buff_polygon_segments"
+simplify_polygon = "I_simplify_polygon"
 
 overlap_remover = "overlap_remover"
 passability = "passability"
@@ -28,7 +29,6 @@ category_class = "category_class"
 overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
-category_aggregator = "category_aggregator"
 
 
 class Arealdekke_N10(Enum):

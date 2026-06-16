@@ -44,6 +44,9 @@ from generalization.n10.arealdekke.overall_tools.small_features_changer import (
     change_attribute_value_main,
 )
 from generalization.n10.arealdekke.overall_tools.area_aggregator import aggregate_areas
+from generalization.n10.arealdekke.category_tools.area_aggregator import (
+    aggregate_category,
+)
 
 from input_data.input_orchestrator import InputDataOrchestrator
 
@@ -552,8 +555,13 @@ class Arealdekke:
                 output_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
                 map_scale=self.__map_scale,
             ),
-            lambda: eliminate_small_polygons(
+            lambda: aggregate_category(
                 input_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
+                map_scale=self.__map_scale,
+            ),
+            lambda: eliminate_small_polygons(
+                input_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.elim_output.value,
                 map_scale=self.__map_scale,
             ),
