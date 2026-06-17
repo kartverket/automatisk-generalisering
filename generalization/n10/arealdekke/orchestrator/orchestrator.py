@@ -18,7 +18,7 @@ def main():
     data_orc = InputDataOrchestrator(map_scale=map_scale)
     data_orc.set_input_dataset(input_area)
     area_data = data_orc.get_dataset("AREA")
-    input_data = area_data.Arealdekke_Begrenset_1
+    input_data = area_data.Arealdekke_Test
 
     # If True = only final output will be available after generalization
     # If False = all intermediate files not deleted by wfm will be available (default)

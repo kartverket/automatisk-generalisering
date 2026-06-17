@@ -52,7 +52,7 @@ def remove_overlaps(
     print("\nCreated WorkFileManager and temporary files for overlap remover process.")
 
     # 3) Remove locked features from buffers to avoid overlap in these areas
-    arcpy.analysis.Erase(
+    arcpy.analysis.PairwiseErase(
         in_features=buffered_fc,
         erase_features=locked_fc,
         out_feature_class=files["erased_buffers"],

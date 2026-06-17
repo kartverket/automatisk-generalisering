@@ -101,7 +101,7 @@ BuffSmallPolygonSegments:
   description:
     - Buffs parts of polygons that are below a specified minimum value.
   N10:
-    min_width: {"ElvFlate":6, "Innsjo":6}
+    min_width: {"ElvFlate":6, "Innsjo":6, "Skog": 6}
 
 
 SmallFeatures:

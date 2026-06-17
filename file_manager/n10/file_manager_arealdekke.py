@@ -26,6 +26,7 @@ category_class = "category_class"
 overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
+poly_to_point = "poly_to_point"
 
 
 class Arealdekke_N10(Enum):
@@ -212,4 +213,20 @@ class Arealdekke_N10(Enum):
 
     small_features_changer__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=small_features_changer, description="small_features_changer"
+    )
+
+    # ========================================
+    #                         POLYGON TO POINT
+    # ========================================
+
+    poly_to_point__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=poly_to_point, description="poly_to_point"
+    )
+
+    poly_to_point_points__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=poly_to_point, description="poly_to_point_points"
+    )
+
+    poly_to_point_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=poly_to_point, description="poly_to_point_output"
     )
