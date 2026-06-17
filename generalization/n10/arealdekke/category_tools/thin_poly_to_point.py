@@ -14,9 +14,7 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
     get_min_width,
 )
 
-input_fc = (
-    r"C:\GIS_Files\ag_outputs\n10\land_use.gdb\E_gangsykkel___gangsykkel___n10_land_use"
-)
+input_fc = r""
 
 
 # ========================
