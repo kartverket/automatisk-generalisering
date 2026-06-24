@@ -150,7 +150,13 @@ class Program_history_class:
                 break
 
     def new_history_category(
-        self, title, operations, accessibility=True, order=None, map_scale="N10"
+        self,
+        title,
+        operations,
+        accessibility=True,
+        reinsert=True,
+        order=None,
+        map_scale="N10",
     ):
 
         data = self.load_history()
@@ -160,6 +166,7 @@ class Program_history_class:
             keys.title.value: title,
             keys.operations.value: operations,
             keys.accessibility.value: accessibility,
+            keys.reinsert.value: reinsert,
             keys.order.value: order,
             keys.map_scale.value: map_scale,
             keys.last_processed.value: None,

@@ -18,11 +18,6 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
     get_min_width,
 )
 
-input_fc = (
-    r"C:\GIS_Files\ag_outputs\n10\land_use.gdb\E_gangsykkel___gangsykkel___n10_land_use"
-)
-
-
 # ========================
 # Main function
 # ========================
@@ -30,10 +25,24 @@ input_fc = (
 
 @timing_decorator
 def pointify_thin_poly(
-    target: str, input_fc: str, output_fc: str, locked_fc: str, map_scale: str
+    target: str,
+    input_fc: str,
+    output_fc: str,
+    locked_fc: str,
+    complete_fc: str,
+    map_scale: str,
 ):
     """
-    ...
+    Identifies thin areas of the target (type of arealdekke) and creates a line of points instead.
+    The area that were replaced with points is changed to the biggest adjacent area type.
+
+    Args:
+        target (str): Name of the arealdekke type to consider
+        input_fc (str): Path to the input feature class with target objects only
+        output_fc (str): Path to the output feature class where the edited target features should be saved
+        locked_fc (str): Path to feature class with locked features
+        complete_fc (str): Path to feature class containing the entire and complete land use dataset
+        map_scale (str): String representing the working map scale
     """
     working_fc = Arealdekke_N10.poly_to_point__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -42,15 +51,26 @@ def pointify_thin_poly(
     files = create_wfm_gdbs(wfm=wfm)
 
     width = get_min_width(map_scale=map_scale, target=target)
-    data_selection(input_fc=input_fc, files=files, target=target)
+    locked_categories = {
+        row[0] for row in arcpy.da.SearchCursor(locked_fc, ["arealdekke"])
+    }
+
+    arcpy.management.CopyFeatures(
+        in_features=input_fc, out_feature_class=files[fc.target_fc]
+    )
+
     find_segments_under_min(files=files, min_width=width)
     create_and_filter_line_data(files=files)
     create_points(files=files)
     remove_small_pieces(input_fc=input_fc, files=files)
-    data_preparation(input_fc=input_fc, files=files, target=target)
+    data_preparation(complete_fc=complete_fc, files=files, target=target)
     create_split_points(files=files, width=width)
     split_polygons(files=files, width=width)
-    rewrite_attribute(files=files)
+    rewrite_attribute(
+        files=files, output_fc=output_fc, locked_categories=locked_categories
+    )
+
+    # wfm.delete_created_files()
 
 
 # ========================
@@ -97,7 +117,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "filtered_lines": wfm.build_file_path(
             file_name="filtered_lines", file_type="gdb"
         ),
-        "points": wfm.build_file_path(file_name="points", file_type="gdb"),
         "small_areas_single": wfm.build_file_path(
             file_name="small_areas_single", file_type="gdb"
         ),
@@ -120,34 +139,20 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
             file_name="touching_points", file_type="gdb"
         ),
         "identical": wfm.build_file_path(file_name="identical", file_type="gdb"),
-        "line_endpoints": wfm.build_file_path(file_name="line_endpoints", file_type="gdb"),
-        "endpoint_buffer": wfm.build_file_path(file_name="endpoint_buffer", file_type="gdb"),
+        "line_endpoints": wfm.build_file_path(
+            file_name="line_endpoints", file_type="gdb"
+        ),
+        "endpoint_buffer": wfm.build_file_path(
+            file_name="endpoint_buffer", file_type="gdb"
+        ),
         "spatial_join": wfm.build_file_path(file_name="spatial_join", file_type="gdb"),
         "cutlines": wfm.build_file_path(file_name="cutlines", file_type="gdb"),
         "split_result": wfm.build_file_path(file_name="split_result", file_type="gdb"),
-        "clipped_lines": wfm.build_file_path(file_name="clipped_lines", file_type="gdb")
+        "intersected_lines": wfm.build_file_path(
+            file_name="intersected_lines", file_type="gdb"
+        ),
+        "test": wfm.build_file_path(file_name="test", file_type="gdb"),
     }
-
-
-def data_selection(input_fc: str, files: dict, target: str) -> None:
-    """
-    Selects and copies relevant data into separate feature classes.
-
-    Args:
-        input_fc (str): Feature class with input data
-        files (dict): Dictionary with all the working files
-        target (str): Name of the feature to consider during pointifying
-    """
-    land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=land_use_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=f"arealdekke = '{target}'",
-    )
-    arcpy.management.CopyFeatures(
-        in_features=land_use_lyr, out_feature_class=files[fc.target_fc]
-    )
 
 
 def create_and_filter_line_data(files: dict) -> None:
@@ -164,7 +169,7 @@ def create_and_filter_line_data(files: dict) -> None:
     )
 
     land_use_lyr = "land_use_lyr"
-    tol = 15  # Tolerance in m for valid length
+    tol = 15  # TODO: Tolerance in m for valid length
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.centre_line],
         out_layer=land_use_lyr,
@@ -185,10 +190,10 @@ def create_points(files: dict) -> None:
     """
     arcpy.management.GeneratePointsAlongLines(
         Input_Features=files["filtered_lines"],
-        Output_Feature_Class=files["points"],
+        Output_Feature_Class=Arealdekke_N10.poly_to_point_points__n10_land_use.value,
         Point_Placement="DISTANCE",
-        Distance=20,
-        Include_End_Points="END_POINTS",
+        Distance=20,  # TODO: Need to get a system for taking care of distance tolerances
+        Include_End_Points="NO_END_POINTS",
     )
 
 
@@ -227,12 +232,12 @@ def remove_small_pieces(input_fc: str, files: dict) -> None:
     )
 
 
-def data_preparation(input_fc: str, files: dict, target: str) -> None:
+def data_preparation(complete_fc: str, files: dict, target: str) -> None:
     """
     Prepares the data for splitting.
 
     Args:
-        input_fc (str): Feature class with input data
+        complete_fc (str): Feature class with the complete dataset
         files (dict): Dictionary with all the working files
         target (str): Name of the land use type to adjust
     """
@@ -242,7 +247,7 @@ def data_preparation(input_fc: str, files: dict, target: str) -> None:
     )
 
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
+    arcpy.management.MakeFeatureLayer(in_features=complete_fc, out_layer=land_use_lyr)
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
@@ -287,13 +292,17 @@ def create_split_points(files: dict, width: int) -> None:
     # A: Touching points
     create_featureclass_point(
         files["touching_points"],
-        arcpy.Describe(files["touching_lines"]).spatialReference
+        arcpy.Describe(files["touching_lines"]).spatialReference,
     )
     arcpy.management.AddField(files["touching_points"], "Line_ID", "LONG")
-    insert_line_endpoints(files["touching_lines"], files["touching_points"], include_oid=True)
+    insert_line_endpoints(
+        files["touching_lines"], files["touching_points"], include_oid=True
+    )
 
     # B: Remove points overlapping qualified lines
-    delete_points_by_location(files["touching_points"], files["qualified_as_line"], invert=True)
+    delete_points_by_location(
+        files["touching_points"], files["qualified_as_line"], invert=True
+    )
 
     # C + D: Remove non-duplicate and then remove duplicate
     delete_non_duplicate_points(files["touching_points"], files["identical"])
@@ -301,12 +310,17 @@ def create_split_points(files: dict, width: int) -> None:
     # E: Line endpoints from filtered lines
     create_featureclass_point(
         files["line_endpoints"],
-        arcpy.Describe(files["filtered_lines"]).spatialReference
+        arcpy.Describe(files["filtered_lines"]).spatialReference,
     )
     insert_line_endpoints(files["filtered_lines"], files["line_endpoints"])
 
     # F: Buffer endpoints and delete touching points inside buffer
-    buffer_and_delete(files["line_endpoints"], files["touching_points"], files["endpoint_buffer"], width * 2)
+    buffer_and_delete(
+        files["line_endpoints"],
+        files["touching_points"],
+        files["endpoint_buffer"],
+        width * 2,
+    )
 
 
 def split_polygons(files: dict, width: int) -> None:
@@ -317,26 +331,39 @@ def split_polygons(files: dict, width: int) -> None:
         files (dict): Dictionary with all the working files
         width (int): Minimum width of the target feature
     """
-    arcpy.analysis.SpatialJoin(target_features=files["touching_points"], join_features=files["qualified_small"], out_feature_class=files["spatial_join"])
+    arcpy.analysis.SpatialJoin(
+        target_features=files["touching_points"],
+        join_features=files["qualified_small"],
+        out_feature_class=files["spatial_join"],
+    )
 
     # A: Select relevant areas
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files["qualified_small"], out_layer=land_use_lyr)
-    arcpy.management.SelectLayerByLocation(in_layer=land_use_lyr, overlap_type="INTERSECT", select_features=files["touching_points"], selection_type="NEW_SELECTION")
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["qualified_small"], out_layer=land_use_lyr
+    )
+    arcpy.management.SelectLayerByLocation(
+        in_layer=land_use_lyr,
+        overlap_type="INTERSECT",
+        select_features=files["touching_points"],
+        selection_type="NEW_SELECTION",
+    )
 
     # B: Create cutlines
     cutlines = []
-    
-    centerlines = { # Pre-load centerlines for fast lookup
+
+    centerlines = {  # Pre-load centerlines for fast lookup
         oid: geom
-        for oid, geom in arcpy.da.SearchCursor(files["filtered_lines"], ["InPoly_FID", "SHAPE@"])
+        for oid, geom in arcpy.da.SearchCursor(
+            files["filtered_lines"], ["InPoly_FID", "SHAPE@"]
+        )
     }
 
-    point_dict = {} # Spatial indexing of points
+    point_dict = {}  # Spatial indexing of points
     with arcpy.da.SearchCursor(files["spatial_join"], ["SHAPE@", "ORIG_FID"]) as search:
         for geom, oid in search:
             point_dict.setdefault(oid, []).append(geom)
-    
+
     with arcpy.da.SearchCursor(land_use_lyr, ["SHAPE@", "ORIG_FID"]) as search:
         for geom, oid in search:
             if oid not in point_dict:
@@ -347,26 +374,76 @@ def split_polygons(files: dict, width: int) -> None:
             for pt in point_dict[oid]:
                 cutline = make_orthogonal_cutline(pt, centerline, length=width)
                 cutlines.append(cutline)
-    
-    arcpy.management.CopyFeatures(in_features=cutlines, out_feature_class=files["cutlines"])
 
-    # C: Split the polygons
-    arcpy.management.FeatureToPolygon(in_features=[files["qualified_small"], files["cutlines"]], out_feature_class=files["split_result"])
+    if cutlines:
+        arcpy.management.CopyFeatures(
+            in_features=cutlines, out_feature_class=files["cutlines"]
+        )
+
+        # C: Split the polygons
+        arcpy.management.FeatureToPolygon(
+            in_features=[files["qualified_small"], files["cutlines"]],
+            out_feature_class=files["split_result"],
+        )
+    else:
+        arcpy.management.CopyFeatures(
+            in_features=files["qualified_small"],
+            out_feature_class=files["split_result"],
+        )
 
 
-def rewrite_attribute(files: dict) -> None:
+def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> None:
     """
     Fetches the original 'arealdekke' attribute value to the splitted features.
 
     Args:
         files (dict): Dictionary with all the working files
+        output_fc (str): Where to store the final output
+        locked_categories (set): A set containing the name of all land use
+                                 categories that are locked
     """
-    
-    """
-    Bruk 'input_as_line' til å finne linjene som samsvarer med de små arealene og finn lengste, hent attributt
-    """
+    arcpy.analysis.Intersect(
+        in_features=[files["input_as_line"], files["split_result"]],
+        out_feature_class=files["intersected_lines"],
+        join_attributes="ALL",
+        output_type="LINE",
+    )
 
-    arcpy.analysis.Clip(in_features=files["input_as_line"], clip_features=files["split_result"], out_feature_class=files["clipped_lines"])
+    attr_sql = "(" + ",".join([f"'{cat}'" for cat in locked_categories]) + ")"
+
+    line_lyr = "line_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["intersected_lines"],
+        out_layer=line_lyr,
+        where_clause=f"arealdekke NOT IN {attr_sql}",
+    )
+
+    search_field = f"FID_{os.path.basename(files['split_result'])}"
+
+    best_lines = {}
+
+    with arcpy.da.SearchCursor(
+        line_lyr, ["arealdekke", search_field, "Shape_Length"]
+    ) as search:
+        for area, poly_id, length in search:
+            if poly_id not in best_lines:
+                best_lines[poly_id] = [length, area]
+            elif best_lines[poly_id][0] < length:
+                best_lines[poly_id] = [length, area]
+
+    with arcpy.da.UpdateCursor(files["split_result"], ["OID@", "arealdekke"]) as update:
+        for oid, area in update:
+            update.updateRow([oid, best_lines[oid][-1]])
+
+    arcpy.management.Merge(
+        inputs=[files["erased_small_areas"], files["split_result"]],
+        output=output_fc,
+    )
+
+    arcpy.management.Merge(
+        inputs=[files["erased_small_areas"], files["split_result"]],
+        output=files["test"],
+    )
 
 
 # ========================
@@ -377,17 +454,20 @@ def create_featureclass_point(path: str, spatial_ref) -> None:
         out_path=os.path.dirname(path),
         out_name=os.path.basename(path),
         geometry_type="POINT",
-        spatial_reference=spatial_ref
+        spatial_reference=spatial_ref,
     )
 
 
-def insert_line_endpoints(line_fc: str, point_fc: str, include_oid: bool=False) -> None:
-    " Fetches the endpoints of the lines and stores them in an own featureclass "
+def insert_line_endpoints(
+    line_fc: str, point_fc: str, include_oid: bool = False
+) -> None:
+    "Fetches the endpoints of the lines and stores them in an own featureclass"
     fields_in = ["OID@", "SHAPE@"] if include_oid else ["SHAPE@"]
     fields_out = ["SHAPE@", "Line_ID"] if include_oid else ["SHAPE@"]
 
-    with arcpy.da.SearchCursor(line_fc, fields_in) as search, \
-        arcpy.da.InsertCursor(point_fc, fields_out) as insert:
+    with arcpy.da.SearchCursor(line_fc, fields_in) as search, arcpy.da.InsertCursor(
+        point_fc, fields_out
+    ) as insert:
         for row in search:
             geom = row[-1]
             oid = row[0] if include_oid else None
@@ -401,8 +481,10 @@ def insert_line_endpoints(line_fc: str, point_fc: str, include_oid: bool=False) 
                 insert.insertRow(out_row)
 
 
-def delete_points_by_location(point_fc: str, select_fc: str, invert: bool=False) -> None:
-    " Deletes a selection of the point data "
+def delete_points_by_location(
+    point_fc: str, select_fc: str, invert: bool = False
+) -> None:
+    "Deletes a selection of the point data"
     lyr = "tmp_point_lyr"
     arcpy.management.MakeFeatureLayer(point_fc, lyr)
 
@@ -411,19 +493,16 @@ def delete_points_by_location(point_fc: str, select_fc: str, invert: bool=False)
         overlap_type="INTERSECT",
         select_features=select_fc,
         selection_type="NEW_SELECTION",
-        invert_spatial_relationship="INVERT" if invert else "NOT_INVERT"
+        invert_spatial_relationship="INVERT" if invert else "NOT_INVERT",
     )
 
     arcpy.management.DeleteFeatures(lyr)
 
 
 def delete_non_duplicate_points(fc: str, identical_fc: str) -> None:
-    " Finds identical points in the datasets and erase all that do not have any duplicate "
+    "Finds identical points in the datasets and erase all that do not have any duplicate"
     arcpy.management.FindIdentical(
-        in_dataset=fc,
-        out_dataset=identical_fc,
-        fields=["SHAPE"],
-        xy_tolerance=1
+        in_dataset=fc, out_dataset=identical_fc, fields=["SHAPE"], xy_tolerance=1
     )
 
     featseq = Counter(
@@ -446,14 +525,18 @@ def delete_non_duplicate_points(fc: str, identical_fc: str) -> None:
     arcpy.management.DeleteIdentical(fc, ["SHAPE"], xy_tolerance=1)
 
 
-def buffer_and_delete(point_fc_1: str, point_fc_2: str, buffer_fc: str, distance: int) -> None:
-    " Buffers the points and deletes the points in the second dataset that intersect with the buffers "
+def buffer_and_delete(
+    point_fc_1: str, point_fc_2: str, buffer_fc: str, distance: int
+) -> None:
+    "Buffers the points and deletes the points in the second dataset that intersect with the buffers"
     arcpy.analysis.Buffer(point_fc_1, buffer_fc, distance)
     delete_points_by_location(point_fc_2, buffer_fc)
 
 
-def make_orthogonal_cutline(point: arcpy.PointGeometry, centerline_geom: arcpy.Polyline, length: int=50) -> arcpy.Polyline:
-    " Creates an orthogonal cutline from a point on the tangent of a centerline "
+def make_orthogonal_cutline(
+    point: arcpy.PointGeometry, centerline_geom: arcpy.Polyline, length: int = 50
+) -> arcpy.Polyline:
+    "Creates an orthogonal cutline from a point on the tangent of a centerline"
     point: arcpy.Point = point.firstPoint
     # Nearest point on centerline
     nearest = centerline_geom.snapToLine(point)
@@ -479,25 +562,3 @@ def make_orthogonal_cutline(point: arcpy.PointGeometry, centerline_geom: arcpy.P
     p2 = arcpy.Point(point.X - nx * length, point.Y - ny * length)
 
     return arcpy.Polyline(arcpy.Array([p1, p2]))
-
-
-
-# ========================
-
-if __name__ == "__main__":
-    import os
-
-    gdb = os.path.dirname(input_fc)
-    pattern = "poly_to_point"
-
-    for dirpath, dirnames, filenames in arcpy.da.Walk(
-        gdb, datatype=["FeatureClass", "Table"]
-    ):
-        for feature in filenames:
-            if feature.startswith(pattern):
-                full_path = os.path.join(dirpath, feature)
-                arcpy.management.Delete(full_path)
-
-    pointify_thin_poly(
-        target="Skog", input_fc=input_fc, output_fc="", locked_fc="", map_scale="N10"
-    )

@@ -226,7 +226,3 @@ class Arealdekke_N10(Enum):
     poly_to_point_points__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=poly_to_point, description="poly_to_point_points"
     )
-
-    poly_to_point_output__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=poly_to_point, description="poly_to_point_output"
-    )

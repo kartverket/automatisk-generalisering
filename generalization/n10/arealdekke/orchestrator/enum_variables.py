@@ -5,6 +5,7 @@ class history_keys(Enum):
 
     category_history = "category_history"
     accessibility = "accessibility"
+    reinsert = "reinsert"
     last_processed = "last_processed"
     map_scale = "map_scale"
     operations = "operations"
