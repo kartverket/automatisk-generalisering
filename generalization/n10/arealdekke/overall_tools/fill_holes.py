@@ -182,20 +182,27 @@ def match_holes_with_surrounding_features(files: dict, output_fc: str) -> None:
         files (dict): Dictionary with all the working files
         output_fc (str): Feature class to store the final output
     """
+    match_attribute = "JOIN_FID"
+
+    existing_fields = [f.name for f in arcpy.ListFields(files["holes"])]
+    if match_attribute in existing_fields:
+        arcpy.management.DeleteField(
+            in_table=files["holes"], drop_field=match_attribute
+        )
+
+    arcpy.management.CalculateField(
+        in_table=files["intersecting_features"],
+        field=match_attribute,
+        expression="!OBJECTID!",
+        expression_type="PYTHON3",
+    )
+
     arcpy.analysis.SpatialJoin(
         target_features=files["holes"],
         join_features=files["intersecting_features"],
         out_feature_class=files["spatial_join"],
         join_operation="JOIN_ONE_TO_MANY",
         match_option="INTERSECT",
-    )
-
-    match_attribute = "JOIN_FID"
-    arcpy.management.CalculateField(
-        in_table=files["intersecting_features"],
-        field=match_attribute,
-        expression="!OBJECTID!",
-        expression_type="PYTHON3",
     )
 
     arcpy.management.Merge(
