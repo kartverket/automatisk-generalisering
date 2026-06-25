@@ -1,6 +1,5 @@
 # Libraries
 
-
 import arcpy
 
 arcpy.env.overwriteOutput = True
@@ -52,14 +51,20 @@ def remove_overlaps(
     print("\nCreated WorkFileManager and temporary files for overlap remover process.")
 
     # 3) Remove locked features from buffers to avoid overlap in these areas
-    arcpy.analysis.Erase(
-        in_features=buffered_fc,
-        erase_features=locked_fc,
-        out_feature_class=files["erased_buffers"],
-    )
-    print(
-        "Erased locked features from buffered features to avoid overlap in these areas."
-    )
+    if locked_fc:
+        arcpy.analysis.PairwiseErase(
+            in_features=buffered_fc,
+            erase_features=locked_fc,
+            out_feature_class=files["erased_buffers"],
+        )
+        print(
+            "Erased locked features from buffered features to avoid overlap in these areas."
+        )
+    else:
+        arcpy.management.CopyFeatures(
+            in_features=buffered_fc, out_feature_class=files["erased_buffers"]
+        )
+        print("Copied buffered features to erased buffers.")
 
     # Extra: Fix geometries in the passability layer after buffering
     update_passability_for_buffer(

@@ -322,7 +322,7 @@ def create_new_fc(
     desc = arcpy.Describe(input_fc)
 
     # 2) Create new, empty fc
-    print(f"🆕 Creating new feature class: {output_fc}")
+    print(f"🆕 Creating new feature class:\n  - {output_fc}")
     arcpy.management.CreateFeatureclass(
         out_path=os.path.dirname(output_fc),
         out_name=os.path.basename(output_fc),

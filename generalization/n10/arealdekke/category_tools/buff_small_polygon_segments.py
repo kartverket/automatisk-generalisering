@@ -6,6 +6,7 @@ import arcpy
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
+from custom_tools.general_tools.validation import check_valid_feature_class
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.overlap_merger import (
@@ -35,6 +36,10 @@ def buff_small_polygon_segments(
         locked_fc (set): A set of feature classes representing locked areas
         map_scale (str): The map scale for the operation
     """
+    print(
+        f"\n{'====='*15}\nBuffering small segments of '{target}' at map scale '{map_scale}'\n{'====='*15}\n"
+    )
+
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
@@ -43,16 +48,20 @@ def buff_small_polygon_segments(
     min_width = get_min_width(map_scale=map_scale, target=target)
 
     extract_data(files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc)
-    find_segments_under_min(files=files, min_width=min_width)
-    choose_target_areas(files=files)
-    get_shared_locked_boundary(files=files, min_width=min_width)
-    buff_small_segments(files=files, min_width=min_width)
 
-    create_overlapping_land_use(
-        input_fc=files[fc.target_fc],
-        buffered_fc=files[fc.small_segments_locked_buffed_dissolved],
-        output_fc=output_fc,
-    )
+    if check_valid_feature_class(files[fc.target_fc], level=2):
+        find_segments_under_min(files=files, min_width=min_width)
+        choose_target_areas(files=files, min_width=min_width)
+        get_shared_locked_boundary(files=files, min_width=min_width)
+        buff_small_segments(files=files, min_width=min_width)
+
+        create_overlapping_land_use(
+            input_fc=files[fc.target_fc],
+            buffered_fc=files[fc.small_segments_locked_buffed_dissolved],
+            output_fc=output_fc,
+        )
+    else:
+        arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
     wfm.delete_created_files()
 
@@ -240,79 +249,46 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
             original size
         - Remove the large enough segments from the original polyon
     """
-
-    input_polygon_lyr = "input_polygon_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.target_fc], out_layer=input_polygon_lyr
-    )
     arcpy.management.PolygonToLine(
-        in_features=input_polygon_lyr, out_feature_class=files[fc.input_polygon_edge]
-    )
-
-    input_polygon_edge_lyr = "input_polygon_edge_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.input_polygon_edge], out_layer=input_polygon_edge_lyr
+        in_features=files[fc.target_fc], out_feature_class=files[fc.input_polygon_edge]
     )
 
     arcpy.analysis.Buffer(
-        in_features=input_polygon_edge_lyr,
+        in_features=files[fc.input_polygon_edge],
         out_feature_class=files[fc.input_polygon_minus_buffer],
         buffer_distance_or_field=f"{min_width/2} Meters",
         line_side="FULL",
     )
 
-    input_polygon_minus_buffer_lyr = "input_polygon_minus_buffer_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.input_polygon_minus_buffer],
-        out_layer=input_polygon_minus_buffer_lyr,
-    )
     arcpy.analysis.Erase(
-        in_features=input_polygon_lyr,
-        erase_features=input_polygon_minus_buffer_lyr,
+        in_features=files[fc.target_fc],
+        erase_features=files[fc.input_polygon_minus_buffer],
         out_feature_class=files[fc.core_of_segments_wide_enough],
     )
 
-    core_of_segments_wide_enough_lyr = "core_of_segments_wide_enough_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.core_of_segments_wide_enough],
-        out_layer=core_of_segments_wide_enough_lyr,
-    )
-
     arcpy.management.RepairGeometry(
-        in_features=core_of_segments_wide_enough_lyr, delete_null="DELETE_NULL"
+        in_features=files[fc.core_of_segments_wide_enough], delete_null="DELETE_NULL"
     )
     arcpy.management.MultipartToSinglepart(
-        in_features=core_of_segments_wide_enough_lyr,
+        in_features=files[fc.core_of_segments_wide_enough],
         out_feature_class=files[fc.core_wide_enough_segments_singlepart],
     )
 
-    core_wide_enough_segments_singlepart_lyr = (
-        "core_wide_enough_segments_singlepart_lyr"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.core_wide_enough_segments_singlepart],
-        out_layer=core_wide_enough_segments_singlepart_lyr,
-    )
-
     arcpy.analysis.PairwiseBuffer(
-        in_features=core_wide_enough_segments_singlepart_lyr,
+        in_features=files[fc.core_wide_enough_segments_singlepart],
         out_feature_class=files[fc.segments_wide_enough],
         buffer_distance_or_field=f"{min_width/2} Meters",
     )
 
-    segments_wide_enough_lyr = "segments_wide_enough_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.segments_wide_enough], out_layer=segments_wide_enough_lyr
-    )
     arcpy.analysis.Erase(
-        in_features=input_polygon_lyr,
-        erase_features=segments_wide_enough_lyr,
+        in_features=files[fc.target_fc],
+        erase_features=files[fc.segments_wide_enough],
         out_feature_class=files[fc.segments_too_small],
     )
 
 
 @timing_decorator
-def choose_target_areas(files: dict) -> None:
+def choose_target_areas(files: dict, min_width: int) -> None:
     """
     What:
         Clips the original polygon to only include 15 meters around the too small segments.
@@ -320,39 +296,23 @@ def choose_target_areas(files: dict) -> None:
     - Creates an overkill buffer that includes the small segments and some of the area around.
     - Clip original polygon to get area with the too small segments.
     """
-
-    segments_too_small_single_lyr = "segments_too_small_single_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.segments_too_small],
-        out_layer=segments_too_small_single_lyr,
-    )
-
     arcpy.analysis.Buffer(
-        in_features=segments_too_small_single_lyr,
+        in_features=files[fc.segments_too_small],
         out_feature_class=files[fc.overkill_buffer],
-        buffer_distance_or_field="15 Meters",
+        buffer_distance_or_field=f"{min_width} Meters",
         line_side="FULL",
-    )
-
-    overkill_buffer_lyr = "overkill_buffer_lyr"
-    original_polygon_lyr = "original_polygon_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.overkill_buffer], out_layer=overkill_buffer_lyr
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.target_fc], out_layer=original_polygon_lyr
     )
 
     try:
         arcpy.analysis.PairwiseClip(
-            in_features=original_polygon_lyr,
-            clip_features=overkill_buffer_lyr,
+            in_features=files[fc.target_fc],
+            clip_features=files[fc.overkill_buffer],
             out_feature_class=files[fc.areas_chosen],
         )
     except:
         arcpy.analysis.Clip(
-            in_features=original_polygon_lyr,
-            clip_features=overkill_buffer_lyr,
+            in_features=files[fc.target_fc],
+            clip_features=files[fc.overkill_buffer],
             out_feature_class=files[fc.areas_chosen],
         )
 
@@ -364,19 +324,14 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         Finds the boundaries between the target polygon and the locked polygons. Then, it creates a
         buffer going outwards from the locked areas.
     """
-
-    overkill_lyr = "overkill_lyr"
     locked_fc_lyr = "locked_fc_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.overkill_buffer], out_layer=overkill_lyr
-    )
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_fc], out_layer=locked_fc_lyr
     )
     arcpy.management.SelectLayerByLocation(
         in_layer=locked_fc_lyr,
         overlap_type="INTERSECT",
-        select_features=overkill_lyr,
+        select_features=files[fc.overkill_buffer],
         selection_type="NEW_SELECTION",
     )
 
@@ -388,24 +343,12 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_fc_line], out_layer=locked_fc_line_lyr
     )
-    arcpy.analysis.Clip(
-        in_features=locked_fc_line_lyr,
-        clip_features=overkill_lyr,
+
+    arcpy.analysis.PairwiseClip(
+        in_features=files[fc.locked_fc_line],
+        clip_features=files[fc.overkill_buffer],
         out_feature_class=files[fc.locked_fc_line_clipped],
     )
-
-    try:
-        arcpy.analysis.PairwiseClip(
-            in_features=locked_fc_line_lyr,
-            clip_features=overkill_lyr,
-            out_feature_class=files[fc.locked_fc_line_clipped],
-        )
-    except:
-        arcpy.analysis.Clip(
-            in_features=locked_fc_line_lyr,
-            clip_features=overkill_lyr,
-            out_feature_class=files[fc.locked_fc_line_clipped],
-        )
 
     locked_fc_line_clipped_lyr = "locked_fc_line_clipped_lyr"
     areas_chosen_lyr = "areas_chosen_lyr"
@@ -546,36 +489,8 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         out_layer=only_small_segments_centre_lyr,
     )
 
-    try:
-        arcpy.analysis.PairwiseBuffer(
-            in_features=only_small_segments_centre_lyr,
-            out_feature_class=files[fc.small_segments_enlarged],
-            buffer_distance_or_field=f"{min_width/2} Meters",
-        )
-
-    except:
-        arcpy.analysis.Buffer(
-            in_features=only_small_segments_centre_lyr,
-            out_feature_class=files[fc.small_segments_enlarged],
-            buffer_distance_or_field=f"{min_width/2} Meters",
-        )
-
-    small_segments_enlarged_lyr = "small_segments_enlarged_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.small_segments_enlarged],
-        out_layer=small_segments_enlarged_lyr,
-    )
-    arcpy.management.Merge(
-        inputs=[locked_fc_outward_buffer_lyr, small_segments_enlarged_lyr],
-        output=files[fc.small_segments_locked_buffed_merged],
-    )
-
-    small_segments_locked_buffed_merged_lyr = "small_segments_locked_buffed_merged_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.small_segments_locked_buffed_merged],
-        out_layer=small_segments_locked_buffed_merged_lyr,
-    )
-    arcpy.management.Dissolve(
-        in_features=small_segments_locked_buffed_merged_lyr,
+    arcpy.analysis.PairwiseBuffer(
+        in_features=only_small_segments_centre_lyr,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
+        buffer_distance_or_field=f"{min_width/2} Meters",
     )

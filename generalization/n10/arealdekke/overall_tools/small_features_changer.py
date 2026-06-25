@@ -175,14 +175,17 @@ def change_attribute_value_category(
                 for row in arcpy.da.SearchCursor(files["selected_normal"], [new_field])
             ]
         )
-        arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=work_lyr,
-            selection_type="NEW_SELECTION",
-            where_clause=f"OBJECTID IN ({OIDS})",
-        )
-        with arcpy.da.UpdateCursor(work_lyr, relevant_fields[new_category]) as update:
-            for _ in update:
-                update.updateRow(updated_fields[category])
+        if OIDS:
+            arcpy.management.SelectLayerByAttribute(
+                in_layer_or_view=work_lyr,
+                selection_type="NEW_SELECTION",
+                where_clause=f"OBJECTID IN ({OIDS})",
+            )
+            with arcpy.da.UpdateCursor(
+                work_lyr, relevant_fields[new_category]
+            ) as update:
+                for _ in update:
+                    update.updateRow(updated_fields[category])
 
         # Updates attribute for 'exception_category'
         arcpy.analysis.Near(
@@ -198,31 +201,32 @@ def change_attribute_value_category(
                 )
             ]
         )
-        arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=work_lyr,
-            selection_type="NEW_SELECTION",
-            where_clause=f"OBJECTID IN ({OIDS})",
-        )
-        match_fields = {
-            oid: val
-            for oid, val in arcpy.da.SearchCursor(
-                files["surrounding_features"],
-                ["OID@", relevant_fields[exception_category][-1]],
+        if OIDS:
+            arcpy.management.SelectLayerByAttribute(
+                in_layer_or_view=work_lyr,
+                selection_type="NEW_SELECTION",
+                where_clause=f"OBJECTID IN ({OIDS})",
             )
-        }
-        sel_oids = {
-            orig_OID: near_OID
-            for orig_OID, near_OID in arcpy.da.SearchCursor(
-                files["selected_exception"], [new_field, "NEAR_FID"]
-            )
-        }
-        with arcpy.da.UpdateCursor(
-            work_lyr, ["OID@"] + relevant_fields[exception_category]
-        ) as update:
-            for oid, _, _ in update:  # (category, dissolve_field, object ID)
-                update.updateRow(
-                    [oid, exception_category, match_fields[sel_oids[str(oid)]]]
+            match_fields = {
+                oid: val
+                for oid, val in arcpy.da.SearchCursor(
+                    files["surrounding_features"],
+                    ["OID@", relevant_fields[exception_category][-1]],
                 )
+            }
+            sel_oids = {
+                orig_OID: near_OID
+                for orig_OID, near_OID in arcpy.da.SearchCursor(
+                    files["selected_exception"], [new_field, "NEAR_FID"]
+                )
+            }
+            with arcpy.da.UpdateCursor(
+                work_lyr, ["OID@"] + relevant_fields[exception_category]
+            ) as update:
+                for oid, _, _ in update:  # (category, dissolve_field, object ID)
+                    update.updateRow(
+                        [oid, exception_category, match_fields[sel_oids[str(oid)]]]
+                    )
     else:
         # If no exception value, rewrite all selected features
         with arcpy.da.UpdateCursor(
