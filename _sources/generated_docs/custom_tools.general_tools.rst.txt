@@ -116,6 +116,14 @@ custom\_tools.general\_tools.study\_area\_selector module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.validation module
+----------------------------------------------
+
+.. automodule:: custom_tools.general_tools.validation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

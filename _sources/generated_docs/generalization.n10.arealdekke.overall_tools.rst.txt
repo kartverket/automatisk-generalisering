@@ -4,6 +4,14 @@ generalization.n10.arealdekke.overall\_tools package
 Submodules
 ----------
 
+generalization.n10.arealdekke.overall\_tools.area\_aggregator module
+--------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.area_aggregator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.overall\_tools.arealdekke\_dissolver module
 -------------------------------------------------------------------------
 
