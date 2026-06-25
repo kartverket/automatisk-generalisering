@@ -11,12 +11,19 @@ from typing import Dict, Set, List, Any, Iterable, Optional
 
 
 def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
+    """
+    creates points that symbolize a connection between two roads,
+    give id of point to the roads that it symbolizes a connection between,
+    this is how we track the movement of the cross through further generalization of the roads,
+    removes all ramps from the roads,
+    Not implemented yet but will restore connections between roads that get lost because of ramp removal when the connection isnt symbolized through a point 
+    """
     config = core_config.WorkFileConfig(root_file=input_fc)
     wfm = WorkFileManager(config=config)
     files = create_wfm_gdbs(wfm=wfm)
     arcpy.management.CopyFeatures(input_fc, files["copy_of_input"])
 
-    relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400) #1000 and above gets an error about falling outside of geometry domain?
+    relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400) 
    
     dissolve_and_return_connection(lines_fc=relevant_roads_layer, output_fc=files["relevant_roads_dissolved"], dissolve_fields = ["objtype", "medium", "motorvegtype", "vegkategori", "typeveg"])
     add_ramps_to_relevant_roads(files=files)
@@ -25,10 +32,10 @@ def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
     make_potential_points(files=files)
     give_points_score(files=files)
     give_points_ramp_id(files=files)
-    all_ramp_oids_per_rampid = remove_points_without_ramp_connection(files=files, max_path_length=1000, short_path_no_ramp_length=250) 
+    all_ramp_oids_per_rampid = remove_points_without_ramp_connection(files=files, max_path_length=1000) 
     add_subsets_values(files=files, all_ramp_oids_per_rampid=all_ramp_oids_per_rampid)
     
-    give_roads_ramp_id_2(files=files)
+    give_roads_ramp_id(files=files)
 
     delete_ramps(files=files)
     arcpy.management.CopyFeatures(
@@ -39,7 +46,7 @@ def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
         in_features=files["potential_points"],
         out_feature_class=output_points_fc,
     )
-    #wfm.delete_created_files()
+    wfm.delete_created_files()
 
     
 
@@ -425,13 +432,11 @@ def get_line_endpoints(line_geom):
     return start_pg, end_pg
 
 @timing_decorator
-def remove_points_without_ramp_connection(files: dict, max_path_length: int, short_path_no_ramp_length: int):
+def remove_points_without_ramp_connection(files: dict, max_path_length: int):
     """
     Removes potential points that arent on top of 2 roads connected by ramps
-    also removes potential points if the two roads are connected through a very short path without ramps
 
     max_path_length: maximum legnth of path in meters, paths longer than this dont count as a connection
-    short_path_no_ramp_length: if point has a path without ramps with a length shorter than this we remove it
     """
     adjacency = build_adjacency_with_medium(files, files["relevant_roads_dissolved"])
     ramp_oids = set()
@@ -462,7 +467,7 @@ def remove_points_without_ramp_connection(files: dict, max_path_length: int, sho
     with arcpy.da.SearchCursor(files["potential_points"], cursor_fields) as s_cur:
         for row in s_cur:
             point_oid = row[0]
-            # expect two FID fields (order depends on how Intersect was run)
+            # expect two FID fields 
             if len(row) < 3 or row[1] is None or row[2] is None:
                 continue
             road_a = int(row[1])
@@ -502,7 +507,8 @@ def remove_points_without_ramp_connection(files: dict, max_path_length: int, sho
 def add_subsets_values(files: dict, all_ramp_oids_per_rampid: dict):
     """
     If a points ramp oids in paths are a subset of another points ramp oids we add it in the is_subset column,
-    if two points have the exact same ramp oids we say the one with a hicher score is a subset of the other
+    if two points have the exact same ramp oids we say the one with a hicher score is a subset of the other,
+    and if the score is equal the one further away from the ramps is subset of the one thats closer to the ramps, 
     """
     road_geoms = defaultdict()
     with arcpy.da.SearchCursor(files["relevant_roads_dissolved"], ["OID@", "SHAPE@"]) as s_cur:
@@ -971,7 +977,7 @@ def give_points_ramp_id(files: dict):
         expression_type="PYTHON3",
     )
 
-def give_roads_ramp_id_2(files: dict):
+def give_roads_ramp_id(files: dict):
     """
     Add a nullable text field 'ramp_id' to the copy_of_input feature class
     and populate it with comma-separated OIDs from potential points that intersect each line.
@@ -1024,87 +1030,6 @@ def give_roads_ramp_id_2(files: dict):
                 row[1] = ",".join(sorted(ramp_ids))
                 u_cur.updateRow(row)
 
-@timing_decorator
-def give_roads_ramp_id(files: dict):
-    """
-    Add a nullable text field 'ramp_id' to the copy_of_input feature class
-    and populate it with comma-separated OIDs from potential points that intersect each line.
-    If no points intersect a line the field is left NULL.
-    """
-    in_fc = files["copy_of_input"]
-    points_fc = files["potential_points"]
-    field_name = "ramp_id"
-    field_length = 1000
-
-    # ensure field exists (create if missing)
-    existing = {f.name for f in arcpy.ListFields(in_fc)}
-    if field_name not in existing:
-        arcpy.management.AddField(
-            in_table=in_fc,
-            field_name=field_name,
-            field_type="TEXT",
-            field_length=field_length,
-            field_is_nullable="NULLABLE",
-        )
-
-    # create feature layers for spatial selection
-    lines_lyr = "copy_of_input_lyr_rampid"
-    points_lyr = "potential_points_lyr_rampid"
-    arcpy.management.MakeFeatureLayer(in_fc, lines_lyr)
-    arcpy.management.MakeFeatureLayer(points_fc, points_lyr)
-
-    # OID field names and delimiters
-    lines_oid_field = arcpy.Describe(in_fc).OIDFieldName
-    points_oid_field = arcpy.Describe(points_fc).OIDFieldName
-    lines_oid_delim = arcpy.AddFieldDelimiters(in_fc, lines_oid_field)
-    points_oid_delim = arcpy.AddFieldDelimiters(points_fc, points_oid_field)
-
-    # Build mapping: line_oid -> list of point_oids
-    line_to_points = defaultdict(list)
-
-    # Iterate points and find intersecting lines (select features to limit work)
-    with arcpy.da.SearchCursor(points_fc, ["OID@"]) as pcur:
-        for prow in pcur:
-            point_oid = int(prow[0])
-            # select the single point in the points layer
-            where_pt = f"{points_oid_delim} = {point_oid}"
-            arcpy.management.SelectLayerByAttribute(points_lyr, "NEW_SELECTION", where_pt)
-
-            # select lines that intersect the currently selected point
-            arcpy.management.SelectLayerByLocation(lines_lyr, "INTERSECT", points_lyr, selection_type="NEW_SELECTION")
-
-            # gather selected line OIDs
-            with arcpy.da.SearchCursor(lines_lyr, ["OID@"]) as lcur:
-                for lrow in lcur:
-                    line_oid = int(lrow[0])
-                    line_to_points[line_oid].append(point_oid)
-
-            # clear selections for next iteration
-            arcpy.management.SelectLayerByAttribute(points_lyr, "CLEAR_SELECTION")
-            arcpy.management.SelectLayerByAttribute(lines_lyr, "CLEAR_SELECTION")
-
-    # Write comma-separated lists into the field; set None when no points
-    with arcpy.da.UpdateCursor(in_fc, ["OID@", field_name]) as ucur:
-        for urow in ucur:
-            line_oid = int(urow[0])
-            pts = line_to_points.get(line_oid)
-            if pts:
-                # keep deterministic order
-                pts_sorted = sorted(set(pts))
-                urow[1] = ",".join(str(p) for p in pts_sorted)
-            else:
-                urow[1] = None
-            ucur.updateRow(urow)
-
-    # cleanup
-    try:
-        arcpy.management.Delete(lines_lyr)
-    except Exception:
-        pass
-    try:
-        arcpy.management.Delete(points_lyr)
-    except Exception:
-        pass
     
 
 def delete_ramps(files: dict):
@@ -1126,8 +1051,11 @@ def delete_ramps(files: dict):
 @timing_decorator
 def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str):
     """
-    Places points on the crosses that survived the whole generalization process
-    Removes points that are to close to eachother
+    Roads have the column ramp_id with the obj id of potential ramp points they intersect with
+    If 2 roads with different mediums cross and have the same values in ramp_id we want to move that point to the intersection of those 2 roads (excluding endpoints)
+
+    Removes points if they are subsets of another surviving point
+    Removes points where there is a short connection between the roads the point is on
     """
     config = core_config.WorkFileConfig(root_file=input_points_fc)
     wfm = WorkFileManager(config=config)
@@ -1142,7 +1070,6 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
     )
     keep_relevant_roads(files=files)
     find_surviving_potential_points(files=files, input_points=input_points_fc)
-    pruning(files=files)
     remove_subsets(files=files)
     remove_points_with_short_connections(files=files, short_path_length=250)
 
@@ -1155,6 +1082,7 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
         in_features=files["potential_points_part2"],
         out_feature_class=output_points_fc,
     )
+    wfm.delete_created_files()
 
 def create_wfm_gdbs_2(wfm: WorkFileManager) -> dict:
     """
@@ -1200,10 +1128,10 @@ def create_wfm_gdbs_2(wfm: WorkFileManager) -> dict:
 @timing_decorator
 def explode_roads(files: dict):
     """
-    Roads have the column ramp_id with the obj id of potential ramp points they intersect with
-    If 2 roads with different mediums cross and have the same values in ramp_id we want to move that point to the intersection of those 2 road (excluding endpoints)
-    A road can intersect more than one potential point, 
-    so to make sure this road can dissolve and intersect with multiple other roads that only have one of the values in ramp_id we explode the road table on the column ramp_id 
+    When a road intersects more than one potential point the value in ramp_id looks like this: 51,52,43, 
+    so to make sure this road can dissolve and intersect with multiple other roads that share one of the values in ramp_id
+    we explode the road table on the column ramp_id 
+    
     exploding: 
         if we have one row with 3 different ramp_id values 
         we turn it into 3 seperate rows each with one of the values 
@@ -1275,7 +1203,7 @@ def explode_roads(files: dict):
 def dissolve_exploded_roads(exploded_roads: str, output_fc: str):
     """
     Dissolves roads and ramps
-    using these fields: ["objtype", "medium", "motorvegtype", "vegkategori", "typeveg"]
+    using these fields: ["objtype", "medium", "motorvegtype", "vegkategori", "typeveg", "ramp_id"]
     """
     arcpy.management.Dissolve(
         in_features=exploded_roads, 
@@ -1313,7 +1241,7 @@ def find_surviving_potential_points(files: dict, input_points: str):
     """
     Find intersection points between features in `exploded_roads_dissolved` that
     share the same `ramp_id` but have different `medium` values.
-
+    excluding endpoints
     
     """
     rid_points = defaultdict(list)
@@ -1576,25 +1504,12 @@ def remove_endpoints_part_2(files: dict, lines_fc: str, points_fc: str):
 
         arcpy.management.Delete(points_lyr)
 
-def pruning(files: dict):
-    """
-    en func per disse punkter:
-    Her kommer pruning av potensielle punkter:
-    regler i rekkefølge av fjerning:
-    Hvis et punkt er på 2 veier som har kobling uten rampe så fjerner vi det punktet. (USIKKER PÅ DENNE HØR MED TEAMET) (nesten garantert at denne blir med bare usikker på grense på lengde for kobling, 500m?)
-    Så fjerner vi punkter som er oppå hverandre ?50m? og beholder det med høyest score (usikker på hva som blir tiebreaker)
-    Hvis 2 punkter har en kort kobling som starter på en vei og er innom alle veier med punkt på, så fjerner vi punktet med lavest score (igjen tiebreaker?) (her kan vi starte med at punktene må være innen x meter fra hverandre)
 
-    Hvis du kjører dissolve with intersections så kan du kanskje lettere ta i bruk shape_length under bfs søk?
-    dissolve with intersections tenker kanskje ikke på medium så da måtte du kjørt dissolve with intersections en gang per medium og så slått sammen resultat
-    """
-    
-    pass
 
 def remove_subsets(files: dict):
     """
-    If a surviving points ramps in path that connects the two roads it is on
-    is a subset of another surviving points ramps we remove the one with the subset
+    If a surviving point is a subset of another surviving point we remove the one that is the subset
+    subset is defined in part 1 of the ramp generalization
     """
     ramp_ids = set()
     with arcpy.da.SearchCursor(files["potential_points_part2"], ["ramp_id"]) as s_cur:
@@ -1614,6 +1529,9 @@ def remove_subsets(files: dict):
 
 @timing_decorator
 def remove_points_with_short_connections(files: dict, short_path_length: int):
+    """
+    Removes points when the two roads it is on have a short connection
+    """
     layer= "layer"
     arcpy.management.MakeFeatureLayer(
         in_features=files["copy_of_roads"],
