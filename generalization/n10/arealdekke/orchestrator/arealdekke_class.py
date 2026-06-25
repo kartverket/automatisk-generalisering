@@ -365,19 +365,19 @@ class Arealdekke:
                             key=keys.reinserts_completed.value,
                             value=reinserts_completed_updated,
                         )
-                    else:
-                        arcpy.analysis.Erase(
-                            in_features=self.files["arealdekke_fc"],
-                            erase_features=self.files["processed_fc"],
-                            out_feature_class=self.files["intermediate_fc"],
-                        )
-                        arcpy.management.Merge(
-                            inputs=[
-                                self.files["processed_fc"],
-                                self.files["intermediate_fc"],
-                            ],
-                            output=self.files["arealdekke_fc"],
-                        )
+                else:
+                    arcpy.analysis.Erase(
+                        in_features=self.files["arealdekke_fc"],
+                        erase_features=self.files["processed_fc"],
+                        out_feature_class=self.files["intermediate_fc"],
+                    )
+                    arcpy.management.Merge(
+                        inputs=[
+                            self.files["processed_fc"],
+                            self.files["intermediate_fc"],
+                        ],
+                        output=self.files["arealdekke_fc"],
+                    )
 
             # Close current land use type
             category.set_accessibility(False)

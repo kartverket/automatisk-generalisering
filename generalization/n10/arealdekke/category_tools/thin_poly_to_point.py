@@ -70,7 +70,7 @@ def pointify_thin_poly(
         files=files, output_fc=output_fc, locked_categories=locked_categories
     )
 
-    # wfm.delete_created_files()
+    wfm.delete_created_files()
 
 
 # ========================
