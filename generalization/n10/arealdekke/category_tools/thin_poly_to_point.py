@@ -431,9 +431,14 @@ def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> No
             elif best_lines[poly_id][0] < length:
                 best_lines[poly_id] = [length, area]
 
+    print(best_lines)
+
     with arcpy.da.UpdateCursor(files["split_result"], ["OID@", "arealdekke"]) as update:
         for oid, area in update:
-            update.updateRow([oid, best_lines[oid][-1]])
+            try:
+                update.updateRow([oid, best_lines[oid][-1]])
+            except:
+                continue
 
     arcpy.management.Merge(
         inputs=[files["erased_small_areas"], files["split_result"]],

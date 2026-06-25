@@ -576,6 +576,7 @@ class Arealdekke:
                 input_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
                 map_scale=self.__map_scale,
+                target="Høyblokkbebyggelse",
             ),
             lambda: eliminate_small_polygons(
                 input_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,

@@ -573,8 +573,8 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
 
     # Run Config:
     partiton_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=50_000,
-        context_radius_meters=0,
+        max_elements_per_partition=5_000,
+        context_radius_meters=200,
         run_partition_optimization=False,
     )
 

@@ -44,8 +44,6 @@ Categories :
 
   - title : Hav
     operations :
-      - buff_small_segments
-      - simplify_and_smooth
     accessibility : false
     reinsert : true
     order: 6
