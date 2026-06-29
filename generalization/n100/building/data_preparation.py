@@ -2,12 +2,14 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import (
+from input_data.features import (
+    input_road,
+)
+from input_data.features import (
     input_area,
     input_building,
     input_matrikkel,
     input_railway,
-    input_road,
 )
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_orchestrator import InputDataOrchestrator

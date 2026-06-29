@@ -8,7 +8,7 @@ from types import ModuleType
 from paths import GIS_FILES_ROOT
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_setup import EXPECTED, FolderSpec
-from input_data.input_symbology import get_symbology_paths
+from input_data.features.input_symbology import get_symbology_paths
 
 # ========================
 # InputDataOrchestrator
@@ -217,14 +217,14 @@ class InputDataOrchestrator:
             dataset (ModuleType): A module containing a DATA list of Path objects.
         """
         data_name = dataset.__name__.split("_")[-1].upper()
-        data = dataset.DATA
+        data: dict = dataset.DATA
 
         content = {}
         missing = set()
 
-        for d in data:
+        for name, d in data.items():
             if self.validate_fc(d):
-                content[d.name] = str(d)
+                content[name] = str(d)
             else:
                 missing.add(str(d))
 

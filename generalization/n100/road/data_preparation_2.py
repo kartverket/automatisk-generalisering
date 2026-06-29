@@ -2,7 +2,7 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_area, input_building, input_railway, input_road
+from input_data.features import input_area, input_building, input_railway, input_road
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_orchestrator import InputDataOrchestrator
 
@@ -104,7 +104,7 @@ def main():
 @timing_decorator
 def data_selection_and_validation(
     area_selection: str, data_orc: InputDataOrchestrator
-) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
+) -> tuple[DatasetNamespace, DatasetNamespace]:
 
     for data in [input_area, input_building, input_railway, input_road]:
         data_orc.set_input_dataset(data)
@@ -123,8 +123,8 @@ def data_selection_and_validation(
             area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=area.AdminFlate_N50,
-        selecting_sql_expression=area_selection,
         select_local=SELECT_STUDY_AREA,
+        selecting_sql_expression=area_selection,
     )
 
     selector.run()

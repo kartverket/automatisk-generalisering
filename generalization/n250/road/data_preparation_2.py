@@ -38,7 +38,7 @@ from generalization.n250.road.vegsperring import remove_roadblock
 
 # Importing custom input files modules
 from input_data import input_n100, input_roads
-from input_data.input_symbology import SymbologyN250
+from input_data.features.input_symbology import SymbologyN250
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
