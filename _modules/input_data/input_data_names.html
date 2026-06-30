@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>input_data.input_data_names &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">input_data.input_data_names</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for input_data.input_data_names</h1><div class="highlight"><pre>
+<span></span><span class="s2">&quot;This file contains all the standard names of feature types and classes that we use.&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+
+
+<div class="viewcode-block" id="DataNames">
+<a class="viewcode-back" href="../../generated_docs/input_data.html#input_data.input_data_names.DataNames">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataNames</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+    <span class="c1">#########################</span>
+    <span class="c1"># Main folder names</span>
+    <span class="c1">#########################</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="s2">&quot;AREA&quot;</span>
+    <span class="n">building</span> <span class="o">=</span> <span class="s2">&quot;BUILDING&quot;</span>
+    <span class="n">matrikkel</span> <span class="o">=</span> <span class="s2">&quot;MATRIKKEL&quot;</span>
+    <span class="n">railway</span> <span class="o">=</span> <span class="s2">&quot;RAILWAY&quot;</span>
+    <span class="n">road</span> <span class="o">=</span> <span class="s2">&quot;ROAD&quot;</span>
+    <span class="n">symbology</span> <span class="o">=</span> <span class="s2">&quot;SYMBOLOGY&quot;</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Scale names</span>
+    <span class="c1">#########################</span>
+    <span class="n">scale_n10</span> <span class="o">=</span> <span class="s2">&quot;n10&quot;</span>
+    <span class="n">scale_n50</span> <span class="o">=</span> <span class="s2">&quot;n50&quot;</span>
+    <span class="n">scale_n100</span> <span class="o">=</span> <span class="s2">&quot;n100&quot;</span>
+    <span class="n">scale_n250</span> <span class="o">=</span> <span class="s2">&quot;n250&quot;</span>
+    <span class="n">scale_n500</span> <span class="o">=</span> <span class="s2">&quot;n500&quot;</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Main sub folder names</span>
+    <span class="c1">#########################</span>
+
+    <span class="n">object_admin</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
+    <span class="n">object_arealdekke_flate</span> <span class="o">=</span> <span class="s2">&quot;land_use&quot;</span>
+    <span class="n">object_bygning</span> <span class="o">=</span> <span class="s2">&quot;building&quot;</span>
+    <span class="n">object_elv_bekk</span> <span class="o">=</span> <span class="s2">&quot;river&quot;</span>
+    <span class="n">object_veg_sti</span> <span class="o">=</span> <span class="s2">&quot;road&quot;</span>
+    <span class="n">object_bygg_og_anlegg</span> <span class="o">=</span> <span class="s2">&quot;facility&quot;</span>
+    <span class="n">object_bane</span> <span class="o">=</span> <span class="s2">&quot;railway&quot;</span>
+    <span class="n">object_hoyde</span> <span class="o">=</span> <span class="s2">&quot;landforms&quot;</span>
+    <span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="s2">&quot;lyrx_outputs&quot;</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Sub names</span>
+    <span class="c1">#########################</span>
+
+    <span class="c1"># Area</span>
+    <span class="n">AdminFlate_N50</span> <span class="o">=</span> <span class="s2">&quot;AdminFlate_N50&quot;</span>
+    <span class="n">AdminGrense_N50</span> <span class="o">=</span> <span class="s2">&quot;AdminGrense_N50&quot;</span>
+    <span class="n">Arealdekke_Test</span> <span class="o">=</span> <span class="s2">&quot;Arealdekke_Test&quot;</span>
+    <span class="n">ArealdekkeFlate</span> <span class="o">=</span> <span class="s2">&quot;ArealdekkeFlate&quot;</span>
+    <span class="n">ArealdekkeFlate_N10</span> <span class="o">=</span> <span class="s2">&quot;ArealdekkeFlate_N10&quot;</span>
+    <span class="n">ArealdekkeFlate_N50</span> <span class="o">=</span> <span class="s2">&quot;ArealdekkeFlate_N50&quot;</span>
+    <span class="n">Begrensningskurve_N50</span> <span class="o">=</span> <span class="s2">&quot;Begrensningskurve_N50&quot;</span>
+    <span class="n">Fishnet_500m</span> <span class="o">=</span> <span class="s2">&quot;Fishnet_500m&quot;</span>
+
+    <span class="c1"># Building</span>
+    <span class="n">AnleggsLinje_N50</span> <span class="o">=</span> <span class="s2">&quot;AnleggsLinje_N50&quot;</span>
+    <span class="n">BygningsPunkt_N10</span> <span class="o">=</span> <span class="s2">&quot;BygningsPunkt_N10&quot;</span>
+    <span class="n">Grunnriss_N10</span> <span class="o">=</span> <span class="s2">&quot;Grunnriss_N10&quot;</span>
+    <span class="n">TuristHytte_N10</span> <span class="o">=</span> <span class="s2">&quot;TuristHytte_N10&quot;</span>
+
+    <span class="c1"># Matrikkel</span>
+    <span class="n">bygning</span> <span class="o">=</span> <span class="s2">&quot;bygning&quot;</span>
+
+    <span class="c1"># Railway</span>
+    <span class="n">Bane_N50</span> <span class="o">=</span> <span class="s2">&quot;Bane_N50&quot;</span>
+    <span class="n">JernbaneStasjon_N50</span> <span class="o">=</span> <span class="s2">&quot;JernbaneStasjon_N50&quot;</span>
+
+    <span class="c1"># Road</span>
+    <span class="n">elveg_and_sti</span> <span class="o">=</span> <span class="s2">&quot;elveg_and_sti&quot;</span>
+    <span class="n">vegsperring</span> <span class="o">=</span> <span class="s2">&quot;vegsperring&quot;</span>
+    <span class="n">VegSti_N50</span> <span class="o">=</span> <span class="s2">&quot;VegSti_N50&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

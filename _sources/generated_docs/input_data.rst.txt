@@ -20,6 +20,22 @@ input\_data.input\_building module
    :show-inheritance:
    :undoc-members:
 
+input\_data.input\_data\_lookup module
+--------------------------------------
+
+.. automodule:: input_data.input_data_lookup
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+input\_data.input\_data\_names module
+-------------------------------------
+
+.. automodule:: input_data.input_data_names
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 input\_data.input\_datasets module
 ----------------------------------
 
