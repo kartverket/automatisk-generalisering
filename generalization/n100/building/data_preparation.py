@@ -5,7 +5,12 @@ import arcpy
 from data_orchestrator.features import (
     input_road,
 )
-from data_orchestrator.features import input_area, input_building, input_matrikkel, input_railway
+from data_orchestrator.features import (
+    input_area,
+    input_building,
+    input_matrikkel,
+    input_railway,
+)
 from data_orchestrator.datasets import DatasetNamespace
 from data_orchestrator.input_orchestrator import InputDataOrchestrator
 

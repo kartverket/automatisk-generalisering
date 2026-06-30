@@ -10,12 +10,12 @@ pipeline.
 from data_orchestrator.data_names import DataNames as dn
 
 PIPELINE_INPUT = {
-    "N10": {"building": [], "land_use": [], "road": []},
-    "N50": {"building": [], "land_use": [], "road": []},
-    "N100": {
-        "building": [],
-        "land_use": [],
-        "road": {
+    dn.scale_n10: {dn.object_bygning: [], dn.object_arealdekke_flate: [], dn.object_veg_sti: []},
+    dn.scale_n50: {dn.object_bygning: [], dn.object_arealdekke_flate: [], dn.object_veg_sti: []},
+    dn.scale_n100: {
+        dn.object_bygning: [],
+        dn.object_arealdekke_flate: [],
+        dn.object_veg_sti: {
             dn.area: [
                 dn.AdminFlate_N50,
                 dn.AdminGrense_N50,
@@ -28,6 +28,6 @@ PIPELINE_INPUT = {
             dn.road: [dn.elveg_and_sti, dn.vegsperring],
         },
     },
-    "N250": {"building": [], "land_use": [], "road": []},
-    "N500": {"building": [], "land_use": [], "road": []},
+    dn.scale_n250: {dn.object_bygning: [], dn.object_arealdekke_flate: [], dn.object_veg_sti: []},
+    dn.scale_n500: {dn.object_bygning: [], dn.object_arealdekke_flate: [], dn.object_veg_sti: []},
 }
