@@ -6,9 +6,9 @@ from pathlib import Path
 from types import ModuleType
 
 from paths import GIS_FILES_ROOT
-from input_data.input_datasets import DatasetNamespace
-from input_data.input_setup import EXPECTED, FolderSpec
-from input_data.input_symbology import get_symbology_paths
+from data_orchestrator.datasets import DatasetNamespace
+from data_orchestrator.input_setup import EXPECTED, FolderSpec
+from data_orchestrator.features.input_symbology import get_symbology_paths
 
 # ========================
 # InputDataOrchestrator

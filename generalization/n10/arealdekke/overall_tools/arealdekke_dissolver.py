@@ -10,7 +10,7 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.input_orchestrator import InputDataOrchestrator
 
 
 class ArealdekkeDissolver:

@@ -7,7 +7,7 @@ pipeline.
 
 """
 
-from input_data_names import DataNames as dn
+from data_orchestrator.data_names import DataNames as dn
 
 PIPELINE_INPUT = {
     "N10": {"building": [], "land_use": [], "road": []},

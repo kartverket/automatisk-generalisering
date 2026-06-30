@@ -11,7 +11,7 @@ area_path = Path.joinpath(Path(GIS_FILES_ROOT), "raw_data", "area.gdb")
 # Setup feature class paths
 
 # Test data
-arealdekke_begrenset = Path.joinpath(area_path, "Arealdekke_Begrenset_1")
+arealdekke_test = Path.joinpath(area_path, "Arealdekke_Test")
 
 # Raw data
 arealdekkeflate = Path.joinpath(area_path, "ArealdekkeFlate")
@@ -29,7 +29,7 @@ begrensningskurve_n50 = Path.joinpath(area_path, "Begrensningskurve_N50")
 # Create dataset for imports
 
 DATA = [
-    arealdekke_begrenset,
+    arealdekke_test,
     arealdekkeflate,
     fishnet,
     arealdekkeflate_n10,
