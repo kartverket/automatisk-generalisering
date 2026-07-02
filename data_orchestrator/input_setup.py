@@ -37,7 +37,9 @@ class FolderSpec:
 # Functionality
 
 
-def create_folder_spec(path: Path, map_scale: str, structure: dict, gdb: bool=True) -> FolderSpec:
+def create_folder_spec(
+    path: Path, map_scale: str, structure: dict, gdb: bool = True
+) -> FolderSpec:
     """
     Creates a new FolderSpec based on the input structure.
 
