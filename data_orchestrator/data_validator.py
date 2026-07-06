@@ -10,7 +10,6 @@ from data_names import DataNames as dn
 from input_setup import FolderSpec, create_folder_spec
 from paths import GIS_FILES_ROOT
 
-
 # ========================
 # Constants
 # ========================
@@ -67,7 +66,6 @@ class DataValidator:
                         (the data that should be generalized)
     """
 
-
     def __init__(self, map_scale: str = None, pipeline: str = None):
         self.validPipeline(pipeline)
         self.validScale(map_scale)
@@ -76,11 +74,9 @@ class DataValidator:
         self.path: Path = GIS_FILES_ROOT
         self.pipeline: str = pipeline.lower()
 
-
     # ========================
     # Validators
     # ========================
-
 
     def global_folder_validation(self) -> None:
         """
@@ -120,7 +116,6 @@ class DataValidator:
                     f"\nExtra: {e}\n"
                 )
 
-
     def pipeline_folder_validation(self) -> None:
         data_scale = dn.raw_data
         spec = create_folder_spec(
@@ -130,11 +125,9 @@ class DataValidator:
         )
         self.validate_folder_spec(spec=spec)
 
-
     # ========================
     # Main functions
     # ========================
-    
 
     def validate_folder_spec(self, spec: FolderSpec) -> None:
         """
@@ -154,9 +147,10 @@ class DataValidator:
                     seen_gdbs.add(gdb)
             self.arcgis_object_exists(arcgis_path=feature_class)
             # TODO: Need to create a lookup for columns (if we want it)
-    
 
-    def scan_structure(self, root_path: Path, valid_paths: set[Path]) -> tuple[set[str]]:
+    def scan_structure(
+        self, root_path: Path, valid_paths: set[Path]
+    ) -> tuple[set[str]]:
         """
         Finds all folders and files in the given root_path and finds missing and extra ones relative to the valid_paths.
 
@@ -175,7 +169,7 @@ class DataValidator:
         for gdb in gdbs:
             for dirpath, _, filenames in arcpy.da.Walk(gdb):
                 discovered.update({Path.joinpath(Path(dirpath), f) for f in filenames})
-        
+
         valid_paths = {str(p.relative_to(root_path)) for p in valid_paths}
         discovered = {str(p.relative_to(root_path)) for p in discovered}
 
@@ -186,11 +180,9 @@ class DataValidator:
 
         return missing, extra
 
-
     # ========================
     # Helper functions
     # ========================
-
 
     def validateInput(self, value: str, valid_set: Iterable[str], name: str) -> bool:
         """
@@ -201,15 +193,12 @@ class DataValidator:
         raise ValueError(
             f"\nInvalid {name} ({value}), must be one of: {', '.join(valid_set)}\n"
         )
-    
 
     def validPipeline(self, pipeline: str = None) -> bool:
         return self.validateInput(pipeline, VALID_PIPELINES, "pipeline")
 
-
     def validScale(self, map_scale: str = None) -> bool:
         return self.validateInput(map_scale, VALID_SCALES, "map scale")
-
 
     def find_gdb(self, path: Path) -> Path | None:
         """
@@ -225,7 +214,6 @@ class DataValidator:
             if parent.suffix.lower() == ".gdb":
                 return parent
         return None
-    
 
     def find_gdbs(self, paths: set[str]) -> set[Path]:
         """
@@ -245,8 +233,7 @@ class DataValidator:
                 gdbs.add(gdb)
 
         return {Path(p) for p in paths.union(gdbs)}
-    
-    
+
     def gdb_exists(self, gdb_path: Path) -> bool:
         """
         Checks if the given gdb_path exists and is a valid geodatabase.
@@ -261,7 +248,6 @@ class DataValidator:
             return True
         raise FileNotFoundError(f"\nGeodatabase not found: {str(gdb_path)}\n")
 
-
     def arcgis_object_exists(self, arcgis_path: Path) -> bool:
         """
         Checks if the given arcgis_path exists and is a valid ArcGIS object.
@@ -275,7 +261,6 @@ class DataValidator:
         if arcpy.Exists(str(arcgis_path)):
             return True
         raise FileNotFoundError(f"\nArcGIS object not found: {str(arcgis_path)}\n")
-
 
     def get_structure_names(self, path: Path) -> set[Path]:
         """
@@ -292,7 +277,7 @@ class DataValidator:
             structure_names.add(p)
             if p.is_dir() and p.suffix.lower() != ".gdb":
                 structure_names.update(self.get_structure_names(path=p))
-        
+
         return structure_names
 
 
