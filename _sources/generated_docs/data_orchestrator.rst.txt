@@ -20,6 +20,14 @@ data\_orchestrator.data\_names module
    :show-inheritance:
    :undoc-members:
 
+data\_orchestrator.data\_reader module
+--------------------------------------
+
+.. automodule:: data_orchestrator.data_reader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 data\_orchestrator.data\_validator module
 -----------------------------------------
 
