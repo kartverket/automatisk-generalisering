@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>input_data.input_data_names &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>data_orchestrator.data_names &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
 </ul>
 
@@ -65,7 +64,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">input_data.input_data_names</li>
+      <li class="breadcrumb-item active">data_orchestrator.data_names</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -74,17 +73,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for input_data.input_data_names</h1><div class="highlight"><pre>
+  <h1>Source code for data_orchestrator.data_names</h1><div class="highlight"><pre>
 <span></span><span class="s2">&quot;This file contains all the standard names of feature types and classes that we use.&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
 
 
 <div class="viewcode-block" id="DataNames">
-<a class="viewcode-back" href="../../generated_docs/input_data.html#input_data.input_data_names.DataNames">[docs]</a>
+<a class="viewcode-back" href="../../generated_docs/data_orchestrator.html#data_orchestrator.data_names.DataNames">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataNames</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
     <span class="c1">#########################</span>
-    <span class="c1"># Main folder names</span>
+    <span class="c1"># Main gdb names</span>
     <span class="c1">#########################</span>
     <span class="n">area</span> <span class="o">=</span> <span class="s2">&quot;AREA&quot;</span>
     <span class="n">building</span> <span class="o">=</span> <span class="s2">&quot;BUILDING&quot;</span>
@@ -94,8 +93,9 @@
     <span class="n">symbology</span> <span class="o">=</span> <span class="s2">&quot;SYMBOLOGY&quot;</span>
 
     <span class="c1">#########################</span>
-    <span class="c1"># Scale names</span>
+    <span class="c1"># Main folder names</span>
     <span class="c1">#########################</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;raw_data&quot;</span>
     <span class="n">scale_n10</span> <span class="o">=</span> <span class="s2">&quot;n10&quot;</span>
     <span class="n">scale_n50</span> <span class="o">=</span> <span class="s2">&quot;n50&quot;</span>
     <span class="n">scale_n100</span> <span class="o">=</span> <span class="s2">&quot;n100&quot;</span>

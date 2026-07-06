@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="composition_configs package" href="composition_configs.html" />
-    <link rel="prev" title="input_data package" href="input_data.html" /> 
+    <link rel="prev" title="generalization.n100.building package" href="generalization.n100.building.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,17 +49,16 @@
 <li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="generalization.n100.building.html">generalization.n100.building package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="input_data.html">input_data package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">automatisk-generalisering</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="composition_configs.html">composition_configs package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="conf.html">conf module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="config.html">config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html">data_orchestrator package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalization.html">generalization package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html">input_data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
 </ul>
@@ -161,6 +160,64 @@
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="data_orchestrator.html">data_orchestrator package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#module-data_orchestrator.data_lookup">data_orchestrator.data_lookup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#module-data_orchestrator.data_names">data_orchestrator.data_names module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames"><code class="docutils literal notranslate"><span class="pre">DataNames</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.area"><code class="docutils literal notranslate"><span class="pre">DataNames.area</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.building"><code class="docutils literal notranslate"><span class="pre">DataNames.building</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.matrikkel"><code class="docutils literal notranslate"><span class="pre">DataNames.matrikkel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.railway"><code class="docutils literal notranslate"><span class="pre">DataNames.railway</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.road"><code class="docutils literal notranslate"><span class="pre">DataNames.road</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.symbology"><code class="docutils literal notranslate"><span class="pre">DataNames.symbology</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.raw_data"><code class="docutils literal notranslate"><span class="pre">DataNames.raw_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.scale_n10"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n10</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.scale_n50"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.scale_n100"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n100</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.scale_n250"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n250</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.scale_n500"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n500</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_admin"><code class="docutils literal notranslate"><span class="pre">DataNames.object_admin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_arealdekke_flate"><code class="docutils literal notranslate"><span class="pre">DataNames.object_arealdekke_flate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_bygning"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bygning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_elv_bekk"><code class="docutils literal notranslate"><span class="pre">DataNames.object_elv_bekk</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_veg_sti"><code class="docutils literal notranslate"><span class="pre">DataNames.object_veg_sti</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_bygg_og_anlegg"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bygg_og_anlegg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_bane"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bane</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.object_hoyde"><code class="docutils literal notranslate"><span class="pre">DataNames.object_hoyde</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">DataNames.lyrx_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.AdminFlate_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AdminFlate_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.AdminGrense_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AdminGrense_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.Arealdekke_Test"><code class="docutils literal notranslate"><span class="pre">DataNames.Arealdekke_Test</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.ArealdekkeFlate"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.ArealdekkeFlate_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate_N10</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.ArealdekkeFlate_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.Begrensningskurve_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.Begrensningskurve_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.Fishnet_500m"><code class="docutils literal notranslate"><span class="pre">DataNames.Fishnet_500m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.AnleggsLinje_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AnleggsLinje_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.BygningsPunkt_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.BygningsPunkt_N10</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.Grunnriss_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.Grunnriss_N10</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.TuristHytte_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.TuristHytte_N10</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.bygning"><code class="docutils literal notranslate"><span class="pre">DataNames.bygning</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.Bane_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.Bane_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.JernbaneStasjon_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.JernbaneStasjon_N50</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.elveg_and_sti"><code class="docutils literal notranslate"><span class="pre">DataNames.elveg_and_sti</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.vegsperring"><code class="docutils literal notranslate"><span class="pre">DataNames.vegsperring</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.data_names.DataNames.VegSti_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.VegSti_N50</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#data-orchestrator-data-validator-module">data_orchestrator.data_validator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#module-data_orchestrator.datasets">data_orchestrator.datasets module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator.html#data_orchestrator.datasets.DatasetNamespace"><code class="docutils literal notranslate"><span class="pre">DatasetNamespace</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#data-orchestrator-input-orchestrator-module">data_orchestrator.input_orchestrator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#data-orchestrator-input-setup-module">data_orchestrator.input_setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html#module-data_orchestrator">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#env-setup-environment-setup-module">env_setup.environment_setup module</a></li>
@@ -242,75 +299,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="input_data.html">input_data package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-area-module">input_data.input_area module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-building-module">input_data.input_building module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-data-lookup-module">input_data.input_data_lookup module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_data_names">input_data.input_data_names module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames"><code class="docutils literal notranslate"><span class="pre">DataNames</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.area"><code class="docutils literal notranslate"><span class="pre">DataNames.area</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.building"><code class="docutils literal notranslate"><span class="pre">DataNames.building</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.matrikkel"><code class="docutils literal notranslate"><span class="pre">DataNames.matrikkel</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.railway"><code class="docutils literal notranslate"><span class="pre">DataNames.railway</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.road"><code class="docutils literal notranslate"><span class="pre">DataNames.road</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.symbology"><code class="docutils literal notranslate"><span class="pre">DataNames.symbology</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.scale_n10"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n10</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.scale_n50"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.scale_n100"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n100</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.scale_n250"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n250</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.scale_n500"><code class="docutils literal notranslate"><span class="pre">DataNames.scale_n500</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_admin"><code class="docutils literal notranslate"><span class="pre">DataNames.object_admin</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_arealdekke_flate"><code class="docutils literal notranslate"><span class="pre">DataNames.object_arealdekke_flate</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_bygning"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bygning</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_elv_bekk"><code class="docutils literal notranslate"><span class="pre">DataNames.object_elv_bekk</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_veg_sti"><code class="docutils literal notranslate"><span class="pre">DataNames.object_veg_sti</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_bygg_og_anlegg"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bygg_og_anlegg</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_bane"><code class="docutils literal notranslate"><span class="pre">DataNames.object_bane</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.object_hoyde"><code class="docutils literal notranslate"><span class="pre">DataNames.object_hoyde</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">DataNames.lyrx_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.AdminFlate_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AdminFlate_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.AdminGrense_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AdminGrense_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.Arealdekke_Test"><code class="docutils literal notranslate"><span class="pre">DataNames.Arealdekke_Test</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.ArealdekkeFlate"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.ArealdekkeFlate_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate_N10</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.ArealdekkeFlate_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.ArealdekkeFlate_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.Begrensningskurve_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.Begrensningskurve_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.Fishnet_500m"><code class="docutils literal notranslate"><span class="pre">DataNames.Fishnet_500m</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.AnleggsLinje_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.AnleggsLinje_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.BygningsPunkt_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.BygningsPunkt_N10</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.Grunnriss_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.Grunnriss_N10</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.TuristHytte_N10"><code class="docutils literal notranslate"><span class="pre">DataNames.TuristHytte_N10</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.bygning"><code class="docutils literal notranslate"><span class="pre">DataNames.bygning</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.Bane_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.Bane_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.JernbaneStasjon_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.JernbaneStasjon_N50</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.elveg_and_sti"><code class="docutils literal notranslate"><span class="pre">DataNames.elveg_and_sti</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.vegsperring"><code class="docutils literal notranslate"><span class="pre">DataNames.vegsperring</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_data_names.DataNames.VegSti_N50"><code class="docutils literal notranslate"><span class="pre">DataNames.VegSti_N50</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_datasets">input_data.input_datasets module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_datasets.DatasetNamespace"><code class="docutils literal notranslate"><span class="pre">DatasetNamespace</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-matrikkel-module">input_data.input_matrikkel module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-orchestrator-module">input_data.input_orchestrator module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-railway-module">input_data.input_railway module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-road-module">input_data.input_road module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data.input_setup">input_data.input_setup module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec"><code class="docutils literal notranslate"><span class="pre">FolderSpec</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec.files"><code class="docutils literal notranslate"><span class="pre">FolderSpec.files</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="input_data.html#input_data.input_setup.FolderSpec.folders"><code class="docutils literal notranslate"><span class="pre">FolderSpec.folders</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#input-data-input-symbology-module">input_data.input_symbology module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_data.html#module-input_data">Module contents</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests.html">tests package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul>
@@ -335,7 +323,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="input_data.html" class="btn btn-neutral float-left" title="input_data package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generalization.n100.building.html" class="btn btn-neutral float-left" title="generalization.n100.building package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="composition_configs.html" class="btn btn-neutral float-right" title="composition_configs package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
