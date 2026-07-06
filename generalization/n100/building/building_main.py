@@ -4,7 +4,7 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
 
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.input_orchestrator import InputDataOrchestrator
 
 # Importing building scripts
 from generalization.n100.building import (

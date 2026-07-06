@@ -6,7 +6,7 @@ arcpy.env.overwriteOutput = True
 # Importing custom modules
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_roads import Road_N100
-from input_data.input_datasets import DatasetNamespace
+from data_orchestrator.datasets import DatasetNamespace
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file

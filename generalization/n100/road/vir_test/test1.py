@@ -12,7 +12,7 @@ from file_manager.n100.file_manager_roads import Road_N100
 # )
 # from input_data import input_elveg
 # from input_data import input_veg
-from input_data import input_n50, input_roads
+from data_orchestrator import input_n50, input_roads
 
 
 @timing_decorator

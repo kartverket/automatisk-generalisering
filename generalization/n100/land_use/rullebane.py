@@ -13,7 +13,7 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_land_use import Land_Use_N100
-from input_data import input_fkb, input_n50
+from data_orchestrator import input_fkb, input_n50
 
 # ========================
 # Program

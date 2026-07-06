@@ -5,7 +5,7 @@ from enum import StrEnum
 
 class DataNames(StrEnum):
     #########################
-    # Main folder names
+    # Main gdb names
     #########################
     area = "AREA"
     building = "BUILDING"
@@ -15,8 +15,9 @@ class DataNames(StrEnum):
     symbology = "SYMBOLOGY"
 
     #########################
-    # Scale names
+    # Main folder names
     #########################
+    raw_data = "raw_data"
     scale_n10 = "n10"
     scale_n50 = "n50"
     scale_n100 = "n100"

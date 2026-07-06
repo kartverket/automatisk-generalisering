@@ -9,7 +9,7 @@ import numpy as np
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from input_data.input_datasets import DatasetNamespace
+from data_orchestrator.datasets import DatasetNamespace
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup

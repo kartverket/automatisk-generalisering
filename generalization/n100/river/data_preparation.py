@@ -2,8 +2,8 @@
 import arcpy
 
 from file_manager.n100 import file_manager_rivers
-from input_data import input_n100, input_other
-from input_data import input_fkb
+from data_orchestrator import input_n100, input_other
+from data_orchestrator import input_fkb
 
 from composition_configs import core_config, logic_config, type_defs
 
