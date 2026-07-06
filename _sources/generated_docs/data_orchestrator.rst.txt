@@ -44,18 +44,18 @@ data\_orchestrator.datasets module
    :show-inheritance:
    :undoc-members:
 
-data\_orchestrator.input\_orchestrator module
----------------------------------------------
-
-.. automodule:: data_orchestrator.input_orchestrator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 data\_orchestrator.input\_setup module
 --------------------------------------
 
 .. automodule:: data_orchestrator.input_setup
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator.orchestrator module
+--------------------------------------
+
+.. automodule:: data_orchestrator.orchestrator
    :members:
    :show-inheritance:
    :undoc-members:
