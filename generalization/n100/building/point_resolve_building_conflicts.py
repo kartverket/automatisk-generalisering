@@ -13,7 +13,7 @@ from custom_tools.generalization_tools.building.resolve_building_conflicts impor
 )
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
-from data_orchestrator.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.orchestrator import InputDataOrchestrator
 
 
 @timing_decorator

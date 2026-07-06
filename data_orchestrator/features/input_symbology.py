@@ -1,12 +1,13 @@
 # Libraries
 
-from paths import GIS_FILES_ROOT
-
 from pathlib import Path
+
+from data_orchestrator.data_names import DataNames as dn
+from paths import GIS_FILES_ROOT
 
 # Setup main symbology path
 
-symbology_path = Path.joinpath(Path(GIS_FILES_ROOT), "symbology")
+symbology_path = Path.joinpath(Path(GIS_FILES_ROOT), dn.symbology.lower())
 
 # Getter function for symbology paths corresponding to map scale
 

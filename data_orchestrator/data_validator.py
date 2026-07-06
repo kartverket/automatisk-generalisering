@@ -5,9 +5,9 @@ import arcpy
 from collections.abc import Iterable
 from pathlib import Path
 
-from data_lookup import PIPELINE_INPUT
-from data_names import DataNames as dn
-from input_setup import FolderSpec, create_folder_spec
+from data_orchestrator.data_lookup import PIPELINE_INPUT
+from data_orchestrator.data_names import DataNames as dn
+from data_orchestrator.input_setup import FolderSpec, create_folder_spec
 from paths import GIS_FILES_ROOT
 
 # ========================
@@ -117,7 +117,7 @@ class DataValidator:
                 )
 
     def pipeline_folder_validation(self) -> None:
-        data_scale = dn.raw_data
+        data_scale = dn.raw_data  # TODO: Dynamic map scale
         spec = create_folder_spec(
             path=self.path,
             map_scale=data_scale,
@@ -279,12 +279,3 @@ class DataValidator:
                 structure_names.update(self.get_structure_names(path=p))
 
         return structure_names
-
-
-if __name__ == "__main__":
-    map_scale = dn.scale_n100
-    pipeline = dn.road.lower()
-    validator = DataValidator(map_scale=map_scale, pipeline=pipeline)
-
-    validator.global_folder_validation()
-    # validator.pipeline_folder_validation()

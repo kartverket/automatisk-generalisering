@@ -6,8 +6,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict
 
-from data_names import DataNames as dn
-
 # Classes
 
 

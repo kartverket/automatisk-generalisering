@@ -11,7 +11,7 @@ from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
-from data_orchestrator.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.orchestrator import InputDataOrchestrator
 
 # Importing environment settings
 from env_setup import environment_setup
