@@ -10,7 +10,8 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
-from data_orchestrator.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.orchestrator import InputDataOrchestrator
+from data_orchestrator.data_names import DataNames as dn
 
 
 class ArealdekkeDissolver:
@@ -353,7 +354,7 @@ class ArealdekkeDissolver:
 def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
     identity = Arealdekke_N10.identity.value
 
-    fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
+    fishnet = data_orc.get_dataset(dataset_name=dn.area).Fishnet_500m
 
     arcpy.analysis.Identity(
         in_features=input_fc,
@@ -380,7 +381,7 @@ def partition_call(
 
     GeometryValidator().check_repair_sequence(input_fc=input_fc, max_iterations=5)
 
-    fishnet = data_orc.get_dataset(dataset_name="AREA").Fishnet_500m
+    fishnet = data_orc.get_dataset(dataset_name=dn.area).Fishnet_500m
 
     arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.
         in_features=input_fc,
