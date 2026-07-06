@@ -182,6 +182,8 @@ class DataValidator:
         missing = valid_paths - discovered
         extra = discovered - valid_paths
 
+        # TODO: Need to create a lookup for columns (if we want it) (for discovered)
+
         return missing, extra
 
 
