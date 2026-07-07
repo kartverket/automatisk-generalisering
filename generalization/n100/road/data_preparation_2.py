@@ -2,9 +2,8 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_area, input_building, input_railway, input_road
-from input_data.input_datasets import DatasetNamespace
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.datasets import DatasetNamespace
+from data_orchestrator.orchestrator import InputDataOrchestrator
 
 from composition_configs import core_config, logic_config, type_defs
 from constants.n100_constants import (
@@ -52,6 +51,7 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 )
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
+from data_orchestrator.data_names import DataNames as dn
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
@@ -68,11 +68,12 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
 
-    data_orc = InputDataOrchestrator(map_scale=SCALE)
+    data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.road)
 
-    area_data, building_data = data_selection_and_validation(
-        area_selection=AREA_SELECTOR, data_orc=data_orc
-    )
+    area_data = data_orc.get_dataset(dn.area)
+    building_data = data_orc.get_dataset(dn.building)
+
+    data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
 
     reclassify_medium()
     categories_major_road_crossings()
@@ -104,15 +105,10 @@ def main():
 @timing_decorator
 def data_selection_and_validation(
     area_selection: str, data_orc: InputDataOrchestrator
-) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
-
-    for data in [input_area, input_building, input_railway, input_road]:
-        data_orc.set_input_dataset(data)
-
-    area: DatasetNamespace = data_orc.get_dataset("AREA")
-    building: DatasetNamespace = data_orc.get_dataset("BUILDING")
-    road: DatasetNamespace = data_orc.get_dataset("ROAD")
-    railway: DatasetNamespace = data_orc.get_dataset("RAILWAY")
+) -> None:
+    area: DatasetNamespace = data_orc.get_dataset(dn.area)
+    road: DatasetNamespace = data_orc.get_dataset(dn.road)
+    railway: DatasetNamespace = data_orc.get_dataset(dn.railway)
 
     selector = StudyAreaSelector(
         input_output_file_dict={
@@ -139,8 +135,6 @@ def data_selection_and_validation(
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
-
-    return area, building
 
 
 def reclassify_medium():

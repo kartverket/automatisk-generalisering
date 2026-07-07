@@ -9,7 +9,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
-from input_data import input_fkb, input_n50
+from data_orchestrator import input_fkb, input_n50
 
 # ========================
 # Program

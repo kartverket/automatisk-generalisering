@@ -2,15 +2,8 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import (
-    input_area,
-    input_building,
-    input_matrikkel,
-    input_railway,
-    input_road,
-)
-from input_data.input_datasets import DatasetNamespace
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.datasets import DatasetNamespace
+from data_orchestrator.orchestrator import InputDataOrchestrator
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -35,6 +28,8 @@ from env_setup import environment_setup
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
+
+from data_orchestrator.data_names import DataNames as dn
 
 
 @timing_decorator
@@ -72,10 +67,11 @@ def main() -> InputDataOrchestrator:
 
     AREA_SELECTOR = "navn IN ('Kvitsøy')"
     SCALE = "n100"
+    PIPELINE = "building"
 
     environment_setup.main()
     data_orc: InputDataOrchestrator = data_selection(
-        area_selector=AREA_SELECTOR, map_scale=SCALE
+        area_selector=AREA_SELECTOR, map_scale=SCALE, pipeline=PIPELINE
     )
     begrensningskurve_land_and_water_bodies()
     unsplit_roads_and_make_buffer()
@@ -93,7 +89,9 @@ def main() -> InputDataOrchestrator:
 
 
 @timing_decorator
-def data_selection(area_selector: str, map_scale: str) -> InputDataOrchestrator:
+def data_selection(
+    area_selector: str, map_scale: str, pipeline: str
+) -> InputDataOrchestrator:
     """
     What:
         Selects and copies the input data for the building generalization process.
@@ -105,22 +103,13 @@ def data_selection(area_selector: str, map_scale: str) -> InputDataOrchestrator:
         Makes sure that the input data is never modified, and that all future I/O's use the same paths regardless if
         the script is run for global data or smaller subselection for logic testing.
     """
-    data_orc = InputDataOrchestrator(map_scale=map_scale)
+    data_orc = InputDataOrchestrator(map_scale=map_scale, pipeline=pipeline)
 
-    for dataset in [
-        input_area,
-        input_building,
-        input_matrikkel,
-        input_railway,
-        input_road,
-    ]:
-        data_orc.set_input_dataset(dataset=dataset)
-
-    area: DatasetNamespace = data_orc.get_dataset("AREA")
-    building: DatasetNamespace = data_orc.get_dataset("BUILDING")
-    matrikkel: DatasetNamespace = data_orc.get_dataset("MATRIKKEL")
-    railway: DatasetNamespace = data_orc.get_dataset("RAILWAY")
-    road: DatasetNamespace = data_orc.get_dataset("ROAD")
+    area: DatasetNamespace = data_orc.get_dataset(dn.area)
+    building: DatasetNamespace = data_orc.get_dataset(dn.building)
+    matrikkel: DatasetNamespace = data_orc.get_dataset(dn.matrikkel)
+    railway: DatasetNamespace = data_orc.get_dataset(dn.railway)
+    road: DatasetNamespace = data_orc.get_dataset(dn.road)
 
     input_output_file_dict = {
         area.Begrensningskurve_N50: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,

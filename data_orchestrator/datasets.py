@@ -25,7 +25,10 @@ class DatasetNamespace:
                 values are paths (Path or str) to the corresponding feature classes.
         """
         for key, value in data.items():
-            setattr(self, key, value)
+            try:
+                setattr(self, key, str(value))
+            except:
+                setattr(self, key, value)
 
     def __repr__(self):
         """

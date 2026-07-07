@@ -5,8 +5,11 @@ from arealdekke_class import Arealdekke
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 
-from input_data import input_area
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.orchestrator import InputDataOrchestrator
+from data_orchestrator.data_names import DataNames as dn
+
+MAP_SCALE = "N10"
+PIPELINE = "land_use"
 
 
 @timing_decorator
@@ -14,10 +17,8 @@ def main():
     environment_setup.main()
 
     # Creates an instance of the arealdekke object.
-    map_scale = "N10"
-    data_orc = InputDataOrchestrator(map_scale=map_scale)
-    data_orc.set_input_dataset(input_area)
-    area_data = data_orc.get_dataset("AREA")
+    data_orc = InputDataOrchestrator(map_scale=MAP_SCALE, pipeline=PIPELINE)
+    area_data = data_orc.get_dataset(dn.area)
     input_data = area_data.Arealdekke_Test
 
     # If True = only final output will be available after generalization
@@ -27,7 +28,7 @@ def main():
     arealdekke = Arealdekke(
         input_data=input_data,
         data_orc=data_orc,
-        map_scale=map_scale,
+        map_scale=MAP_SCALE,
         only_keep_final_output=only_keep_final_output,
     )
 

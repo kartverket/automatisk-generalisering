@@ -48,7 +48,7 @@ from generalization.n10.arealdekke.category_tools.area_aggregator import (
     aggregate_category,
 )
 
-from input_data.input_orchestrator import InputDataOrchestrator
+from data_orchestrator.orchestrator import InputDataOrchestrator
 
 arcpy.env.overwriteOutput = True
 

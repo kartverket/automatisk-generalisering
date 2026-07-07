@@ -1,0 +1,88 @@
+"""
+
+This file is used as a lookup table for the different generalization pipelines.
+Which datasets are needed to run a specific generalization pipeline, and which
+columns do these feature classes to contain to be valid and useful in the
+pipeline.
+
+"""
+
+from data_orchestrator.data_names import DataNames as dn
+
+PIPELINE_INPUT = {
+    dn.raw_data: {
+        dn.area: [
+            dn.AdminFlate_N50,
+            dn.AdminGrense_N50,
+            dn.ArealdekkeFlate,
+            dn.ArealdekkeFlate_N10,
+            dn.ArealdekkeFlate_N50,
+            dn.Begrensningskurve_N50,
+            dn.Fishnet_500m,
+        ],
+        dn.building: [
+            dn.AnleggsLinje_N50,
+            dn.BygningsPunkt_N10,
+            dn.Grunnriss_N10,
+            dn.TuristHytte_N10,
+        ],
+        dn.matrikkel: [dn.bygning],
+        dn.railway: [dn.Bane_N50, dn.JernbaneStasjon_N50],
+        dn.road: [dn.elveg_and_sti, dn.vegsperring, dn.VegSti_N50],
+    },
+    dn.scale_n10: {
+        dn.object_bygning: [],
+        dn.object_arealdekke_flate: {dn.area: [dn.Arealdekke_Test, dn.Fishnet_500m]},
+        dn.object_veg_sti: [],
+    },
+    dn.scale_n50: {
+        dn.object_bygning: [],
+        dn.object_arealdekke_flate: [],
+        dn.object_veg_sti: [],
+    },
+    dn.scale_n100: {
+        dn.object_bygning: {
+            dn.area: [
+                dn.AdminFlate_N50,
+                dn.ArealdekkeFlate_N10,
+                dn.ArealdekkeFlate_N50,
+                dn.Begrensningskurve_N50,
+            ],
+            dn.building: [
+                dn.AnleggsLinje_N50,
+                dn.BygningsPunkt_N10,
+                dn.Grunnriss_N10,
+                dn.TuristHytte_N10,
+            ],
+            dn.matrikkel: [dn.bygning],
+            dn.railway: [
+                dn.Bane_N50,
+                dn.JernbaneStasjon_N50,
+            ],
+            dn.road: [dn.VegSti_N50],
+        },
+        dn.object_arealdekke_flate: [],
+        dn.object_veg_sti: {
+            dn.area: [
+                dn.AdminFlate_N50,
+                dn.AdminGrense_N50,
+                dn.ArealdekkeFlate_N10,
+                dn.ArealdekkeFlate_N50,
+                dn.Begrensningskurve_N50,
+            ],
+            dn.building: [dn.AnleggsLinje_N50],
+            dn.railway: [dn.Bane_N50],
+            dn.road: [dn.elveg_and_sti, dn.vegsperring],
+        },
+    },
+    dn.scale_n250: {
+        dn.object_bygning: [],
+        dn.object_arealdekke_flate: [],
+        dn.object_veg_sti: [],
+    },
+    dn.scale_n500: {
+        dn.object_bygning: [],
+        dn.object_arealdekke_flate: [],
+        dn.object_veg_sti: [],
+    },
+}

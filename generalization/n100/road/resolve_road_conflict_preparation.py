@@ -9,7 +9,7 @@ from tqdm import tqdm
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from input_data.input_datasets import DatasetNamespace
+from data_orchestrator.datasets import DatasetNamespace
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import FieldNames, MediumAlias
