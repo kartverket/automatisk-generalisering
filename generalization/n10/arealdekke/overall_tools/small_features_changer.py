@@ -100,14 +100,18 @@ def change_attribute_value_category(
 
     work_lyr = "work_lyr"
     wilderness_lyr = "other_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=working_fc, out_layer=work_lyr, where_clause=sql)
-    arcpy.management.MakeFeatureLayer(in_features=working_fc, out_layer=wilderness_lyr, where_clause=sql_wilderness)
+    arcpy.management.MakeFeatureLayer(
+        in_features=working_fc, out_layer=work_lyr, where_clause=sql
+    )
+    arcpy.management.MakeFeatureLayer(
+        in_features=working_fc, out_layer=wilderness_lyr, where_clause=sql_wilderness
+    )
 
     arcpy.management.SelectLayerByLocation(
         in_layer=work_lyr,
         overlap_type="BOUNDARY_TOUCHES",
         select_features=wilderness_lyr,
-        selection_type="NEW_SELECTION"
+        selection_type="NEW_SELECTION",
     )
 
     if exception_category:
