@@ -1262,9 +1262,7 @@ def remove_small_roads_from_endpoints(files: dict, min_length: int = 500):
     as they are likely not significant enough for connections.
     """
     adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(adjacency[3444])	
-    print(adjacency[363])	
+   
 
     valid_oids = set()
     line_length_dict = defaultdict(int)
@@ -1292,7 +1290,7 @@ def remove_small_roads_from_endpoints(files: dict, min_length: int = 500):
             length = sum(line_length_dict[oid] for oid in oids)
             if length < min_length:
                 u_cur.deleteRow()
-                print(f"Deleted endpoint {row[0]} on road {road_oid} with total connected length {length} < {min_length}")
+               
 
     
 
@@ -1322,8 +1320,6 @@ def group_endpoints(files: dict, all_ramp_oids_per_rampid: dict):
         ["uid", "SHAPE@"]
     ) as s_cur:
         for endpoint_oid, endpoint_geom in s_cur:
-            if endpoint_oid == 9:
-                print("endpoint 9")
             intersecting_ramp_oids = []
 
             for ramp_oid, ramp_geom in ramp_oid_geom.items():
@@ -1331,19 +1327,15 @@ def group_endpoints(files: dict, all_ramp_oids_per_rampid: dict):
                     intersecting_ramp_oids.append(ramp_oid)
 
             # Finn alle ramp_id-er dette endpointet tilhører
-            if endpoint_oid == 9:
-                print(intersecting_ramp_oids)
             matching_ramp_ids = set()
 
             for ramp_oid in intersecting_ramp_oids:
                 matching_ramp_ids.update(ramp_ids_per_oid.get(ramp_oid, set()))
             
-            if endpoint_oid == 9:
-                print(matching_ramp_ids)
+
 
             # Legg endpointet inn i alle relevante ramp_id-grupper
             for ramp_id in matching_ramp_ids:
-                print(ramp_id)
                 endpoints_per_rampid[ramp_id].append({
                     "endpoint_oid": endpoint_oid,
                     "endpoint_geom": endpoint_geom,
@@ -1452,185 +1444,209 @@ def group_endpoints_not_belonging_to_a_ramp_id(files: dict, endpoints_per_rampid
             for row in data:
                 i_cur.insertRow([row["geom"], key])
     
-    print("endpointgroups")
-    print(endpoint_groups)
-    print("ramp_groups")
-    print(ramp_groups)
+ 
     
     return endpoint_groups, ramp_groups
 
 
+##########
+#make potential connection points for groups without rampid
+#########
 
-class UnionFind:
-    def __init__(self):
-        self.parent = {}
 
-    def find(self, x):
-        if x not in self.parent:
-            self.parent[x] = x
+def _load_ramp_and_road_geometries(files: dict):
+    ramp_oid_geom = {}
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"], ["OID@", "SHAPE@"], "typeveg = 'rampe'"
+    ) as s_cur:
+        for oid, geom in s_cur:
+            ramp_oid_geom[oid] = geom
 
-        if self.parent[x] != x:
-            self.parent[x] = self.find(self.parent[x])
+    road_oid_geom = {}
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"], ["OID@", "SHAPE@"], "typeveg <> 'rampe'"
+    ) as s_cur:
+        for oid, geom in s_cur:
+            road_oid_geom[oid] = geom
 
-        return self.parent[x]
+    return ramp_oid_geom, road_oid_geom
 
-    def union(self, a, b):
-        root_a = self.find(a)
-        root_b = self.find(b)
 
-        if root_a != root_b:
-            self.parent[root_b] = root_a
+def _collect_adjacent_roads_for_ramp_group(
+    adjacency: dict,
+    ramp_oids: set,
+    ramp_oid_geom: dict,
+    valid_road_oids: set,
+    max_steps: int = 4,
+) -> set:
+    adjacent_roads = set()
 
+    for ramp_oid in ramp_oids:
+        neighbors = adjacency.get(ramp_oid, ())
+        for neighbor in neighbors:
+            if neighbor in ramp_oid_geom:
+                continue
+            adjacent_roads.add(neighbor)
+
+            expanded = bfs_all_ramps(
+                adjacency=adjacency,
+                start=neighbor,
+                valid_oids=valid_road_oids,
+                max_steps=max_steps,
+            )
+            adjacent_roads.update(expanded)
+
+    return adjacent_roads
+
+
+def _exclude_roads_touching_endpoint(
+    endpoint_geom,
+    candidate_roads: set,
+    road_oid_geom: dict,
+    adjacency: dict,
+    valid_road_oids: set,
+    max_steps: int = 4,
+):
+    filtered_roads = set(candidate_roads)
+    endpoint_adjacent_roads = set()
+
+    for road_oid in list(filtered_roads):
+        road_geom = road_oid_geom[road_oid]
+        if endpoint_geom.disjoint(road_geom):
+            continue
+
+        filtered_roads.discard(road_oid)
+        endpoint_adjacent_roads.add(road_oid)
+
+        expanded = bfs_all_ramps(
+            adjacency=adjacency,
+            start=road_oid,
+            valid_oids=valid_road_oids,
+            max_steps=max_steps,
+        )
+        for step in expanded:
+            filtered_roads.discard(step)
+            endpoint_adjacent_roads.add(step)
+
+    return filtered_roads, endpoint_adjacent_roads
+
+
+def _find_best_endpoint_to_road_connection(
+    endpoint_rows: list,
+    adjacent_roads: set,
+    road_oid_geom: dict,
+    adjacency: dict,
+    valid_road_oids: set,
+    max_steps: int = 4,
+):
+    best_distance = float("inf")
+    best_endpoint_geom = None
+    best_road_geom = None
+    best_road_oid = None
+    endpoint_adjacent_roads = defaultdict(set)
+
+    for endpoint in endpoint_rows:
+        endpoint_oid = endpoint["oid"]
+        endpoint_geom = endpoint["geom"]
+
+        candidate_roads, excluded_for_endpoint = _exclude_roads_touching_endpoint(
+            endpoint_geom=endpoint_geom,
+            candidate_roads=adjacent_roads,
+            road_oid_geom=road_oid_geom,
+            adjacency=adjacency,
+            valid_road_oids=valid_road_oids,
+            max_steps=max_steps,
+        )
+        endpoint_adjacent_roads[endpoint_oid].update(excluded_for_endpoint)
+
+        for road_oid in candidate_roads:
+            road_geom = road_oid_geom[road_oid]
+            dist = road_geom.distanceTo(endpoint_geom)
+            if dist < best_distance:
+                best_distance = dist
+                best_road_geom = road_geom
+                best_road_oid = road_oid
+                best_endpoint_geom = endpoint_geom
+
+    return best_road_geom, best_road_oid, best_endpoint_geom, endpoint_adjacent_roads
+
+
+def _insert_group_connection_point(insert_cursor, closest_road_geom, closest_endpoint_geom, group_key: str):
+    if closest_road_geom is None or closest_endpoint_geom is None:
+        return None
+
+    closest_point_geom = closest_road_geom.queryPointAndDistance(closest_endpoint_geom, True)[0]
+    insert_cursor.insertRow([closest_point_geom, group_key])
+    return closest_point_geom
+
+
+def _append_remaining_group_endpoints(
+    endpoints_per_rampid: dict,
+    group_key: str,
+    endpoint_rows: list,
+    closest_road_oid,
+    endpoint_adjacent_roads: dict,
+):
+    for endpoint in endpoint_rows:
+        endpoint_oid = endpoint["oid"]
+        if closest_road_oid in endpoint_adjacent_roads.get(endpoint_oid, set()):
+            continue
+
+        endpoints_per_rampid[group_key].append(
+            {
+                "endpoint_oid": endpoint_oid,
+                "endpoint_geom": endpoint["geom"],
+            }
+        )
 
 @timing_decorator
-def make_potential_connection_points_for_groups_without_rampid(files: dict, endpoint_groups: dict, ramp_groups: dict, endpoints_per_rampid: dict):
-    
-    
+def make_potential_connection_points_for_groups_without_rampid(
+    files: dict,
+    endpoint_groups: dict,
+    ramp_groups: dict,
+    endpoints_per_rampid: dict,
+):
     adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
-    
-    ramp_oid_geom = defaultdict(set)
-    with arcpy.da.SearchCursor(files["relevant_roads_dissolved"], ["OID@", "SHAPE@"], "typeveg = 'rampe'") as s_cur:
-        for row in s_cur:
-            oid = row[0]
-            geom = row[1]
-            ramp_oid_geom.setdefault(oid, geom)
-    road_oid_geom = {}
-    with arcpy.da.SearchCursor(files["relevant_roads_dissolved"], ["OID@", "SHAPE@"], "typeveg <> 'rampe'") as s_cur:
-        for row in s_cur:
-            oid = row[0]
-            geom = row[1]
-            road_oid_geom[oid] = geom
-    
-    valid_oids=set(road_oid_geom.keys())
+    ramp_oid_geom, road_oid_geom = _load_ramp_and_road_geometries(files)
+    valid_road_oids = set(road_oid_geom.keys())
+
     with arcpy.da.InsertCursor(files["potential_connection"], ["SHAPE@", "group_id"]) as i_cur:
         for group_key, ramp_oids in ramp_groups.items():
-            # Find all adjacent roads to the ramps in this group
-            adjacent_roads = set()
-            for ramp_oid in ramp_oids:
-                neighbors = adjacency.get(ramp_oid, ())
-                for neighbor in neighbors:
-                    if neighbor not in ramp_oid_geom:  # Exclude ramps
-                        adjacent_roads.add(neighbor)
-                        steps = bfs_all_ramps(adjacency=adjacency, start=neighbor, valid_oids=valid_oids, max_steps=4) #5 steps out from ramps
-                        for step in steps:
-                            adjacent_roads.add(step)
-                            if group_key == "ramp_group_key_3" or group_key == "ramp_group_key_4":
-                                print(f"Step {step} added to adjacent roads for group {group_key} from neighbor {neighbor} of ramp {ramp_oid}")
+            adjacent_roads = _collect_adjacent_roads_for_ramp_group(
+                adjacency=adjacency,
+                ramp_oids=ramp_oids,
+                ramp_oid_geom=ramp_oid_geom,
+                valid_road_oids=valid_road_oids,
+                max_steps=4,
+            )
 
+            best_road_geom, best_road_oid, best_endpoint_geom, endpoint_adjacent_roads = (
+                _find_best_endpoint_to_road_connection(
+                    endpoint_rows=endpoint_groups.get(group_key, []),
+                    adjacent_roads=adjacent_roads,
+                    road_oid_geom=road_oid_geom,
+                    adjacency=adjacency,
+                    valid_road_oids=valid_road_oids,
+                    max_steps=4,
+                )
+            )
 
-            
-            uf = UnionFind()
+            _insert_group_connection_point(
+                insert_cursor=i_cur,
+                closest_road_geom=best_road_geom,
+                closest_endpoint_geom=best_endpoint_geom,
+                group_key=group_key,
+            )
 
-            print(f"Group {group_key} has {len(adjacent_roads)} adjacent roads.")
-            
-            for road in adjacent_roads:
-                uf.find(road)
+            _append_remaining_group_endpoints(
+                endpoints_per_rampid=endpoints_per_rampid,
+                group_key=group_key,
+                endpoint_rows=endpoint_groups.get(group_key, []),
+                closest_road_oid=best_road_oid,
+                endpoint_adjacent_roads=endpoint_adjacent_roads,
+            )
 
-            for road in adjacent_roads:
-                for other_road in adjacent_roads:
-                    if road == other_road:
-                        continue
-
-                    paths = bfs_all_paths(
-                        adjacency=adjacency,
-                        start=road,
-                        target=other_road,
-                        max_steps=3,
-                        valid_oids=valid_oids
-                    )
-
-                    for path in paths:
-                        # Add every road in the path to the same connected group
-                        for i in range(len(path) - 1):
-                            uf.union(path[i], path[i + 1])
-            
-            
-            # Build final road groups
-            road_groups = defaultdict(set)
-
-            for road in uf.parent:
-                root = uf.find(road)
-                road_groups[root].add(road)
-
-            print(f"Group {group_key} has {len(road_groups)} road groups.")
-            print(f"Road groups: {road_groups}")
-
-
-                                
-            
-
-            
-            # Find largest road group(s). If tie, include all tied largest groups.
-            if road_groups:
-                max_group_size = max(len(group) for group in road_groups.values())
-                candidate_roads = set()
-                for group in road_groups.values():
-                    if len(group) == max_group_size:
-                        candidate_roads.update(group)
-            else:
-                # Fallback if grouping did not produce any groups
-                candidate_roads = set(adjacent_roads)
-
-
-            # find closest connection between a road and endpoint in group
-           
-            distance = float("inf")
-            closest_road = None
-            closest_endpoint = None
-            endpoint_adjacent_roads = defaultdict(set)
-            closest_road_oid = None
-            for endpoint in endpoint_groups.get(group_key, []):
-                endpoint_oid = endpoint["oid"]
-                endpoint_geom = endpoint["geom"]
-                # endpoint-specific candidate roads
-                loop_adjacent_roads = set(adjacent_roads)
-
-                # exclude only roads that intersect this endpoint (+ local bfs expansion)
-                for road in list(loop_adjacent_roads):
-                    road_geom = road_oid_geom[road]
-                    if not endpoint_geom.disjoint(road_geom):
-                        loop_adjacent_roads.remove(road)
-                        endpoint_adjacent_roads.setdefault(endpoint_oid, set()).add(road)
-                        steps = bfs_all_ramps(
-                        adjacency=adjacency,
-                        start=road,
-                        valid_oids=valid_oids,
-                        max_steps=4, ################################### Kan du/skal du øke denne?????????
-                        )
-                        for step in steps:
-                            loop_adjacent_roads.discard(step)
-                            endpoint_adjacent_roads[endpoint_oid].add(step)
-                
-                # find nearest remaining road for this endpoint
-                for road in loop_adjacent_roads:
-                    road_geom = road_oid_geom[road]
-                    dist = road_geom.distanceTo(endpoint_geom)
-                    if dist < distance:
-                        distance = dist
-                        closest_road = road_geom
-                        closest_road_oid = road
-                        closest_endpoint = endpoint_geom
-            
-
-            closest_point_geom = closest_road.queryPointAndDistance(closest_endpoint, True)[0]
-
-            i_cur.insertRow([closest_point_geom, group_key])
-            for endpoint in endpoint_groups.get(group_key, []):
-                if closest_road_oid in endpoint_adjacent_roads[endpoint["oid"]]:
-                    continue
-                endpoint_oid = endpoint["oid"]
-                endpoint_geom = endpoint["geom"]
-                endpoints_per_rampid[group_key].append({
-                    "endpoint_oid": endpoint_oid,
-                    "endpoint_geom": endpoint_geom,
-                })
-
-
-
-    
     return endpoints_per_rampid
-
-
 
 
 
@@ -1651,129 +1667,150 @@ def make_potential_connection_points_for_groups_without_rampid(files: dict, endp
     
 
 
-@timing_decorator
-def make_potential_connection_points(files: dict, endpoints_per_rampid: dict):
-    """
-    if endpoint is on road with connection to rampid move to potential_connection 
-    add rampids to potential_connection
-    """
-    
+##################
+# make potential connection points
+##################
 
+def _create_potential_connection_featureclass(files: dict):
     arcpy.management.CreateFeatureclass(
         out_path=os.path.dirname(files["potential_connection"]),
         out_name=os.path.basename(files["potential_connection"]),
         geometry_type="POINT",
         spatial_reference=arcpy.Describe(files["relevant_roads_dissolved"]).spatialReference,
     )
-
-    valid_adjacency_oid = set()
-    road_oid_geom = {}
-    with arcpy.da.SearchCursor(files["relevant_roads_dissolved"], ["OID@", "SHAPE@", "typeveg"]) as s_cur:
-        for row in s_cur:
-            oid = row[0]
-            geom = row[1]
-            typeveg = row[2]
-           
-
-            if typeveg != "rampe":
-                road_oid_geom[oid] = geom
-                valid_adjacency_oid.add(oid)
-    
-
-    all_fields = arcpy.ListFields(files["potential_points"])
-    field_names = [f.name for f in all_fields if "FID" in f.name]
-    field_names = ["ramp_id"] + field_names
-    rampid_road_oids = {}
-    with arcpy.da.SearchCursor(files["potential_points"], field_names, where_clause="is_subset IS NULL") as s_cur:
-        for row in s_cur:
-            ramp_id = row[0]
-            road_oid_1 = row[1]
-            road_oid_2 = row[2]
-            rampid_road_oids[ramp_id] = [road_oid_1, road_oid_2]
-
-
-    adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
-    print(adjacency[5])
-    print(adjacency[72])
-    print(adjacency[122])
-    print(adjacency[95])
-    print(adjacency[123])
-    print(adjacency[605])
-    print(adjacency[33])
-    print(adjacency[25])
-
-    endpoint_to_potential_connection = {}
-    for rampid, endpoints in endpoints_per_rampid.items():
-        if rampid == "42":
-            print(rampid)
-            print(endpoints)
-        for endpoint in endpoints:
-            endpoint_road_oid = None
-            endpoint_oid = endpoint["endpoint_oid"]
-            endpoint_geom = endpoint["endpoint_geom"]
-
-            for road_oid, road_geom in road_oid_geom.items():
-                if not endpoint_geom.disjoint(road_geom):
-                    endpoint_road_oid = road_oid
-                    break
-            if rampid == "42":
-                print(endpoint_road_oid)
-                print(rampid_road_oids[rampid][0])
-                print(rampid_road_oids[rampid][1])
-            
-            
-                
-            paths1 = bfs_all_paths(adjacency=adjacency, start=endpoint_road_oid, target=rampid_road_oids[rampid][0], max_steps=12, valid_oids=valid_adjacency_oid)
-            paths2 = bfs_all_paths(adjacency=adjacency, start=endpoint_road_oid, target=rampid_road_oids[rampid][1], max_steps=12, valid_oids=valid_adjacency_oid)
-            if rampid == "42":
-                print(paths1)
-                print(paths2)
-           
-            if paths1 or paths2:
-                if endpoint_oid == 9:
-                    print("Hello")
-                    print(rampid)
-                endpoint_to_potential_connection.setdefault(
-                    endpoint_oid,
-                    {
-                        "rampid": [],
-                        "geom": endpoint_geom
-                    }
-                )["rampid"].append(rampid)
-
-                if rampid == "42":
-                    print(endpoint_to_potential_connection[endpoint_oid])
-                    print(endpoint_oid)
-
-    rampid_to_potential_connection = {}
-    with arcpy.da.SearchCursor(files["potential_points"], ["ramp_id", "SHAPE@"], where_clause="is_subset IS NULL") as s_cur:
-        for row in s_cur:
-            rampid_to_potential_connection[row[0]] = row[1]
-            
     arcpy.management.AddField(
         in_table=files["potential_connection"],
         field_name="group_id",
-        field_type="TEXT"
+        field_type="TEXT",
     )
+
+
+def _load_non_ramp_roads(files: dict):
+    valid_adjacency_oid = set()
+    road_oid_geom = {}
+
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"], ["OID@", "SHAPE@", "typeveg"]
+    ) as s_cur:
+        for oid, geom, typeveg in s_cur:
+            if typeveg != "rampe":
+                road_oid_geom[oid] = geom
+                valid_adjacency_oid.add(oid)
+
+    return road_oid_geom, valid_adjacency_oid
+
+
+def _get_point_road_fid_fields(points_fc: str):
+    all_fields = arcpy.ListFields(points_fc)
+    fid_fields = [f.name for f in all_fields if "FID" in f.name]
+
+    if len(fid_fields) < 2:
+        raise ValueError(
+            f"Expected at least 2 FID fields in {points_fc}, found: {fid_fields}"
+        )
+
+    return fid_fields[0], fid_fields[1]
+
+
+def _load_rampid_road_oids(files: dict):
+    fid_a, fid_b = _get_point_road_fid_fields(files["potential_points"])
+    rampid_road_oids = {}
+
+    with arcpy.da.SearchCursor(
+        files["potential_points"],
+        ["ramp_id", fid_a, fid_b],
+        where_clause="is_subset IS NULL",
+    ) as s_cur:
+        for ramp_id, road_oid_1, road_oid_2 in s_cur:
+            rampid_road_oids[ramp_id] = [road_oid_1, road_oid_2]
+
+    return rampid_road_oids
+
+
+def _find_intersecting_road_oid(endpoint_geom, road_oid_geom: dict):
+    for road_oid, road_geom in road_oid_geom.items():
+        if not endpoint_geom.disjoint(road_geom):
+            return road_oid
+    return None
+
+
+def _build_endpoint_to_potential_connection_map(
+    endpoints_per_rampid: dict,
+    rampid_road_oids: dict,
+    road_oid_geom: dict,
+    valid_adjacency_oid: set,
+    adjacency: dict,
+):
+    endpoint_to_potential_connection = {}
+
+    for rampid, endpoints in endpoints_per_rampid.items():
+        if rampid not in rampid_road_oids:
+            continue
+
+        target_a, target_b = rampid_road_oids[rampid]
+
+        for endpoint in endpoints:
+            endpoint_oid = endpoint["endpoint_oid"]
+            endpoint_geom = endpoint["endpoint_geom"]
+
+            endpoint_road_oid = _find_intersecting_road_oid(endpoint_geom, road_oid_geom)
+            if endpoint_road_oid is None:
+                continue
+
+            paths1 = bfs_all_paths(
+                adjacency=adjacency,
+                start=endpoint_road_oid,
+                target=target_a,
+                max_steps=12,
+                valid_oids=valid_adjacency_oid,
+            )
+            paths2 = bfs_all_paths(
+                adjacency=adjacency,
+                start=endpoint_road_oid,
+                target=target_b,
+                max_steps=12,
+                valid_oids=valid_adjacency_oid,
+            )
+
+            if paths1 or paths2:
+                endpoint_to_potential_connection.setdefault(
+                    endpoint_oid,
+                    {"rampid": [], "geom": endpoint_geom},
+                )["rampid"].append(rampid)
+
+    return endpoint_to_potential_connection
+
+
+def _load_rampid_to_point_geom(files: dict):
+    rampid_to_potential_connection = {}
+
+    with arcpy.da.SearchCursor(
+        files["potential_points"],
+        ["ramp_id", "SHAPE@"],
+        where_clause="is_subset IS NULL",
+    ) as s_cur:
+        for ramp_id, geom in s_cur:
+            rampid_to_potential_connection[ramp_id] = geom
+
+    return rampid_to_potential_connection
+
+
+def _insert_potential_connections(
+    files: dict,
+    endpoint_to_potential_connection: dict,
+    rampid_to_potential_connection: dict,
+):
     with arcpy.da.InsertCursor(files["potential_connection"], ["SHAPE@", "group_id"]) as i_cur:
-        for endpoint_oid, data in endpoint_to_potential_connection.items():
-                rampid = data["rampid"]
-                endpoint_geom = data["geom"]
-               
-                for rid in rampid:
-                    i_cur.insertRow([
-                        endpoint_geom,
-                        str(rid)
-                    ])
-        
+        for _, data in endpoint_to_potential_connection.items():
+            endpoint_geom = data["geom"]
+            for rid in data["rampid"]:
+                i_cur.insertRow([endpoint_geom, str(rid)])
+
         for rampid, ramp_geom in rampid_to_potential_connection.items():
-            i_cur.insertRow([
-                    ramp_geom,
-                    str(rampid)
-                ])
-    
-   
-    
+            i_cur.insertRow([ramp_geom, str(rampid)])
+
+
+def _remove_promoted_endpoints(endpoints_per_rampid: dict, endpoint_to_potential_connection: dict):
     for rampid, endpoints in endpoints_per_rampid.items():
         endpoints_per_rampid[rampid] = [
             endpoint
@@ -1784,139 +1821,187 @@ def make_potential_connection_points(files: dict, endpoints_per_rampid: dict):
             )
         ]
 
-    
+
+def _delete_non_remaining_endpoint_rows(files: dict, endpoints_per_rampid: dict):
     remaining_endpoint_oids = {
         endpoint["endpoint_oid"]
         for endpoints in endpoints_per_rampid.values()
         for endpoint in endpoints
     }
+
     with arcpy.da.UpdateCursor(files["endpoints_for_connections"], ["uid"]) as u_cur:
         for row in u_cur:
             if row[0] not in remaining_endpoint_oids:
                 u_cur.deleteRow()
-    
-    return endpoints_per_rampid
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @timing_decorator
-def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: dict):
+def make_potential_connection_points(files: dict, endpoints_per_rampid: dict):
     """
-    Extends roads from endpoints to potential connection points based on the shortest distance.
+    If endpoint is on road with connection to rampid, move endpoint to potential_connection.
+    Add ramp points to potential_connection.
     """
-    #looper gjennom grupper 
-    # henter geometrien til alle endpoint og på koblingspunkt
-    # finner den hvor distancen fra et endepunkt til et på koblingspunkt er kortest og lager en linje med de 2 punktene
-    # så konverterer vi det endepunktet til på koblingspunkt (dette trengs bare å gjøres i gruppen i loopen ikke endre noe arcpy feature class)
-    # lopp gjennom til alle endepunkt i gruppen har koblet seg på 
-    # til slutt fjern endpoints som har fått en linje fra endpoints_for_connection
+    _create_potential_connection_featureclass(files)
+
+    road_oid_geom, valid_adjacency_oid = _load_non_ramp_roads(files)
+    rampid_road_oids = _load_rampid_road_oids(files)
+    adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
+
+    endpoint_to_potential_connection = _build_endpoint_to_potential_connection_map(
+        endpoints_per_rampid=endpoints_per_rampid,
+        rampid_road_oids=rampid_road_oids,
+        road_oid_geom=road_oid_geom,
+        valid_adjacency_oid=valid_adjacency_oid,
+        adjacency=adjacency,
+    )
+
+    rampid_to_potential_connection = _load_rampid_to_point_geom(files)
+
+    _insert_potential_connections(
+        files=files,
+        endpoint_to_potential_connection=endpoint_to_potential_connection,
+        rampid_to_potential_connection=rampid_to_potential_connection,
+    )
+
+    _remove_promoted_endpoints(endpoints_per_rampid, endpoint_to_potential_connection)
+    _delete_non_remaining_endpoint_rows(files, endpoints_per_rampid)
+
+    return endpoints_per_rampid
+
+
+#######################
+#Extending roads to restore lost connections
+#######################
+
+
+def _load_potential_connections(files: dict) -> dict:
     potential_connections_per_rampid = {}
     with arcpy.da.SearchCursor(files["potential_connection"], ["group_id", "SHAPE@"]) as s_cur:
-        for row in s_cur:
-            group_id = row[0]
-            geom = row[1]
+        for group_id, geom in s_cur:
             potential_connections_per_rampid.setdefault(group_id, []).append(geom)
-    
-    new_lines = {}
-    endpoints_to_remove = []
-    
-    for rampid, endpoints in endpoints_per_rampid.items():
+    return potential_connections_per_rampid
 
-        # Make a mutable copy of endpoints so we can remove connected ones
-        remaining_endpoints = endpoints.copy()
 
-        # Ensure the rampid exists in the potential connections dictionary
-        potential_connections_per_rampid.setdefault(rampid, [])
+def _find_closest_endpoint_connection(remaining_endpoints: list, candidate_geoms: list):
+    lowest_distance = float("inf")
+    best_endpoint = None
+    best_endpoint_oid = None
+    best_endpoint_geom = None
+    best_candidate_geom = None
 
-        # Keep going until all endpoints in this group have been connected
-        while remaining_endpoints:
+    for endpoint in remaining_endpoints:
+        endpoint_oid = endpoint["endpoint_oid"]
+        endpoint_geom = endpoint["endpoint_geom"]
 
-            lowest_distance = float("inf")
-            lowest_distance_endpoint = None
-            lowest_distance_endpoint_oid = None
-            lowest_distance_endpoint_geom = None
-            lowest_distance_potential_geom = None
+        for candidate_geom in candidate_geoms:
+            distance = endpoint_geom.distanceTo(candidate_geom)
+            if distance < lowest_distance:
+                lowest_distance = distance
+                best_endpoint = endpoint
+                best_endpoint_oid = endpoint_oid
+                best_endpoint_geom = endpoint_geom
+                best_candidate_geom = candidate_geom
 
-            # Find shortest connection from any remaining endpoint
-            # to any current potential connection
-            for endpoint in remaining_endpoints:
-                endpoint_oid = endpoint["endpoint_oid"]
-                endpoint_geom = endpoint["endpoint_geom"]
+    return best_endpoint, best_endpoint_oid, best_endpoint_geom, best_candidate_geom
 
-                for potential_connections_geom in potential_connections_per_rampid[rampid]:
-                    distance = endpoint_geom.distanceTo(potential_connections_geom)
 
-                    if distance < lowest_distance:
-                        lowest_distance = distance
-                        lowest_distance_endpoint = endpoint
-                        lowest_distance_endpoint_oid = endpoint_oid
-                        lowest_distance_endpoint_geom = endpoint_geom
-                        lowest_distance_potential_geom = potential_connections_geom
+def _build_line_between_points(endpoint_geom, candidate_geom):
+    sr = endpoint_geom.spatialReference
+    line = arcpy.Polyline(
+        arcpy.Array([endpoint_geom.firstPoint, candidate_geom.firstPoint]),
+        sr
+    )
+    return line, sr
 
-            # Safety check: no possible connection found
-            if lowest_distance_endpoint_geom is None or lowest_distance_potential_geom is None:
-                print(f"No valid connection found for rampid {rampid}")
-                break
 
-            # Make a line between the closest endpoint and closest potential connection
-            sr = lowest_distance_endpoint_geom.spatialReference
+def _connect_group_endpoints(rampid, endpoints, potential_connections_per_rampid):
+    new_lines_for_group = {}
+    remaining_endpoints = endpoints.copy()
+    potential_connections_per_rampid.setdefault(rampid, [])
+    sr = None
 
-            new_line = arcpy.Polyline(
-                arcpy.Array([
-                    lowest_distance_endpoint_geom.firstPoint,
-                    lowest_distance_potential_geom.firstPoint
-                ]),
-                sr
-            )
+    while remaining_endpoints:
+        best = _find_closest_endpoint_connection(
+            remaining_endpoints,
+            potential_connections_per_rampid[rampid]
+        )
+        best_endpoint, endpoint_oid, endpoint_geom, candidate_geom = best
 
-            new_lines.setdefault(lowest_distance_endpoint_oid, []).append(new_line)
+        if endpoint_geom is None or candidate_geom is None:
+            break
 
-            # Add the connected endpoint as a new potential connection point
-            potential_connections_per_rampid[rampid].append(lowest_distance_endpoint_geom)
+        new_line, sr = _build_line_between_points(endpoint_geom, candidate_geom)
+        new_lines_for_group.setdefault(endpoint_oid, []).append(new_line)
 
-            # Remove this endpoint so it does not get connected again
-            remaining_endpoints.remove(lowest_distance_endpoint)
-            endpoints_to_remove.append(lowest_distance_endpoint_oid)
-    
+        potential_connections_per_rampid[rampid].append(endpoint_geom)
+        remaining_endpoints.remove(best_endpoint)
 
-   
+    return new_lines_for_group, sr
 
-    # Create empty featureclass using input as template so fields + spatial ref are preserved
+
+def _write_new_lines_feature_class(
+    files: dict,
+    endpoint_data_map: dict,
+    new_lines: dict,
+    spatial_reference
+):
+    if spatial_reference is None:
+        spatial_reference = arcpy.Describe(files["copy_of_input"]).spatialReference
+
     arcpy.management.CreateFeatureclass(
         os.path.dirname(files["new_lines"]),
         os.path.basename(files["new_lines"]),
         geometry_type="POLYLINE",
         template=files["copy_of_input"],
-        spatial_reference=sr,
+        spatial_reference=spatial_reference,
     )
+
     fields = [f.name for f in arcpy.ListFields(files["new_lines"]) if f.type not in ("OID", "Geometry")]
     fields = ["SHAPE@"] + fields
+
     with arcpy.da.InsertCursor(files["new_lines"], fields) as i_cur:
-        for uid, line in new_lines.items():
-           data = endpoint_data_map.get(uid, {})
-           row = [line[0]] + [data.get(field, None) for field in fields[1:]]
-           i_cur.insertRow(row)
-    
+        for uid, lines in new_lines.items():
+            data = endpoint_data_map.get(uid, {})
+            row = [lines[0]] + [data.get(field, None) for field in fields[1:]]
+            i_cur.insertRow(row)
+
+
+def _finalize_new_lines(new_lines_fc: str):
     arcpy.management.DeleteIdentical(
-        in_dataset=files["new_lines"],
+        in_dataset=new_lines_fc,
         fields="Shape",
     )
     arcpy.management.RepairGeometry(
-        in_features=files["new_lines"],
+        in_features=new_lines_fc,
         delete_null="DELETE_NULL",
     )
 
+
+@timing_decorator
+def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: dict):
+    potential_connections_per_rampid = _load_potential_connections(files)
+
+    all_new_lines = {}
+    last_sr = None
+
+    for rampid, endpoints in endpoints_per_rampid.items():
+        group_lines, sr = _connect_group_endpoints(
+            rampid,
+            endpoints,
+            potential_connections_per_rampid
+        )
+        if sr is not None:
+            last_sr = sr
+        for uid, lines in group_lines.items():
+            all_new_lines.setdefault(uid, []).extend(lines)
+
+    _write_new_lines_feature_class(
+        files=files,
+        endpoint_data_map=endpoint_data_map,
+        new_lines=all_new_lines,
+        spatial_reference=last_sr,
+    )
+    _finalize_new_lines(files["new_lines"])
 
 
 
