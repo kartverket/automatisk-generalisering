@@ -210,8 +210,8 @@ Snaumark_uspesifisert,GroenneOmr,*,*,Park,None
 Snaumark_uspesifisert,IdrettsOmr,Alpinanlegg,Blokkmark,Alpinbakke,Blokkmark
 Snaumark_uspesifisert,IdrettsOmr,Alpinanlegg,Fjell_i_dagen,Alpinbakke,Fjell_i_dagen
 Snaumark_uspesifisert,IdrettsOmr,Alpinanlegg,*,Alpinbakke,None
-Snaumark_uspesifisert,IdrettsOmr,Golfanlegg,Fjell_i_dagen,Golfanlegg,Fjell_i_dagen
-Snaumark_uspesifisert,IdrettsOmr,Golfanlegg,*,Golfanlegg,None
+Snaumark_uspesifisert,IdrettsOmr,Golfanlegg,Fjell_i_dagen,Golfbane,Fjell_i_dagen
+Snaumark_uspesifisert,IdrettsOmr,Golfanlegg,*,Golfbane,None
 Snaumark_uspesifisert,IdrettsOmr,*,Blokkmark,IdrettsOmr,Blokkmark
 Snaumark_uspesifisert,IdrettsOmr,*,Fjell_i_dagen,IdrettsOmr,Fjell_i_dagen
 Snaumark_uspesifisert,IdrettsOmr,*,*,IdrettsOmr,None

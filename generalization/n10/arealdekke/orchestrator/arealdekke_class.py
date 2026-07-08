@@ -269,6 +269,7 @@ class Arealdekke:
                                 title=category_obj.get_title(),
                                 operations=category_obj.get_operations(),
                                 accessibility=category_obj.get_accessibility(),
+                                reinsert=category_obj.get_reinsert(),
                                 order=category_obj.get_order(),
                                 map_scale=category_obj.get_map_scale(),
                             )
@@ -302,6 +303,7 @@ class Arealdekke:
         # Iterate through categories in same order as in the YAML file
         for category in open_cats:
             cat_title = category.get_title()
+            cat_reinsert = category.get_reinsert()
             self.get_locked_categories()  # Land use types not to be edited
             self.get_category(cat_title)  # This land use type
 
@@ -314,6 +316,7 @@ class Arealdekke:
                     input_fc=self.files["category_fc"],
                     locked_fc=self.files["locked_fc"],
                     processed_fc=self.files["processed_fc"],
+                    complete_fc=self.files["arealdekke_fc"],
                 ):
                     for key, value in operation.items():
                         self.program_history.update_history_cat_lvl(
@@ -341,29 +344,43 @@ class Arealdekke:
                     ),
                 ]
 
-                for index in range(reinserts_completed, len(reinsert_operations)):
+                if cat_reinsert:
+                    for index in range(reinserts_completed, len(reinsert_operations)):
 
-                    reinsert_operations[index]()
+                        reinsert_operations[index]()
 
-                    # Update status / history log
-                    arcpy.management.CopyFeatures(
-                        in_features=self.files["intermediate_fc"],
-                        out_feature_class=self.files["arealdekke_fc"],
+                        # Update status / history log
+                        arcpy.management.CopyFeatures(
+                            in_features=self.files["intermediate_fc"],
+                            out_feature_class=self.files["arealdekke_fc"],
+                        )
+
+                        self.program_history.update_history_top_lvl(
+                            key=keys.newest_version.value,
+                            value=str(self.files["arealdekke_fc"]),
+                        )
+
+                        reinserts_completed_updated = (
+                            category.update_reinsert_operations_completed()
+                        )
+
+                        self.program_history.update_history_cat_lvl(
+                            title=cat_title,
+                            key=keys.reinserts_completed.value,
+                            value=reinserts_completed_updated,
+                        )
+                else:
+                    arcpy.analysis.Erase(
+                        in_features=self.files["arealdekke_fc"],
+                        erase_features=self.files["processed_fc"],
+                        out_feature_class=self.files["intermediate_fc"],
                     )
-
-                    self.program_history.update_history_top_lvl(
-                        key=keys.newest_version.value,
-                        value=str(self.files["arealdekke_fc"]),
-                    )
-
-                    reinserts_completed_updated = (
-                        category.update_reinsert_operations_completed()
-                    )
-
-                    self.program_history.update_history_cat_lvl(
-                        title=cat_title,
-                        key=keys.reinserts_completed.value,
-                        value=reinserts_completed_updated,
+                    arcpy.management.Merge(
+                        inputs=[
+                            self.files["processed_fc"],
+                            self.files["intermediate_fc"],
+                        ],
+                        output=self.files["arealdekke_fc"],
                     )
 
             # Close current land use type
@@ -559,6 +576,7 @@ class Arealdekke:
                 input_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
                 map_scale=self.__map_scale,
+                target="Høyblokkbebyggelse",
             ),
             lambda: eliminate_small_polygons(
                 input_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,

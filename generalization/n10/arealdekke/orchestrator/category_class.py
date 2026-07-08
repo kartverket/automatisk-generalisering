@@ -5,13 +5,16 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+
+# Category tools:
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
 )
-
-# Category tools:
 from generalization.n10.arealdekke.category_tools.simplify_polygon import (
     simplify_and_smooth_polygon,
+)
+from generalization.n10.arealdekke.category_tools.thin_poly_to_point import (
+    pointify_thin_poly,
 )
 from generalization.n10.arealdekke.orchestrator.enum_variables import (
     history_keys as keys,
@@ -25,6 +28,7 @@ class Category:
         title: str,
         operations: list,
         accessibility: bool,
+        reinsert: bool,
         order: int,
         map_scale: str,
         last_processed: str = None,
@@ -47,6 +51,7 @@ class Category:
         self.__accessibility: bool = (
             accessibility if accessibility is not None else True
         )
+        self.__reinsert: bool = reinsert if reinsert is not None else True
         self.__order: int = order
         self.__map_scale: str = map_scale
         self.__last_processed: str = last_processed if last_processed else None
@@ -68,7 +73,9 @@ class Category:
     # ========================
 
     @timing_decorator
-    def process_category(self, input_fc: str, locked_fc: str, processed_fc: str):
+    def process_category(
+        self, input_fc: str, locked_fc: str, processed_fc: str, complete_fc: str
+    ):
         """
         What:
                 Iterates through each operation, unless some of the operations were previously completed.
@@ -101,6 +108,7 @@ class Category:
                 ),
                 "output_fc": processed_fc,
                 "locked_fc": locked_fc,
+                "complete_fc": complete_fc,
                 "map_scale": self.__map_scale,
             }
 
@@ -134,6 +142,9 @@ class Category:
 
     def get_accessibility(self) -> bool:
         return self.__accessibility
+
+    def get_reinsert(self) -> bool:
+        return self.__reinsert
 
     def get_operations(self) -> list:
         return self.__operations
@@ -175,6 +186,7 @@ class Category:
         """
 
         return {
-            "simplify_and_smooth": simplify_and_smooth_polygon,
             "buff_small_segments": buff_small_polygon_segments,
+            "pointify_thin_poly": pointify_thin_poly,
+            "simplify_and_smooth": simplify_and_smooth_polygon,
         }

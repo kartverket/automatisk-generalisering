@@ -96,12 +96,22 @@ def change_attribute_value_category(
         if size_limit
         else f"{field} = '{category}'"
     )
+    sql_wilderness = f"{field} IN ('Alpinbakke', 'Golfanlegg', 'Golfbane', 'Innmarksbeite', 'Jordbruk', 'Myr', 'Snaumark', 'Skog')"
 
     work_lyr = "work_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=working_fc, out_layer=work_lyr)
+    wilderness_lyr = "other_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=working_fc, out_layer=work_lyr, where_clause=sql
+    )
+    arcpy.management.MakeFeatureLayer(
+        in_features=working_fc, out_layer=wilderness_lyr, where_clause=sql_wilderness
+    )
 
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=work_lyr, selection_type="NEW_SELECTION", where_clause=sql
+    arcpy.management.SelectLayerByLocation(
+        in_layer=work_lyr,
+        overlap_type="BOUNDARY_TOUCHES",
+        select_features=wilderness_lyr,
+        selection_type="NEW_SELECTION",
     )
 
     if exception_category:
