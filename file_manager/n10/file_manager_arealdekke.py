@@ -11,15 +11,15 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
-attribute_file = "A_attribute_changer"
-dissolve_file = "B_dissolve"
-island_merger = "C_island_merger"
-area_aggregator = "D_area_aggregator"
-category_aggregator = "E_category_aggregator"
-elim_file = "F_eliminate"
-gangsykkel_file = "G_gangsykkel"
-buff_polygon_segments = "H_buff_polygon_segments"
-simplify_polygon = "I_simplify_polygon"
+attribute_file = "attribute_changer"
+dissolve_file = "dissolve"
+island_merger = "island_merger"
+area_aggregator = "area_aggregator"
+category_aggregator = "category_aggregator"
+elim_file = "eliminate"
+gangsykkel_file = "gangsykkel"
+buff_polygon_segments = "buff_polygon_segments"
+simplify_polygon = "simplify_polygon"
 
 overlap_remover = "overlap_remover"
 passability = "passability"
