@@ -28,6 +28,14 @@ generalization.n10.arealdekke.category\_tools.simplify\_polygon module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.category\_tools.thin\_poly\_to\_point module
+--------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.category_tools.thin_poly_to_point
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
