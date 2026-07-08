@@ -10,8 +10,12 @@ from collections import defaultdict
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
+from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
+    EliminateSmallPolygonsParameters,
+)
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     EliminateSmallPolygonsParameters,
 )
