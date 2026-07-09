@@ -67,6 +67,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#data_orchestrator.datasets.DatasetNamespace"><code class="docutils literal notranslate"><span class="pre">DatasetNamespace</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#data-orchestrator-input-fkb-module">data_orchestrator.input_fkb module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-orchestrator-input-other-module">data_orchestrator.input_other module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-orchestrator-input-raster-module">data_orchestrator.input_raster module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-data_orchestrator.input_setup">data_orchestrator.input_setup module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#data_orchestrator.input_setup.FolderSpec"><code class="docutils literal notranslate"><span class="pre">FolderSpec</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#data_orchestrator.input_setup.create_folder_spec"><code class="docutils literal notranslate"><span class="pre">create_folder_spec()</span></code></a></li>
@@ -162,8 +165,23 @@ pipeline.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.fkb_water">
+<span class="sig-name descname"><span class="pre">fkb_water</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FKB_WATER'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.fkb_water" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.river_basin">
+<span class="sig-name descname"><span class="pre">river_basin</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RIVER_BASIN'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.river_basin" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.raw_data">
 <span class="sig-name descname"><span class="pre">raw_data</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'raw_data'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.raw_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.dom_10m">
+<span class="sig-name descname"><span class="pre">dom_10m</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dom_10m'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.dom_10m" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -326,6 +344,26 @@ pipeline.</p>
 <span class="sig-name descname"><span class="pre">VegSti_N50</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'VegSti_N50'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.VegSti_N50" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.fkb_vann_grense">
+<span class="sig-name descname"><span class="pre">fkb_vann_grense</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fkb_vann_grense'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.fkb_vann_grense" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.fkb_vann_omrade">
+<span class="sig-name descname"><span class="pre">fkb_vann_omrade</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fkb_vann_omrade'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.fkb_vann_omrade" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.fkb_vann_posisjon">
+<span class="sig-name descname"><span class="pre">fkb_vann_posisjon</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fkb_vann_posisjon'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.fkb_vann_posisjon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator.data_names.DataNames.Nedborfelt_Vassdragsomr">
+<span class="sig-name descname"><span class="pre">Nedborfelt_Vassdragsomr</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Nedborfelt_Vassdragsomr'</span></span><a class="headerlink" href="#data_orchestrator.data_names.DataNames.Nedborfelt_Vassdragsomr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -354,6 +392,15 @@ on the instance, pointing to the corresponding dataset path.</p>
 
 </dd></dl>
 
+</section>
+<section id="data-orchestrator-input-fkb-module">
+<h2>data_orchestrator.input_fkb module<a class="headerlink" href="#data-orchestrator-input-fkb-module" title="Link to this heading"></a></h2>
+</section>
+<section id="data-orchestrator-input-other-module">
+<h2>data_orchestrator.input_other module<a class="headerlink" href="#data-orchestrator-input-other-module" title="Link to this heading"></a></h2>
+</section>
+<section id="data-orchestrator-input-raster-module">
+<h2>data_orchestrator.input_raster module<a class="headerlink" href="#data-orchestrator-input-raster-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-data_orchestrator.input_setup">
 <span id="data-orchestrator-input-setup-module"></span><h2>data_orchestrator.input_setup module<a class="headerlink" href="#module-data_orchestrator.input_setup" title="Link to this heading"></a></h2>

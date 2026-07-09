@@ -44,6 +44,30 @@ data\_orchestrator.datasets module
    :show-inheritance:
    :undoc-members:
 
+data\_orchestrator.input\_fkb module
+------------------------------------
+
+.. automodule:: data_orchestrator.input_fkb
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator.input\_other module
+--------------------------------------
+
+.. automodule:: data_orchestrator.input_other
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator.input\_raster module
+---------------------------------------
+
+.. automodule:: data_orchestrator.input_raster
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 data\_orchestrator.input\_setup module
 --------------------------------------
 
