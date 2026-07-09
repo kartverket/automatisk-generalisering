@@ -1914,7 +1914,7 @@ def _build_line_between_points(endpoint_geom, candidate_geom):
     return line, sr
 
 
-def _connect_group_endpoints(rampid, endpoints, potential_connections_per_rampid):
+def _connect_group_endpoints(rampid: str, endpoints: list, potential_connections_per_rampid: dict):
     new_lines_for_group = {}
     remaining_endpoints = endpoints.copy()
     potential_connections_per_rampid.setdefault(rampid, [])
@@ -1962,8 +1962,9 @@ def _write_new_lines_feature_class(
     with arcpy.da.InsertCursor(files["new_lines"], fields) as i_cur:
         for uid, lines in new_lines.items():
             data = endpoint_data_map.get(uid, {})
-            row = [lines[0]] + [data.get(field, None) for field in fields[1:]]
-            i_cur.insertRow(row)
+            for line in lines:
+                row = [line] + [data.get(field, None) for field in fields[1:]]
+                i_cur.insertRow(row)
 
 
 def _finalize_new_lines(new_lines_fc: str):
@@ -1976,24 +1977,117 @@ def _finalize_new_lines(new_lines_fc: str):
         delete_null="DELETE_NULL",
     )
 
+def _add_new_line_to_adjacency(adjacency: dict, valid_adjacency_oid: set, line: arcpy.Polyline, road_oid_geom: dict, new_line_oid: int, sr):
+    """
+    adds new line to adjacency by checking which roads its endpoints intersect with and adding a ghost member to the adjacency list for those roads
+    also adds the new line to the road_oid_geom and valid_adjacency_oid sets
+    """
+    start_point = line.firstPoint
+    end_point = line.lastPoint
+    start_pg = arcpy.PointGeometry(start_point, sr)
+    end_pg = arcpy.PointGeometry(end_point, sr)
+
+    for road_oid, road_geom in road_oid_geom.items():
+        if not start_pg.disjoint(road_geom) or not end_pg.disjoint(road_geom):
+            adjacency.setdefault(road_oid, set()).add(new_line_oid)
+            adjacency.setdefault(new_line_oid, set()).add(road_oid)
+    
+    valid_adjacency_oid.add(new_line_oid)
+    road_oid_geom[new_line_oid] = line
+
+    return adjacency, valid_adjacency_oid, road_oid_geom
+
+
+def _check_endpoints_connection(adjacency: dict, valid_adjacency_oid: set, road_oid_geom: dict, endpoints, rampid: str, potential_connections_per_rampid: dict,):
+    """
+    Checks if the endpoints are connected to the potential connection points
+    and removes the endpoints that are connected from the endpoints list.
+    and adds the connected endpoints to the potential_connections_per_rampid dictionary
+    """
+    endpoints_copy = endpoints.copy()
+
+    for endpoint in endpoints_copy:
+        endpoint_oid = endpoint["endpoint_oid"]
+        endpoint_geom = endpoint["endpoint_geom"]
+
+        endpoint_road_oids = []
+        for road_oid, road_geom in road_oid_geom.items():
+            if not endpoint_geom.disjoint(road_geom):
+                endpoint_road_oids.append(road_oid)
+
+        
+
+        connected = False
+        for potential_geom in potential_connections_per_rampid.get(rampid, []):
+            if connected:
+                break
+            potential_road_oids = []
+            for road_oid, road_geom in road_oid_geom.items():
+                if not potential_geom.disjoint(road_geom):
+                    potential_road_oids.append(road_oid)
+
+            for endpoint_road_oid in endpoint_road_oids:
+                if connected:
+                    break
+                for potential_road_oid in potential_road_oids:
+                    paths = bfs_all_paths(
+                        adjacency=adjacency,
+                        start=endpoint_road_oid,
+                        target=potential_road_oid,
+                        max_steps=12,
+                        valid_oids=valid_adjacency_oid,
+                    )
+
+                    if paths:
+                        connected = True
+                        break
+        
+        if connected:
+            potential_connections_per_rampid.setdefault(rampid, []).append(endpoint_geom)
+            endpoints.remove(endpoint)
+            print(f"Endpoint {endpoint_oid} is connected to potential connection for rampid {rampid}, removing from endpoints.")
+
+
+    
+    return endpoints, potential_connections_per_rampid
+        
+
+
 
 @timing_decorator
 def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: dict):
+    """
+    creates new roads from the endpoints to the potential connection points
+    uses the data, f.eks medium, from the road of the endpoint to fill in the data for the new road
+    """
     potential_connections_per_rampid = _load_potential_connections(files)
 
     all_new_lines = {}
     last_sr = None
 
+    adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
+    road_oid_geom, valid_adjacency_oid = _load_non_ramp_roads(files)
+    counter = 0
+
     for rampid, endpoints in endpoints_per_rampid.items():
+        counter += 1
+        
+        endpoints, potential_connections_per_rampid = _check_endpoints_connection(adjacency=adjacency, valid_adjacency_oid=valid_adjacency_oid, road_oid_geom=road_oid_geom, endpoints=endpoints, potential_connections_per_rampid=potential_connections_per_rampid, rampid=rampid)
+        
+
         group_lines, sr = _connect_group_endpoints(
             rampid,
             endpoints,
-            potential_connections_per_rampid
+            potential_connections_per_rampid,
         )
         if sr is not None:
             last_sr = sr
         for uid, lines in group_lines.items():
             all_new_lines.setdefault(uid, []).extend(lines)
+            adjacency, valid_adjacency_oid, road_oid_geom = _add_new_line_to_adjacency(adjacency=adjacency, valid_adjacency_oid=valid_adjacency_oid, line=lines[0], road_oid_geom=road_oid_geom, new_line_oid=f"new_line_{uid}_{counter}", sr=sr)
+        
+        
+
 
     _write_new_lines_feature_class(
         files=files,
