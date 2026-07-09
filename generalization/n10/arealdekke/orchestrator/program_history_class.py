@@ -96,8 +96,8 @@ class Program_history_class:
 
         if (
             preprocessed
-            and cat_history
-            and cat_history[0][keys.operations_completed.value]
+            and cat_history != []
+            and cat_history[0][keys.operations_completed.value] is not None
         ):
             response["cats_exist"] = True
             response["cats"] = []

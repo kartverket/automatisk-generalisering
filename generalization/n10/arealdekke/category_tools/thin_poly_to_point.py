@@ -84,7 +84,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     be used during the process of pointifying thin polygons.
 
     Args:
-        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files
+        wfm (WorkFileManager): The WorkFileManager instance that is keeping the files
 
     Returns:
         dict: A dictionary with all the files as variables
@@ -441,11 +441,6 @@ def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> No
     arcpy.management.Merge(
         inputs=[files["erased_small_areas"], files["split_result"]],
         output=output_fc,
-    )
-
-    arcpy.management.Merge(
-        inputs=[files["erased_small_areas"], files["split_result"]],
-        output=files["test"],
     )
 
 
