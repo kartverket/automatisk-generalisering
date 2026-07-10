@@ -1202,6 +1202,7 @@ def create_endpoints(files: dict):
     )
     
     # Count how many times each XY occurs
+    
     xy_counts = defaultdict(int)
 
     with arcpy.da.SearchCursor(files["endpoints_for_connections"], ["SHAPE@XY"]) as cursor:
@@ -1215,6 +1216,8 @@ def create_endpoints(files: dict):
         for (xy,) in cursor:
             if xy in duplicate_xys:
                 cursor.deleteRow()
+    
+                
 
 
     ########
@@ -2144,6 +2147,7 @@ def _connect_group_endpoints(
     remaining_endpoints = endpoints.copy()
     potential_connections_per_rampid.setdefault(rampid, [])
     sr = None
+    counter = 0
 
     while remaining_endpoints:
         best_found = False
@@ -2189,6 +2193,12 @@ def _connect_group_endpoints(
                     best_endpoint_index = endpoint_idx
                     best_endpoint = endpoint
                     best_found = True
+                    ###
+                    ### Testing adjacency after each line
+                    ###
+                    adjacency, valid_adjacency_oid, road_oid_geom = _add_new_line_to_adjacency(adjacency=adjacency, valid_adjacency_oid=valid_adjacency_oid, line=validated_line, road_oid_geom=road_oid_geom, new_line_oid=f"new_line_{endpoint_oid}_{counter}", sr=sr)
+                    counter += 1
+                    remaining_endpoints, potential_connections_per_rampid = _check_endpoints_connection(adjacency=adjacency, valid_adjacency_oid=valid_adjacency_oid, road_oid_geom=road_oid_geom, endpoints=remaining_endpoints, potential_connections_per_rampid=potential_connections_per_rampid, rampid=rampid)
                     break
         
         if not best_found:
