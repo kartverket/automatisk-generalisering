@@ -43,6 +43,7 @@ def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
         in_features=files["copy_of_input"],
         out_feature_class=output_roads_fc,
     )
+    arcpy.management.Append([files["new_lines"]], output_roads_fc)
     arcpy.management.CopyFeatures(
         in_features=files["potential_points"],
         out_feature_class=output_points_fc,
@@ -1420,6 +1421,7 @@ def group_endpoints_not_belonging_to_a_ramp_id(files: dict, endpoints_per_rampid
                     })
     
 
+    """
     arcpy.management.CreateFeatureclass(
         out_path=os.path.dirname(files["ramp_group"]),
         out_name=os.path.basename(files["ramp_group"]),
@@ -1443,6 +1445,7 @@ def group_endpoints_not_belonging_to_a_ramp_id(files: dict, endpoints_per_rampid
         for key, data in endpoint_groups.items():
             for row in data:
                 i_cur.insertRow([row["geom"], key])
+                """
     
  
     
@@ -1598,6 +1601,9 @@ def _append_remaining_group_endpoints(
                 "endpoint_geom": endpoint["geom"],
             }
         )
+
+
+
 
 @timing_decorator
 def make_potential_connection_points_for_groups_without_rampid(
@@ -1905,36 +1911,293 @@ def _find_closest_endpoint_connection(remaining_endpoints: list, candidate_geoms
     return best_endpoint, best_endpoint_oid, best_endpoint_geom, best_candidate_geom
 
 
+def _roads_intersecting_line_body(new_line: arcpy.Polyline, road_oid_geom: dict) -> set:
+    """
+    Returns roads crossed by the line body, excluding roads touching line endpoints.
+    """
+    intersect_roads = set()
+    sr = new_line.spatialReference
+    start_pg = arcpy.PointGeometry(new_line.firstPoint, sr)
+    end_pg = arcpy.PointGeometry(new_line.lastPoint, sr)
+
+    for road_oid, road_geom in road_oid_geom.items():
+        if not new_line.disjoint(road_geom) and start_pg.disjoint(road_geom) and end_pg.disjoint(road_geom):
+            intersect_roads.add(road_oid)
+
+    return intersect_roads
+
+
+def _roads_touching_point(point_geom: arcpy.PointGeometry, road_oid_geom: dict) -> set:
+    """
+    Returns road ids that touch the point geometry.
+    """
+    roads = set()
+    for road_oid, road_geom in road_oid_geom.items():
+        if not point_geom.disjoint(road_geom):
+            roads.add(road_oid)
+    return roads
+
+
+def _line_road_intersection_points(line_geom: arcpy.Polyline, road_geom) -> List[arcpy.PointGeometry]:
+    """
+    Returns all point intersections between a line and one road geometry.
+    """
+    intersections = []
+    inter = line_geom.intersect(road_geom, 1)
+    if inter is None:
+        return intersections
+
+    sr = line_geom.spatialReference
+    for p in inter:
+        if p is None:
+            continue
+        intersections.append(arcpy.PointGeometry(arcpy.Point(p.X, p.Y), sr))
+
+    return intersections
+
+
+def _find_snap_point_for_same_medium_crossing(
+    new_line: arcpy.Polyline,
+    intersect_road_oid,
+    road_oid_geom: dict,
+    adjacency: dict,
+    valid_adjacency_oid: set,
+    max_steps: int = 12,
+) -> Optional[arcpy.PointGeometry]:
+    """
+    Finds a snap point on the intersected road when that road is connected,
+    through adjacency, to any road touching the new line's last point.
+    """
+    intersect_road_geom = road_oid_geom.get(intersect_road_oid)
+    if intersect_road_geom is None:
+        return None
+
+    sr = new_line.spatialReference
+    end_pg = arcpy.PointGeometry(new_line.lastPoint, sr)
+    end_point_roads = _roads_touching_point(end_pg, road_oid_geom)
+    if not end_point_roads:
+        return None
+
+    connected = False
+    for end_road_oid in end_point_roads:
+        if end_road_oid == intersect_road_oid:
+            connected = True
+            break
+
+        paths = bfs_all_paths(
+            adjacency=adjacency,
+            start=intersect_road_oid,
+            target=end_road_oid,
+            max_steps=max_steps,
+            max_paths=1,
+            valid_oids=valid_adjacency_oid,
+        )
+        if paths:
+            connected = True
+            break
+
+    if not connected:
+        return None
+
+    intersection_points = _line_road_intersection_points(new_line, intersect_road_geom)
+    if not intersection_points:
+        return None
+
+    return min(intersection_points, key=lambda p: p.distanceTo(end_pg))
+
+def _try_other_points_along_lines(road_oid_geom, endpoint_geom, candidate_geom, road_oid_medium, new_line_medium):
+    """
+    """
+    intersecting_roads = _roads_touching_point(candidate_geom, road_oid_geom)
+    possible_lines = []
+    
+    for road_oid in intersecting_roads:
+        road_geom = road_oid_geom[road_oid]
+        for i in range(1, 100, 2):
+            fraction = i / 100
+            new_point = road_geom.positionAlongLine(fraction, True)
+            if new_point is None:
+                continue
+            
+            line = arcpy.Polyline(arcpy.Array([endpoint_geom.firstPoint, new_point.firstPoint]), endpoint_geom.spatialReference)
+            roads_intersecting_line = _roads_intersecting_line_body(line, road_oid_geom)
+            intersecting_wrong_medium = False
+            for road_oid_2 in roads_intersecting_line:
+                medium = road_oid_medium.get(road_oid_2)
+                if medium == new_line_medium:
+                    intersecting_wrong_medium = True
+                    break
+            if not intersecting_wrong_medium:
+                possible_lines.append(line)
+                    
+    
+    shortest_line = None
+    shortest_length = float("inf")
+    for line in possible_lines:
+        length = line.length
+        if length < shortest_length:
+            shortest_length = length
+            shortest_line = line
+    
+    return shortest_line
+            
+
+
+
+
+        
+
+def _validate_line_crossings(
+    new_line: arcpy.Polyline,
+    new_line_medium: str,
+    road_oid_geom: dict,
+    road_oid_medium: dict,
+    adjacency: dict,
+    valid_adjacency_oid: set,
+    candidate_geom: arcpy.Point,
+    endpoint_geom: arcpy.Point
+) -> tuple[bool, arcpy.Polyline]:
+    """
+    Validates line crossings and, only for same-medium conflicts, may snap
+    line last point to a crossing point if BFS connectivity allows it.
+    """
+    current_line = new_line
+
+    # Limit snaps to avoid pathological loops if geometry is degenerate.
+    for _ in range(3):
+        intersect_roads = _roads_intersecting_line_body(current_line, road_oid_geom)
+        if not intersect_roads:
+            return True, current_line
+
+        snapped = False
+        for road_oid in intersect_roads:
+            road_medium = road_oid_medium.get(road_oid)
+            if road_medium == new_line_medium:                                                             
+                snap_point = _find_snap_point_for_same_medium_crossing(
+                    new_line=current_line,
+                    intersect_road_oid=road_oid,
+                    road_oid_geom=road_oid_geom,
+                    adjacency=adjacency,
+                    valid_adjacency_oid=valid_adjacency_oid,
+                    max_steps=12,
+                )
+
+                if snap_point is None:
+                    shortest_line = _try_other_points_along_lines(road_oid_geom, endpoint_geom, candidate_geom, road_oid_medium, new_line_medium)
+                    if shortest_line:
+                        return True, shortest_line
+                    return False, current_line
+
+                sr = current_line.spatialReference
+                snapped_line = arcpy.Polyline(
+                    arcpy.Array([current_line.firstPoint, snap_point.firstPoint]),
+                    sr,
+                )
+
+                if snap_point.distanceTo(arcpy.PointGeometry(current_line.lastPoint, sr)) <= 0.001:
+                    return False, current_line
+
+                current_line = snapped_line
+                snapped = True
+                break
+
+        if not snapped:
+            return True, current_line
+
+    return False, current_line
+
+
 def _build_line_between_points(endpoint_geom, candidate_geom):
+    if endpoint_geom is None or candidate_geom is None:
+        return None, None
     sr = endpoint_geom.spatialReference
-    line = arcpy.Polyline(
-        arcpy.Array([endpoint_geom.firstPoint, candidate_geom.firstPoint]),
-        sr
-    )
+    try:
+        line = arcpy.Polyline(
+            arcpy.Array([endpoint_geom.firstPoint, candidate_geom.firstPoint]),
+            sr
+        )
+    except Exception as e:
+        print(f"Error creating line between points: {e}")
+        return None, sr
+    if line is None or line.length == 0:
+        return None, sr
     return line, sr
 
 
-def _connect_group_endpoints(rampid: str, endpoints: list, potential_connections_per_rampid: dict):
+def _connect_group_endpoints(
+    rampid: str,
+    endpoints: list,
+    potential_connections_per_rampid: dict,
+    road_oid_geom: dict,
+    road_oid_medium: dict,
+    endpoint_data_map: dict,
+    adjacency: dict,
+    valid_adjacency_oid: set,
+):
+    """
+    Creates connecting lines between endpoints and potential connection points.
+    Validates that new lines don't cross roads with incompatible mediums.
+    If a line is invalid, tries the next closest candidate.
+    If no valid candidates exist for an endpoint, skips it.
+    """
     new_lines_for_group = {}
     remaining_endpoints = endpoints.copy()
     potential_connections_per_rampid.setdefault(rampid, [])
     sr = None
 
     while remaining_endpoints:
-        best = _find_closest_endpoint_connection(
-            remaining_endpoints,
-            potential_connections_per_rampid[rampid]
-        )
-        best_endpoint, endpoint_oid, endpoint_geom, candidate_geom = best
-
-        if endpoint_geom is None or candidate_geom is None:
+        best_found = False
+        best_endpoint_index = -1
+        best_endpoint = None
+        best_endpoint_oid = None
+        
+        # Try to find a valid connection for each endpoint
+        for endpoint_idx, endpoint in enumerate(remaining_endpoints):
+            endpoint_oid = endpoint["endpoint_oid"]
+            endpoint_geom = endpoint["endpoint_geom"]
+            
+            # Try candidates sorted by distance
+            candidates_with_distance = [
+                (endpoint_geom.distanceTo(cand), cand)
+                for cand in potential_connections_per_rampid[rampid]
+            ]
+            candidates_with_distance.sort(key=lambda x: x[0])
+            
+            for distance, candidate_geom in candidates_with_distance:
+                if endpoint_geom is None or candidate_geom is None:
+                    continue
+                    
+                new_line, sr = _build_line_between_points(endpoint_geom, candidate_geom)
+                if new_line is None or new_line.length == 0 or new_line.length > 500:
+                    continue
+                # Validate the line before accepting it
+                new_line_medium = endpoint_data_map.get(endpoint_oid, {}).get("medium")
+                is_valid, validated_line = _validate_line_crossings(
+                    new_line,
+                    new_line_medium,
+                    road_oid_geom,
+                    road_oid_medium,
+                    adjacency,
+                    valid_adjacency_oid,
+                    candidate_geom,
+                    endpoint_geom
+                )
+                if is_valid:
+                    # Valid line found
+                    new_lines_for_group.setdefault(endpoint_oid, []).append(validated_line)
+                    potential_connections_per_rampid[rampid].append(endpoint_geom)
+                    best_endpoint_index = endpoint_idx
+                    best_endpoint = endpoint
+                    best_found = True
+                    break
+        
+        if not best_found:
+            # No valid connection found for any remaining endpoint
+            print(f"No valid connection found for rampid {rampid}. Remaining endpoints: {[e['endpoint_oid'] for e in remaining_endpoints]}")
             break
-
-        new_line, sr = _build_line_between_points(endpoint_geom, candidate_geom)
-        new_lines_for_group.setdefault(endpoint_oid, []).append(new_line)
-
-        potential_connections_per_rampid[rampid].append(endpoint_geom)
-        remaining_endpoints.remove(best_endpoint)
+        
+        # Remove the successfully connected endpoint
+        remaining_endpoints.pop(best_endpoint_index)
 
     return new_lines_for_group, sr
 
@@ -2045,11 +2308,20 @@ def _check_endpoints_connection(adjacency: dict, valid_adjacency_oid: set, road_
         if connected:
             potential_connections_per_rampid.setdefault(rampid, []).append(endpoint_geom)
             endpoints.remove(endpoint)
-            print(f"Endpoint {endpoint_oid} is connected to potential connection for rampid {rampid}, removing from endpoints.")
 
 
     
     return endpoints, potential_connections_per_rampid
+
+def _load_non_ramp_road_mediums(files: dict) -> dict:
+    road_oid_medium = {}
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"], ["OID@", "medium", "typeveg"]
+    ) as s_cur:
+        for oid, medium, typeveg in s_cur:
+            if typeveg != "rampe":
+                road_oid_medium[oid] = medium
+    return road_oid_medium
         
 
 
@@ -2067,6 +2339,7 @@ def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: 
 
     adjacency = build_adjacency_with_medium(files=files, lines=files["relevant_roads_dissolved"])
     road_oid_geom, valid_adjacency_oid = _load_non_ramp_roads(files)
+    road_oid_medium = _load_non_ramp_road_mediums(files)
     counter = 0
 
     for rampid, endpoints in endpoints_per_rampid.items():
@@ -2079,6 +2352,11 @@ def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: 
             rampid,
             endpoints,
             potential_connections_per_rampid,
+            road_oid_geom,
+            road_oid_medium,
+            endpoint_data_map,
+            adjacency,
+            valid_adjacency_oid,
         )
         if sr is not None:
             last_sr = sr
