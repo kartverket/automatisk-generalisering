@@ -11,15 +11,15 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
-attribute_file = "A_attribute_changer"
-dissolve_file = "B_dissolve"
-island_merger = "C_island_merger"
-area_aggregator = "D_area_aggregator"
-category_aggregator = "E_category_aggregator"
-elim_file = "F_eliminate"
-gangsykkel_file = "G_gangsykkel"
-buff_polygon_segments = "H_buff_polygon_segments"
-simplify_polygon = "I_simplify_polygon"
+attribute_file = "attribute_changer"
+dissolve_file = "dissolve"
+island_merger = "island_merger"
+area_aggregator = "area_aggregator"
+category_aggregator = "category_aggregator"
+elim_file = "eliminate"
+gangsykkel_file = "gangsykkel"
+buff_polygon_segments = "buff_polygon_segments"
+simplify_polygon = "simplify_polygon"
 
 overlap_remover = "overlap_remover"
 passability = "passability"
@@ -30,6 +30,7 @@ overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
 poly_to_point = "poly_to_point"
+remove_thin_tracks = "remove_thin_tracks"
 
 
 class Arealdekke_N10(Enum):
@@ -252,4 +253,12 @@ class Arealdekke_N10(Enum):
 
     poly_to_point_points__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=poly_to_point, description="poly_to_point_points"
+    )
+
+    # ========================================
+    #                      THIN TRACKS REMOVER
+    # ========================================
+
+    thin_tracks_remover__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=remove_thin_tracks, description="thin_tracks_remover"
     )

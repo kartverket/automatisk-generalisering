@@ -10,6 +10,9 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
 )
+from generalization.n10.arealdekke.category_tools.remove_thin_tracks import (
+    remove_thin_tracks,
+)
 from generalization.n10.arealdekke.category_tools.simplify_polygon import (
     simplify_and_smooth_polygon,
 )
@@ -188,5 +191,6 @@ class Category:
         return {
             "buff_small_segments": buff_small_polygon_segments,
             "pointify_thin_poly": pointify_thin_poly,
+            "remove_thin_tracks": remove_thin_tracks,
             "simplify_and_smooth": simplify_and_smooth_polygon,
         }

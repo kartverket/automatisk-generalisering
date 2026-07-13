@@ -176,7 +176,6 @@ def files_setup(wfm: WorkFileManager) -> dict:
     }
 
 
-@timing_decorator
 def get_min_width(map_scale: str, target: str) -> int:
     """
     Extracts the minimum width for the target land use from the parameters.yml file in the parameters folder.
