@@ -13,11 +13,14 @@ class DataNames(StrEnum):
     railway = "RAILWAY"
     road = "ROAD"
     symbology = "SYMBOLOGY"
+    fkb_water = "FKB_WATER"
+    river_basin = "RIVER_BASIN"
 
     #########################
     # Main folder names
     #########################
     raw_data = "raw_data"
+    dom_10m = "dom_10m"
     scale_n10 = "n10"
     scale_n50 = "n50"
     scale_n100 = "n100"
@@ -69,3 +72,11 @@ class DataNames(StrEnum):
     elveg_and_sti = "elveg_and_sti"
     vegsperring = "vegsperring"
     VegSti_N50 = "VegSti_N50"
+
+    # FKB Water
+    fkb_vann_grense = "fkb_vann_grense"
+    fkb_vann_omrade = "fkb_vann_omrade"
+    fkb_vann_posisjon = "fkb_vann_posisjon"
+
+    # River Basin
+    Nedborfelt_Vassdragsomr = "Nedborfelt_Vassdragsomr"
