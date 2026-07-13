@@ -62,7 +62,6 @@ def island_controller(input_fc: str, output_fc: str) -> None:
 # ========================
 
 
-@timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     """
     Creates all the temporarily files that are going to be used
@@ -95,7 +94,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     }
 
 
-@timing_decorator
 def copy_features_and_identifies_inner_holes(input_fc: str, files: dict) -> None:
     """
     Copy the original data into a separate feature class,
@@ -153,7 +151,6 @@ def copy_features_and_identifies_inner_holes(input_fc: str, files: dict) -> None
     )
 
 
-@timing_decorator
 def find_hole_geometries(files: dict) -> None:
     """
     Extract hole boundaries and create own geometries of these that are of relevant size.
@@ -204,7 +201,6 @@ def find_hole_geometries(files: dict) -> None:
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
 
 
-@timing_decorator
 def find_holes_with_multiple_features(files: dict, stat_field: str) -> None:
     """
     Detects which of the hole polygons that contains multiple land use categories.
@@ -265,7 +261,6 @@ def find_holes_with_multiple_features(files: dict, stat_field: str) -> None:
         )
 
 
-@timing_decorator
 def find_largest_feature_on_island(files: dict, stat_field: str) -> tuple:
     """
     For each of the detected relevant island, find the features with largest area.
@@ -318,7 +313,6 @@ def find_largest_feature_on_island(files: dict, stat_field: str) -> tuple:
     return to_keep, feature_collection
 
 
-@timing_decorator
 def update_island_attributes(files: dict, area_ids: dict) -> None:
     """
     Sets the attributes of the island equal the largest inner polygon.
@@ -366,7 +360,6 @@ def update_island_attributes(files: dict, area_ids: dict) -> None:
     )
 
 
-@timing_decorator
 def update_relevant_islands(files: dict, feature_ids: set, output_fc: str):
     """
     Erases the relevant island geometries from the input data and replaces these holes with the updated island polygons.

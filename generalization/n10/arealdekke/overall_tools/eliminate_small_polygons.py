@@ -152,7 +152,6 @@ class EliminateSmallPolygons:
             self.files["eliminate_final_elim_merged"],
         )
 
-    @timing_decorator
     def add_fields(self, input_fc):
         """Add area, length, isoperimetric quotient and iq_adjusted_area fields to the input feature class, and populate them with values."""
         fields = [f.name for f in arcpy.ListFields(input_fc)]
@@ -203,7 +202,6 @@ class EliminateSmallPolygons:
             expression_type="PYTHON3",
         )
 
-    @timing_decorator
     def eliminate(self, input_fc, output_fc):
         """Eliminate small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel."""
         layer = "eliminate_layer"
@@ -243,7 +241,7 @@ class EliminateSmallPolygons:
 
         temp_in = input_fc
         for arealdekke, min_area in self.scale_parameters.min_area.items():
-            print(f"eliminating: {arealdekke} min area: {min_area}")
+            print(f"Eliminating: {arealdekke} - {min_area}")
             clauses = []
             clauses.append(f"arealdekke = '{arealdekke}'")
             clauses.append(f"area < {min_area}")
@@ -285,7 +283,6 @@ class EliminateSmallPolygons:
             input_fc=output_fc, max_iterations=5
         )
 
-    @timing_decorator
     def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
         layer = "eliminate_after_elim_layer"
@@ -308,7 +305,6 @@ class EliminateSmallPolygons:
             buffer_distance_or_field=f"{self.scale_parameters.spike_size} Meters",
         )
 
-    @timing_decorator
     def _clip_and_erase(self):
         """Clip and erase the buffered features, to remove narrow parts of polygons, and then merge the clipped and erased features back together. And run a final eliminate on anything smaller than 100 sqm that is not water or samferdsel."""
         arcpy.analysis.Clip(
@@ -371,7 +367,6 @@ class EliminateSmallPolygons:
             selection="LENGTH",
         )
 
-    @timing_decorator
     def _integrate(self, input_fc):
         arcpy.management.Integrate(
             in_features=input_fc,

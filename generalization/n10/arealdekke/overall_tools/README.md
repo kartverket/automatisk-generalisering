@@ -1,6 +1,13 @@
 # Overall_tools
 
 
+### Aggregation
+
+| Module Name       | Parameters | Return | File path | Description         |
+|-------------------|------------|--------|-----------|---------------------|
+|[**aggregate_areas**](area_aggregator.py)| input_fc: str, output_fc: str, map_scale: str | None | area_aggregator.py | Functionality to aggregate small features that are below the minimum area limit. Features area aggregated and topology is preserved by cleaning overlapping areas. |
+
+##
 ### Attributes
 
 | Module Name       | Parameters | Return | File path | Description         |
@@ -21,7 +28,7 @@
 | [**partition_call**](eliminate_small_polygons.py)| input_fc: str,<br/>output_fc: str,<br/>map_scale: str | None | eliminate_small_polygons.py| Eliminates small polygons based on *area times isoperimetric quotient* and removes narrow polygon parts with a minus buffer.|
 |[**eliminate_holes**](eliminate_small_polygons.py)| input_fc: str,<br/>output_fc: str,<br/>selection: str,<br/>wfm: WorkFileManager | None | eliminate_small_polygons.py| Function in eliminate_small_polygons. Finds and eliminates holes in selected polygons based on criteria specified in parameters.yml.|
 |[**fill_holes**](fill_holes.py)| input_fc: str,<br/>output_fc: str,<br/>target:str,<br/>locked_categories: set | None | fill_holes.py| Functionality to remove holes and replace it with surrounding geometries that are merged back into the complete data set. The function does also take care of locked features not to be edited.|
-|[**partition_call**](gangsykkel_dissolver.py)| input: str,<br/>output: str,<br/>map_scale: str | None | Gangsykkel_dissolver.py | Dissolves *'GangSykkelVeg'* into roads if they are adjacent. Uses *eliminate_holes* on the *'samferdsel'* layer (without *'GangSykkelVeg'*) afterwards.|
+|[**partition_call**](gangsykkel_dissolver.py)| input: str,<br/>output: str,<br/>map_scale: str | None | gangsykkel_dissolver.py | Dissolves *'GangSykkelVeg'* into roads if they are adjacent. Uses *eliminate_holes* on the *'samferdsel'* layer (without *'GangSykkelVeg'*) afterwards.|
 |[**island_controller**](island_controller.py)| input: str,<br/>output: str | None | Island_controller.py | Dissolves areas on small islands that are too small to include multiple land use categories. The category using most of the area of the island will get the area of the other categories.|
 
 ### Reinsertion

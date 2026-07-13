@@ -99,7 +99,6 @@ class fc(Enum):
     output_fc = "output_fc"
 
 
-@timing_decorator
 def files_setup(wfm: WorkFileManager) -> dict:
     """
     Creates all the temporary files that are going to
@@ -199,7 +198,6 @@ def get_min_width(map_scale: str, target: str) -> int:
     return scale_parameters.min_width[target]
 
 
-@timing_decorator
 def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
     """
     What:
@@ -235,7 +233,6 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
         )
 
 
-@timing_decorator
 def find_segments_under_min(files: dict, min_width: int) -> None:
     """
     What:
@@ -286,7 +283,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
     )
 
 
-@timing_decorator
 def choose_target_areas(files: dict, min_width: int) -> None:
     """
     What:
@@ -316,7 +312,6 @@ def choose_target_areas(files: dict, min_width: int) -> None:
         )
 
 
-@timing_decorator
 def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     """
     What:
@@ -432,7 +427,6 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     )
 
 
-@timing_decorator
 def buff_small_segments(files: dict, min_width: int) -> None:
     """
     What:
