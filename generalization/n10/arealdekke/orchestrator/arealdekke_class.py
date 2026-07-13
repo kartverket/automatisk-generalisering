@@ -1,5 +1,6 @@
 # Module imports:
 from pathlib import Path
+from tqdm import tqdm
 
 import arcpy
 import yaml
@@ -345,8 +346,12 @@ class Arealdekke:
                 ]
 
                 if cat_reinsert:
-                    for index in range(reinserts_completed, len(reinsert_operations)):
-
+                    for index in tqdm(
+                        range(reinserts_completed, len(reinsert_operations)),
+                        desc=f"Reinserting {cat_title} into arealdekke",
+                        leave=False,
+                        colour="yellow",
+                    ):
                         reinsert_operations[index]()
 
                         # Update status / history log
@@ -509,6 +514,9 @@ class Arealdekke:
         Args:
             input_data (str): Feature class with data to copy
         """
+        arcpy.management.Integrate(
+            in_features=input_data, cluster_tolerance="0.001 Meters"
+        )
         arcpy.management.CopyFeatures(
             in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],

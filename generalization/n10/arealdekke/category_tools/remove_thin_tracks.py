@@ -273,12 +273,13 @@ def cleanup(files: dict, target: str, complete_fc: str) -> None:
         for row in cursor:
             row[0] = target
             cursor.updateRow(row)
-    
+
     arcpy.analysis.Erase(
-        in_features=complete_fc, erase_features=files["to_adjust"], out_feature_class=files["temporary_complete"]
+        in_features=complete_fc,
+        erase_features=files["to_adjust"],
+        out_feature_class=files["temporary_complete"],
     )
 
     arcpy.management.Merge(
-        inputs=[files["temporary_complete"], files["to_adjust"]],
-        output=complete_fc
+        inputs=[files["temporary_complete"], files["to_adjust"]], output=complete_fc
     )
