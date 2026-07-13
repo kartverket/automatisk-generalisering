@@ -2,7 +2,7 @@
 import arcpy
 
 from file_manager.n100 import file_manager_rivers
-from data_orchestrator import input_n100, input_other
+from data_orchestrator import input_other
 from data_orchestrator import input_fkb
 
 from composition_configs import core_config, logic_config, type_defs
@@ -10,7 +10,7 @@ from composition_configs import core_config, logic_config, type_defs
 # Importing custom modules
 from file_manager.n100.file_manager_rivers import River_N100
 from env_setup import environment_setup
-import config
+from paths import require
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
@@ -22,6 +22,7 @@ MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 AREA_SELECTOR = "vassOmrNr IN ('198')"
 SCALE = "n100"
+SELECT_STUDY_AREA = require("SELECT_STUDY_AREA").strip().lower() == "true"
 
 
 @timing_decorator
@@ -46,7 +47,7 @@ def data_selection_and_validation(area_selection: str):
         },
         selecting_file=input_other.RiverBasins,
         selecting_sql_expression=area_selection,
-        select_local=config.select_study_area,
+        select_local=SELECT_STUDY_AREA,
     )
 
     selector.run()
