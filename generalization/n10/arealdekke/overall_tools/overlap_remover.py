@@ -173,12 +173,10 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
         files (dict): Dictionary with all the working files
         attr_val (str): String representing the value of the attribute that must be locked
     """
-    orig_fc = files["copy_of_input"]
-    locked_fc = files["locked_features"]
-    intersecting_fc = files["intersecting_features"]
-
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=orig_fc, out_layer=land_use_lyr)
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["copy_of_input"], out_layer=land_use_lyr
+    )
 
     # Stores locked features in own fc
     arcpy.management.SelectLayerByAttribute(
@@ -186,7 +184,9 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
         selection_type="NEW_SELECTION",
         where_clause=f"arealdekke = '{attr_val}'",
     )
-    arcpy.management.CopyFeatures(in_features=land_use_lyr, out_feature_class=locked_fc)
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files["locked_features"]
+    )
 
     # Deletes locked features from original data
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
@@ -195,11 +195,11 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=locked_fc,
+        select_features=files["locked_features"],
         selection_type="NEW_SELECTION",
     )
     arcpy.management.CopyFeatures(
-        in_features=land_use_lyr, out_feature_class=intersecting_fc
+        in_features=land_use_lyr, out_feature_class=files["intersecting_features"]
     )
 
     # Deletes intersecting features from original data

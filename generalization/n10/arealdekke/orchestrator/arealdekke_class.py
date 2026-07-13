@@ -1,6 +1,5 @@
 # Module imports:
 from pathlib import Path
-from tqdm import tqdm
 
 import arcpy
 import yaml
@@ -346,12 +345,7 @@ class Arealdekke:
                 ]
 
                 if cat_reinsert:
-                    for index in tqdm(
-                        range(reinserts_completed, len(reinsert_operations)),
-                        desc=f"Reinserting {cat_title} into arealdekke",
-                        leave=False,
-                        colour="yellow",
-                    ):
+                    for index in range(reinserts_completed, len(reinsert_operations)):
                         reinsert_operations[index]()
 
                         # Update status / history log
