@@ -13,7 +13,8 @@
 | Module Name       | Parameters | Return | File path | Description         |
 |-------------------|------------|--------|-----------|---------------------|
 |[**attribute_analyzer**](attribute_analyzer.py) | **** | **** | attribute_analyzer.py | File analyzing attribute data from csv file and lists. Core processes: <br/>- Sort_results <br/>- Write_to_file <br/>- Load_rules |
-|[**attribute_changer**](attribute_changer.py) | input_fc: str,<br/>output_fc: str | None | attribute_changer.py | Re-categorizes *'arealdekke'* based on the fields: *"Arealdekke", "Hovedklasse", "Underklasse", "Grunnforhold"*. Overwrites the original *"arealdekke"* field to replace it with two new fields: *"gammel_arealdekke"* and *"fremkommelighet"*.
+|[**attribute_changer**](attribute_changer.py) | input_fc: str,<br/>output_fc: str | None | attribute_changer.py | Re-categorizes *'arealdekke'* based on the fields: *"Arealdekke", "Hovedklasse", "Underklasse", "Grunnforhold"*. Overwrites the original *"arealdekke"* field to replace it with two new fields: *"gammel_arealdekke"* and *"fremkommelighet"*. |
+|[**change_attribute_value_main**](small_features_changer.py)| input_fc: str, <br/> map_scale: str, <br/> target: str | None | small_features_changer.py | Changes the land use category ('arealdekke') for small features to a secondary type or an exception type of land use because of cartographical cleanness. <br/> (Partially hardcoded for one case.)
 
 ##
 > [**Attribute_prioritizing.csv**](attribute_prioritizing.csv) is a CSV file that outlines how the arealdekke categories must be sorted and reclassified. Can be imported into other files as a dictionary. The file contains the following columns: <br/>- Arealdekke <br/>- Hovedklasse <br/>- Underklasse <br/>- Grunnforhold <br/>- Ny_arealdekke <br/>- Fremkommelighet

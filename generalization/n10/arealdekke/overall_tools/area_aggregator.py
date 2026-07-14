@@ -14,9 +14,8 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    buff_small_polygon_segments_parameters,
-    EliminateSmallPolygonsParameters,
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    get_min_area, get_min_width
 )
 from generalization.n10.arealdekke.overall_tools.overlap_remover import remove_overlaps
 
@@ -58,11 +57,12 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
     )
 
     for feature in features.keys():
-        area, width = fetch_parameters(feature=feature, map_scale=map_scale)
+        min_area = get_min_area(map_scale=map_scale, target=feature)
+        min_width = get_min_width(map_scale=map_scale, target=feature)
 
-        tol = width * features[feature]
+        tol = min_width * features[feature]
 
-        data_selection(files=files, feature=feature, area_tol=area, tol=tol)
+        data_selection(files=files, feature=feature, area_tol=min_area, tol=tol)
         aggregate_small_features(files=files, tol=tol)
         combine_datasets(files=files)
         remove_overlaps(
@@ -123,45 +123,6 @@ def create_wfm_gdbs(wfm: WorkFileManager):
             file_name="processed_features", file_type="gdb"
         ),
     }
-
-
-def fetch_parameters(feature: str, map_scale: str) -> list:
-    """
-    Retrieves relevant minimum criterias for the relevant feature type.
-
-    Args:
-        feature (str): Name of the feature type to investigate
-        map_scale (str): Current map scale
-
-    Returns:
-        list: A list of the relevant parameteres for this specific feature
-    """
-    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-
-    categories = [
-        ["EliminateSmallPolygons", EliminateSmallPolygonsParameters, "min_area"],
-        [
-            "BuffSmallPolygonSegments",
-            buff_small_polygon_segments_parameters,
-            "min_width",
-        ],
-    ]
-
-    params = []
-
-    for name, param_class, call in categories:
-        scale_parameters = initialize_params(
-            params_path=params_path,
-            class_name=name,
-            map_scale=map_scale,
-            dataclass=param_class,
-        )
-
-        params.append(getattr(scale_parameters, call)[feature])
-
-    print(f"⚙️  Parameters fetched for feature '{feature}' at map scale '{map_scale}'")
-
-    return params
 
 
 def data_selection(files: dict, feature: str, area_tol: int, tol: int) -> None:
