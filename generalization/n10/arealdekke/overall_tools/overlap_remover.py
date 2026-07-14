@@ -49,20 +49,11 @@ def remove_overlaps(
     files = create_wfm_gdbs(wfm)
 
     # 3) Remove locked features from buffers to avoid overlap in these areas
-    if locked_fc:
-        arcpy.analysis.PairwiseErase(
-            in_features=buffered_fc,
-            erase_features=locked_fc,
-            out_feature_class=files["erased_buffers"],
-        )
-    else:
-        arcpy.management.CopyFeatures(
-            in_features=buffered_fc, out_feature_class=files["erased_buffers"]
-        )
+    data_cleaning(files=files, input_fc=input_fc, buffered_fc=buffered_fc, locked_fc=locked_fc)
 
     # Extra: Fix geometries in the passability layer after buffering
     update_passability_for_buffer(
-        buffered_fc=files["erased_buffers"], target=changed_area
+        buffered_fc=files["singlepart_buffers"], target=changed_area
     )
 
     # 4) Fetch correct attributes for the buffered features
@@ -104,6 +95,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "erased_buffers": wfm.build_file_path(
             file_name="erased_buffers", file_type="gdb"
         ),
+        "singlepart_buffers": wfm.build_file_path(
+            file_name="singlepart_buffers", file_type="gdb"
+        ),
         "copy_of_input": wfm.build_file_path(
             file_name="copy_of_input", file_type="gdb"
         ),
@@ -119,6 +113,51 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     }
 
 
+def data_cleaning(files: dict, input_fc: str, buffered_fc: str, locked_fc: str) -> None:
+    """
+    Removes locked areas from the buffered features to avoid overlap in these areas,
+    and creates a singlepart feature class so that areas not overlapping the original
+    features anymore can be deleted.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        input_fc (str): Input feature class with original, complete land use
+        buffered_fc (str): Feature class with the enlarged land use that
+                           overlaps other areas
+        locked_fc (str): Feature class with the locked features
+    """
+    if locked_fc:
+        arcpy.analysis.PairwiseErase(
+            in_features=buffered_fc,
+            erase_features=locked_fc,
+            out_feature_class=files["erased_buffers"],
+        )
+    else:
+        arcpy.management.CopyFeatures(
+            in_features=buffered_fc, out_feature_class=files["erased_buffers"]
+        )
+    
+    arcpy.management.MultipartToSinglepart(
+        in_features=files["erased_buffers"],
+        out_feature_class=files["singlepart_buffers"]
+    )
+
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["singlepart_buffers"], out_layer=land_use_lyr
+    )
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=land_use_lyr,
+        overlap_type="INTERSECT",
+        select_features=input_fc,
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT",
+    )
+
+    arcpy.management.DeleteFeatures(in_features=land_use_lyr)
+
+
 def change_target_features(input_fc: str, files: dict, target: str) -> None:
     """
     Changes the original geometry to fit with the edited features and preserves attribute information.
@@ -131,16 +170,16 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
     """
     # Update attribute information of buffered features with 'arealdekke' == target to original data
     arcpy.management.AddField(
-        in_table=files["erased_buffers"], field_name="arealdekke", field_type="TEXT"
+        in_table=files["singlepart_buffers"], field_name="arealdekke", field_type="TEXT"
     )
     arcpy.management.CalculateField(
-        in_table=files["erased_buffers"],
+        in_table=files["singlepart_buffers"],
         field="arealdekke",
         expression=f"'{target}'",
         expression_type="PYTHON3",
     )
     fetch_orig_data(
-        without_data=files["erased_buffers"],
+        without_data=files["singlepart_buffers"],
         original=input_fc,
         column="arealdekke",
         index="arealdekke",
@@ -158,7 +197,7 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
 
     # Insert the buffered features with correct attribute information
     arcpy.management.Merge(
-        inputs=[input_fc, files["erased_buffers"]],
+        inputs=[input_fc, files["singlepart_buffers"]],
         output=files["copy_of_input"],
     )
 
