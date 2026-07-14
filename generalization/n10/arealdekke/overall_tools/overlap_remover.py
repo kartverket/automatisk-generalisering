@@ -49,7 +49,9 @@ def remove_overlaps(
     files = create_wfm_gdbs(wfm)
 
     # 3) Remove locked features from buffers to avoid overlap in these areas
-    data_cleaning(files=files, input_fc=input_fc, buffered_fc=buffered_fc, locked_fc=locked_fc)
+    data_cleaning(
+        files=files, input_fc=input_fc, buffered_fc=buffered_fc, locked_fc=locked_fc
+    )
 
     # Extra: Fix geometries in the passability layer after buffering
     update_passability_for_buffer(
@@ -136,10 +138,10 @@ def data_cleaning(files: dict, input_fc: str, buffered_fc: str, locked_fc: str) 
         arcpy.management.CopyFeatures(
             in_features=buffered_fc, out_feature_class=files["erased_buffers"]
         )
-    
+
     arcpy.management.MultipartToSinglepart(
         in_features=files["erased_buffers"],
-        out_feature_class=files["singlepart_buffers"]
+        out_feature_class=files["singlepart_buffers"],
     )
 
     land_use_lyr = "land_use_lyr"

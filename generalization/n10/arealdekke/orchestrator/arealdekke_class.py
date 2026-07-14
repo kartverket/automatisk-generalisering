@@ -310,7 +310,10 @@ class Arealdekke:
             # Performe modification operations defined for this category in the YAML
             cat_operations = category.get_operations()
 
-            if cat_operations:
+            if (
+                cat_operations
+                and int(arcpy.management.GetCount(self.files["category_fc"])[0]) != 0
+            ):
                 # These functions modifies the specific category only
                 for operation in category.process_category(
                     input_fc=self.files["category_fc"],
