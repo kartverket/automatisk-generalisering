@@ -18,7 +18,7 @@ EliminateSmallPolygons:
   N10:
     min_area: 
       Snaumark: 225
-      grøntområde: 900
+      Grøntområde: 900
       Skog: 225
       Jordbruk: 2500
       Innmarksbeite: 2500
@@ -123,6 +123,7 @@ BuffSmallPolygonSegments:
       "Myr": 6,
       "Park": 6,
       "Parkering": 6,
+      "Samferdsel": 6,
       "Skog": 6,
       "Snaumark": 6,
       "Snøisbre": 20,

@@ -10,12 +10,8 @@ from collections import defaultdict
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
-from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    EliminateSmallPolygonsParameters,
-)
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     EliminateSmallPolygonsParameters,
 )
@@ -27,10 +23,10 @@ from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
 
 @timing_decorator
 def aggregate_category(
+    target: str,
     input_fc: str,
     output_fc: str,
     map_scale: str,
-    target: str,
     allowed: list,
     boundary: str = None,
 ) -> None:
@@ -38,10 +34,10 @@ def aggregate_category(
     Changes surrounding features around the target features to the same land use value as target.
 
     Args:
+        target (str): Name of the land use type to consider in this process
         input_fc (str): Feature class containing the input data
         output_fc (str): Feature class where the result is stored
         map_scale (str): Current map scale
-        target (str): Name of the land use type to consider in this process
         allowed (list): List of allowed land use types to be considered for aggregation
         boundary (str, optional): Boundary feature class for aggregation - defaults to None
     """

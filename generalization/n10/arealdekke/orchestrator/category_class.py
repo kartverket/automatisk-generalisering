@@ -2,13 +2,15 @@
 import inspect
 
 from composition_configs import core_config
-from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # Category tools:
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
+)
+from generalization.n10.arealdekke.category_tools.remove_thin_tracks import (
+    remove_thin_tracks,
 )
 from generalization.n10.arealdekke.category_tools.simplify_polygon import (
     simplify_and_smooth_polygon,
@@ -72,7 +74,6 @@ class Category:
     # Main functions
     # ========================
 
-    @timing_decorator
     def process_category(
         self, input_fc: str, locked_fc: str, processed_fc: str, complete_fc: str
     ):
@@ -188,5 +189,6 @@ class Category:
         return {
             "buff_small_segments": buff_small_polygon_segments,
             "pointify_thin_poly": pointify_thin_poly,
+            "remove_thin_tracks": remove_thin_tracks,
             "simplify_and_smooth": simplify_and_smooth_polygon,
         }

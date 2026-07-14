@@ -84,7 +84,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     be used during the process of pointifying thin polygons.
 
     Args:
-        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files
+        wfm (WorkFileManager): The WorkFileManager instance that is keeping the files
 
     Returns:
         dict: A dictionary with all the files as variables
@@ -443,11 +443,6 @@ def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> No
         output=output_fc,
     )
 
-    arcpy.management.Merge(
-        inputs=[files["erased_small_areas"], files["split_result"]],
-        output=files["test"],
-    )
-
 
 # ========================
 
@@ -547,16 +542,28 @@ def make_orthogonal_cutline(
 
     # Get tangent
     offset = 0.1
-    tangent = centerline_geom.positionAlongLine(pos + offset)
+    line_length = centerline_geom.length
 
-    dx = tangent.firstPoint.X - nearest.firstPoint.X
-    dy = tangent.firstPoint.Y - nearest.firstPoint.Y
+    pos1 = max(0, pos - offset)
+    pos2 = min(line_length, pos + offset)
+
+    p_before = centerline_geom.positionAlongLine(pos1).firstPoint
+    p_after = centerline_geom.positionAlongLine(pos2).firstPoint
+
+    dx = p_after.X - p_before.X
+    dy = p_after.Y - p_before.Y
 
     # Compute orthogonal vector
     nx, ny = -dy, dx
 
     # Normalize
     mag = np.sqrt(nx**2 + ny**2)
+
+    if mag < 1e-9:
+        p1 = arcpy.Point(point.X, point.Y + length)
+        p2 = arcpy.Point(point.X, point.Y - length)
+        return arcpy.Polyline(arcpy.Array([p1, p2]))
+
     nx /= mag
     ny /= mag
 

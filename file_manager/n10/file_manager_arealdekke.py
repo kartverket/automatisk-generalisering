@@ -30,6 +30,7 @@ overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
 poly_to_point = "poly_to_point"
+remove_thin_tracks = "remove_thin_tracks"
 
 
 class Arealdekke_N10(Enum):
@@ -252,4 +253,12 @@ class Arealdekke_N10(Enum):
 
     poly_to_point_points__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=poly_to_point, description="poly_to_point_points"
+    )
+
+    # ========================================
+    #                      THIN TRACKS REMOVER
+    # ========================================
+
+    thin_tracks_remover__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=remove_thin_tracks, description="thin_tracks_remover"
     )

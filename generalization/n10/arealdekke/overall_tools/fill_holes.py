@@ -40,7 +40,9 @@ def fill_holes(
         input_fc=input_fc, files=files, locked_categories=locked_categories
     )
     find_holes(files=files, target=target)
-    match_holes_with_surrounding_features(files=files, output_fc=output_fc)
+    match_holes_with_surrounding_features(
+        files=files, output_fc=output_fc, target=target
+    )
 
     wfm.delete_created_files()
 
@@ -84,6 +86,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "dissolved_data": wfm.build_file_path(
             file_name="dissolved_data", file_type="gdb"
         ),
+        "remaining_features": wfm.build_file_path(
+            file_name="remaining_features", file_type="gdb"
+        ),
     }
 
 
@@ -112,12 +117,15 @@ def remove_locked_features_from_input(
     locked_categories_sql = ", ".join(
         [f"'{category}'" for category in locked_categories]
     )
-    sql = f"arealdekke IN ({locked_categories_sql})"
 
     arcpy.management.MakeFeatureLayer(
-        in_features=files["copy_of_input"], out_layer=land_use_lyr, where_clause=sql
+        in_features=files["copy_of_input"], out_layer=land_use_lyr
     )
-
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke IN ({locked_categories_sql})",
+    )
     arcpy.management.CopyFeatures(
         in_features=land_use_lyr, out_feature_class=files["locked_features"]
     )
@@ -174,21 +182,25 @@ def find_holes(files: dict, target: str) -> None:
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
 
 
-def match_holes_with_surrounding_features(files: dict, output_fc: str) -> None:
+def match_holes_with_surrounding_features(
+    files: dict, output_fc: str, target: str
+) -> None:
     """
     Matches the hole geometries with the surrounding features and merges these together.
 
     Args:
         files (dict): Dictionary with all the working files
         output_fc (str): Feature class to store the final output
+        target (str): Land use category that is being processed
     """
     match_attribute = "JOIN_FID"
 
     existing_fields = [f.name for f in arcpy.ListFields(files["holes"])]
-    if match_attribute in existing_fields:
+    while match_attribute in existing_fields:
         arcpy.management.DeleteField(
             in_table=files["holes"], drop_field=match_attribute
         )
+        existing_fields = [f.name for f in arcpy.ListFields(files["holes"])]
 
     arcpy.management.CalculateField(
         in_table=files["intersecting_features"],
@@ -231,12 +243,30 @@ def match_holes_with_surrounding_features(files: dict, output_fc: str) -> None:
             if oid in changed_geometries:
                 cursor.updateRow([oid, changed_geometries[oid]])
 
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["spatial_join"], out_layer=land_use_lyr
+    )
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"{match_attribute} IS NULL",
+    )
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files["remaining_features"]
+    )
+
+    with arcpy.da.UpdateCursor(files["remaining_features"], ["arealdekke"]) as cursor:
+        for _ in cursor:
+            cursor.updateRow([target])
+
     arcpy.management.Merge(
         inputs=[
             files["copy_of_input"],
             files["locked_features"],
             files["target_features"],
             files["intersecting_features"],
+            files["remaining_features"],
         ],
         output=output_fc,
     )

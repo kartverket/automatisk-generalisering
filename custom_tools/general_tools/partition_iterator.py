@@ -810,6 +810,7 @@ class PartitionIterator:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
+            self.work_file_manager_temp_files.delete_created_files()
             return False
 
         arcpy.CalculateField_management(
@@ -1872,6 +1873,7 @@ class PartitionIterator:
 
         self.update_max_partition_count()
         self.work_file_manager_iteration_files.delete_created_files()
+        self.work_file_manager_temp_files.delete_created_files()
         self._initialize_overview_catalog()
         file_utilities.delete_feature(self.partition_features_all)
 

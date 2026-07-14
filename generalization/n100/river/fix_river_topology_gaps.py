@@ -1,7 +1,7 @@
 import arcpy
 
 # Importing custom files
-import config
+from data_orchestrator import input_raster
 from custom_tools.general_tools import custom_arcpy, line_topology
 from file_manager.n100.file_manager_rivers import River_N100
 from file_manager.n100.file_manager_roads import Road_N100
@@ -31,7 +31,7 @@ def main():
 def compute_raster_extent() -> tuple[type_defs.RasterFilePath, ...]:
 
     rasters = find_rasters_for_vector_extent(
-        raster_dir=config.raster_directory,
+        raster_dir=str(input_raster.dom_10m),
         input_features=River_N100.data_preparation___river_lines___n100_river.value,
     )
     return tuple(rasters)
