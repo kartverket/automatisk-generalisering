@@ -1,11 +1,12 @@
+import arcpy
+import numpy as np
 import os
+
 from dataclasses import dataclass
 from enum import Enum
 from math import atan2, ceil, degrees, floor
+from pathlib import Path
 from typing import Optional, Union, Dict
-
-import arcpy
-import numpy as np
 
 from composition_configs.logic_config import (
     AngleToolConfig,
@@ -78,7 +79,7 @@ class GeometryValidator:
         self.non_problematic_features = {}
         self.iteration = 0
 
-    def check_geometry(self):
+    def check_geometry(self, logging: bool = True):
         """Check the geometry of the input features."""
         self.problematic_features.clear()
 
@@ -97,15 +98,18 @@ class GeometryValidator:
                 problems_found = result[1] == "true"
                 if problems_found:
                     self.problematic_features[alias] = path
-                    print(f"Geometry issues found in feature: {alias}")
+                    if logging:
+                        print(f"Geometry issues found in feature: {alias}")
                 else:
                     self.non_problematic_features[alias] = path
-                    print(f"No geometry issues found in feature: {alias}")
+                    if logging:
+                        print(f"No geometry issues found in feature: {alias}")
         elif isinstance(self.input_features, str):
             if self.input_features in self.non_problematic_features:
-                print(
-                    f"Feature {self.input_features} previously validated as non-problematic, skipping."
-                )
+                if logging:
+                    print(
+                        f"Feature {self.input_features} previously validated as non-problematic, skipping."
+                    )
                 return
 
             self.generated_out_table_path = (
@@ -117,14 +121,18 @@ class GeometryValidator:
             problems_found = result[1] == "true"
             if problems_found:
                 self.problematic_features[self.input_features] = self.input_features
-                print(f"Geometry issues found in feature: {self.input_features}")
+                if logging:
+                    print(f"Geometry issues found in feature: {self.input_features}")
             else:
                 self.non_problematic_features[self.input_features] = self.input_features
-                print(f"No geometry issues found in feature: {self.input_features}")
+                if logging:
+                    print(f"No geometry issues found in feature: {self.input_features}")
         else:
             raise TypeError("input_features must be either a dictionary or a string.")
 
-    def repair_geometry(self, delete_null="DELETE_NULL", validation_method="ESRI"):
+    def repair_geometry(
+        self, delete_null="DELETE_NULL", validation_method="ESRI", logging: bool = True
+    ):
         """Repair the geometry of the features identified with issues."""
         if not self.problematic_features:
             print("No problematic features to repair.")
@@ -136,7 +144,8 @@ class GeometryValidator:
                 delete_null=delete_null,
                 validation_method=validation_method,
             )
-            print(f"Repaired geometry for feature: {alias}")
+            if logging:
+                print(f"Repaired geometry for feature: {alias}")
 
     @partition_io_decorator(
         input_param_names=["input_features"],
@@ -149,20 +158,36 @@ class GeometryValidator:
         if input_fc:
             self.input_features = input_fc
 
-        while self.iteration < max_iterations:
-            print(f"--- Iteration {self.iteration + 1} ---")
-            self.check_geometry()
-            if not self.problematic_features:
-                print("No further geometry issues detected.")
-                break
-            self.repair_geometry()
-            self.iteration += 1
+        status = "SUCCESS"
+        problematic_aliases = ""
 
-        if self.iteration == max_iterations:
-            problematic_aliases = ", ".join(self.problematic_features.keys())
-            print(
-                f"Maximum iterations ({max_iterations}) reached. Manual inspection may be required for the following features: {problematic_aliases}"
+        while self.iteration < max_iterations:
+            self.iteration += 1
+            self.check_geometry(logging=False)
+            if not self.problematic_features:
+                break
+            self.repair_geometry(logging=False)
+
+        if self.iteration == max_iterations and self.problematic_features:
+            status = "MAX_ITERATIONS_REACHED"
+            problematic_aliases = ", ".join(
+                Path(p).name for p in self.problematic_features.keys()
             )
+
+        message = (
+            f"\n{'====='*15}"
+            f"\nCheck Repair Sequence: "
+            f"status={status} | "
+            f"iterations={self.iteration}/{max_iterations}"
+        )
+        if problematic_aliases:
+            message += (
+                f" | remaining_issues={len(self.problematic_features)}"
+                f" | features={problematic_aliases}"
+            )
+        message += f"\n{'====='*15}\n"
+
+        print(message)
 
 
 class _ConcreteLineAngleMode(str, Enum):

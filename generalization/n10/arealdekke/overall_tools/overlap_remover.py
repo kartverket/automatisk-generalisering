@@ -48,8 +48,6 @@ def remove_overlaps(
     # 2) Creates temporary files
     files = create_wfm_gdbs(wfm)
 
-    print("\nCreated WorkFileManager and temporary files for overlap remover process.")
-
     # 3) Remove locked features from buffers to avoid overlap in these areas
     if locked_fc:
         arcpy.analysis.PairwiseErase(
@@ -57,14 +55,10 @@ def remove_overlaps(
             erase_features=locked_fc,
             out_feature_class=files["erased_buffers"],
         )
-        print(
-            "Erased locked features from buffered features to avoid overlap in these areas."
-        )
     else:
         arcpy.management.CopyFeatures(
             in_features=buffered_fc, out_feature_class=files["erased_buffers"]
         )
-        print("Copied buffered features to erased buffers.")
 
     # Extra: Fix geometries in the passability layer after buffering
     update_passability_for_buffer(
@@ -74,26 +68,18 @@ def remove_overlaps(
     # 4) Fetch correct attributes for the buffered features
     # (those that are going to be merged with original data)
     change_target_features(input_fc=input_fc, files=files, target=changed_area)
-    print(
-        "Changed geometry of target features to fit with buffered features, and preserved attributes."
-    )
 
     # 5) Fetch data with changed area and those overlapping these
     fetch_relevant_data(
         files=files,
         attr_val=changed_area,
     )
-    print(
-        "Fetched relevant data for the process: the buffer zones and the features intersecting these."
-    )
 
     # 6) Delete overlapping areas from features
     erase_overlap(files=files)
-    print("Overlap erased.")
 
     # 7) Collect the data and store the result
     collect_and_finish(files=files, output_fc=output_fc)
-    print("Collected data and stored the result in output feature class.\n")
 
     wfm.delete_created_files()
 
@@ -118,7 +104,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "erased_buffers": wfm.build_file_path(
             file_name="erased_buffers", file_type="gdb"
         ),
-        "spatial_join": wfm.build_file_path(file_name="spatial_join", file_type="gdb"),
         "copy_of_input": wfm.build_file_path(
             file_name="copy_of_input", file_type="gdb"
         ),
@@ -148,14 +133,12 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
     arcpy.management.AddField(
         in_table=files["erased_buffers"], field_name="arealdekke", field_type="TEXT"
     )
-
     arcpy.management.CalculateField(
         in_table=files["erased_buffers"],
         field="arealdekke",
         expression=f"'{target}'",
         expression_type="PYTHON3",
     )
-
     fetch_orig_data(
         without_data=files["erased_buffers"],
         original=input_fc,
@@ -166,7 +149,6 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
     # Delete old features with 'arealdekke' == target
     land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
-
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=land_use_lyr,
         selection_type="NEW_SELECTION",
@@ -191,12 +173,10 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
         files (dict): Dictionary with all the working files
         attr_val (str): String representing the value of the attribute that must be locked
     """
-    orig_fc = files["copy_of_input"]
-    locked_fc = files["locked_features"]
-    intersecting_fc = files["intersecting_features"]
-
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=orig_fc, out_layer=land_use_lyr)
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["copy_of_input"], out_layer=land_use_lyr
+    )
 
     # Stores locked features in own fc
     arcpy.management.SelectLayerByAttribute(
@@ -204,7 +184,9 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
         selection_type="NEW_SELECTION",
         where_clause=f"arealdekke = '{attr_val}'",
     )
-    arcpy.management.CopyFeatures(in_features=land_use_lyr, out_feature_class=locked_fc)
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files["locked_features"]
+    )
 
     # Deletes locked features from original data
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
@@ -213,11 +195,11 @@ def fetch_relevant_data(files: dict, attr_val: str) -> None:
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=locked_fc,
+        select_features=files["locked_features"],
         selection_type="NEW_SELECTION",
     )
     arcpy.management.CopyFeatures(
-        in_features=land_use_lyr, out_feature_class=intersecting_fc
+        in_features=land_use_lyr, out_feature_class=files["intersecting_features"]
     )
 
     # Deletes intersecting features from original data

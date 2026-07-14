@@ -86,7 +86,6 @@ class ArealdekkeDissolver:
             "arealdekke_gangogsykkel": arealdekke_gangogsykkel,
         }
 
-    @timing_decorator
     def fetch_divide_data(self) -> None:
         """
         This function fetches the data and divides it based on the rules described in the class docstring.
@@ -138,7 +137,6 @@ class ArealdekkeDissolver:
             out_feature_class=self.files["arealdekke_samferdsel"],
         )
 
-    @timing_decorator
     def dissolve(self) -> None:
         """
         Dissolves the data based on the rules described in the class docstring.
@@ -177,7 +175,6 @@ class ArealdekkeDissolver:
             multi_part="SINGLE_PART",
         )
 
-    @timing_decorator
     def restore_data(self) -> None:
         """
         Restores data to the dissolved features.

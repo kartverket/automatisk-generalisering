@@ -40,7 +40,6 @@ def change_attribute_value_main(working_fc: str) -> None:
 # ========================
 
 
-@timing_decorator
 def change_attribute_value_category(
     working_fc: str,
     field: str,

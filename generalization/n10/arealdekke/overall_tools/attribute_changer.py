@@ -64,7 +64,6 @@ def attribute_changer(input_fc: str, output_fc: str):
 # ========================
 
 
-@timing_decorator
 def clip_data(input_fc: str, output_fc: str, area: str) -> None:
     """
     Clips relevant data to desired area.
@@ -89,7 +88,6 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
     print("📍 Clipping completed.\n")
 
 
-@timing_decorator
 def prepare_partition_iterator(
     input_fc: str,
     new_field: list,
@@ -193,7 +191,6 @@ def prepare_partition_iterator(
     return partition_area_attribute_changer
 
 
-@timing_decorator
 def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
     """
     Copies all attributes from the input feature class to the output,
