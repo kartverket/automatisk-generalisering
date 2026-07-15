@@ -431,6 +431,7 @@ class Arealdekke:
                 Path(self.final_output_fc).name,
                 Path(Arealdekke_N10.passability__n10_land_use.value).name,
                 Path(Arealdekke_N10.poly_to_point_points__n10_land_use.value).name,
+                Path(Arealdekke_N10.river_lines__n10_land_use.value).name,
             }
 
             arcpy.env.workspace = str(gdb)
