@@ -12,6 +12,14 @@ generalization.n10.arealdekke.parameters.parameter\_dataclasses module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.parameters.parameter\_worker module
+-----------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.parameters.parameter_worker
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
