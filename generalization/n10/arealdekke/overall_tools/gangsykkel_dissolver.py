@@ -1,12 +1,10 @@
 from collections import defaultdict
-from pathlib import Path
 
 import arcpy
 
 from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
-from custom_tools.general_tools.param_utils import initialize_params
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
@@ -17,8 +15,8 @@ from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
 from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import (
     EliminateSmallPolygons,
 )
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    GangSykkelDissolverParameters,
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    initialize_parameters,
 )
 
 
@@ -43,12 +41,8 @@ class GangSykkelDissolver:
         self.files = self._create_wfm_gdbs(self.wfm)
 
         self.map_scale = gang_sykkel_dissolver_config.map_scale
-        params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-        self.scale_parameters = initialize_params(
-            params_path=params_path,
-            class_name="GangSykkelDissolver",
-            map_scale=self.map_scale,
-            dataclass=GangSykkelDissolverParameters,
+        self.gang_sykkel_parameters = initialize_parameters(
+            map_scale=self.map_scale, class_name="GangSykkelDissolver"
         )
 
         self.geometry_validator = GeometryValidator()
@@ -283,7 +277,7 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_final_merge_singlepart"],
             out_layer=gangsykkel_final_merge_singlepart_lyr,
-            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < {self.scale_parameters.length_divide}",
+            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < {self.gang_sykkel_parameters.length_divide}",
         )
 
         arcpy.management.Eliminate(
@@ -417,12 +411,12 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=long_layer,
-            where_clause=f'"Shape_Length" > {self.scale_parameters.length_divide}',
+            where_clause=f'"Shape_Length" > {self.gang_sykkel_parameters.length_divide}',
         )
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=short_layer,
-            where_clause=f'"Shape_Length" <= {self.scale_parameters.length_divide}',
+            where_clause=f'"Shape_Length" <= {self.gang_sykkel_parameters.length_divide}',
         )
 
         arcpy.management.Append(
@@ -486,7 +480,7 @@ class GangSykkelDissolver:
         environment_setup.main()
         self._fetch_data()
         self._dissolve_looping(
-            buffer_distance=f"{self.scale_parameters.buffer_distance} Meters"
+            buffer_distance=f"{self.gang_sykkel_parameters.buffer_distance} Meters"
         )
         e_kwargs = logic_config.EliminateSmallPolygonsInitKwargs(
             input_feature="",

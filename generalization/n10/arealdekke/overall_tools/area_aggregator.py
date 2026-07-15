@@ -15,7 +15,8 @@ from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.parameters.parameter_worker import (
-    get_min_area, get_min_width
+    get_min_area,
+    get_min_width,
 )
 from generalization.n10.arealdekke.overall_tools.overlap_remover import remove_overlaps
 
