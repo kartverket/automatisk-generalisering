@@ -9,8 +9,8 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     fc,
     find_segments_under_min,
-    get_min_width,
 )
+from generalization.n10.arealdekke.parameters.parameter_worker import get_min_width
 from generalization.n10.arealdekke.overall_tools.area_aggregator import (
     aggregate_small_features,
 )
@@ -45,7 +45,10 @@ def remove_thin_tracks(
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    width = get_min_width(map_scale=map_scale, target=track_type)
+    width = get_min_width(
+        map_scale=map_scale,
+        target=target,
+    )
 
     fetch_data(
         files=files,

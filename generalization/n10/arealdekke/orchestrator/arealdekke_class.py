@@ -233,7 +233,6 @@ class Arealdekke:
                 key=keys.preprocessed.value, value=True
             )
 
-    @timing_decorator
     def add_categories(self, categories_config_file: Path) -> None:
         """
         What:
@@ -278,6 +277,8 @@ class Arealdekke:
 
             except Exception as e:
                 raise e
+
+        print("\nCategories added to arealdekke object!\n")
 
     @timing_decorator
     def process_categories(self) -> None:
@@ -579,7 +580,9 @@ class Arealdekke:
                 output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
             ),
             lambda: change_attribute_value_main(
-                working_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+                input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+                map_scale=self.__map_scale,
+                target="Bebygd",
             ),
             lambda: aggregate_areas(
                 input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,

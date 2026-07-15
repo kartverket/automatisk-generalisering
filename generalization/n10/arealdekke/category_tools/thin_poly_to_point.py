@@ -15,8 +15,8 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     fc,
     find_segments_under_min,
-    get_min_width,
 )
+from generalization.n10.arealdekke.parameters.parameter_worker import get_min_width
 
 # ========================
 # Main function
@@ -49,8 +49,10 @@ def pointify_thin_poly(
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-
-    width = get_min_width(map_scale=map_scale, target=target)
+    width = get_min_width(
+        map_scale=map_scale,
+        target=target,
+    )
     locked_categories = {
         row[0] for row in arcpy.da.SearchCursor(locked_fc, ["arealdekke"])
     }
