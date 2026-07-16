@@ -64,9 +64,6 @@ class fc(StrEnum):
     locked_fc_line_intersecting = "locked_fc_line_intersecting"
     locked_fc_outward_buffer = "locked_fc_outward_buffer"
     only_small_segments_centre = "only_small_segments_centre"
-    test = "test"
-    work_fc = "work_fc"
-    output_fc = "output_fc"
     mini_buffer = "mini_buffer"
     should_expand_candidates = "should_expand_candidates"
     should_expand = "should_expand"
@@ -74,6 +71,7 @@ class fc(StrEnum):
     lines_to_expand = "lines_to_expand"
     areas_to_delete = "areas_to_delete"
     intermediate_target = "intermediate_target"
+    overlapping_land_use = "overlapping_land_use"
 
 
 # ========================
@@ -126,8 +124,11 @@ def buff_small_polygon_segments(
         create_overlapping_land_use(
             input_fc=files[fc.target_fc],
             buffered_fc=files[fc.small_segments_locked_buffed_dissolved],
-            output_fc=output_fc,
+            output_fc=files[fc.overlapping_land_use] if to_line else output_fc,
         )
+
+        if to_line:
+            pass
     else:
         arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
@@ -241,9 +242,9 @@ def file_setup(wfm: WorkFileManager) -> dict:
         fc.small_segments_locked_buffed_dissolved: wfm.build_file_path(
             file_name=fc.small_segments_locked_buffed_dissolved, file_type="gdb"
         ),
-        fc.test: wfm.build_file_path(file_name=fc.test, file_type="gdb"),
-        fc.work_fc: wfm.build_file_path(file_name=fc.work_fc, file_type="gdb"),
-        fc.output_fc: wfm.build_file_path(file_name=fc.output_fc, file_type="gdb"),
+        fc.overlapping_land_use: wfm.build_file_path(
+            file_name=fc.overlapping_land_use, file_type="gdb"
+        ),
     }
 
 
@@ -534,6 +535,28 @@ def buff_small_segments(
     )
 
     print("⭕ Small segments buffered and dissolved with locked areas buffers")
+
+
+def smooth_transition_between_lines_and_polygons(
+    input_fc: str, output_fc: str
+) -> None:
+    """
+    What:
+        Smooths the transition between the buffered small segments and the locked areas.
+    How:
+        - Dissolve the locked areas and the buffered small segments into one feature class
+        - Use the Smooth Polygon tool to smooth the transition between the two feature classes
+    """
+    arcpy.analysis.PairwiseDissolve(
+        in_features=[input_fc, locked_fc],
+        out_feature_class=output_fc,
+    )
+    arcpy.cartography.SmoothPolygon(
+        in_features=output_fc,
+        out_feature_class=output_fc,
+        algorithm="PAEK",
+        tolerance="5 Meters",
+    )
 
 
 if __name__ == "__main__":
