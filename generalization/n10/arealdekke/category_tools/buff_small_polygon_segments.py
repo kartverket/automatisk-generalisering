@@ -1,7 +1,5 @@
 # Libraries
 
-from importlib.metadata import files
-
 import arcpy
 
 arcpy.env.overwriteOutput = True
@@ -15,6 +13,9 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.overlap_merger import (
     create_overlapping_land_use,
+)
+from generalization.n10.arealdekke.category_tools.smooth_transition import (
+    smooth_transition_between_lines_and_polygons,
 )
 from generalization.n10.arealdekke.parameters.parameter_worker import (
     get_min_width,
@@ -128,13 +129,17 @@ def buff_small_polygon_segments(
         )
 
         if to_line:
-            pass
+            smooth_transition_between_lines_and_polygons(
+                input_fc=files[fc.overlapping_land_use],
+                output_fc=output_fc,
+                line_fc=LINE[target],
+            )
     else:
         arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
     print(f"\n✅ Buffering of small segments finished!\n{'====='*15}\n")
 
-    wfm.delete_created_files()
+    # wfm.delete_created_files()
 
 
 # ========================
@@ -426,7 +431,15 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
 def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     """
     What:
-        Extracts the small segments from the original polygon.
+        Extracts segments that are narrower than the minimum width requirement
+        of the target polygon and stores them as line features in the specified
+        output feature class.
+
+        Centre lines passing through these narrow areas are removed from the
+        complete line set, which is subsequently buffered by the minimum width.
+        Extracted narrow segments must also exceed a length tolerance to be
+        considered visible. Segments shorter than this tolerance are merged back
+        into the remaining line set and buffered to the minimum width instead.
     """
     lim = min_width / 2
     output_fc = LINE[target]
@@ -535,28 +548,6 @@ def buff_small_segments(
     )
 
     print("⭕ Small segments buffered and dissolved with locked areas buffers")
-
-
-def smooth_transition_between_lines_and_polygons(
-    input_fc: str, output_fc: str
-) -> None:
-    """
-    What:
-        Smooths the transition between the buffered small segments and the locked areas.
-    How:
-        - Dissolve the locked areas and the buffered small segments into one feature class
-        - Use the Smooth Polygon tool to smooth the transition between the two feature classes
-    """
-    arcpy.analysis.PairwiseDissolve(
-        in_features=[input_fc, locked_fc],
-        out_feature_class=output_fc,
-    )
-    arcpy.cartography.SmoothPolygon(
-        in_features=output_fc,
-        out_feature_class=output_fc,
-        algorithm="PAEK",
-        tolerance="5 Meters",
-    )
 
 
 if __name__ == "__main__":
