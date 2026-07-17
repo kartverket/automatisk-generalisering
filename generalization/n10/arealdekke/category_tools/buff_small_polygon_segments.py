@@ -139,7 +139,7 @@ def buff_small_polygon_segments(
 
     print(f"\n✅ Buffering of small segments finished!\n{'====='*15}\n")
 
-    # wfm.delete_created_files()
+    wfm.delete_created_files()
 
 
 # ========================

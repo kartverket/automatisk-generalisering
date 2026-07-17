@@ -27,17 +27,22 @@ def smooth_transition_between_lines_and_polygons(
     wfm = WorkFileManager(config=config)
 
     files = file_setup(wfm=wfm)
+
     clean_lines(line_fc=line_fc, input_fc=input_fc, files=files)
+    """
     poly_to_line, line_to_endpoints = connect_polys_and_lines(
         input_fc=input_fc, line_fc=line_fc, files=files
     )
+
     adjust_polygon_edges(
         input_fc=input_fc,
         poly_to_line=poly_to_line,
         line_to_endpoints=line_to_endpoints,
     )
-
+    """
     arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
+
+    wfm.delete_created_files()
 
     print("📐 Smooth transition between lines and polygons completed")
 
@@ -128,8 +133,8 @@ def adjust_polygon_edges(
     input_fc: str,
     poly_to_line: dict,
     line_to_endpoints: dict,
-    window: int = 8,
-    spacing: float = 0.25,
+    window: int = 10,
+    spacing: float = 1.0,
     max_shift: float = 10.0,
 ) -> None:
     """
@@ -175,7 +180,7 @@ def adjust_polygon_edges(
                     strength = calculate_funnel_strength(
                         line_vec=line_vec, poly_vec=poly_vec
                     )
-                except ValueError as e:
+                except Exception as e:
                     raise ValueError(
                         f"Error processing polygon OID {oid} and line OID {line_oid}:\n{e}"
                     )
@@ -187,6 +192,7 @@ def adjust_polygon_edges(
                 # Orthogonal vector to the line vector
                 line_dir = normalize(line_vec)
 
+                # Fetches indices of vertices to modify, and those to delete
                 left_idx, right_idx, indices_to_delete = get_spaced_indices(
                     ring=modified_ring, center_idx=idx, window=window, spacing=spacing
                 )
@@ -209,11 +215,11 @@ def adjust_polygon_edges(
                     )
                     modified_ring[pt_idx] = new_pt
 
-            modified_ring = [
-                pt 
-                for idx, pt in enumerate(modified_ring)
-                if idx not in indices_to_delete
-            ]
+                modified_ring = [
+                    pt 
+                    for idx, pt in enumerate(modified_ring)
+                    if idx not in indices_to_delete
+                ]
 
             array = arcpy.Array(modified_ring)
             new_polygon = arcpy.Polygon(array, polygon.spatialReference)
@@ -306,7 +312,6 @@ def get_spaced_indices(
     indices_to_delete = (
         set(left_traversed)
         | set(right_traversed)
-        | {center_idx}
     ) - (
         set(left_indices)
         | set(right_indices)
