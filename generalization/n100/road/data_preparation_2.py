@@ -45,11 +45,9 @@ from generalization.n100.road.major_road_crossings import (
 )
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
-from generalization.n100.road.ramps_point import ramp_points
 from generalization.n100.road.ramps import main as ramps
 from generalization.n100.road.ramps import main_part_2 as ramps_part_2
 from generalization.n100.road.ramps import correct_ramp_id_after_merge_divided_roads
-from generalization.n100.road.ramps_point import MovePointsToCrossings
 from generalization.n100.road.resolve_road_conflict_preparation import (
     remove_road_points_in_water,
     run_dissolve_with_intersections,
@@ -86,7 +84,6 @@ def main():
     generalize_roundabouts()
     remove_roadblock(data=area_data)
     trim_road_details()
-    #ramp_points()
     ramps(
         input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
@@ -110,7 +107,6 @@ def main():
         input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
         output_points_fc=Road_N100.ramps__final_points__n100_road.value,
     )
-    #final_ramp_points()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
         f.write(
             f"Total amount of work files created: "
