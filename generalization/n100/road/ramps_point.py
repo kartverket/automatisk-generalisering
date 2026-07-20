@@ -1,8 +1,8 @@
 # Import packages
 import os
-from collections import defaultdict
-
 import arcpy
+from collections import deque, defaultdict
+from typing import Dict, Set, List, Any, Iterable, Optional
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
@@ -11,7 +11,9 @@ arcpy.env.overwriteOutput = True
 from dam import calculate_angle, get_endpoints
 
 from custom_tools.decorators.timing_decorator import timing_decorator
-from file_manager.n100.file_manager_roads import Road_N100
+
+
+from dam import get_endpoints, calculate_angle
 
 """
 Purpose:
@@ -116,7 +118,7 @@ def ramp_points():
     make_ramp_points()
     connect_roads_to_points()
 
-    delete_intermediate_files()
+    #delete_intermediate_files()
 
 
 ##################
@@ -623,12 +625,22 @@ def make_ramp_points() -> None:
     arcpy.management.FeatureToPoint("ramps_lyr", ramp_points_fc, "CENTROID")
 
     run = MovePointsToCrossings(
-        input_road_feature=roads_fc,
+        input_road_feature=data_files["input"],
         input_point_feature=ramp_points_fc,
         output_point_feature=out_fc,
     )
 
     run.run()
+
+def _endpoints(poly):
+    pts = set()
+    for part in poly:
+        part = list(part)
+        if not part:
+            continue
+        pts.add((part[0].X, part[0].Y))
+        pts.add((part[-1].X, part[-1].Y))
+    return pts
 
 
 def build_adjecency(lines):
@@ -651,6 +663,132 @@ def build_adjecency(lines):
 
     arcpy.management.Delete(near_table)
     return adjecency
+
+def build_adjacency_with_medium(lines, medium_field="medium"):
+    """
+    Creates adjecency graph of roads that intersect using near table 1 meter, but with a check for medium attribute to avoid false connections where roads arent actually connected but just intersect in the geometry due to overpasses etc.
+    if different mediums only keep as adjecent if they intersect at endpoints
+    """
+    adjacency = defaultdict(set)
+    near_table = r"in_memory\near_table_adjacency"
+    arcpy.analysis.GenerateNearTable(
+        in_features=lines,
+        near_features=lines,
+        out_table=near_table,
+        search_radius="1 Meters",
+        closest="ALL",
+    )
+
+    # Cache shapes and medium values to avoid repeated cursors
+    shapes = {}
+    mediums = {}
+    with arcpy.da.SearchCursor(lines, ["OID@", "SHAPE@", medium_field]) as cur:
+        for oid, shape, med in cur:
+            shapes[oid] = shape
+            mediums[oid] = med
+
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cursor:
+        for in_fid, near_fid in cursor:
+            if in_fid == near_fid:
+                continue
+            # fast path: same medium -> neighbour
+            if mediums.get(in_fid) == mediums.get(near_fid):
+                adjacency[in_fid].add(near_fid)
+                continue
+
+            g1 = shapes.get(in_fid)
+            g2 = shapes.get(near_fid)
+            if g1 is None or g2 is None:
+                continue
+
+            # compute intersection geometry (dimension 1 = point)
+            inter = g1.intersect(g2, 1)  # 1 for point output
+            if inter is None:
+                continue
+
+            # collect intersection points as coordinate tuples
+            inter_pts = set()
+            for p in inter:
+                inter_pts.add((p.X, p.Y))
+
+            if not inter_pts:
+                continue
+
+            # endpoints of each polyline
+            ep1 = _endpoints(g1)
+            ep2 = _endpoints(g2)
+
+            # require every intersection point to be an endpoint of both features
+            if inter_pts.issubset(ep1) and inter_pts.issubset(ep2):
+                adjacency[in_fid].add(near_fid)
+
+    arcpy.management.Delete(near_table)
+    return adjacency
+
+
+def bfs_all_paths(
+    adjacency: Dict[Any, Iterable[Any]],
+    start: Any,
+    target: Any,
+    max_steps: int = 20,
+    max_paths: Optional[int] = None,
+    valid_oids: Optional[set] = None
+) -> List[List[Any]]:
+    """
+    Find all simple paths from start to target using a BFS expansion up to max_steps edges.
+
+    Parameters
+    - adjacency: mapping node -> iterable of neighbor nodes
+    - start: starting node OID
+    - target: target node OID
+    - max_steps: maximum number of edges to traverse (default 20)
+    - max_paths: optional cap on number of returned paths (None = no cap)
+    - valid_oids: optional set of all valid oids
+
+    Returns
+    - list of paths, where each path is a list of node OIDs starting with start and ending with target
+    """
+    if start == target:
+        return [[start]]
+
+    results: List[List[Any]] = []
+    queue = deque()
+    queue.append([start])
+
+    while queue:
+        path = queue.popleft()
+        if len(path) - 1 > max_steps:
+            # path already exceeds allowed edges; skip
+            continue
+
+        last = path[-1]
+        neighbors = adjacency.get(last, ())
+
+        for nbr in neighbors:
+            if valid_oids:
+                if nbr not in valid_oids:
+                    continue
+            if nbr in path:
+                # avoid cycles; require simple paths
+                continue
+
+            new_path = path + [nbr]
+
+            if nbr == target:
+                # found a path; only accept if within max_steps
+                if len(new_path) - 1 <= max_steps:
+                    results.append(new_path)
+                    if max_paths is not None and len(results) >= max_paths:
+                        return results
+                # do not expand this path further
+                continue
+
+            # only enqueue if we can still add edges without exceeding max_steps
+            if len(new_path) - 1 < max_steps:
+                queue.append(new_path)
+
+    return results
+
 
 
 def get_selected_oids(layer):
@@ -823,8 +961,8 @@ def connect_roads_to_points():
         endpoints_fc, ["SHAPE@", "from_road", "start_end"]
     ) as ins_cur:
         for oid, geom in road_cur:
-            if oid in oids_within_10_steps:
-                continue
+            # if oid in oids_within_10_steps:
+            #    continue
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, oid, 1])
             ins_cur.insertRow([end_pg, oid, 2])
@@ -868,8 +1006,14 @@ def connect_roads_to_points():
                 continue
             pr = point_priority.get(int(near_fid))
             rid = roadID.get(int(near_fid))
-            # store priority as fourth element (nx, ny, dist, priority)
-            near_map[int(in_fid)] = (float(nx), float(ny), float(nd), pr, rid)
+            near_map[int(in_fid)] = (
+                float(nx),
+                float(ny),
+                float(nd),
+                pr,
+                rid,
+                int(near_fid),
+            )
 
     arcpy.management.Delete(near_table)
 
@@ -919,7 +1063,7 @@ def connect_roads_to_points():
             else:
                 continue  # nothing to snap for this road
 
-            nx, ny, nd, pr, rid = chosen_entry
+            nx, ny, nd, pr, rid, ramp_id = chosen_entry
             if rid == oid:
                 continue
             within_10_for_this_ramp = oids_within_10_by_rid.get(int(ramp_id), set())
@@ -990,7 +1134,11 @@ class MovePointsToCrossings:
 
     def run(self):
         self.make_priority_points()
-        self.make_priority_maps()
+        if self.with_ramps:
+            self.remove_unconnected_pri_points()
+        self.add_vegkategori_score()
+        #self.make_priority_maps()
+        self.make_priority_maps_2()
         self.place_points()
         for item in self.delete_list:
             arcpy.management.Delete(item)
@@ -1177,8 +1325,220 @@ class MovePointsToCrossings:
             if count > 0:
                 arcpy.management.DeleteFeatures(priority2_lyr)
 
+    def remove_unconnected_pri_points(self):
+        """
+        Removes priority points that arent on roads connected by ramps
+        """
+        pri_field = "priority"
+        arcpy.management.AddField(self.priority1, pri_field, "FLOAT")
+        arcpy.management.CalculateField(self.priority1, pri_field, "1", "PYTHON3")
+        arcpy.management.AddField(self.priority1_5, pri_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1_5, pri_field, "1.5", "PYTHON3")
+        arcpy.management.AddField(self.priority2, pri_field, "SHORT")
+        arcpy.management.CalculateField(self.priority2, pri_field, "2", "PYTHON3")
+
+        self.priorities_crossing = "in_memory\\priorities_crossing"
+        arcpy.management.Merge([self.priority1, self.priority1_5, self.priority2], self.priorities_crossing)
+        id_field = "id_field"
+        arcpy.management.AddField(self.priorities_crossing, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priorities_crossing, id_field, "!OBJECTID!", "PYTHON3")
+        """
+        arcpy.management.AddField(self.priority1, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.AddField(self.priority1_5, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1_5, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.AddField(self.priority2, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority2, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1F")
+        arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5F")
+        arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2F")
+        """
+        arcpy.management.CopyFeatures(self.priorities_crossing, r"C:\temp\vei.gdb\priorities_crossingF")
+
+        print("Removing unconnected pri points")
+        adjacency = build_adjacency_with_medium(self.dissolved_roads)
+        print("adjecency 14:")
+        print(adjacency[14])
+        ramp_oids = set()
+        ramps_lyr = "ramps_lyr_436"
+        arcpy.management.MakeFeatureLayer(self.dissolved_roads, ramps_lyr, "typeveg = 'rampe'")
+        with arcpy.da.SearchCursor(ramps_lyr, ["OID@"]) as s_cur:
+            for row in s_cur:
+                ramp_oids.add(row[0])
         
-       # arcpy.management.Merge(inputs=[self.priority1, self.priority1_5, self.priority2, self.piority2_5], output=r"C:\temp\ramper.gdb\priority_points_merged")
+        roads_lyr = "roads_lyr_673"
+        arcpy.management.MakeFeatureLayer(self.dissolved_roads, roads_lyr, "typeveg <> 'rampe' and objtype = 'VegSenterlinje'")
+        
+        near_table = "in_memory\\near_table_12432"
+        near_table_valid = "in_memory\\near_table_45745"
+        #priorities = [self.priority1, self.priority1_5, self.priority2]
+        #for priority in priorities:
+            #print(priority)
+        remove_points = set()
+        arcpy.analysis.GenerateNearTable(self.priorities_crossing, roads_lyr, near_table, search_radius="1 Meter", closest="ALL")
+        in_fid_near_fid = defaultdict(list)
+        with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as s_cur:
+            for row in s_cur:
+                in_fid = row[0]
+                near_fid = row[1]
+                in_fid_near_fid[in_fid].append(near_fid)
+
+
+        valid_oids = defaultdict(set)
+        arcpy.analysis.GenerateNearTable(self.priorities_crossing, self.dissolved_roads, near_table_valid, search_radius="500 Meter", closest="ALL")
+        with arcpy.da.SearchCursor(near_table_valid, ["IN_FID", "NEAR_FID"]) as s_cur:
+            for row in s_cur:
+                in_fid = row[0]
+                near_fid = row[1]
+                valid_oids[in_fid].add(near_fid)
+
+
+        for in_fid, near_list in in_fid_near_fid.items():
+            if len(near_list) > 2:
+                print(f"IN_FID {in_fid} has {len(near_list)} NEAR_FID values: {sorted(near_list)}")
+
+            all_paths = bfs_all_paths(adjacency=adjacency, start=near_list[0], target=near_list[1], max_steps=10, valid_oids=valid_oids[in_fid])
+            result = any(value in ramp_oids for path in all_paths for value in path)
+            if not result:
+                remove_points.add(in_fid)
+
+
+
+        with arcpy.da.UpdateCursor(self.priorities_crossing, [id_field]) as u_cur:
+            for row in u_cur:
+                if row[0] in remove_points:
+                    u_cur.deleteRow()
+
+        print(f"deleted rows: ", {len(remove_points)})
+        arcpy.management.CopyFeatures(self.priorities_crossing, r"C:\temp\vei.gdb\priorities_crossingE")
+        
+        #arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1E")
+        #arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5E")
+        #arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2E")
+    
+    def add_vegkategori_score(self):
+        """
+        combine the vegkategori of the roads into a score for self.priorities_crossing  
+        'E':1, 'R':2, 'F':3, 'K':4, 'P':5, 'S':6
+        """
+        field = "vegkategori_sum"
+
+        # Add the new field (LONG)
+        arcpy.management.AddField(self.priorities_crossing, field, "SHORT")
+
+        # CalculateField: use a mapping dict and sum the two fields, handle None/unknown as 0
+        expression = "map_and_sum(!vegkategori!, !vegkategori_1!)"
+        code_block = """def map_and_sum(a, b):
+            m = {'E':1, 'R':2, 'F':3, 'K':4, 'P':5, 'S':6}
+            va = m.get(a, 0) if a is not None else 0
+            vb = m.get(b, 0) if b is not None else 0
+            return va + vb
+        """
+
+        arcpy.management.CalculateField(self.priorities_crossing, field, expression, "PYTHON3", code_block)
+    
+    def make_priority_maps_2(self):
+        """
+        attempt at 1 map for all priorities that are crossings
+        """
+        all_oids = []
+        oid_field = arcpy.Describe(self.input_point_feature).oidFieldName
+        with arcpy.da.SearchCursor(self.input_point_feature, [oid_field]) as sc:
+            for row in sc:
+                all_oids.append(int(row[0]))
+
+        if self.with_ramps:
+            self.near_map_crossing = self.create_near_map_unmatched_buffer_2(
+                "500 Meters",
+                self.input_point_feature,
+                self.priorities_crossing,
+                all_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near_map_crossing = self.create_near_map_unmatched(
+                "200 Meters", self.input_point_feature, self.priorities_crossing, all_oids
+            )
+        self.unmatched_oids = [oid for oid in all_oids if oid not in self.near_map_crossing]
+
+        ##########
+        ##########
+        ##########
+        if not self.with_ramps:
+            self.near2_5_map = self.create_near_map_unmatched(
+                "200 Meters",
+                self.input_point_feature,
+                self.piority2_5,
+                self.unmatched_oids,
+            )
+            self.unmatched_oids = [
+                oid for oid in self.unmatched_oids if oid not in self.near2_5_map
+            ]
+
+        roads_lyr = "roads_lyr"
+
+        arcpy.management.MakeFeatureLayer(
+            roads_lyr,
+            "motorveg_lyr",
+            where_clause="motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg'",
+        )
+
+        if self.with_ramps:
+            self.near3_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "motorveg_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near3_map = self.create_near_map_unmatched(
+                "100 Meters",
+                self.input_point_feature,
+                "motorveg_lyr",
+                self.unmatched_oids,
+            )
+        self.unmatched_oids = [
+            oid for oid in self.unmatched_oids if oid not in self.near3_map
+        ]
+
+        arcpy.management.MakeFeatureLayer(
+            roads_lyr,
+            "ikke_motorveg_lyr",
+            where_clause="motorvegtype = 'Ikke motorveg'",
+        )
+        if self.with_ramps:
+            self.near3_5_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "ikke_motorveg_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near3_5_map = self.create_near_map_unmatched(
+                "100 Meters",
+                self.input_point_feature,
+                "ikke_motorveg_lyr",
+                self.unmatched_oids,
+            )
+        self.unmatched_oids = [
+            oid for oid in self.unmatched_oids if oid not in self.near3_5_map
+        ]
+
+        if self.with_ramps:
+            self.near4_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "roads_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near4_map = self.create_near_map_unmatched(
+                "100 Meters", self.input_point_feature, "roads_lyr", self.unmatched_oids
+            )
+
 
     def make_priority_maps(self):
         # oids
