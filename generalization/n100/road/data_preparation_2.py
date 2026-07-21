@@ -618,9 +618,9 @@ def merge_divided_roads():
 
     # we need to correct ramp ids after merge divided roads to ensure all possible ramps points are included in the output
     correct_ramp_id_after_merge_divided_roads(
-        merge_input = Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        merge_output = Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        merge_out_table = Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
+        merge_input=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        merge_output=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        merge_out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
     )
 
 
@@ -852,18 +852,6 @@ def final_output():
         output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
         inverted=True,
     )
-
-"""
-def final_ramp_points():
-    f = MovePointsToCrossings(
-        Road_N100.data_preparation___road_final_output___n100_road.value,
-        Road_N100.ramps__ramp_points_moved__n100_road.value,
-        Road_N100.ramps__ramp_points_moved_2__n100_road.value,
-        delete_points_not_on_crossings=True,
-        with_ramps=False,
-    )
-    f.run()
-    """
 
 
 if __name__ == "__main__":

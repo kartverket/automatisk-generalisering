@@ -1969,7 +1969,6 @@ def make_potential_connection_points_for_groups_without_rampid(
             endpoint_geom = endpoint["geom"].WKT  # Use WKT for hashable representation
 
             if endpoint_geom in seen_geoms:
-                print("Duplicate endpoint geometry found, skipping")
                 continue
 
             seen_geoms.add(endpoint_geom)
