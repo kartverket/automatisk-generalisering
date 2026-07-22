@@ -365,6 +365,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___merge_divided_roads_out_table___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merge_divided_roads_out_table",
+        )
+    )
+
     data_preparation___divided_roads_merged_outputs___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -937,83 +944,16 @@ class Road_N100(Enum):
     # ========================================
     #                                    RAMPS
     # ========================================
-
-    ramps__ramps__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="ramps"
+    ramps__potential_points__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="potential_points"
     )
 
-    ramps__collapsed_roundabouts__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="collapsed_roundabouts"
-    )
-
-    ramps__small_roundabouts__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="small_roundabouts"
-    )
-
-    ramps__roads_with_cleaned_roundabouts__n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=ramps_file, description="roads_with_cleaned_roundabouts"
-        )
-    )
-
-    ramps__buffered_ramps__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="buffered_ramps"
-    )
-
-    ramps__buffered_ramps_100__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="buffered_ramps_100"
-    )
-
-    ramps__roads_near_ramp__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="roads_near_ramp"
-    )
-
-    ramps__endpoints__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="endpoints"
-    )
-
-    ramps__dissolved_ramps__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="dissolved_ramps"
-    )
-
-    ramps__intermediate_ramps__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="intermediate_ramps"
-    )
-
-    ramps__merged_ramps__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="merged_ramps"
-    )
-
-    ramps__closest_points__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="closest_points"
+    ramps__final_points__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="final_points"
     )
 
     ramps__generalized_ramps__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="generalized_ramps"
-    )
-
-    ramps__dissolved_group__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="dissolved_group"
-    )
-
-    ramps__splitted_group__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="splitted_group"
-    )
-
-    ramps__ramp_points__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="ramp_points"
-    )
-
-    ramps__ramp_points_moved__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="ramp_points_moved"
-    )
-
-    ramps__ramp_points_moved_2__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="ramp_points_moved_2"
-    )
-
-    ramps__test__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="test"
     )
 
     # ========================================
