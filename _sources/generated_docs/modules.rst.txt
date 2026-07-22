@@ -13,5 +13,6 @@ automatisk-generalisering
    file_manager
    generalization
    generate_pyvis_docu
+   main
    paths
    tests
