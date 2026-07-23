@@ -14,7 +14,6 @@ from tqdm import tqdm
 from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     load_rules,
@@ -32,8 +31,6 @@ def attribute_changer(input_fc: str, output_fc: str):
     Main program changing attributes for N10 land use using partition iterator.
     """
     print("\n🚀 Starts changing attribute information for land use (N10)...\n")
-
-    environment_setup.main()
 
     print("📦 Fetches and prepares data...\n")
 

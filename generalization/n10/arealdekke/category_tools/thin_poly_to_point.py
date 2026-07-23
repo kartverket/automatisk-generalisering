@@ -69,7 +69,10 @@ def pointify_thin_poly(
     create_split_points(files=files, width=width)
     split_polygons(files=files, width=width)
     rewrite_attribute(
-        files=files, output_fc=output_fc, locked_categories=locked_categories
+        files=files,
+        target=target,
+        output_fc=output_fc,
+        locked_categories=locked_categories,
     )
 
     wfm.delete_created_files()
@@ -234,14 +237,14 @@ def remove_small_pieces(input_fc: str, files: dict) -> None:
     )
 
 
-def data_preparation(complete_fc: str, files: dict, target: str) -> None:
+def data_preparation(complete_fc: str, files: dict, target: str=None) -> None:
     """
     Prepares the data for splitting.
 
     Args:
         complete_fc (str): Feature class with the complete dataset
         files (dict): Dictionary with all the working files
-        target (str): Name of the land use type to adjust
+        target (str, optional): Name of the land use type to adjust. Defaults to None
     """
     arcpy.management.FeatureToLine(
         in_features=files["qualified_small"],
@@ -256,10 +259,12 @@ def data_preparation(complete_fc: str, files: dict, target: str) -> None:
         select_features=files["qualified_small"],
         selection_type="NEW_SELECTION",
     )
+
+    sql = f"arealdekke <> '{target}'" if target else "1=1"
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=land_use_lyr,
         selection_type="SUBSET_SELECTION",
-        where_clause=f"arealdekke <> '{target}'",
+        where_clause=sql,
     )
 
     arcpy.management.FeatureToLine(
@@ -312,7 +317,7 @@ def create_split_points(files: dict, width: int) -> None:
     # E: Line endpoints from filtered lines
     create_featureclass_point(
         files["line_endpoints"],
-        arcpy.Describe(files["filtered_lines"]).spatialReference,
+        arcpy.Describe(files["touching_lines"]).spatialReference,
     )
     insert_line_endpoints(files["filtered_lines"], files["line_endpoints"])
 
@@ -394,12 +399,15 @@ def split_polygons(files: dict, width: int) -> None:
         )
 
 
-def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> None:
+def rewrite_attribute(
+    files: dict, target: str, output_fc: str, locked_categories: set
+) -> None:
     """
     Fetches the original 'arealdekke' attribute value to the splitted features.
 
     Args:
         files (dict): Dictionary with all the working files
+        target (str): The target value to use for unmatched features
         output_fc (str): Where to store the final output
         locked_categories (set): A set containing the name of all land use
                                  categories that are locked
@@ -438,7 +446,7 @@ def rewrite_attribute(files: dict, output_fc: str, locked_categories: set) -> No
             try:
                 update.updateRow([oid, best_lines[oid][-1]])
             except:
-                continue
+                update.updateRow([oid, target])
 
     arcpy.management.Merge(
         inputs=[files["erased_small_areas"], files["split_result"]],

@@ -115,16 +115,15 @@ def buff_small_polygon_segments(
         find_segments_under_min(files=files, min_width=min_width)
         choose_target_areas(files=files, min_width=min_width)
         get_shared_locked_boundary(files=files, min_width=min_width)
-        buff_small_segments(files=files, min_width=min_width, to_line=to_line)
+        buff_small_segments(
+            files=files, target=target, min_width=min_width, to_line=to_line
+        )
 
         create_overlapping_land_use(
             input_fc=files[fc.target_fc],
             buffered_fc=files[fc.small_segments_locked_buffed_dissolved],
             output_fc=output_fc,
         )
-
-        if to_line:
-            snap_lines(land_use_fc=output_fc, target=target, files=files)
     else:
         arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
@@ -419,7 +418,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     )
 
 
-def extract_below_limit(files: dict, min_width: int) -> None:
+def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     """
     What:
         Extracts segments that are narrower than the minimum width requirement
@@ -492,12 +491,18 @@ def extract_below_limit(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.lines_to_expand],
     )
 
+    arcpy.management.CopyFeatures(
+        in_features=files[fc.intermediate_lines], out_feature_class=LINE[target]
+    )
+
     print(
         f"📏 Especially small segments thinner than {lim} meters extracted from target polygon and stored in separate file."
     )
 
 
-def buff_small_segments(files: dict, min_width: int, to_line: bool = False) -> None:
+def buff_small_segments(
+    files: dict, target: str, min_width: int, to_line: bool = False
+) -> None:
     """
     What:
         Finds the centre line of the small polygon segments. Then erases large enough areas and
@@ -516,7 +521,7 @@ def buff_small_segments(files: dict, min_width: int, to_line: bool = False) -> N
     )
 
     if to_line:
-        extract_below_limit(files=files, min_width=min_width)
+        extract_below_limit(files=files, target=target, min_width=min_width)
 
     lines_to_expand = (
         files[fc.lines_to_expand] if to_line else files[fc.small_segments_centre]
@@ -538,23 +543,23 @@ def buff_small_segments(files: dict, min_width: int, to_line: bool = False) -> N
     print("⭕ Small segments buffered and dissolved with locked areas buffers")
 
 
-def snap_lines(land_use_fc: str, target: str, files: dict) -> None:
+# ========================
+
+
+def snap_lines(land_use_fc: str) -> None:
     """
     What:
-        Snaps the lines in input_fc to the lines in line_fc.
+        Snaps the lines in land_use_fc to the lines in line_fc.
     """
-    line_fc = LINE[target]
+    for target, line_fc in LINE.items():
+        land_use_lyr = "land_use_lyr"
+        arcpy.management.MakeFeatureLayer(
+            in_features=land_use_fc,
+            out_layer=land_use_lyr,
+            where_clause=f"arealdekke='{target}'",
+        )
 
-    arcpy.edit.Snap(
-        in_features=files[fc.intermediate_lines],
-        snap_environment=[[land_use_fc, "EDGE", "2.5 Meters"]],
-    )
-    arcpy.analysis.Erase(
-        in_features=files[fc.intermediate_lines],
-        erase_features=land_use_fc,
-        out_feature_class=line_fc,
-    )
-    arcpy.edit.Snap(
-        in_features=line_fc,
-        snap_environment=[[land_use_fc, "EDGE", "1 Meters"]],
-    )
+        arcpy.edit.Snap(
+            in_features=line_fc,
+            snap_environment=[[land_use_lyr, "EDGE", "2.5 Meters"]],
+        )

@@ -4,6 +4,8 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
+from enum import StrEnum
+
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
@@ -11,6 +13,32 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     LINE,
 )
+from generalization.n10.arealdekke.category_tools.thin_poly_to_point import (
+    create_split_points,
+    data_preparation,
+    split_polygons,
+)
+
+# ========================
+# Class
+# ========================
+
+
+class names(StrEnum):
+    complete = "complete"
+    filtered_lines = "filtered_lines"
+    qualified_small = "qualified_small"
+    qualified_as_line = "qualified_as_line"
+    input_as_line = "input_as_line"
+    touching_lines = "touching_lines"
+    touching_points = "touching_points"
+    identical = "identical"
+    line_endpoints = "line_endpoints"
+    endpoint_buffer = "endpoint_buffer"
+    spatial_join = "spatial_join"
+    cutlines = "cutlines"
+    split_result = "split_result"
+
 
 # ========================
 # Main function
@@ -18,7 +46,137 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
 
 
 @timing_decorator
-def fill_holes(
+def fill_holes(input_fc: str, output_fc: str) -> None:
+    """
+    Adjusts the input geometries with topologycal errors so that the output
+    geometries are valid and do not contain any holes.
+
+    Args:
+        input_fc (str): The feature class with polygon geometries to be processed
+        output_fc (str): The feature class where the result should be saved
+    """
+    # Set up WorkFileManager
+    fc = Arealdekke_N10.fill_holes__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=fc)
+    wfm = WorkFileManager(config=config)
+
+    files = file_setup(wfm=wfm)
+    min_size = 20  # Minimum size of a polygon of any kind
+    width = 10  # General width large enough to cover any hole
+
+    data_sorting(input_fc=input_fc, files=files, min_size=min_size)
+    data_preparation(complete_fc=input_fc, files=files)
+    create_split_points(files=files, width=width)
+    split_polygons(files=files, width=width)
+
+
+# ========================
+# Helper functions
+# ========================
+
+
+def file_setup(wfm: WorkFileManager) -> dict:
+    """
+    Creates all the temporary files that are going to
+    be used during the process of filling holes.
+
+    Args:
+        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files
+
+    Returns:
+        dict: A dictionary with all the files as variables
+    """
+    return {
+        names.complete: wfm.build_file_path(file_name=names.complete, file_type="gdb"),
+        #
+        # Holes:
+        names.qualified_small: wfm.build_file_path(file_name=names.qualified_small, file_type="gdb"),
+        #
+        names.qualified_as_line: wfm.build_file_path(file_name=names.qualified_as_line, file_type="gdb"),
+        names.input_as_line: wfm.build_file_path(file_name=names.input_as_line, file_type="gdb"),
+        names.touching_lines: wfm.build_file_path(file_name=names.touching_lines, file_type="gdb"),
+        names.touching_points: wfm.build_file_path(file_name=names.touching_points, file_type="gdb"),
+        names.identical: wfm.build_file_path(file_name=names.identical, file_type="gdb"),
+        names.filtered_lines: wfm.build_file_path(file_name=names.filtered_lines, file_type="gdb"),
+        names.line_endpoints: wfm.build_file_path(file_name=names.line_endpoints, file_type="gdb"),
+        names.endpoint_buffer: wfm.build_file_path(file_name=names.endpoint_buffer, file_type="gdb"),
+        names.spatial_join: wfm.build_file_path(file_name=names.spatial_join, file_type="gdb"),
+        names.cutlines: wfm.build_file_path(file_name=names.cutlines, file_type="gdb"),
+        names.split_result: wfm.build_file_path(file_name=names.split_result, file_type="gdb"),
+    }
+
+
+def data_sorting(input_fc: str, files: dict, min_size: int) -> None:
+    """
+    Sorts the data in the input feature class into different working files.
+
+    Args:
+        input_fc (str): The feature class with polygon geometries to be processed
+        files (dict): Dictionary with all the working files
+        min_size (int): Minimum size of a polygon that can be left alone
+    """
+    # Fetch line layers and create a complete
+    # set of polygons covering the entire area
+    active_line_layers = [val for val in LINE.values() if arcpy.Exists(val)]
+    arcpy.management.FeatureToPolygon(
+        in_features=[input_fc] + active_line_layers,
+        out_feature_class=files[names.complete],
+    )
+
+    # Removes the input from the complete set
+    # => the remaining polygons are the holes
+    arcpy.analysis.Erase(
+        in_features=files[names.complete],
+        erase_features=input_fc,
+        out_feature_class=files[names.qualified_small],
+    )
+
+    # For all landd use types, fetch polygons smaller than
+    # the minimum size and add them to the holes
+    land_use_lyr = "land_use_lyr"
+    land_use_types = {
+        row[0]
+        for row in arcpy.da.SearchCursor(input_fc, ["arealdekke"])
+    }
+    for land_use in land_use_types:
+        arcpy.management.MakeFeatureLayer(
+            in_features=input_fc,
+            out_layer=land_use_lyr,
+            where_clause=f"arealdekke = '{land_use}' AND Shape_Area < {min_size}",
+        )
+        arcpy.management.Append(
+            inputs=land_use_lyr, target=files[names.qualified_small], schema_type="NO_TEST"
+        )
+
+    arcpy.cartography.CollapseHydroPolygon(
+        in_features=files[names.qualified_small],
+        out_line_feature_class=files[names.filtered_lines],
+        merge_adjacent_input_polygons="NO_MERGE"
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@timing_decorator
+def fill_holes_2(
     input_fc: str, output_fc: str, target: str, locked_categories: set
 ) -> None:
     """
@@ -274,4 +432,11 @@ def match_holes_with_surrounding_features(
             files["remaining_features"],
         ],
         output=output_fc,
+    )
+
+
+if __name__ == "__main__":
+    fill_holes(
+        input_fc=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
+        output_fc=None
     )

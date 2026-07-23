@@ -47,6 +47,9 @@ from generalization.n10.arealdekke.overall_tools.area_aggregator import aggregat
 from generalization.n10.arealdekke.category_tools.area_aggregator import (
     aggregate_category,
 )
+from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
+    snap_lines,
+)
 
 from data_orchestrator.orchestrator import InputDataOrchestrator
 
@@ -329,8 +332,6 @@ class Arealdekke:
 
                 reinserts_completed = category.get_reinserts_completed()
 
-                locked_cat_titles = self.get_locked_categories_titles()
-
                 # Reinsert the modified category back into the complete land use to preserve topology
                 reinsert_operations = [
                     lambda: remove_overlaps(
@@ -339,13 +340,7 @@ class Arealdekke:
                         locked_fc=self.files["locked_fc"],
                         output_fc=self.files["intermediate_fc"],
                         changed_area=cat_title,
-                    ),
-                    lambda: fill_holes(
-                        input_fc=self.files["arealdekke_fc"],
-                        output_fc=self.files["intermediate_fc"],
-                        target=cat_title,
-                        locked_categories=locked_cat_titles,
-                    ),
+                    )
                 ]
 
                 if cat_reinsert:
@@ -521,20 +516,6 @@ class Arealdekke:
             out_feature_class=self.files["arealdekke_fc"],
         )
 
-    def get_locked_categories_titles(self) -> set:
-        """
-        Returns a set of strings with category name of locked categories.
-        """
-        return set(
-            map(
-                lambda cat: cat.get_title(),
-                filter(
-                    lambda cat: not cat.get_accessibility(),
-                    self.categories,
-                ),
-            )
-        )
-
     def get_num_postprocessors(self) -> int:
         """
         Returns number of postprocessing operations.
@@ -614,4 +595,9 @@ class Arealdekke:
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
+            lambda: fill_holes(
+                input_fc=self.final_output_fc,
+                output_fc="",
+            ),
+            lambda: snap_lines(land_use_fc=self.final_output_fc),
         ]

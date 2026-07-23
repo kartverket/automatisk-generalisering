@@ -66,15 +66,14 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     # Fetch original fields to keep in the final passability layer
     field = "arealdekke"
 
-    arealdekke_set = set()
-
-    with arcpy.da.SearchCursor(passability_fc, [field]) as cursor:
-        for row in cursor:
-            if row[0] is not None:
-                arealdekke_set.add(row[0])
+    arealdekke_set = {
+        row[0]
+        for row in arcpy.da.SearchCursor(passability_fc, [field])
+        if row[0] is not None
+    }
 
     # Performes intersection for each land use category
-    intersect_results = []
+    results = []
     num = len(arealdekke_set)
 
     for i, value in enumerate(arealdekke_set):
@@ -99,25 +98,45 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         )
 
         # Creates temporary file for this category
-        out_fc = wfm.build_file_path(
+        intersect_fc = wfm.build_file_path(
             file_name=f"passability_intersect_{value}", file_type="gdb"
+        )
+        aggregate_fc = wfm.build_file_path(
+            file_name=f"passability_aggregate_{value}", file_type="gdb"
         )
 
         arcpy.analysis.Intersect(
             in_features=[pass_lyr, final_lyr],
-            out_feature_class=out_fc,
+            out_feature_class=intersect_fc,
             join_attributes="ALL",
         )
+        arcpy.cartography.AggregatePolygons(
+            in_features=intersect_fc,
+            out_feature_class=aggregate_fc,
+            aggregation_distance="5 Meters",
+            orthogonality_option="ORTHOGONAL",
+        )
 
-        intersect_results.append(out_fc)
+        arcpy.management.CalculateField(
+            in_table=aggregate_fc,
+            field="fremkommelighet",
+            expression=f"'{value}'",
+            expression_type="PYTHON3",
+        )
+
+        results.append(aggregate_fc)
 
     print("Merging intersected features to create the final passability layer.")
     merged = wfm.build_file_path(file_name="merged_passability", file_type="gdb")
-    arcpy.management.Merge(inputs=intersect_results, output=merged)
+    arcpy.management.Merge(inputs=results, output=merged)
 
     print(
         "Dissolving merged geometries based on 'fremkommelighet' to create the final passability layer.\n"
     )
+
+    if arcpy.Exists(passability_fc):
+        arcpy.management.Delete(passability_fc)
+
     arcpy.management.Dissolve(
         in_features=merged,
         out_feature_class=passability_fc,
@@ -126,43 +145,3 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     )
 
     wfm.delete_created_files()
-
-
-# ========================
-# Helper functions
-# ========================
-
-
-def update_passability_for_buffer(buffered_fc: str, target: str) -> None:
-    """
-    Removes areas from the passability layer that overlaps with buffered features of a
-    specific land use category (target) on the fly during the process_category pipeline.
-
-    Args:
-        buffered_fc (str): Feature class with the buffered features of the target category
-        target (str): The field name value of the land use / 'arealdekke'
-                       that is enlarged and overlaps other areas
-    """
-    passability_fc = Arealdekke_N10.passability__n10_land_use.value
-
-    temp_file = "in_memory/temp_passability"
-    arcpy.management.CopyFeatures(
-        in_features=passability_fc, out_feature_class=temp_file
-    )
-
-    sql = f"arealdekke <> '{target}'"
-    passability_lyr = "passability_lyr"
-
-    arcpy.management.MakeFeatureLayer(in_features=temp_file, out_layer=passability_lyr)
-
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=passability_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=sql,
-    )
-
-    arcpy.analysis.PairwiseErase(
-        in_features=passability_lyr,
-        erase_features=buffered_fc,
-        out_feature_class=passability_fc,
-    )
