@@ -10,14 +10,15 @@
 # arcpy is not listed: it ships with the ArcGIS Pro conda environment
 # and is not available on PyPI.
 
-geopandas
-lxml
-matplotlib
-networkx
-numpy
-pydantic
-PyYAML
-pyvis
-requests
-shapely
-tqdm
+#geopandas
+#lxml
+#matplotlib
+#networkx
+#numpy
+#pydantic
+#PyYAML
+#pyvis
+#requests
+#shapely
+#tqdm
+google-cloud-storage
