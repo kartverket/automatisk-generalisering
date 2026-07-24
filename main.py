@@ -14,6 +14,36 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+def upload_results_to_gcs(
+    local_folder: str,
+    bucket_name: str,
+    gcs_folder: str,
+) -> None:
+    """
+    Upload all files from a local folder to a GCS folder/prefix.
+
+    Args:
+        local_folder: Local source folder, e.g. "/tmp/mydata"
+        bucket_name: Name of the GCS bucket.
+        gcs_folder: Folder/prefix inside the bucket, e.g. "data/output/"
+    """
+
+    # Ensure prefix ends with /
+    if gcs_folder and not gcs_folder.endswith("/"):
+        gcs_folder += "/"
+
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+
+    local_base = Path(local_folder)
+
+    for local_file in local_base.rglob("*"):
+        if local_file.is_file():
+            relative_path = local_file.relative_to(local_base)
+            blob_name = f"{gcs_folder}{relative_path.as_posix()}"
+            blob = bucket.blob(blob_name)
+            blob.upload_from_filename(str(local_file))
+            logger.info(f"Uploaded {local_file} -> gs://{bucket_name}/{blob_name}")
 
 def download_gcs_folder(
     bucket_name: str,
@@ -157,3 +187,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+    upload_results_to_gcs(
+        local_folder="/tmp/GIS_Files/ag_outputs/n100/road.gdb/",
+        bucket_name=os.environ.get("GCS_BUCKET"),
+        gcs_folder="output/",
+    )
