@@ -58,7 +58,11 @@ from generalization.n100.road.vegsperring import remove_roadblock
 from data_orchestrator.data_names import DataNames as dn
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
-SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
+
+if require("SELECT_STUDY_AREA") == "False":
+    SELECT_STUDY_AREA = False
+else:
+    SELECT_STUDY_AREA = True
 
 AREA_SELECTOR = "navn IN ('Ås')"
 SCALE = "n100"
