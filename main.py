@@ -187,11 +187,14 @@ def main():
 
     handler(args)
 
-
-if __name__ == "__main__":
-    main()
     upload_results_to_gcs(
         gdb_path="/tmp/GIS_Files/ag_outputs/n100/road.gdb/",
         bucket_name=os.environ.get("GCS_BUCKET"),
-        gcs_folder="output/",
+        gcs_folder=f"outputs/{args.scale}_{args.obj}/",
+
     )
+
+
+if __name__ == "__main__":
+    main()
+    
