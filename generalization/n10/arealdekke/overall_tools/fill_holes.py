@@ -437,6 +437,6 @@ def match_holes_with_surrounding_features(
 
 if __name__ == "__main__":
     fill_holes(
-        input_fc=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
+        input_fc=Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value,
         output_fc=None
     )

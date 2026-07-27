@@ -589,15 +589,15 @@ class Arealdekke:
                 final_fc=self.final_categories_fc,
                 passability_fc=Arealdekke_N10.passability__n10_land_use.value,
             ),
+            lambda: fill_holes(
+                input_fc=self.final_categories_fc,
+                output_fc="",
+            ),
             lambda: arealdekke_dissolver(
                 input_fc=self.final_categories_fc,
                 output_fc=self.final_output_fc,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
-            ),
-            lambda: fill_holes(
-                input_fc=self.final_output_fc,
-                output_fc="",
             ),
             lambda: snap_lines(land_use_fc=self.final_output_fc),
         ]
