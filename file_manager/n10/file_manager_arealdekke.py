@@ -225,6 +225,10 @@ class Arealdekke_N10(Enum):
         script_source_name=fill_holes, description="fill_holes"
     )
 
+    fill_holes_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=fill_holes, description="fill_holes_output"
+    )
+
     # ========================================
     #                   SMALL FEATURES CHANGER
     # ========================================

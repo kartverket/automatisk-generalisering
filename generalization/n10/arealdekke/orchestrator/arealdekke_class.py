@@ -160,7 +160,8 @@ class Arealdekke:
         self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
 
         # If some categories had started during last run
-        if cat_lvl_info["cats_exist"]:
+        # But not all of them were completed, the program will continue where it left off
+        if not all(not c.get_accessibility() for c in cat_lvl_info["cats"]) and cat_lvl_info["cats_exist"]:
 
             category: Category
             for category in cat_lvl_info["cats"]:
@@ -174,8 +175,7 @@ class Arealdekke:
                         == category.get_operations_completed()
                     )
                     and (
-                        category.get_reinserts_completed()
-                        < self.get_num_postprocessors()
+                        category.get_reinserts_completed() == 0
                     )
                 ):
                     arcpy.management.CopyFeatures(
@@ -591,10 +591,10 @@ class Arealdekke:
             ),
             lambda: fill_holes(
                 input_fc=self.final_categories_fc,
-                output_fc="",
+                output_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
             ),
             lambda: arealdekke_dissolver(
-                input_fc=self.final_categories_fc,
+                input_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
                 output_fc=self.final_output_fc,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,

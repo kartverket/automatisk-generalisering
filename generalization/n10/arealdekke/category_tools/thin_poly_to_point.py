@@ -237,7 +237,7 @@ def remove_small_pieces(input_fc: str, files: dict) -> None:
     )
 
 
-def data_preparation(complete_fc: str, files: dict, target: str=None) -> None:
+def data_preparation(complete_fc: str, files: dict, target: str = None) -> None:
     """
     Prepares the data for splitting.
 
@@ -306,7 +306,7 @@ def create_split_points(files: dict, width: int) -> None:
         files["touching_lines"], files["touching_points"], include_oid=True
     )
 
-    # B: Remove points overlapping qualified lines
+    # B: Remove points not overlapping qualified lines
     delete_points_by_location(
         files["touching_points"], files["qualified_as_line"], invert=True
     )
@@ -338,10 +338,21 @@ def split_polygons(files: dict, width: int) -> None:
         files (dict): Dictionary with all the working files
         width (int): Minimum width of the target feature
     """
+    arcpy.management.CalculateField(
+        in_table=files["qualified_small"],
+        field="ORIG_FID",
+        expression="!OBJECTID!",
+        expression_type="PYTHON3",
+    )
+
     arcpy.analysis.SpatialJoin(
         target_features=files["touching_points"],
         join_features=files["qualified_small"],
         out_feature_class=files["spatial_join"],
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_ALL",
+        match_option="INTERSECT",
+        search_radius=f"{width} Meters",
     )
 
     # A: Select relevant areas
@@ -371,6 +382,8 @@ def split_polygons(files: dict, width: int) -> None:
         for geom, oid in search:
             point_dict.setdefault(oid, []).append(geom)
 
+    spatial_ref = arcpy.Describe(files["qualified_small"]).spatialReference
+
     with arcpy.da.SearchCursor(land_use_lyr, ["SHAPE@", "ORIG_FID"]) as search:
         for geom, oid in search:
             if oid not in point_dict:
@@ -379,7 +392,9 @@ def split_polygons(files: dict, width: int) -> None:
                 continue
             centerline = centerlines[oid]
             for pt in point_dict[oid]:
-                cutline = make_orthogonal_cutline(pt, centerline, length=width)
+                cutline = make_orthogonal_cutline(
+                    pt, centerline, length=width / 5, spatial_ref=spatial_ref
+                )
                 cutlines.append(cutline)
 
     if cutlines:
@@ -542,7 +557,10 @@ def buffer_and_delete(
 
 
 def make_orthogonal_cutline(
-    point: arcpy.PointGeometry, centerline_geom: arcpy.Polyline, length: int = 50
+    point: arcpy.PointGeometry,
+    centerline_geom: arcpy.Polyline,
+    length: int = 50,
+    spatial_ref: arcpy.SpatialReference = None,
 ) -> arcpy.Polyline:
     "Creates an orthogonal cutline from a point on the tangent of a centerline"
     point: arcpy.Point = point.firstPoint
@@ -572,7 +590,7 @@ def make_orthogonal_cutline(
     if mag < 1e-9:
         p1 = arcpy.Point(point.X, point.Y + length)
         p2 = arcpy.Point(point.X, point.Y - length)
-        return arcpy.Polyline(arcpy.Array([p1, p2]))
+        return arcpy.Polyline(arcpy.Array([p1, p2]), spatial_reference=spatial_ref)
 
     nx /= mag
     ny /= mag
@@ -581,4 +599,4 @@ def make_orthogonal_cutline(
     p1 = arcpy.Point(point.X + nx * length, point.Y + ny * length)
     p2 = arcpy.Point(point.X - nx * length, point.Y - ny * length)
 
-    return arcpy.Polyline(arcpy.Array([p1, p2]))
+    return arcpy.Polyline(arcpy.Array([p1, p2]), spatial_reference=spatial_ref)
