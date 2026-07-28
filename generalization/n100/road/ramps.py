@@ -280,6 +280,7 @@ def dissolve_and_return_connection(
         in_table=output_fc,
         field_name=orig_lines_id,
         field_type="TEXT",
+        field_length=1000
     )
     orig_layer = "orig_layer"
     arcpy.management.MakeFeatureLayer(
