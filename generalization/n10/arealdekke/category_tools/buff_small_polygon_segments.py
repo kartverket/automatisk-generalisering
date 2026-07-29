@@ -432,7 +432,7 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
         into the remaining line set and buffered to the minimum width instead.
     """
     lim = min_width / 2
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.input_polygon_edge],
         out_feature_class=files[fc.mini_buffer],
         buffer_distance_or_field=f"{lim / 2} Meters",
@@ -442,7 +442,7 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
         erase_features=files[fc.mini_buffer],
         out_feature_class=files[fc.should_expand_candidates],
     )
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.should_expand_candidates],
         out_feature_class=files[fc.should_expand],
         buffer_distance_or_field=f"{lim / 2} Meters",
@@ -534,7 +534,7 @@ def buff_small_segments(
             erase_features=files[fc.locked_fc_outward_buffer],
             out_feature_class=files[fc.only_small_segments_centre],
         )
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.only_small_segments_centre] if status else lines_to_expand,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
         buffer_distance_or_field=f"{min_width/2} Meters",
@@ -551,6 +551,12 @@ def snap_lines(land_use_fc: str) -> None:
     What:
         Snaps the lines in land_use_fc to the lines in line_fc.
     """
+    working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=working_fc)
+    wfm = WorkFileManager(config=config)
+
+    erased_fc = wfm.build_file_path(file_name="erased_fc", file_type="gdb")
+
     for target, line_fc in LINE.items():
         land_use_lyr = "land_use_lyr"
         arcpy.management.MakeFeatureLayer(
@@ -563,3 +569,11 @@ def snap_lines(land_use_fc: str) -> None:
             in_features=line_fc,
             snap_environment=[[land_use_lyr, "EDGE", "2.5 Meters"]],
         )
+        arcpy.analysis.Erase(
+            in_features=line_fc,
+            erase_features=land_use_lyr,
+            out_feature_class=erased_fc,
+        )
+        arcpy.management.CopyFeatures(in_features=erased_fc, out_feature_class=line_fc)
+
+    wfm.delete_created_files()

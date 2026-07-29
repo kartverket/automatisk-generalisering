@@ -64,11 +64,11 @@ def fill_holes(input_fc: str, output_fc: str) -> None:
     fc = Arealdekke_N10.fill_holes__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=fc)
     wfm = WorkFileManager(config=config)
-    
+
     files = file_setup(wfm=wfm)
     min_size = 20  # Minimum size of a polygon of any kind
     width = 10  # General width large enough to cover any hole
-    
+
     data_sorting(input_fc=input_fc, files=files, min_size=min_size)
     data_preparation(complete_fc=input_fc, files=files)
     create_split_points(files=files, width=width / 10)
@@ -76,7 +76,7 @@ def fill_holes(input_fc: str, output_fc: str) -> None:
     match_holes_with_surrounding_features(
         files=files, input_fc=input_fc, output_fc=output_fc
     )
-    
+
     wfm.delete_created_files()
 
 
@@ -190,6 +190,12 @@ def data_sorting(input_fc: str, files: dict, min_size: int) -> None:
             target=files[names.qualified_small],
             schema_type="NO_TEST",
         )
+
+    arcpy.management.RepairGeometry(
+        in_features=files[names.qualified_small],
+        delete_null="DELETE_NULL",
+        validation_method="ESRI",
+    )
 
     arcpy.cartography.CollapseHydroPolygon(
         in_features=files[names.qualified_small],
@@ -308,11 +314,3 @@ def match_holes_with_surrounding_features(
         inputs=[files[names.split_result], files[names.surrounding_features]],
         output=output_fc,
     )
-
-"""
-if __name__ == "__main__":
-    fill_holes(
-        input_fc=Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value,
-        output_fc=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
-    )
-"""

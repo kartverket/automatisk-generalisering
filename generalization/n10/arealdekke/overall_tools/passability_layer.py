@@ -63,7 +63,14 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     wfm = WorkFileManager(config=config)
 
     final_lyr = "final_lyr"
-    features_to_keep = ["Samferdsel", "ElvFlate", "Innsjo", "InnsjoRegulert", "Kanal", "Hav"]
+    features_to_keep = [
+        "Samferdsel",
+        "ElvFlate",
+        "Innsjo",
+        "InnsjoRegulert",
+        "Kanal",
+        "Hav",
+    ]
     values_to_keep = "', '".join(features_to_keep)
     sql = f"{arealdekke} IN ('{values_to_keep}')"
     arcpy.management.MakeFeatureLayer(in_features=final_fc, out_layer=final_lyr)
@@ -73,7 +80,9 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
 
     erased_fc = wfm.build_file_path(file_name="erased", file_type="gdb")
     arcpy.analysis.Erase(
-        in_features=passability_fc, erase_features=final_lyr, out_feature_class=erased_fc
+        in_features=passability_fc,
+        erase_features=final_lyr,
+        out_feature_class=erased_fc,
     )
 
     aggregated_fc = wfm.build_file_path(file_name="aggregated", file_type="gdb")
@@ -83,7 +92,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         aggregation_distance="5 Meters",
         orthogonality_option="ORTHOGONAL",
         barrier_features=final_lyr,
-        aggregate_field=fremkommelighet
+        aggregate_field=fremkommelighet,
     )
 
     if arcpy.Exists(passability_fc):

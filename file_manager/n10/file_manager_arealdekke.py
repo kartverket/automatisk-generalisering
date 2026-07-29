@@ -33,6 +33,7 @@ poly_to_point = "poly_to_point"
 remove_thin_tracks = "remove_thin_tracks"
 river_lines = "river_lines"
 smooth_transition = "smooth_transition"
+snap_lines = "snap_lines"
 
 
 class Arealdekke_N10(Enum):
@@ -163,6 +164,10 @@ class Arealdekke_N10(Enum):
 
     buffed_polygon_segments__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=buff_polygon_segments, description="buffed_polygon_segments"
+    )
+
+    snap_lines__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=snap_lines, description="snap_lines"
     )
 
     river_lines__n10_land_use = file_manager.generate_file_name_gdb(

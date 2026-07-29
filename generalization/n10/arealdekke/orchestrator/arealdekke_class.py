@@ -161,28 +161,27 @@ class Arealdekke:
 
         # If some categories had started during last run
         # But not all of them were completed, the program will continue where it left off
-        if not all(not c.get_accessibility() for c in cat_lvl_info["cats"]) and cat_lvl_info["cats_exist"]:
+        if cat_lvl_info["cats_exist"]:
+            if not all(not c.get_accessibility() for c in cat_lvl_info["cats"]):
 
-            category: Category
-            for category in cat_lvl_info["cats"]:
-                # .. fetch this as last processed
-                last_processed = category.get_last_processed()
+                category: Category
+                for category in cat_lvl_info["cats"]:
+                    # .. fetch this as last processed
+                    last_processed = category.get_last_processed()
 
-                if (
-                    (last_processed is not None)
-                    and (
-                        len(category.get_operations())
-                        == category.get_operations_completed()
-                    )
-                    and (
-                        category.get_reinserts_completed() == 0
-                    )
-                ):
-                    arcpy.management.CopyFeatures(
-                        in_features=last_processed,
-                        out_feature_class=self.files["processed_fc"],
-                    )
-                    break
+                    if (
+                        (last_processed is not None)
+                        and (
+                            len(category.get_operations())
+                            == category.get_operations_completed()
+                        )
+                        and (category.get_reinserts_completed() == 0)
+                    ):
+                        arcpy.management.CopyFeatures(
+                            in_features=last_processed,
+                            out_feature_class=self.files["processed_fc"],
+                        )
+                        break
 
         # Setting final output files
         self.final_categories_fc = (
