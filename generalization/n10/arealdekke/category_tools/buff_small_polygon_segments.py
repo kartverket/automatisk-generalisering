@@ -1,7 +1,5 @@
 # Libraries
 
-from importlib.metadata import files
-
 import arcpy
 
 arcpy.env.overwriteOutput = True
@@ -64,9 +62,6 @@ class fc(StrEnum):
     locked_fc_line_intersecting = "locked_fc_line_intersecting"
     locked_fc_outward_buffer = "locked_fc_outward_buffer"
     only_small_segments_centre = "only_small_segments_centre"
-    test = "test"
-    work_fc = "work_fc"
-    output_fc = "output_fc"
     mini_buffer = "mini_buffer"
     should_expand_candidates = "should_expand_candidates"
     should_expand = "should_expand"
@@ -74,6 +69,7 @@ class fc(StrEnum):
     lines_to_expand = "lines_to_expand"
     areas_to_delete = "areas_to_delete"
     intermediate_target = "intermediate_target"
+    intermediate_lines = "intermediate_lines"
 
 
 # ========================
@@ -120,7 +116,7 @@ def buff_small_polygon_segments(
         choose_target_areas(files=files, min_width=min_width)
         get_shared_locked_boundary(files=files, min_width=min_width)
         buff_small_segments(
-            files=files, min_width=min_width, target=target, to_line=to_line
+            files=files, target=target, min_width=min_width, to_line=to_line
         )
 
         create_overlapping_land_use(
@@ -241,9 +237,9 @@ def file_setup(wfm: WorkFileManager) -> dict:
         fc.small_segments_locked_buffed_dissolved: wfm.build_file_path(
             file_name=fc.small_segments_locked_buffed_dissolved, file_type="gdb"
         ),
-        fc.test: wfm.build_file_path(file_name=fc.test, file_type="gdb"),
-        fc.work_fc: wfm.build_file_path(file_name=fc.work_fc, file_type="gdb"),
-        fc.output_fc: wfm.build_file_path(file_name=fc.output_fc, file_type="gdb"),
+        fc.intermediate_lines: wfm.build_file_path(
+            file_name=fc.intermediate_lines, file_type="gdb"
+        ),
     }
 
 
@@ -425,11 +421,18 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
 def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     """
     What:
-        Extracts the small segments from the original polygon.
+        Extracts segments that are narrower than the minimum width requirement
+        of the target polygon and stores them as line features in the specified
+        output feature class.
+
+        Centre lines passing through these narrow areas are removed from the
+        complete line set, which is subsequently buffered by the minimum width.
+        Extracted narrow segments must also exceed a length tolerance to be
+        considered visible. Segments shorter than this tolerance are merged back
+        into the remaining line set and buffered to the minimum width instead.
     """
     lim = min_width / 2
-    output_fc = LINE[target]
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.input_polygon_edge],
         out_feature_class=files[fc.mini_buffer],
         buffer_distance_or_field=f"{lim / 2} Meters",
@@ -439,7 +442,7 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
         erase_features=files[fc.mini_buffer],
         out_feature_class=files[fc.should_expand_candidates],
     )
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.should_expand_candidates],
         out_feature_class=files[fc.should_expand],
         buffer_distance_or_field=f"{lim / 2} Meters",
@@ -451,12 +454,12 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     )
     arcpy.management.MultipartToSinglepart(
         in_features=files[fc.lines_to_keep_multipart],
-        out_feature_class=output_fc,
+        out_feature_class=files[fc.intermediate_lines],
     )
 
     land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=output_fc,
+        in_features=files[fc.intermediate_lines],
         out_layer=land_use_lyr,
     )
     arcpy.management.SelectLayerByAttribute(
@@ -467,7 +470,7 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
 
     arcpy.analysis.Buffer(
-        in_features=output_fc,
+        in_features=files[fc.intermediate_lines],
         out_feature_class=files[fc.areas_to_delete],
         buffer_distance_or_field=f"{lim} Meters",
         line_side="FULL",
@@ -484,17 +487,21 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
 
     arcpy.analysis.Erase(
         in_features=files[fc.small_segments_centre],
-        erase_features=output_fc,
+        erase_features=files[fc.intermediate_lines],
         out_feature_class=files[fc.lines_to_expand],
     )
 
+    arcpy.management.CopyFeatures(
+        in_features=files[fc.intermediate_lines], out_feature_class=LINE[target]
+    )
+
     print(
-        f"📏 Especially small segments thinner than {lim} meters extracted from target polygon and stored in {LINE[target]}"
+        f"📏 Especially small segments thinner than {lim} meters extracted from target polygon and stored in separate file."
     )
 
 
 def buff_small_segments(
-    files: dict, min_width: int, target: str, to_line: bool = False
+    files: dict, target: str, min_width: int, to_line: bool = False
 ) -> None:
     """
     What:
@@ -527,7 +534,7 @@ def buff_small_segments(
             erase_features=files[fc.locked_fc_outward_buffer],
             out_feature_class=files[fc.only_small_segments_centre],
         )
-    arcpy.analysis.PairwiseBuffer(
+    arcpy.analysis.Buffer(
         in_features=files[fc.only_small_segments_centre] if status else lines_to_expand,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
         buffer_distance_or_field=f"{min_width/2} Meters",
@@ -536,27 +543,37 @@ def buff_small_segments(
     print("⭕ Small segments buffered and dissolved with locked areas buffers")
 
 
-if __name__ == "__main__":
-    # """
-    target = "ElvFlate"
-    locked = "Samferdsel"
+# ========================
 
-    input_fc = Arealdekke_N10.attribute_changer_output__n10_land_use.value
 
-    lyr1 = "lyr1"
-    lyr2 = "lyr2"
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_fc, out_layer=lyr1, where_clause=f"arealdekke='{target}'"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_fc, out_layer=lyr2, where_clause=f"arealdekke='{locked}'"
-    )
+def snap_lines(land_use_fc: str) -> None:
+    """
+    What:
+        Snaps the lines in land_use_fc to the lines in line_fc.
+    """
+    working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=working_fc)
+    wfm = WorkFileManager(config=config)
 
-    buff_small_polygon_segments(
-        target=target,
-        input_fc=lyr1,
-        output_fc=Arealdekke_N10.elim_output.value,
-        locked_fc=lyr2,
-        map_scale="N10",
-    )
-    # """
+    erased_fc = wfm.build_file_path(file_name="erased_fc", file_type="gdb")
+
+    for target, line_fc in LINE.items():
+        land_use_lyr = "land_use_lyr"
+        arcpy.management.MakeFeatureLayer(
+            in_features=land_use_fc,
+            out_layer=land_use_lyr,
+            where_clause=f"arealdekke='{target}'",
+        )
+
+        arcpy.edit.Snap(
+            in_features=line_fc,
+            snap_environment=[[land_use_lyr, "EDGE", "2.5 Meters"]],
+        )
+        arcpy.analysis.Erase(
+            in_features=line_fc,
+            erase_features=land_use_lyr,
+            out_feature_class=erased_fc,
+        )
+        arcpy.management.CopyFeatures(in_features=erased_fc, out_feature_class=line_fc)
+
+    wfm.delete_created_files()

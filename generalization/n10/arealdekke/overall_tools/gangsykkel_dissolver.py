@@ -6,7 +6,6 @@ from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -477,7 +476,6 @@ class GangSykkelDissolver:
 
     @timing_decorator
     def run(self) -> None:
-        environment_setup.main()
         self._fetch_data()
         self._dissolve_looping(
             buffer_distance=f"{self.gang_sykkel_parameters.buffer_distance} Meters"

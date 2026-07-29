@@ -26,7 +26,7 @@ def simplify_and_smooth_polygon(input_fc: str, output_fc: str) -> None:
         in_features=input_fc,
         out_feature_class=Arealdekke_N10.simplified_polygons__n10_land_use.value,
         algorithm="WEIGHTED_AREA",
-        tolerance=5,
+        tolerance=2,
         error_option="RESOLVE_ERRORS",
         collapsed_point_option="NO_KEEP",
     )

@@ -47,6 +47,9 @@ from generalization.n10.arealdekke.overall_tools.area_aggregator import aggregat
 from generalization.n10.arealdekke.category_tools.area_aggregator import (
     aggregate_category,
 )
+from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
+    snap_lines,
+)
 
 from data_orchestrator.orchestrator import InputDataOrchestrator
 
@@ -157,29 +160,28 @@ class Arealdekke:
         self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
 
         # If some categories had started during last run
+        # But not all of them were completed, the program will continue where it left off
         if cat_lvl_info["cats_exist"]:
+            if not all(not c.get_accessibility() for c in cat_lvl_info["cats"]):
 
-            category: Category
-            for category in cat_lvl_info["cats"]:
-                # .. fetch this as last processed
-                last_processed = category.get_last_processed()
+                category: Category
+                for category in cat_lvl_info["cats"]:
+                    # .. fetch this as last processed
+                    last_processed = category.get_last_processed()
 
-                if (
-                    (last_processed is not None)
-                    and (
-                        len(category.get_operations())
-                        == category.get_operations_completed()
-                    )
-                    and (
-                        category.get_reinserts_completed()
-                        < self.get_num_postprocessors()
-                    )
-                ):
-                    arcpy.management.CopyFeatures(
-                        in_features=last_processed,
-                        out_feature_class=self.files["processed_fc"],
-                    )
-                    break
+                    if (
+                        (last_processed is not None)
+                        and (
+                            len(category.get_operations())
+                            == category.get_operations_completed()
+                        )
+                        and (category.get_reinserts_completed() == 0)
+                    ):
+                        arcpy.management.CopyFeatures(
+                            in_features=last_processed,
+                            out_feature_class=self.files["processed_fc"],
+                        )
+                        break
 
         # Setting final output files
         self.final_categories_fc = (
@@ -329,8 +331,6 @@ class Arealdekke:
 
                 reinserts_completed = category.get_reinserts_completed()
 
-                locked_cat_titles = self.get_locked_categories_titles()
-
                 # Reinsert the modified category back into the complete land use to preserve topology
                 reinsert_operations = [
                     lambda: remove_overlaps(
@@ -339,13 +339,7 @@ class Arealdekke:
                         locked_fc=self.files["locked_fc"],
                         output_fc=self.files["intermediate_fc"],
                         changed_area=cat_title,
-                    ),
-                    lambda: fill_holes(
-                        input_fc=self.files["arealdekke_fc"],
-                        output_fc=self.files["intermediate_fc"],
-                        target=cat_title,
-                        locked_categories=locked_cat_titles,
-                    ),
+                    )
                 ]
 
                 if cat_reinsert:
@@ -431,6 +425,7 @@ class Arealdekke:
                 Path(self.final_output_fc).name,
                 Path(Arealdekke_N10.passability__n10_land_use.value).name,
                 Path(Arealdekke_N10.poly_to_point_points__n10_land_use.value).name,
+                Path(Arealdekke_N10.river_lines__n10_land_use.value).name,
             }
 
             arcpy.env.workspace = str(gdb)
@@ -520,20 +515,6 @@ class Arealdekke:
             out_feature_class=self.files["arealdekke_fc"],
         )
 
-    def get_locked_categories_titles(self) -> set:
-        """
-        Returns a set of strings with category name of locked categories.
-        """
-        return set(
-            map(
-                lambda cat: cat.get_title(),
-                filter(
-                    lambda cat: not cat.get_accessibility(),
-                    self.categories,
-                ),
-            )
-        )
-
     def get_num_postprocessors(self) -> int:
         """
         Returns number of postprocessing operations.
@@ -607,10 +588,15 @@ class Arealdekke:
                 final_fc=self.final_categories_fc,
                 passability_fc=Arealdekke_N10.passability__n10_land_use.value,
             ),
-            lambda: arealdekke_dissolver(
+            lambda: fill_holes(
                 input_fc=self.final_categories_fc,
+                output_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
+            ),
+            lambda: arealdekke_dissolver(
+                input_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
                 output_fc=self.final_output_fc,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
+            lambda: snap_lines(land_use_fc=self.final_output_fc),
         ]

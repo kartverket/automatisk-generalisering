@@ -5,7 +5,7 @@
 | Module Name       | File path         | Description                   |
 |-------------------|-------------------|-------------------------------|
 | **aggregate_category** | [area_aggregator.py](area_aggregator.py) | Aggregation function used to combine smaller objects of a specific type into larger polygons by changing the land use type of surrounding features. |
-| **buff_small_polygon_segments** | [buff_small_polygon_segments.py](buff_small_polygon_segments.py) | Buffs polygon segments under a minimum width requirement without overlapping locked features. *Create_overlapping_land_use* can be used afterwards to merge the buffered segments back into the layer. |
+| **buff_small_polygon_segments** | [buff_small_polygon_segments.py](buff_small_polygon_segments.py) | Buffs polygon segments under a minimum width requirement without overlapping locked features. *Create_overlapping_land_use* can be used afterwards to merge the buffered segments back into the layer. ***snap_lines*** is an extra tool for post processing the lines generated in the main function. |
 | **remove_thin_tracks** | [remove_thin_tracks.py](remove_thin_tracks.py) | Changes the land use type for track type that are too thin to go through the target type to the target type. |
 |**simplify_and_smooth_polygon**| [simplify_polygon.py](simplify_polygon.py) | Uses simplify and smooth to adjust polygons and remove small, extra details.|
 | **pointify_thin_poly** | [thin_poly_to_point.py](thin_poly_to_point.py) | Detects thin areas of the land use type target and changes this to the type of the largest adjacent area. The changed area is also replaced with a line of points going along the centre line of the deleted area |

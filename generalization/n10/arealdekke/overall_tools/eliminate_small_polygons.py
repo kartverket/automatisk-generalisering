@@ -6,7 +6,6 @@ from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.parameters.parameter_worker import (
@@ -473,8 +472,6 @@ class EliminateSmallPolygons:
 
     @timing_decorator
     def run(self):
-        environment_setup.main()
-
         self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
         self._exlude()
