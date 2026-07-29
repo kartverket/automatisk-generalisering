@@ -50,6 +50,9 @@ from generalization.n10.arealdekke.category_tools.area_aggregator import (
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     snap_lines,
 )
+from generalization.n10.arealdekke.overall_tools.replace_uncategorized import (
+    replace_uncategorized_features,
+)
 
 from data_orchestrator.orchestrator import InputDataOrchestrator
 
@@ -592,8 +595,12 @@ class Arealdekke:
                 input_fc=self.final_categories_fc,
                 output_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
             ),
-            lambda: arealdekke_dissolver(
+            lambda: replace_uncategorized_features(
                 input_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.replace_uncategorized__n10_land_use.value,
+            ),
+            lambda: arealdekke_dissolver(
+                input_fc=Arealdekke_N10.replace_uncategorized__n10_land_use.value,
                 output_fc=self.final_output_fc,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
