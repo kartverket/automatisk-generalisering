@@ -22,3 +22,4 @@
 #shapely
 #tqdm
 google-cloud-storage
+minio==7.2.20
