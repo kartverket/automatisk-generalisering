@@ -956,9 +956,7 @@ class PartitionIterator:
             self.work_file_manager_temp_files.delete_created_files()
 
         prepared.active_path = filtered_context_path
-        prepared.count = file_utilities.count_objects(
-            input_layer=filtered_context_path
-        )
+        prepared.count = file_utilities.count_objects(input_layer=filtered_context_path)
         prepared.reduced_count = prepared.pre_optimization_count - prepared.count
 
     def select_partition_feature(self, iteration_partition, object_id):
