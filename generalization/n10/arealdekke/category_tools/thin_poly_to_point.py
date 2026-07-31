@@ -212,12 +212,12 @@ def create_points(input_fc: str, files: dict) -> None:
         join_features=input_fc,
         out_feature_class=files["joined_points"],
         join_operation="JOIN_ONE_TO_MANY",
-        match_option="Closest",
+        match_option="CLOSEST",
     )
 
     existing_fields = [f.name for f in arcpy.ListFields(point_fc)]
     new_fields = [
-        f for f in arcpy.ListFields(input_fc) if f.name not in existing_fields
+        f.name for f in arcpy.ListFields(input_fc) if f.name not in existing_fields
     ]
 
     arcpy.management.JoinField(
@@ -225,7 +225,7 @@ def create_points(input_fc: str, files: dict) -> None:
         in_field="OBJECTID",
         join_table=files["joined_points"],
         join_field="TARGET_FID",
-        fields=[f.name for f in new_fields],
+        fields=new_fields,
     )
 
 

@@ -70,6 +70,7 @@ class fc(StrEnum):
     areas_to_delete = "areas_to_delete"
     intermediate_target = "intermediate_target"
     intermediate_lines = "intermediate_lines"
+    spatial_join = "spatial_join"
 
 
 # ========================
@@ -376,6 +377,26 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
         where_clause="Shape_Length < 15",
     )
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
+
+    # Fetch original attributes
+    arcpy.analysis.SpatialJoin(
+        target_features=files[fc.intermediate_lines],
+        join_features=files[fc.target_fc],
+        out_feature_class=files[fc.spatial_join],
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="CLOSEST",
+    )
+
+    existing_fields = [f.name for f in arcpy.ListFields(files[fc.intermediate_lines])]
+    new_fields = [f.name for f in arcpy.ListFields(files[fc.target_fc]) if f.name not in existing_fields]
+
+    arcpy.management.JoinField(
+        in_data=files[fc.intermediate_lines],
+        in_field="OBJECTID",
+        join_table=files[fc.spatial_join],
+        join_field="TARGET_FID",
+        fields=new_fields,
+    )
 
     arcpy.analysis.Buffer(
         in_features=files[fc.intermediate_lines],

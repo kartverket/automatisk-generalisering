@@ -31,6 +31,7 @@ WATER_SQL = ",".join([f"'{feature}'" for feature in WATER_FEATURES])
 class Names(StrEnum):
     target_lines = "target_lines"
     spatial_join = "spatial_join"
+    joined_lines = "joined_lines"
     erased = "erased"
 
 
@@ -163,6 +164,26 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
 
         if int(arcpy.management.GetCount(join_lyr)[0]) == 0:
             continue
+
+        # Fetch original attributes for the new lines
+        arcpy.analysis.SpatialJoin(
+            target_features=line_lyr,
+            join_features=land_use_lyr,
+            out_feature_class=files[Names.joined_lines],
+            join_operation="JOIN_ONE_TO_MANY",
+            match_option="CLOSEST",
+        )
+
+        existing_fields = [f.name for f in arcpy.ListFields(line_lyr)]
+        new_fields = [f.name for f in arcpy.ListFields(land_use_lyr) if f.name not in existing_fields]
+
+        arcpy.management.JoinField(
+            in_data=line_lyr,
+            in_field="OBJECTID",
+            join_table=files[Names.joined_lines],
+            join_field="TARGET_FID",
+            fields=new_fields,
+        )
 
         arcpy.management.Append(
             inputs=line_lyr,
