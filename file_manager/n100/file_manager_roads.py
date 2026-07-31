@@ -956,6 +956,18 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="generalized_ramps"
     )
 
+    data_preparation__partition_ramps_root__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation, description="partition_ramps_root"
+        )
+    )
+
+    ramps__ramps_root__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="ramps_root"
+    )
+    ramps_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="ramps_docu",
+    )
     # ========================================
     #                            ROAD CLEANING
     # ========================================

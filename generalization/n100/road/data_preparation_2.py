@@ -57,6 +57,8 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from data_orchestrator.data_names import DataNames as dn
 
+from composition_configs.logic_config import RoadRampsConfig
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 if require("SELECT_STUDY_AREA") == "False":
@@ -81,18 +83,19 @@ def main():
     area_data = data_orc.get_dataset(dn.area)
     building_data = data_orc.get_dataset(dn.building)
 
-    data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
-
-    reclassify_medium()
-    categories_major_road_crossings()
-    generalize_roundabouts()
-    remove_roadblock(data=area_data)
-    trim_road_details()
-    ramps(
-        input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
-        output_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-    )
+    # data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
+    #
+    # reclassify_medium()
+    # categories_major_road_crossings()
+    # generalize_roundabouts()
+    # remove_roadblock(data=area_data)
+    # trim_road_details()
+    ramp_partition()
+    # ramps(
+    #     input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+    #     output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
+    #     output_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+    # )
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -311,6 +314,70 @@ def trim_road_details():
         in_features=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
     )
+
+
+@timing_decorator
+def ramp_partition():
+    road = "road"
+    points = "points"
+
+    ramps_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            )
+        ]
+    )
+
+    ramps_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag="generalized",
+                path=Road_N100.ramps__generalized_ramps__n100_road.value,
+            ),
+            core_config.OutputEntry.vector_output(
+                object=points,
+                tag="output",
+                path=Road_N100.ramps__potential_points__n100_road.value,
+            ),
+        ]
+    )
+
+    ramps_io_config = core_config.PartitionIOConfig(
+        input_config=ramps_input_config,
+        output_config=ramps_output_config,
+        documentation_directory=Road_N100.ramps_docu___n100_road.value,
+    )
+
+    ramp_config = core_config.FuncMethodEntryConfig(
+        func=ramps,
+        params=RoadRampsConfig(
+            input_roads=core_config.InjectIO(object=road, tag="input"),
+            output_roads=core_config.InjectIO(object=road, tag="generalized"),
+            output_points=core_config.InjectIO(object=points, tag="output"),
+            wfm_config=core_config.WorkFileConfig(
+                root_file=Road_N100.ramps__ramps_root__n100_road.value
+            ),
+        ),
+    )
+    method_config = core_config.MethodEntriesConfig([ramp_config])
+
+    run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=5_000,
+        context_radius_meters=500,
+        run_partition_optimization=False,
+    )
+
+    PartitionIterator(
+        partition_io_config=ramps_io_config,
+        partition_method_inject_config=method_config,
+        partition_iterator_run_config=run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
+        ),
+    ).run()
 
 
 @timing_decorator
