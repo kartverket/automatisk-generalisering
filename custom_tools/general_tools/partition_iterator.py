@@ -548,8 +548,10 @@ class PartitionIterator:
         Creates cartographic partitions based on the given element_limit.
         Overwrites any existing partition feature.
         """
+        # generate_partition_path returns a plain str; the manager wants one of the
+        # type_defs path types. Local narrowing until that return type is tightened.
         self.work_file_manager_partition_feature.delete_created_files(
-            exceptions=[self.partition_features_all]
+            exceptions=[type_defs.GdbFilePath(self.partition_features_all)]
         )
         in_features = [
             prepared.active_path
