@@ -65,27 +65,27 @@ def main() -> InputDataOrchestrator:
         Prepares the input data and files used in future processing steps.
     """
 
-    AREA_SELECTOR = "navn IN ('Kvitsøy')"
+    AREA_SELECTOR = "navn IN ('Asker')"
     SCALE = "n100"
     PIPELINE = "building"
 
     environment_setup.main()
-    data_orc: InputDataOrchestrator = data_selection(
-        area_selector=AREA_SELECTOR, map_scale=SCALE, pipeline=PIPELINE
-    )
+    # data_orc: InputDataOrchestrator = data_selection(
+    #     area_selector=AREA_SELECTOR, map_scale=SCALE, pipeline=PIPELINE
+    # )
     begrensningskurve_land_and_water_bodies()
-    unsplit_roads_and_make_buffer()
-    railway_station_points_to_polygons(data_orc=data_orc)
-    selecting_power_grid_lines()
-    selecting_urban_areas_by_sql()
-    adding_matrikkel_points_to_areas_that_are_no_longer_urban()
-    selecting_n50_points_not_in_urban_areas()
-    adding_field_values_to_matrikkel()
-    merge_building_points()
-    reclassifying_polygon_values()
-    polygon_selections_based_on_size()
-
-    return data_orc
+    # unsplit_roads_and_make_buffer()
+    # railway_station_points_to_polygons(data_orc=data_orc)
+    # selecting_power_grid_lines()
+    # selecting_urban_areas_by_sql()
+    # adding_matrikkel_points_to_areas_that_are_no_longer_urban()
+    # selecting_n50_points_not_in_urban_areas()
+    # adding_field_values_to_matrikkel()
+    # merge_building_points()
+    # reclassifying_polygon_values()
+    # polygon_selections_based_on_size()
+    #
+    # return data_orc
 
 
 @timing_decorator
@@ -276,6 +276,7 @@ def begrensningskurve_land_and_water_bodies():
                 object=begrensningskurve,
                 tag=processed_begrensningskurve,
                 path=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+                extraction_method=core_config.OutputExtractionMethod.CLIP,
             )
         ]
     )
@@ -312,8 +313,9 @@ def begrensningskurve_land_and_water_bodies():
     )
 
     begrensningskurve_partition_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500_000,
+        max_elements_per_partition=1500,
         context_radius_meters=500,
+        run_partition_optimization=False,
     )
 
     partition_iterator_work_file_config = core_config.WorkFileConfig(

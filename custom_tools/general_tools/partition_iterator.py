@@ -3,10 +3,11 @@ import os
 import shutil
 import time
 import traceback
-from dataclasses import asdict, fields, is_dataclass, replace
+from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional
 
 import arcpy
 
@@ -15,6 +16,202 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy, file_utilities, param_utils
 from env_setup import environment_setup
 from file_manager.work_file_manager import PartitionWorkFileManager
+
+
+@dataclass
+class PreparedInput:
+    """
+    One configured input dataset, plus everything preparation learns about it.
+
+    `source_path` is what the caller configured. `active_path` is what partition
+    selection actually reads from: the same file for processing inputs, but a
+    pre-filtered copy for context inputs when a search distance is set.
+
+    `pre_optimization_count` and `reduced_count` stay None for processing inputs;
+    they only describe the context pre-filtering step.
+    """
+
+    object: str
+    input_type: core_config.InputType
+    data_type: core_config.DataType
+    source_path: str
+    active_path: str
+    dummy_path: Optional[str] = None
+    count: int = 0
+    pre_optimization_count: Optional[int] = None
+    reduced_count: Optional[int] = None
+
+    @classmethod
+    def from_resolved(cls, entry: core_config.ResolvedInputEntry) -> "PreparedInput":
+        """Start from a resolved config entry, with the source path active."""
+        return cls(
+            object=entry.object,
+            input_type=entry.input_type,
+            data_type=entry.data_type,
+            source_path=entry.path,
+            active_path=entry.path,
+        )
+
+    def is_vector_of_type(self, input_type: core_config.InputType) -> bool:
+        """Return True iff this is a vector dataset of the given input type."""
+        return (
+            self.input_type is input_type
+            and self.data_type is core_config.DataType.VECTOR
+        )
+
+
+@dataclass
+class PartitionStats:
+    """
+    Per-object measurements for a single partition.
+
+    `count` and `vertex_count` cover everything selected for the partition. The
+    processing/context split below is derived from `PARTITION_FIELD` and only applies
+    to processing inputs; it stays zeroed for context inputs and for partitions where
+    the object had no features.
+    """
+
+    count: int = 0
+    vertex_count: int = 0
+    processing_object_count: int = 0
+    context_object_count: int = 0
+    processing_vertex_count: int = 0
+    context_vertex_count: int = 0
+    processing_object_percentage: float = 0
+    context_object_percentage: float = 0
+    processing_vertex_percentage: float = 0
+    context_vertex_percentage: float = 0
+
+
+@dataclass
+class PeakStat:
+    """A single observed extreme: the value, and the partition it came from."""
+
+    value: Optional[float] = None
+    partition_id: Optional[int] = None
+
+
+@dataclass
+class MinMaxStat:
+    """
+    Running highest and lowest value for one metric across partitions.
+
+    Feed observations with `observe()`; the first one initializes both ends.
+    """
+
+    max: PeakStat = field(default_factory=PeakStat)
+    min: PeakStat = field(default_factory=PeakStat)
+
+    def observe(self, value: float, partition_id: int) -> None:
+        if self.max.value is None or value > self.max.value:
+            self.max = PeakStat(value=value, partition_id=partition_id)
+        if self.min.value is None or value < self.min.value:
+            self.min = PeakStat(value=value, partition_id=partition_id)
+
+
+@dataclass
+class OutputOverview:
+    """Totals for one output tag, and how far it drifted from the input it came from."""
+
+    output_object_count: int = 0
+    output_vertex_count: int = 0
+    object_count_diff_absolute: Optional[int] = None
+    object_count_diff_percentage: Optional[float] = None
+    vertex_count_diff_absolute: Optional[int] = None
+    vertex_count_diff_percentage: Optional[float] = None
+
+
+@dataclass
+class PercentageAccumulator:
+    """
+    Running sums of the per-partition percentage splits for one processing input.
+
+    Kept outside `ProcessingInputOverview` because these are intermediate values used
+    to compute the averages, and the overview is serialized verbatim to overview.json.
+    """
+
+    processing_object_percentage: float = 0
+    context_object_percentage: float = 0
+    processing_vertex_percentage: float = 0
+    context_vertex_percentage: float = 0
+
+
+@dataclass
+class ProcessingInputOverview:
+    """Whole-run totals, extremes, and averages for one processing input."""
+
+    input_object_count: int = 0
+    input_vertex_count: int = 0
+    partitions_with_object_present: int = 0
+    processing_object_count: MinMaxStat = field(default_factory=MinMaxStat)
+    processing_vertex_count: MinMaxStat = field(default_factory=MinMaxStat)
+    processing_object_percentage: MinMaxStat = field(default_factory=MinMaxStat)
+    context_object_percentage: MinMaxStat = field(default_factory=MinMaxStat)
+    avg_processing_object_percentage: Optional[float] = None
+    avg_context_object_percentage: Optional[float] = None
+    avg_processing_vertex_percentage: Optional[float] = None
+    avg_context_vertex_percentage: Optional[float] = None
+    outputs: Dict[str, OutputOverview] = field(default_factory=dict)
+
+
+@dataclass
+class RunConfigOverview:
+    """The settings this run was executed with."""
+
+    partition_method: core_config.PartitionMethod
+    search_distance_meters: int
+    search_distance_used: bool
+    max_elements_per_partition: int
+    run_partition_optimization: bool
+    final_partition_feature_count: Optional[int]
+    custom_partition_feature_used: bool
+
+
+@dataclass
+class PartitionSummary:
+    """How the work spread across partitions."""
+
+    total_partitions: int = 0
+    partitions_with_inputs: int = 0
+    partitions_skipped: int = 0
+    partition_id_highest_load: Optional[int] = None
+    highest_load_value: int = 0
+    average_load: Optional[float] = None
+
+
+@dataclass
+class RuntimeOverview:
+    """Wall-clock figures for the run."""
+
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    average_iteration_runtime_seconds: Optional[float] = None
+    max_iteration_runtime_seconds: Optional[float] = None
+    max_iteration_runtime_partition_id: Optional[int] = None
+
+
+@dataclass
+class ContextInputsSummary:
+    """Context-input totals, including what the pre-filtering step saved."""
+
+    total_processed_objects: int = 0
+    total_processed_vertices: int = 0
+    total_objects_saved_by_optimization: Optional[int] = None
+    total_processing_input_context_objects: int = 0
+    total_processing_input_context_vertices: int = 0
+
+
+@dataclass
+class OverviewCatalog:
+    """The full run report, serialized to overview.json at the end of the run."""
+
+    run_config: RunConfigOverview
+    partition_summary: PartitionSummary = field(default_factory=PartitionSummary)
+    runtime: RuntimeOverview = field(default_factory=RuntimeOverview)
+    context_inputs_summary: ContextInputsSummary = field(
+        default_factory=ContextInputsSummary
+    )
+    processing_inputs: Dict[str, ProcessingInputOverview] = field(default_factory=dict)
 
 
 class PartitionIterator:
@@ -40,15 +237,21 @@ class PartitionIterator:
 
     # Catalogs
     The iterator maintains three dictionaries:
-      - `input_catalog`: per *object* (dataset name) stores metadata and the global input
-        paths; populated from `PartitionIOConfig`.
+      - `input_catalog`: per *object* (dataset name) holds a `PreparedInput` record with
+        the configured source path, the active (possibly pre-filtered) path, and counts;
+        populated from `PartitionIOConfig`.
       - `output_catalog`: per object stores final output paths; populated from
-        `PartitionIOConfig`.
-      - `iteration_catalog`: per partition, per object, stores iteration-specific paths
-        (e.g., the selected subset path, produced outputs) and counts.
+        `PartitionIOConfig`. Per-output settings live on `output_entries` instead,
+        since this layout only holds tag-to-path pairs.
+      - `iteration_paths`: per partition, per object, the iteration-scoped paths
+        (the selected subset, plus any tags injected methods allocate). Open-ended:
+        injected methods may introduce new tags and new objects at runtime.
+      - `iteration_stats`: per partition, per object, a `PartitionStats` record of
+        counts. Fixed schema, unlike `iteration_paths`, which is why the two are
+        kept apart; `_iteration_catalog_snapshot()` merges them for the JSON log.
 
     The following keys are used inside catalogs:
-      - `INPUT_TYPE_KEY` / `DATA_TYPE_KEY`: metadata about each object’s role and data type.
+      - `DATA_TYPE_KEY`: metadata about each object’s data type.
       - `INPUT_KEY`: the canonical tag for the active input path of an object.
       - `COUNT`: number of selected features this iteration.
       - `DUMMY`: a dummy feature path used to keep downstream logic stable when a
@@ -65,10 +268,10 @@ class PartitionIterator:
     - `InjectIO(obj, some_tag)` where `some_tag != "input"` resolves to a **new, unique
         iteration-scoped path** under the iteration work directory. If no such entry exists
         yet for `(obj, some_tag)`, the iterator creates and registers it in the
-        `iteration_catalog[obj][some_tag]`. Your injected method is expected to write to it.
+        `iteration_paths[obj][some_tag]`. Your injected method is expected to write to it.
     - You may introduce **new tags for an existing object** (e.g., `"buffer"`, `"cleaned"`)
         or even **new objects** via `InjectIO(new_object, new_tag)`. The iterator will allocate
-        paths and track them in `iteration_catalog` as those tags/objects appear in params.
+        paths and track them in `iteration_paths` as those tags/objects appear in params.
 
     Resolution & execution flow:
     1. `resolve_injected_io_for_methods(...)` deep-walks params (dataclasses, dicts, lists,
@@ -142,23 +345,9 @@ class PartitionIterator:
         iterator.run()
     """
 
-    INPUT_TYPE_KEY = "input_type"
     DATA_TYPE_KEY = "data_type"
     INPUT_KEY = "input"
-    DUMMY = "dummy"
-    COUNT = "count"
-    VERTEX_COUNT = "vertex_count"
     PARTITION_ID_FIELD = "partition_id"
-    PROCESSING_OBJECT_COUNT = "processing_object_count"
-    CONTEXT_OBJECT_COUNT = "context_object_count"
-    PROCESSING_VERTEX_COUNT = "processing_vertex_count"
-    CONTEXT_VERTEX_COUNT = "context_vertex_count"
-    PROCESSING_OBJECT_PERCENTAGE = "processing_object_percentage"
-    CONTEXT_OBJECT_PERCENTAGE = "context_object_percentage"
-    PROCESSING_VERTEX_PERCENTAGE = "processing_vertex_percentage"
-    CONTEXT_VERTEX_PERCENTAGE = "context_vertex_percentage"
-    PRE_OPTIMIZATION_COUNT = "pre_optimization_count"
-    REDUCED_COUNT = "reduced_count"
     PARTITION_FIELD = "partition_selection_field"
 
     def __init__(
@@ -184,17 +373,18 @@ class PartitionIterator:
             work_file_manager_config: Controls generation of temp/iteration/persistent paths.
         """
 
-        self.input_catalog: Dict[str, Dict[str, Any]] = {}
+        self.input_catalog: Dict[str, PreparedInput] = {}
         self.output_catalog: Dict[str, Dict[str, Any]] = {}
-        self.iteration_catalog: Dict[str, Dict[str, Any]] = {}
+        self.iteration_paths: Dict[str, Dict[str, str]] = {}
+        self.iteration_stats: Dict[str, PartitionStats] = {}
 
         input_entries_resolved = [
             core_config.ResolvedInputEntry(
                 object=e.object,
                 tag=e.tag,
                 path=e.path,
-                input_type=e.input_type.value,
-                data_type=e.data_type.value,
+                input_type=e.input_type,
+                data_type=e.data_type,
             )
             for e in partition_io_config.input_config.entries
         ]
@@ -204,7 +394,8 @@ class PartitionIterator:
                 object=e.object,
                 tag=e.tag,
                 path=e.path,
-                data_type=e.data_type.value,
+                data_type=e.data_type,
+                extraction_method=e.extraction_method,
             )
             for e in partition_io_config.output_config.entries
         ]
@@ -218,6 +409,7 @@ class PartitionIterator:
             entries=output_entries_resolved,
             target_dict=self.output_catalog,
         )
+        self.output_entries = output_entries_resolved
 
         self.documentation_directory = partition_io_config.documentation_directory
 
@@ -232,12 +424,19 @@ class PartitionIterator:
         self.run_partition_optimization = (
             partition_iterator_run_config.run_partition_optimization
         )
-        self.partition_method: Literal["FEATURES", "VERTICES"] = (
-            partition_iterator_run_config.partition_method.value
+        self.partition_method: core_config.PartitionMethod = (
+            partition_iterator_run_config.partition_method
         )
+        self.custom_partition_feature = partition_io_config.custom_partition_feature
+        self.use_custom_partition_feature = self.custom_partition_feature is not None
+        if self.use_custom_partition_feature and self.run_partition_optimization:
+            raise ValueError(
+                "run_partition_optimization=True is incompatible with a custom "
+                "partition feature; optimization only exists to generate partitions."
+            )
 
         self.max_partition_count: int = 1
-        self.final_partition_feature_count: int
+        self.final_partition_feature_count: Optional[int] = None
         self.error_log = {}
 
         # PartitionIterator currently needs particular configuration for work files, at some steps
@@ -263,11 +462,16 @@ class PartitionIterator:
             config=iteration_config
         )
 
-        self.partition_feature = (
-            self.work_file_manager_partition_feature.generate_partition_path(
-                object_name="partition_feature",
+        custom_path = self.custom_partition_feature
+        if custom_path is not None:
+            self._validate_custom_partition_feature(custom_path)
+            self.partition_feature = custom_path
+        else:
+            self.partition_feature = (
+                self.work_file_manager_partition_feature.generate_partition_path(
+                    object_name="partition_feature",
+                )
             )
-        )
         self.partition_features_all = (
             self.work_file_manager_partition_feature.generate_partition_path(
                 object_name="partition_features_all",
@@ -279,36 +483,33 @@ class PartitionIterator:
         self.iteration_start_time: float
         self._last_injected_log = None
 
-        self.overview_catalog: Dict[str, Any] = {}
         self._overview_partition_loads: List[float] = []
-        self._overview_pct_accumulators: Dict[str, Dict[str, float]] = {}
+        self._overview_pct_accumulators: Dict[str, PercentageAccumulator] = {}
+        # Built here so the catalog is never None; partition_iteration rebuilds it once
+        # the partition counts it reports are actually known.
+        self._initialize_overview_catalog()
 
     def resolve_partition_input_config(
         self,
         entries: List[core_config.ResolvedInputEntry],
-        target_dict: Dict[str, Dict[str, str]],
+        target_dict: Dict[str, PreparedInput],
     ) -> None:
         """
-        Add resolved input entries to `target_dict`.
+        Add resolved input entries to `target_dict` as `PreparedInput` records.
 
         Ensures each object appears only once; raises on duplicates.
         """
-        seen_objects = set()
         for entry in entries:
-            if entry.object in seen_objects or entry.object in target_dict:
+            if entry.object in target_dict:
                 raise ValueError(
                     f"Duplicate input object: '{entry.object}' is not supported"
                 )
-            entry_dict = target_dict.setdefault(entry.object, {})
-            entry_dict[self.INPUT_TYPE_KEY] = entry.input_type
-            entry_dict[self.DATA_TYPE_KEY] = entry.data_type
-            entry_dict[entry.tag] = entry.path
-            seen_objects.add(entry.object)
+            target_dict[entry.object] = PreparedInput.from_resolved(entry)
 
     def resolve_partition_output_config(
         self,
         entries: List[core_config.ResolvedOutputEntry],
-        target_dict: Dict[str, Dict[str, str]],
+        target_dict: Dict[str, Dict[str, Any]],
     ) -> None:
         """
         Add resolved output entries to `target_dict`.
@@ -325,6 +526,23 @@ class PartitionIterator:
             entry_dict[self.DATA_TYPE_KEY] = entry.data_type
             entry_dict[entry.tag] = entry.path
 
+    def _validate_custom_partition_feature(self, path: str) -> None:
+        """
+        Validate that a user-supplied custom partition feature is a polygon.
+
+        Only the geometry type is checked. The caller is responsible for providing a
+        topologically correct feature class with contiguous OBJECTIDs (1..N), since the
+        iteration loop selects partitions by `object_id_field = partition_id` over
+        `range(1, count + 1)`. Feature count, overlaps, and topology are not validated.
+        """
+        if not arcpy.Exists(path):
+            raise ValueError(f"Custom partition feature does not exist: {path}")
+        shape_type = arcpy.Describe(path).shapeType
+        if shape_type != "Polygon":
+            raise ValueError(
+                f"Custom partition feature must be a polygon, got '{shape_type}': {path}"
+            )
+
     def _create_cartographic_partitions(self, element_limit: int) -> None:
         """
         Creates cartographic partitions based on the given element_limit.
@@ -333,13 +551,10 @@ class PartitionIterator:
         self.work_file_manager_partition_feature.delete_created_files(
             exceptions=[self.partition_features_all]
         )
-        VALID_TAGS = {self.INPUT_KEY}
-
         in_features = [
-            path
-            for object_, tag_dict in self.input_catalog.items()
-            for tag, path in tag_dict.items()
-            if tag in VALID_TAGS and path is not None
+            prepared.active_path
+            for prepared in self.input_catalog.values()
+            if prepared.active_path is not None
         ]
 
         if not in_features:
@@ -350,7 +565,7 @@ class PartitionIterator:
             in_features=in_features,
             out_features=self.partition_feature,
             feature_count=element_limit,
-            partition_method=self.partition_method,
+            partition_method=self.partition_method.value,
         )
         print(f"Created partition feature: {self.partition_feature}")
 
@@ -361,14 +576,9 @@ class PartitionIterator:
         FEATURES: sum of feature counts across all catalog entries.
         VERTICES: sum of vertex counts across all catalog entries.
         """
-        if self.partition_method == "VERTICES":
-            return sum(
-                entry.get(self.VERTEX_COUNT, 0)
-                for entry in self.iteration_catalog.values()
-            )
-        return sum(
-            entry.get(self.COUNT, 0) for entry in self.iteration_catalog.values()
-        )
+        if self.partition_method is core_config.PartitionMethod.VERTICES:
+            return sum(stats.vertex_count for stats in self.iteration_stats.values())
+        return sum(stats.count for stats in self.iteration_stats.values())
 
     def _count_maximum_objects_in_partition(self) -> int:
         """
@@ -390,7 +600,7 @@ class PartitionIterator:
         max_partition_load = 0
 
         for partition_id in range(1, self.max_partition_count + 1):
-            self.iteration_catalog = {}
+            self._reset_iteration_catalogs()
             iteration_partition = (
                 self.work_file_manager_iteration_files.generate_partition_path(
                     object_name="partition_feature_iteration_selection",
@@ -503,15 +713,13 @@ class PartitionIterator:
             file_utilities.delete_feature(input_feature=file_path)
             print(f"Deleted file: {file_path}")
 
-    def create_dummy_features(self, tag: str) -> None:
+    def create_dummy_features(self) -> None:
         """
-        Create dummy feature classes for all objects that have a valid path
-        under the given tag. Used to provide stable placeholder inputs when
-        a partition produces no features.
+        Create an empty dummy feature class per input, matching its active path's schema.
+        Used to provide stable placeholder inputs when a partition produces no features.
         """
-        for object_key, tag_dict in self.input_catalog.items():
-            template_path = tag_dict.get(tag)
-            if not template_path:
+        for object_key, prepared in self.input_catalog.items():
+            if not prepared.active_path:
                 continue
 
             dummy_feature_path = (
@@ -522,9 +730,9 @@ class PartitionIterator:
             )
 
             file_utilities.create_feature_class(
-                template_feature=template_path, new_feature=dummy_feature_path
+                template_feature=prepared.active_path, new_feature=dummy_feature_path
             )
-            self.input_catalog[object_key][self.DUMMY] = dummy_feature_path
+            prepared.dummy_path = dummy_feature_path
 
     def update_empty_object_tag_with_dummy_file(
         self, object_key: str, tag: str
@@ -532,18 +740,11 @@ class PartitionIterator:
         """
         Replaces the value for the given tag with the dummy path if available for the object_key.
         """
-        tag_dict = self.input_catalog.get(object_key)
-        if tag_dict is None:
+        prepared = self.input_catalog.get(object_key)
+        if prepared is None or prepared.dummy_path is None:
             return
 
-        dummy_path = tag_dict.get(self.DUMMY)
-        if dummy_path is None:
-            return
-
-        if tag not in tag_dict:
-            return
-
-        self.iteration_catalog[object_key][tag] = dummy_path
+        self.iteration_paths[object_key][tag] = prepared.dummy_path
 
     def _reset_documentation_dir(self) -> None:
         """
@@ -564,23 +765,29 @@ class PartitionIterator:
         docu_dir_path.mkdir(parents=True, exist_ok=True)
 
     def write_documentation(
-        self, name: str, dict_data: dict, sub_dir: Optional[str] = None
+        self, name: str, dict_data: Any, sub_dir: Optional[str] = None
     ) -> None:
         """
         Writes a JSON file to documentation_directory or its subdirectory.
         Ensures the destination directory exists.
+
+        The payload is passed through `_jsonify`, so callers may hand over dataclass
+        records (or catalogs holding them) rather than pre-flattened dicts.
         """
         base_dir = self.documentation_directory
         out_dir = os.path.join(base_dir, sub_dir) if sub_dir else base_dir
         os.makedirs(out_dir, exist_ok=True)
 
         json_path = os.path.join(out_dir, f"{name}.json")
-        file_utilities.write_dict_to_json(path=json_path, dict_data=dict_data)
+        file_utilities.write_dict_to_json(
+            path=json_path, dict_data=self._jsonify(dict_data)
+        )
 
     def _jsonify(self, obj: Any) -> Any:
         """
         Make params JSON-safe:
         - dataclasses -> asdict
+        - enums -> their value
         - Path -> str
         - sets -> lists
         - dict/list/tuple -> recurse
@@ -588,6 +795,8 @@ class PartitionIterator:
         """
         if is_dataclass(obj) and not isinstance(obj, type):
             return self._jsonify(asdict(obj))
+        if isinstance(obj, Enum):
+            return obj.value
         if isinstance(obj, Path):
             return str(obj)
         if isinstance(obj, dict):
@@ -605,51 +814,56 @@ class PartitionIterator:
         """
         self.max_partition_count = file_utilities.count_objects(self.partition_feature)
 
-    def _is_vector_of_type(
-        self, tag_dict: dict, input_type: core_config.InputType
-    ) -> bool:
-        """
-        Return True iff `tag_dict` represents a vector dataset of the given `input_type`
-        (PROCESSING or CONTEXT) and has an active `INPUT_KEY` path.
-        """
-        return (
-            tag_dict.get(self.INPUT_TYPE_KEY) == input_type.value
-            and tag_dict.get(self.DATA_TYPE_KEY) == core_config.DataType.VECTOR.value
-            and self.INPUT_KEY in tag_dict
-        )
+    def _reset_iteration_catalogs(self) -> None:
+        """Drop all per-partition paths and stats before starting a partition."""
+        self.iteration_paths = {}
+        self.iteration_stats = {}
 
-    def _processing_items(self) -> Iterator[Tuple[str, str]]:
+    def _iteration_catalog_snapshot(self) -> Dict[str, Dict[str, Any]]:
         """
-        Yield (object_key, input_path) for all PROCESSING vector inputs present in `input_catalog`.
-        """
-        for object_key, tag in self.input_catalog.items():
-            if self._is_vector_of_type(
-                tag_dict=tag, input_type=core_config.InputType.PROCESSING
-            ):
-                yield object_key, tag[self.INPUT_KEY]
+        Merge `iteration_paths` and `iteration_stats` into one per-object view.
 
-    def _context_items(self) -> Iterator[Tuple[str, str]]:
+        Only used for the `catalog_{partition_id}.json` log, which reads better as a
+        single record per object than as two parallel structures.
         """
-        Yield (object_key, input_path) for all CONTEXT vector inputs present in `input_catalog`.
-        """
-        for object_key, tag in self.input_catalog.items():
-            if self._is_vector_of_type(
-                tag_dict=tag, input_type=core_config.InputType.CONTEXT
-            ):
-                yield object_key, tag[self.INPUT_KEY]
+        snapshot: Dict[str, Dict[str, Any]] = {}
+        for object_key in {*self.iteration_paths, *self.iteration_stats}:
+            entry: Dict[str, Any] = dict(self.iteration_paths.get(object_key, {}))
+            stats = self.iteration_stats.get(object_key)
+            if stats is not None:
+                entry.update(asdict(stats))
+            snapshot[object_key] = entry
+        return snapshot
 
-    def _output_vector_items(self) -> Iterator[Tuple[str, str, str]]:
+    def _processing_items(self) -> Iterator[PreparedInput]:
         """
-        Yield (object_key, tag, final_output_path) for vector outputs only.
+        Yield every PROCESSING vector input in `input_catalog`.
+        """
+        for prepared in self.input_catalog.values():
+            if prepared.is_vector_of_type(core_config.InputType.PROCESSING):
+                yield prepared
+
+    def _context_items(self) -> Iterator[PreparedInput]:
+        """
+        Yield every CONTEXT vector input in `input_catalog`.
+        """
+        for prepared in self.input_catalog.values():
+            if prepared.is_vector_of_type(core_config.InputType.CONTEXT):
+                yield prepared
+
+    def _output_vector_items(self) -> Iterator[core_config.ResolvedOutputEntry]:
+        """
+        Yield the resolved entry for vector outputs only.
         Mirrors _processing_items/_context_items for consistency.
+
+        Iterates `output_entries` rather than `output_catalog`, since per-output
+        settings (like `extraction_method`) have no place in the catalog's
+        tag-to-path layout.
         """
-        for object_key, tag_dict in self.output_catalog.items():
-            if tag_dict.get(self.DATA_TYPE_KEY) != core_config.DataType.VECTOR.value:
+        for entry in self.output_entries:
+            if entry.data_type is not core_config.DataType.VECTOR:
                 continue
-            for tag, final_output_path in tag_dict.items():
-                if tag == self.DATA_TYPE_KEY:
-                    continue
-                yield object_key, tag, final_output_path
+            yield entry
 
     def prepare_input_data(self):
         """
@@ -659,25 +873,23 @@ class PartitionIterator:
         - Context inputs: either counted directly (if search_distance <= 0)
         or filtered to features within the search radius of processing inputs.
         """
-        for object_key, input_path in self._processing_items():
-            self._prepare_processing_input(object_key=object_key, input_path=input_path)
+        for prepared in self._processing_items():
+            self._prepare_processing_input(prepared=prepared)
 
-        for object_key, input_path in self._context_items():
-            self._prepare_context_input(object_key=object_key, input_path=input_path)
+        for prepared in self._context_items():
+            self._prepare_context_input(prepared=prepared)
 
-    def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
+    def _prepare_processing_input(self, prepared: PreparedInput) -> None:
         """
         Initialize a processing input for partitioning.
 
-        - Registers the input path and feature count in `input_catalog`.
+        - Records the feature count.
         - Deletes `PARTITION_FIELD` if it exists, then creates the field.
         - This helper field is required during partitioning and will later
         be removed by `cleanup_partition_fields` to restore clean inputs.
         """
-        self.input_catalog[object_key][self.INPUT_KEY] = input_path
-        self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
-            input_layer=input_path
-        )
+        input_path = prepared.active_path
+        prepared.count = file_utilities.count_objects(input_layer=input_path)
 
         existing_fields = {field.name for field in arcpy.ListFields(input_path)}
         if self.PARTITION_FIELD in existing_fields:
@@ -691,46 +903,45 @@ class PartitionIterator:
             field_type="LONG",
         )
 
-    def _prepare_context_input(self, object_key: str, input_path: str) -> None:
+    def _prepare_context_input(self, prepared: PreparedInput) -> None:
         """
         Initialize a context input for partitioning.
 
-        - If `search_distance <= 0`: registers the raw input and its feature count.
+        - If `search_distance <= 0`: keeps the raw input active and records its count.
         - Otherwise:
             * Creates a filtered copy of the input,
             * Selects features within `search_distance` of each processing input,
             * Appends them into the filtered dataset,
-            * Registers the filtered dataset and its feature count in `input_catalog`.
+            * Makes the filtered dataset the active path and records how much it saved.
         """
-        self.input_catalog[object_key][self.PRE_OPTIMIZATION_COUNT] = (
-            file_utilities.count_objects(input_layer=input_path)
+        input_path = prepared.source_path
+        prepared.pre_optimization_count = file_utilities.count_objects(
+            input_layer=input_path
         )
         if self.search_distance <= 0:
-            self.input_catalog[object_key][self.INPUT_KEY] = input_path
-            self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
-                input_layer=input_path
-            )
+            prepared.count = file_utilities.count_objects(input_layer=input_path)
             return
 
-        processing_input_objects: List[Tuple[str, str]] = list(self._processing_items())
+        processing_inputs = list(self._processing_items())
 
         filtered_context_path = (
             self.work_file_manager_persistent_files.generate_partition_path(
-                object_name=object_key, tag="input_contex_filtered"
+                object_name=prepared.object, tag="input_contex_filtered"
             )
         )
 
         file_utilities.create_feature_class(
             template_feature=input_path, new_feature=filtered_context_path
         )
-        for processing_object, path in processing_input_objects:
+        for processing_input in processing_inputs:
             memory_layer = self.work_file_manager_temp_files.generate_partition_path(
-                object_name=object_key, tag=f"near_{processing_object}_selection"
+                object_name=prepared.object,
+                tag=f"near_{processing_input.object}_selection",
             )
             custom_arcpy.select_location_and_make_feature_layer(
                 input_layer=input_path,
                 overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                select_features=path,
+                select_features=processing_input.active_path,
                 output_name=memory_layer,
                 search_distance=self.search_distance,
             )
@@ -742,14 +953,11 @@ class PartitionIterator:
             )
             self.work_file_manager_temp_files.delete_created_files()
 
-        self.input_catalog[object_key][self.INPUT_KEY] = filtered_context_path
-        self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
+        prepared.active_path = filtered_context_path
+        prepared.count = file_utilities.count_objects(
             input_layer=filtered_context_path
         )
-        self.input_catalog[object_key][self.REDUCED_COUNT] = (
-            self.input_catalog[object_key][self.PRE_OPTIMIZATION_COUNT]
-            - self.input_catalog[object_key][self.COUNT]
-        )
+        prepared.reduced_count = prepared.pre_optimization_count - prepared.count
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -778,14 +986,15 @@ class PartitionIterator:
             * Includes features within the search radius but not center-in,
             * Marks them with `PARTITION_FIELD = 0`,
             * Appends them to the same iteration dataset.
-        - Updates `iteration_catalog` with path and feature count.
+        - Updates `iteration_paths` and `iteration_stats` with path and feature count.
         - Creates a dummy feature if no features are found.
 
         Returns:
             bool: True if the partition contains any features for this object,
             False otherwise.
         """
-        iteration_entry = self.iteration_catalog.setdefault(object_key, {})
+        self.iteration_paths.setdefault(object_key, {})
+        stats = self.iteration_stats.setdefault(object_key, PartitionStats())
 
         selection_memory_path = (
             self.work_file_manager_temp_files.generate_partition_path(
@@ -805,8 +1014,8 @@ class PartitionIterator:
         center_count = file_utilities.count_objects(selection_memory_path)
 
         if center_count == 0:
-            iteration_entry[self.COUNT] = center_count
-            iteration_entry[self.VERTEX_COUNT] = 0
+            stats.count = center_count
+            stats.vertex_count = 0
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
@@ -868,13 +1077,13 @@ class PartitionIterator:
                 schema_type="NO_TEST",
             )
 
-        iteration_entry[self.COUNT] = (
+        stats.count = (
             file_utilities.count_objects(input_layer=output_path)
             if self.search_distance > 0
             else center_count
         )
-        iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(output_path)
-        iteration_entry[self.INPUT_KEY] = output_path
+        stats.vertex_count = file_utilities.count_vertices(output_path)
+        self.iteration_paths[object_key][self.INPUT_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
 
@@ -895,10 +1104,10 @@ class PartitionIterator:
             False if all were empty.
         """
 
-        for object_key, input_path in self._processing_items():
+        for prepared in self._processing_items():
             result = self.process_single_processing_input(
-                object_key=object_key,
-                input_path=input_path,
+                object_key=prepared.object,
+                input_path=prepared.active_path,
                 iteration_partition=iteration_partition,
                 partition_id=partition_id,
             )
@@ -920,13 +1129,14 @@ class PartitionIterator:
         How:
         - Selects features within `search_distance` of the partition geometry.
         - Writes the selection to an iteration-scoped dataset.
-        - Updates `iteration_catalog` with feature count and path.
+        - Updates `iteration_paths` and `iteration_stats` with path and feature count.
         - If no features are found, assigns a dummy feature path.
 
         Side effects:
-            Creates/deletes temporary feature classes and updates `iteration_catalog`.
+            Creates/deletes temporary feature classes and updates the iteration catalogs.
         """
-        iteration_entry = self.iteration_catalog.setdefault(object_key, {})
+        self.iteration_paths.setdefault(object_key, {})
+        stats = self.iteration_stats.setdefault(object_key, PartitionStats())
         output_path = self.work_file_manager_iteration_files.generate_partition_path(
             object_name=object_key,
             partition_id=partition_id,
@@ -945,16 +1155,14 @@ class PartitionIterator:
         count = file_utilities.count_objects(output_path)
 
         if count > 0:
-            iteration_entry[self.INPUT_KEY] = output_path
-            iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(
-                output_path
-            )
+            self.iteration_paths[object_key][self.INPUT_KEY] = output_path
+            stats.vertex_count = file_utilities.count_vertices(output_path)
         else:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
-            iteration_entry[self.VERTEX_COUNT] = 0
-        iteration_entry[self.COUNT] = count
+            stats.vertex_count = 0
+        stats.count = count
 
     def process_all_context_inputs(
         self,
@@ -965,40 +1173,15 @@ class PartitionIterator:
         Process all configured context inputs for one partition.
 
         Calls `process_single_context_input` for each context object
-        and records results in `iteration_catalog`.
+        and records results in the iteration catalogs.
         """
-        for object_key, input_path in self._context_items():
+        for prepared in self._context_items():
             self.process_single_context_input(
-                object_key=object_key,
-                input_path=input_path,
+                object_key=prepared.object,
+                input_path=prepared.active_path,
                 iteration_partition=iteration_partition,
                 partition_id=partition_id,
             )
-
-    @staticmethod
-    def _empty_stat() -> dict:
-        return {"value": None, "partition_id": None}
-
-    def _zero_fill_processing_split_metadata(self, iteration_entry: dict) -> None:
-        for key in [
-            self.PROCESSING_OBJECT_COUNT,
-            self.CONTEXT_OBJECT_COUNT,
-            self.PROCESSING_VERTEX_COUNT,
-            self.CONTEXT_VERTEX_COUNT,
-            self.PROCESSING_OBJECT_PERCENTAGE,
-            self.CONTEXT_OBJECT_PERCENTAGE,
-            self.PROCESSING_VERTEX_PERCENTAGE,
-            self.CONTEXT_VERTEX_PERCENTAGE,
-        ]:
-            iteration_entry[key] = 0
-
-    def _update_stat_max_min(
-        self, entry: dict, key_max: str, key_min: str, value: float, partition_id: int
-    ) -> None:
-        if entry[key_max]["value"] is None or value > entry[key_max]["value"]:
-            entry[key_max] = {"value": value, "partition_id": partition_id}
-        if entry[key_min]["value"] is None or value < entry[key_min]["value"]:
-            entry[key_min] = {"value": value, "partition_id": partition_id}
 
     def _collect_single_processing_input_metadata(
         self, object_key: str, partition_id: int
@@ -1008,16 +1191,17 @@ class PartitionIterator:
 
         Uses PARTITION_FIELD (1 = processing, 0 = context) to make two attribute
         selections on the iteration path, then counts objects and vertices for each.
-        Results are written into iteration_catalog for the given object_key.
-        """
-        iteration_entry = self.iteration_catalog.get(object_key, {})
+        Results are written into iteration_stats for the given object_key.
 
-        if iteration_entry.get(self.COUNT, 0) == 0:
-            self._zero_fill_processing_split_metadata(iteration_entry)
+        A partition where the object had no features keeps the zeroed defaults.
+        """
+        stats = self.iteration_stats.get(object_key)
+
+        if stats is None or stats.count == 0:
             return
 
-        iteration_path = iteration_entry[self.INPUT_KEY]
-        total_count = iteration_entry[self.COUNT]
+        iteration_path = self.iteration_paths[object_key][self.INPUT_KEY]
+        total_count = stats.count
 
         processing_layer = f"partition_{partition_id}_{object_key}_processing_lyr"
         context_layer = f"partition_{partition_id}_{object_key}_context_lyr"
@@ -1041,24 +1225,22 @@ class PartitionIterator:
         arcpy.Delete_management(processing_layer)
         arcpy.Delete_management(context_layer)
 
-        iteration_entry[self.PROCESSING_OBJECT_COUNT] = processing_count
-        iteration_entry[self.CONTEXT_OBJECT_COUNT] = context_count
-        iteration_entry[self.PROCESSING_VERTEX_COUNT] = processing_vertices
-        iteration_entry[self.CONTEXT_VERTEX_COUNT] = context_vertices
+        stats.processing_object_count = processing_count
+        stats.context_object_count = context_count
+        stats.processing_vertex_count = processing_vertices
+        stats.context_vertex_count = context_vertices
         total_vertices = processing_vertices + context_vertices
 
-        iteration_entry[self.PROCESSING_OBJECT_PERCENTAGE] = round(
+        stats.processing_object_percentage = round(
             processing_count / total_count * 100, 2
         )
-        iteration_entry[self.CONTEXT_OBJECT_PERCENTAGE] = round(
-            context_count / total_count * 100, 2
-        )
-        iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = (
+        stats.context_object_percentage = round(context_count / total_count * 100, 2)
+        stats.processing_vertex_percentage = (
             round(processing_vertices / total_vertices * 100, 2)
             if total_vertices > 0
             else 0
         )
-        iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = (
+        stats.context_vertex_percentage = (
             round(context_vertices / total_vertices * 100, 2)
             if total_vertices > 0
             else 0
@@ -1069,11 +1251,11 @@ class PartitionIterator:
         Collect processing/context split metadata for all processing inputs.
 
         Calls _collect_single_processing_input_metadata for each processing object
-        in the iteration_catalog. Mirrors the process_single_X / process_all_X pattern.
+        in the iteration catalogs. Mirrors the process_single_X / process_all_X pattern.
         """
-        for object_key, _ in self._processing_items():
+        for prepared in self._processing_items():
             self._collect_single_processing_input_metadata(
-                object_key=object_key,
+                object_key=prepared.object,
                 partition_id=partition_id,
             )
 
@@ -1085,175 +1267,108 @@ class PartitionIterator:
         top-level sections for run_config, partition_summary, and runtime.
         Accumulators for averages are kept as instance variables, not in the JSON structure.
         """
-        processing_inputs = {}
-        for object_key, _ in self._processing_items():
-            outputs = {}
-            tag_dict = self.output_catalog.get(object_key, {})
-            for tag in tag_dict:
-                if tag == self.DATA_TYPE_KEY:
-                    continue
-                outputs[tag] = {
-                    "output_object_count": 0,
-                    "output_vertex_count": 0,
+        processing_inputs = {
+            prepared.object: ProcessingInputOverview(
+                outputs={
+                    entry.tag: OutputOverview()
+                    for entry in self._output_vector_items()
+                    if entry.object == prepared.object
                 }
-            processing_inputs[object_key] = {
-                "input_object_count": 0,
-                "input_vertex_count": 0,
-                "partitions_with_object_present": 0,
-                "max_processing_object_count": self._empty_stat(),
-                "min_processing_object_count": self._empty_stat(),
-                "max_processing_vertex_count": self._empty_stat(),
-                "min_processing_vertex_count": self._empty_stat(),
-                "max_processing_object_percentage": self._empty_stat(),
-                "min_processing_object_percentage": self._empty_stat(),
-                "max_context_object_percentage": self._empty_stat(),
-                "min_context_object_percentage": self._empty_stat(),
-                "outputs": outputs,
-            }
-
-        self.overview_catalog = {
-            "run_config": {
-                "partition_method": self.partition_method,
-                "search_distance_meters": self.search_distance,
-                "search_distance_used": self.search_distance > 0,
-                "max_elements_per_partition": self.max_elements_per_partition,
-                "run_partition_optimization": self.run_partition_optimization,
-                "final_partition_feature_count": self.final_partition_feature_count,
-            },
-            "partition_summary": {
-                "total_partitions": self.max_partition_count,
-                "partitions_with_inputs": 0,
-                "partitions_skipped": 0,
-                "partition_id_highest_load": None,
-                "highest_load_value": 0,
-                "average_load": None,
-            },
-            "runtime": {
-                "start_time": datetime.now().isoformat(),
-                "end_time": None,
-                "average_iteration_runtime_seconds": None,
-                "max_iteration_runtime_seconds": None,
-                "max_iteration_runtime_partition_id": None,
-            },
-            "context_inputs_summary": {
-                "total_processed_objects": 0,
-                "total_processed_vertices": 0,
-                "total_objects_saved_by_optimization": None,
-                "total_processing_input_context_objects": 0,
-                "total_processing_input_context_vertices": 0,
-            },
-            "processing_inputs": processing_inputs,
+            )
+            for prepared in self._processing_items()
         }
+
+        self.overview_catalog = OverviewCatalog(
+            run_config=RunConfigOverview(
+                partition_method=self.partition_method,
+                search_distance_meters=self.search_distance,
+                search_distance_used=self.search_distance > 0,
+                max_elements_per_partition=self.max_elements_per_partition,
+                run_partition_optimization=self.run_partition_optimization,
+                final_partition_feature_count=self.final_partition_feature_count,
+                custom_partition_feature_used=self.use_custom_partition_feature,
+            ),
+            partition_summary=PartitionSummary(
+                total_partitions=self.max_partition_count
+            ),
+            runtime=RuntimeOverview(start_time=datetime.now().isoformat()),
+            processing_inputs=processing_inputs,
+        )
 
         self._overview_partition_loads = []
         self._overview_pct_accumulators = {
-            object_key: {
-                "processing_object_percentage": 0.0,
-                "context_object_percentage": 0.0,
-                "processing_vertex_percentage": 0.0,
-                "context_vertex_percentage": 0.0,
-            }
-            for object_key in processing_inputs
+            object_key: PercentageAccumulator() for object_key in processing_inputs
         }
 
     def _update_partition_load_overview(self, partition_id: int) -> None:
         """Track partition load and update highest load in partition_summary."""
-        partition_summary = self.overview_catalog["partition_summary"]
-        partition_summary["partitions_with_inputs"] += 1
+        partition_summary = self.overview_catalog.partition_summary
+        partition_summary.partitions_with_inputs += 1
 
         current_load = self._total_partition_load()
         self._overview_partition_loads.append(current_load)
-        if current_load > partition_summary["highest_load_value"]:
-            partition_summary["highest_load_value"] = current_load
-            partition_summary["partition_id_highest_load"] = partition_id
+        if current_load > partition_summary.highest_load_value:
+            partition_summary.highest_load_value = current_load
+            partition_summary.partition_id_highest_load = partition_id
 
     def _update_processing_inputs_overview(self, partition_id: int) -> None:
         """Accumulate per-object counts, max/min stats, percentage accumulators,
-        and processing-input context totals from the current iteration_catalog."""
-        context_summary = self.overview_catalog["context_inputs_summary"]
+        and processing-input context totals from the current iteration_stats."""
+        context_summary = self.overview_catalog.context_inputs_summary
 
-        for object_key, _ in self._processing_items():
-            iteration_entry = self.iteration_catalog.get(object_key, {})
-            if iteration_entry.get(self.COUNT, 0) == 0:
+        for prepared in self._processing_items():
+            object_key = prepared.object
+            stats = self.iteration_stats.get(object_key)
+            if stats is None or stats.count == 0:
                 continue
 
-            obj_overview = self.overview_catalog["processing_inputs"][object_key]
-            obj_overview["partitions_with_object_present"] += 1
-            obj_overview["input_object_count"] += iteration_entry.get(
-                self.PROCESSING_OBJECT_COUNT, 0
-            )
-            obj_overview["input_vertex_count"] += iteration_entry.get(
-                self.PROCESSING_VERTEX_COUNT, 0
-            )
+            obj_overview = self.overview_catalog.processing_inputs[object_key]
+            obj_overview.partitions_with_object_present += 1
+            obj_overview.input_object_count += stats.processing_object_count
+            obj_overview.input_vertex_count += stats.processing_vertex_count
 
             acc = self._overview_pct_accumulators[object_key]
-            acc["processing_object_percentage"] += iteration_entry.get(
-                self.PROCESSING_OBJECT_PERCENTAGE, 0
-            )
-            acc["context_object_percentage"] += iteration_entry.get(
-                self.CONTEXT_OBJECT_PERCENTAGE, 0
-            )
-            acc["processing_vertex_percentage"] += iteration_entry.get(
-                self.PROCESSING_VERTEX_PERCENTAGE, 0
-            )
-            acc["context_vertex_percentage"] += iteration_entry.get(
-                self.CONTEXT_VERTEX_PERCENTAGE, 0
-            )
+            acc.processing_object_percentage += stats.processing_object_percentage
+            acc.context_object_percentage += stats.context_object_percentage
+            acc.processing_vertex_percentage += stats.processing_vertex_percentage
+            acc.context_vertex_percentage += stats.context_vertex_percentage
 
-            self._update_stat_max_min(
-                obj_overview,
-                "max_processing_object_count",
-                "min_processing_object_count",
-                iteration_entry.get(self.PROCESSING_OBJECT_COUNT, 0),
-                partition_id,
+            obj_overview.processing_object_count.observe(
+                stats.processing_object_count, partition_id
             )
-            self._update_stat_max_min(
-                obj_overview,
-                "max_processing_vertex_count",
-                "min_processing_vertex_count",
-                iteration_entry.get(self.PROCESSING_VERTEX_COUNT, 0),
-                partition_id,
+            obj_overview.processing_vertex_count.observe(
+                stats.processing_vertex_count, partition_id
             )
 
             if self.search_distance > 0:
-                self._update_stat_max_min(
-                    obj_overview,
-                    "max_processing_object_percentage",
-                    "min_processing_object_percentage",
-                    iteration_entry.get(self.PROCESSING_OBJECT_PERCENTAGE, 0),
-                    partition_id,
+                obj_overview.processing_object_percentage.observe(
+                    stats.processing_object_percentage, partition_id
                 )
-                self._update_stat_max_min(
-                    obj_overview,
-                    "max_context_object_percentage",
-                    "min_context_object_percentage",
-                    iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0),
-                    partition_id,
+                obj_overview.context_object_percentage.observe(
+                    stats.context_object_percentage, partition_id
                 )
 
-            context_summary[
-                "total_processing_input_context_objects"
-            ] += iteration_entry.get(self.CONTEXT_OBJECT_COUNT, 0)
-            context_summary[
-                "total_processing_input_context_vertices"
-            ] += iteration_entry.get(self.CONTEXT_VERTEX_COUNT, 0)
+            context_summary.total_processing_input_context_objects += (
+                stats.context_object_count
+            )
+            context_summary.total_processing_input_context_vertices += (
+                stats.context_vertex_count
+            )
 
     def _update_context_inputs_overview(self) -> None:
         """Accumulate object and vertex totals for context input datasets
-        from the current iteration_catalog."""
-        context_summary = self.overview_catalog["context_inputs_summary"]
-        for object_key, _ in self._context_items():
-            iteration_entry = self.iteration_catalog.get(object_key, {})
-            context_summary["total_processed_objects"] += iteration_entry.get(
-                self.COUNT, 0
-            )
-            context_summary["total_processed_vertices"] += iteration_entry.get(
-                self.VERTEX_COUNT, 0
-            )
+        from the current iteration_stats."""
+        context_summary = self.overview_catalog.context_inputs_summary
+        for prepared in self._context_items():
+            stats = self.iteration_stats.get(prepared.object)
+            if stats is None:
+                continue
+            context_summary.total_processed_objects += stats.count
+            context_summary.total_processed_vertices += stats.vertex_count
 
     def _update_overview_from_partition(self, partition_id: int) -> None:
         """
-        Accumulate all per-partition data from iteration_catalog into overview_catalog.
+        Accumulate all per-partition data from iteration_stats into overview_catalog.
 
         Called after _collect_processing_input_metadata so all metadata is populated.
         """
@@ -1263,10 +1378,10 @@ class PartitionIterator:
 
     def _finalize_runtime_overview(self) -> None:
         """Set end_time and compute average iteration runtime."""
-        runtime = self.overview_catalog["runtime"]
-        runtime["end_time"] = datetime.now().isoformat()
+        runtime = self.overview_catalog.runtime
+        runtime.end_time = datetime.now().isoformat()
         if self.iteration_times_with_input:
-            runtime["average_iteration_runtime_seconds"] = round(
+            runtime.average_iteration_runtime_seconds = round(
                 sum(self.iteration_times_with_input)
                 / len(self.iteration_times_with_input),
                 3,
@@ -1275,59 +1390,53 @@ class PartitionIterator:
     def _finalize_partition_summary_overview(self) -> None:
         """Compute average partition load."""
         if self._overview_partition_loads:
-            self.overview_catalog["partition_summary"]["average_load"] = round(
+            self.overview_catalog.partition_summary.average_load = round(
                 sum(self._overview_partition_loads)
                 / len(self._overview_partition_loads),
                 2,
             )
 
     def _finalize_context_inputs_overview(self) -> None:
-        """Sum REDUCED_COUNT from input_catalog to populate total_objects_saved_by_optimization."""
-        self.overview_catalog["context_inputs_summary"][
-            "total_objects_saved_by_optimization"
-        ] = sum(
-            tag_dict.get(self.REDUCED_COUNT, 0)
-            for _, tag_dict in self.input_catalog.items()
-            if self._is_vector_of_type(
-                tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT
-            )
+        """Sum per-context-input reductions into total_objects_saved_by_optimization."""
+        self.overview_catalog.context_inputs_summary.total_objects_saved_by_optimization = sum(
+            prepared.reduced_count or 0 for prepared in self._context_items()
         )
 
     def _finalize_processing_inputs_overview(self) -> None:
         """Compute per-object averages and output diffs."""
-        for object_key, obj_overview in self.overview_catalog[
-            "processing_inputs"
-        ].items():
-            n = obj_overview["partitions_with_object_present"]
-            acc = self._overview_pct_accumulators.get(object_key, {})
-
-            obj_overview["avg_processing_object_percentage"] = (
-                round(acc["processing_object_percentage"] / n, 2) if n > 0 else None
-            )
-            obj_overview["avg_context_object_percentage"] = (
-                round(acc["context_object_percentage"] / n, 2) if n > 0 else None
-            )
-            obj_overview["avg_processing_vertex_percentage"] = (
-                round(acc["processing_vertex_percentage"] / n, 2) if n > 0 else None
-            )
-            obj_overview["avg_context_vertex_percentage"] = (
-                round(acc["context_vertex_percentage"] / n, 2) if n > 0 else None
+        for object_key, obj_overview in self.overview_catalog.processing_inputs.items():
+            n = obj_overview.partitions_with_object_present
+            acc = self._overview_pct_accumulators.get(
+                object_key, PercentageAccumulator()
             )
 
-            input_obj = obj_overview["input_object_count"]
-            input_vtx = obj_overview["input_vertex_count"]
+            obj_overview.avg_processing_object_percentage = (
+                round(acc.processing_object_percentage / n, 2) if n > 0 else None
+            )
+            obj_overview.avg_context_object_percentage = (
+                round(acc.context_object_percentage / n, 2) if n > 0 else None
+            )
+            obj_overview.avg_processing_vertex_percentage = (
+                round(acc.processing_vertex_percentage / n, 2) if n > 0 else None
+            )
+            obj_overview.avg_context_vertex_percentage = (
+                round(acc.context_vertex_percentage / n, 2) if n > 0 else None
+            )
 
-            for tag_entry in obj_overview["outputs"].values():
-                out_obj = tag_entry["output_object_count"]
-                out_vtx = tag_entry["output_vertex_count"]
-                tag_entry["object_count_diff_absolute"] = out_obj - input_obj
-                tag_entry["object_count_diff_percentage"] = (
+            input_obj = obj_overview.input_object_count
+            input_vtx = obj_overview.input_vertex_count
+
+            for tag_entry in obj_overview.outputs.values():
+                out_obj = tag_entry.output_object_count
+                out_vtx = tag_entry.output_vertex_count
+                tag_entry.object_count_diff_absolute = out_obj - input_obj
+                tag_entry.object_count_diff_percentage = (
                     round((out_obj - input_obj) / input_obj * 100, 2)
                     if input_obj > 0
                     else None
                 )
-                tag_entry["vertex_count_diff_absolute"] = out_vtx - input_vtx
-                tag_entry["vertex_count_diff_percentage"] = (
+                tag_entry.vertex_count_diff_absolute = out_vtx - input_vtx
+                tag_entry.vertex_count_diff_percentage = (
                     round((out_vtx - input_vtx) / input_vtx * 100, 2)
                     if input_vtx > 0
                     else None
@@ -1353,16 +1462,15 @@ class PartitionIterator:
         iteration_time = time.time() - self.iteration_start_time
         if inputs_present:
             self.iteration_times_with_input.append(iteration_time)
-            if self.overview_catalog:
-                runtime = self.overview_catalog["runtime"]
-                if (
-                    runtime["max_iteration_runtime_seconds"] is None
-                    or iteration_time > runtime["max_iteration_runtime_seconds"]
-                ):
-                    runtime["max_iteration_runtime_seconds"] = round(iteration_time, 3)
-                    runtime["max_iteration_runtime_partition_id"] = object_id
-        elif self.overview_catalog:
-            self.overview_catalog["partition_summary"]["partitions_skipped"] += 1
+            runtime = self.overview_catalog.runtime
+            if (
+                runtime.max_iteration_runtime_seconds is None
+                or iteration_time > runtime.max_iteration_runtime_seconds
+            ):
+                runtime.max_iteration_runtime_seconds = round(iteration_time, 3)
+                runtime.max_iteration_runtime_partition_id = object_id
+        else:
+            self.overview_catalog.partition_summary.partitions_skipped += 1
 
         avg_runtime = (
             sum(self.iteration_times_with_input) / len(self.iteration_times_with_input)
@@ -1482,14 +1590,14 @@ class PartitionIterator:
     ) -> str:
         """Resolve a single `InjectIO` placeholder to a concrete path for this partition."""
         if inject.tag == self.INPUT_KEY and inject.object in self.input_catalog:
-            return self.iteration_catalog[inject.object][inject.tag]
+            return self.iteration_paths[inject.object][inject.tag]
 
         path = self.work_file_manager_resolved_files.generate_partition_path(
             object_name=inject.object,
             tag=inject.tag,
             partition_id=partition_id,
         )
-        self.iteration_catalog.setdefault(inject.object, {})[inject.tag] = path
+        self.iteration_paths.setdefault(inject.object, {})[inject.tag] = path
 
         return path
 
@@ -1665,7 +1773,7 @@ class PartitionIterator:
 
                 self.write_documentation(
                     name=f"method_log_{partition_id}",
-                    dict_data=self._jsonify(execution_log),
+                    dict_data=execution_log,
                     sub_dir=os.path.join("method_logs"),
                 )
                 return
@@ -1683,7 +1791,7 @@ class PartitionIterator:
 
                 self.write_documentation(
                     name=f"attempt_{attempt}_error",
-                    dict_data=self._jsonify(attempt_log),
+                    dict_data=attempt_log,
                     sub_dir=os.path.join("error_logs", f"error_{partition_id}"),
                 )
 
@@ -1736,69 +1844,114 @@ class PartitionIterator:
                 schema_type="NO_TEST",
             )
 
-    def _append_partition_selected_features(
+    def _extract_partition_output(
         self,
         object_key: str,
         tag: str,
         iteration_path: Any,
+        iteration_partition: str,
+        partition_id: int,
+        extraction_method: core_config.OutputExtractionMethod,
+    ) -> str:
+        """
+        Produce the per-partition slice of an iteration output to append to the final output.
+
+        The slice is built according to the output's own `extraction_method`:
+        - "selection": select whole features owned by this partition (PARTITION_FIELD = 1).
+        - "clip": clip the iteration output by the partition polygon (PairwiseClip). The full
+          iteration output is clipped; this does not depend on PARTITION_FIELD. Correctness
+          relies on the partition polygons not overlapping: generated cartographic partitions
+          satisfy this, a `custom_partition_feature` is only validated for geometry type.
+
+        Returns the path to a temporary (work-managed) feature holding the slice. The caller
+        is responsible for deleting temp files via the temp work file manager.
+        """
+        if extraction_method is core_config.OutputExtractionMethod.CLIP:
+            extracted_path = self.work_file_manager_temp_files.generate_partition_path(
+                object_name=object_key,
+                tag=tag,
+                partition_id=partition_id,
+                suffix="partition_final_output_append_clip",
+            )
+            arcpy.analysis.PairwiseClip(
+                in_features=iteration_path,
+                clip_features=iteration_partition,
+                out_feature_class=extracted_path,
+            )
+            return extracted_path
+
+        extracted_path = self.work_file_manager_temp_files.generate_partition_path(
+            object_name=object_key,
+            tag=tag,
+            partition_id=partition_id,
+            suffix="partition_final_output_append_selection",
+        )
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
+            expression=f"{self.PARTITION_FIELD} = 1",
+            output_name=extracted_path,
+        )
+        return extracted_path
+
+    def _extract_and_append_partition_output(
+        self,
+        object_key: str,
+        tag: str,
+        iteration_path: Any,
+        iteration_partition: str,
         final_output_path: str,
         partition_id: int,
+        extraction_method: core_config.OutputExtractionMethod,
     ) -> None:
         """
         Checks whether the intermediate result for the given object and tag is valid,
-        and appends it to the final output if so.
+        extracts this partition's slice (selection or clip), and appends it to the final
+        output if so.
 
         Args:
             object_key (str): The object identifier (e.g. 'building_polygons').
             tag (str): The processing tag (e.g. 'some_logic').
+            iteration_path (Any): The iteration output for this object/tag.
+            iteration_partition (str): The current partition polygon (used by clip).
             final_output_path (str): Destination output path.
             partition_id (int): Current partition identifier.
+            extraction_method: How to slice this output (SELECTION or CLIP).
         """
         if not file_utilities.feature_has_rows(feature=iteration_path):
             return
 
-        partition_selection_path = (
-            self.work_file_manager_temp_files.generate_partition_path(
-                object_name=object_key,
-                tag=tag,
-                partition_id=partition_id,
-                suffix="partition_final_output_append_selection",
-            )
-        )
-
-        custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=iteration_path,
-            expression=f"{self.PARTITION_FIELD} = 1",
-            output_name=partition_selection_path,
+        extracted_path = self._extract_partition_output(
+            object_key=object_key,
+            tag=tag,
+            iteration_path=iteration_path,
+            iteration_partition=iteration_partition,
+            partition_id=partition_id,
+            extraction_method=extraction_method,
         )
 
         try:
-            if not file_utilities.feature_has_rows(feature=partition_selection_path):
+            if not file_utilities.feature_has_rows(feature=extracted_path):
                 return
 
-            output_entry = (
-                self.overview_catalog.get("processing_inputs", {})
-                .get(object_key, {})
-                .get("outputs", {})
-                .get(tag)
-            )
+            obj_overview = self.overview_catalog.processing_inputs.get(object_key)
+            output_entry = obj_overview.outputs.get(tag) if obj_overview else None
             if output_entry is not None:
-                output_entry["output_object_count"] += file_utilities.count_objects(
-                    partition_selection_path
+                output_entry.output_object_count += file_utilities.count_objects(
+                    extracted_path
                 )
-                output_entry["output_vertex_count"] += file_utilities.count_vertices(
-                    partition_selection_path
+                output_entry.output_vertex_count += file_utilities.count_vertices(
+                    extracted_path
                 )
 
             if not arcpy.Exists(final_output_path):
                 arcpy.management.CopyFeatures(
-                    in_features=partition_selection_path,
+                    in_features=extracted_path,
                     out_feature_class=final_output_path,
                 )
                 print(f"Created final output for {object_key}:{tag}")
             else:
                 arcpy.management.Append(
-                    inputs=partition_selection_path,
+                    inputs=extracted_path,
                     target=final_output_path,
                     schema_type="NO_TEST",
                 )
@@ -1807,24 +1960,27 @@ class PartitionIterator:
         finally:
             self.work_file_manager_temp_files.delete_created_files()
 
-    def append_iteration_outputs_to_final(self, partition_id: int) -> None:
+    def append_iteration_outputs_to_final(
+        self, partition_id: int, iteration_partition: str
+    ) -> None:
         """
         Appends all valid outputs for the current iteration to their final output paths.
 
         Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.
         """
-        for object_key, tag, final_output_path in self._output_vector_items():
-            iteration_entry = self.iteration_catalog.get(object_key)
-            if not iteration_entry:
+        for entry in self._output_vector_items():
+            object_paths = self.iteration_paths.get(entry.object)
+            if not object_paths:
                 continue
 
-            iteration_paths = iteration_entry.get(tag)
-            self._append_partition_selected_features(
-                object_key=object_key,
-                tag=tag,
-                iteration_path=iteration_paths,
-                final_output_path=final_output_path,
+            self._extract_and_append_partition_output(
+                object_key=entry.object,
+                tag=entry.tag,
+                iteration_path=object_paths.get(entry.tag),
+                iteration_partition=iteration_partition,
+                final_output_path=entry.path,
                 partition_id=partition_id,
+                extraction_method=entry.extraction_method,
             )
 
     def cleanup_helper_fields(self) -> None:
@@ -1844,16 +2000,18 @@ class PartitionIterator:
                     final_output_path, fields_to_delete
                 )
 
-        for object_key, input_path in self._processing_items():
-            print(f"Cleaning fields in processing input: {input_path}")
-            file_utilities.delete_fields_if_exist(input_path, fields_to_delete)
+        for prepared in self._processing_items():
+            print(f"Cleaning fields in processing input: {prepared.active_path}")
+            file_utilities.delete_fields_if_exist(
+                prepared.active_path, fields_to_delete
+            )
 
     def _reset_iteration_state(self, partition_id: int) -> None:
         print(
             f"\nProcessing Partition: {partition_id} out of {self.max_partition_count}"
         )
         self.iteration_start_time = time.time()
-        self.iteration_catalog = {}
+        self._reset_iteration_catalogs()
 
     def partition_iteration(self):
         """
@@ -1913,10 +2071,13 @@ class PartitionIterator:
                 self.execute_injected_methods_with_retry(partition_id=partition_id)
                 self.write_documentation(
                     name=f"catalog_{partition_id}",
-                    dict_data=self.iteration_catalog,
+                    dict_data=self._iteration_catalog_snapshot(),
                     sub_dir="iteration_catalog",
                 )
-                self.append_iteration_outputs_to_final(partition_id=partition_id)
+                self.append_iteration_outputs_to_final(
+                    partition_id=partition_id,
+                    iteration_partition=iteration_partition,
+                )
 
             finally:
                 self.work_file_manager_iteration_files.delete_created_files()
@@ -1952,18 +2113,21 @@ class PartitionIterator:
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
-        self.create_dummy_features(tag=self.INPUT_KEY)
+        self.create_dummy_features()
         self.write_documentation(name="input_catalog", dict_data=self.input_catalog)
 
-        print("\nCreating Cartographic Partitions...")
-        self.final_partition_feature_count = (
-            self._find_partition_size()
-            if self.run_partition_optimization
-            else int(self.max_elements_per_partition)
-        )
-        self._create_cartographic_partitions(
-            element_limit=self.final_partition_feature_count
-        )
+        if self.use_custom_partition_feature:
+            print("\nUsing custom partition feature; skipping partition creation...")
+        else:
+            print("\nCreating Cartographic Partitions...")
+            self.final_partition_feature_count = (
+                self._find_partition_size()
+                if self.run_partition_optimization
+                else int(self.max_elements_per_partition)
+            )
+            self._create_cartographic_partitions(
+                element_limit=self.final_partition_feature_count
+            )
 
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
