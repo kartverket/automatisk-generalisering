@@ -512,6 +512,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
                 object=gangsykkel,
                 tag=dissolved_gangsykkel,
                 path=output_fc,
+                extraction_method=core_config.OutputExtractionMethod.CLIP,
             )
         ]
     )

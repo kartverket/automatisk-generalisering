@@ -66,7 +66,7 @@ if require("SELECT_STUDY_AREA") == "False":
 else:
     SELECT_STUDY_AREA = True
 
-AREA_SELECTOR = "navn IN ('Ås')"
+AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -83,19 +83,14 @@ def main():
     area_data = data_orc.get_dataset(dn.area)
     building_data = data_orc.get_dataset(dn.building)
 
-    # data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
-    #
-    # reclassify_medium()
-    # categories_major_road_crossings()
-    # generalize_roundabouts()
-    # remove_roadblock(data=area_data)
-    # trim_road_details()
+    data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
+
+    reclassify_medium()
+    categories_major_road_crossings()
+    generalize_roundabouts()
+    remove_roadblock(data=area_data)
+    trim_road_details()
     ramp_partition()
-    # ramps(
-    #     input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-    #     output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
-    #     output_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-    # )
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -341,6 +336,7 @@ def ramp_partition():
                 object=points,
                 tag="output",
                 path=Road_N100.ramps__potential_points__n100_road.value,
+                extraction_method=core_config.OutputExtractionMethod.CLIP,
             ),
         ]
     )
@@ -365,7 +361,7 @@ def ramp_partition():
     method_config = core_config.MethodEntriesConfig([ramp_config])
 
     run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=5_000,
+        max_elements_per_partition=35_000,
         context_radius_meters=500,
         run_partition_optimization=False,
     )
