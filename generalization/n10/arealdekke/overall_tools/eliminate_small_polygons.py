@@ -222,9 +222,7 @@ class EliminateSmallPolygons:
             selection="LENGTH",
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=output_fc, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=output_fc)
 
     @timing_decorator
     def eliminate_multiple_minimums(
@@ -274,9 +272,7 @@ class EliminateSmallPolygons:
 
         arcpy.management.CopyFeatures(temp_out, output_fc)
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=output_fc, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=output_fc)
 
     def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
@@ -315,10 +311,10 @@ class EliminateSmallPolygons:
             out_feature_class=self.files["eliminate_erased"],
         )
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_clipped"], max_iterations=5
+            input_fc=self.files["eliminate_clipped"]
         )
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_erased"], max_iterations=5
+            input_fc=self.files["eliminate_erased"]
         )
 
         arcpy.management.MultipartToSinglepart(
@@ -341,7 +337,7 @@ class EliminateSmallPolygons:
         self.add_fields(self.files["eliminate_merged_clipped_erased"])
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_merged_clipped_erased"], max_iterations=5
+            input_fc=self.files["eliminate_merged_clipped_erased"]
         )
 
         quoted = ", ".join(
@@ -495,9 +491,7 @@ class EliminateSmallPolygons:
             in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
         )
-        self.geometry_validator.check_repair_sequence(
-            input_fc=self.output_feature, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=self.output_feature)
 
         self.wfm.delete_created_files()
 
@@ -565,7 +559,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
 
     # Run Config:
     partiton_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=25_000,
+        max_elements_per_partition=10_000,
         context_radius_meters=200,
         run_partition_optimization=False,
     )

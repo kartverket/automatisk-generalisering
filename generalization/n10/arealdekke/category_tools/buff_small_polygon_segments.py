@@ -373,7 +373,7 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=land_use_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="Shape_Length < 10",
+        where_clause="Shape_Length < 15",
     )
     arcpy.management.DeleteFeatures(in_features=land_use_lyr)
 

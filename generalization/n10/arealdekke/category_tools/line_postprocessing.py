@@ -14,7 +14,17 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
 )
 
 # ========================
-# Classes
+# Constants
+# ========================
+
+
+IMPORTANT_FEATURE = "Samferdsel"
+WATER_FEATURES = ["ElvFlate", "Innsjo", "InnsjoRegulert", "Kanal", "Hav"]
+WATER_SQL = ",".join([f"'{feature}'" for feature in WATER_FEATURES])
+
+
+# ========================
+# Class
 # ========================
 
 
@@ -161,7 +171,10 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
         )
         arcpy.edit.Snap(
             in_features=line_fc,
-            snap_environment=[[line_fc, "EDGE", "5 Meters"]],
+            snap_environment=[
+                [line_fc, "END", "25 Meters"],
+                [line_fc, "EDGE", "15 Meters"],
+            ],
         )
 
         arcpy.management.SelectLayerByLocation(
@@ -188,43 +201,28 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
         out_layer=land_use_lyr,
     )
 
-    for target, line_fc in LINE.items():
+    for line_fc in LINE.values():
         arcpy.management.SelectLayerByAttribute(
-            in_layer=land_use_lyr,
+            in_layer_or_view=land_use_lyr,
             selection_type="NEW_SELECTION",
-            where_clause=f"arealdekke='{target}'",
+            where_clause=f"arealdekke IN ({WATER_SQL})",
         )
-
         arcpy.edit.Snap(
             in_features=line_fc,
-            snap_environment=[[land_use_lyr, "EDGE", "2.5 Meters"]],
+            snap_environment=[[land_use_lyr, "EDGE", "20 Meters"]],
         )
         arcpy.analysis.Erase(
             in_features=line_fc,
             erase_features=land_use_lyr,
             out_feature_class=files[Names.erased],
         )
-        arcpy.management.CopyFeatures(
-            in_features=files[Names.erased], out_feature_class=line_fc
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=land_use_lyr,
+            selection_type="NEW_SELECTION",
+            where_clause=f"arealdekke='{IMPORTANT_FEATURE}'",
         )
-
-
-# ========================
-
-
-def find_short_lonely_lines(line_fc: str) -> None:
-    """
-    Fetch lines not connected to any other line and remove them if they are shorter
-    than the threshold distance. The lines are instead buffered with minimum width
-    for current feature type and added back into the land use feature class.
-
-    Args:
-        line_fc (str): The path to the line feature class
-    """
-    line_oid_to_end_points: DefaultDict[int, list] = DefaultDict(list)
-    with arcpy.da.SearchCursor(line_fc, ["OID@", "SHAPE@"]) as cursor:
-        for oid, geom in cursor:
-            if geom is None or geom.isEmpty:
-                continue
-            end_points = [geom.firstPoint, geom.lastPoint]
-            line_oid_to_end_points[oid] = end_points
+        arcpy.analysis.Erase(
+            in_features=files[Names.erased],
+            erase_features=land_use_lyr,
+            out_feature_class=line_fc,
+        )
