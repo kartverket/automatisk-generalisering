@@ -18,6 +18,9 @@ RUN /arcgis/server/startserver.sh
 # Make the project script the container entrypoint
 ENV SCALE=scale OBJECT=object
 
+
+# Define separate entrypoints for on-prem and on-cloud modes
+# Build image with --target on_prem/on_cloud and tag on_prem/on_cloud accordingly
 FROM base AS on_prem
 CMD ["python", "main_on_prem.py"]
 
