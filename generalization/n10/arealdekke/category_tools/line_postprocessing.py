@@ -12,7 +12,9 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     LINE,
 )
-from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import normal_call as dissolve_lines
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
+    normal_call as dissolve_lines,
+)
 
 # ========================
 # Constants
