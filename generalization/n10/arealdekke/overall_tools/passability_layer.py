@@ -12,7 +12,6 @@ from custom_tools.general_tools.validation import check_valid_feature_class
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
-
 # ========================
 # Class
 # ========================
@@ -75,7 +74,9 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     config = core_config.WorkFileConfig(root_file=fc)
     wfm = WorkFileManager(config=config)
 
-    files = {name: wfm.build_file_path(file_name=name, file_type="gdb") for name in Names}
+    files = {
+        name: wfm.build_file_path(file_name=name, file_type="gdb") for name in Names
+    }
 
     final_lyr = "final_lyr"
     features_to_keep = [

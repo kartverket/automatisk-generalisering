@@ -388,7 +388,11 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     )
 
     existing_fields = [f.name for f in arcpy.ListFields(files[fc.intermediate_lines])]
-    new_fields = [f.name for f in arcpy.ListFields(files[fc.target_fc]) if f.name not in existing_fields]
+    new_fields = [
+        f.name
+        for f in arcpy.ListFields(files[fc.target_fc])
+        if f.name not in existing_fields
+    ]
 
     arcpy.management.JoinField(
         in_data=files[fc.intermediate_lines],

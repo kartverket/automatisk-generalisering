@@ -3,15 +3,16 @@ import arcpy
 arcpy.env.overwriteOutput = True
 
 from enum import StrEnum
-from typing import DefaultDict
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
+from data_orchestrator.orchestrator import InputDataOrchestrator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     LINE,
 )
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import normal_call as dissolve_lines
 
 # ========================
 # Constants
@@ -41,7 +42,7 @@ class Names(StrEnum):
 
 
 @timing_decorator
-def post_process_lines(land_use_fc: str) -> None:
+def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> None:
     """
     For each target feature corresponding to a specific line feature class,
     remove too small polygons and replace them with new lines, snap these
@@ -49,6 +50,7 @@ def post_process_lines(land_use_fc: str) -> None:
 
     Args:
         land_use_fc (str): The path to the land use feature class
+        data_orc (InputDataOrchestrator): The data orchestrator instance
     """
     working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -58,6 +60,14 @@ def post_process_lines(land_use_fc: str) -> None:
 
     remove_short_polygons(land_use_fc=land_use_fc, files=files)
     snap_lines(land_use_fc=land_use_fc, files=files)
+
+    dissolved_fc = Arealdekke_N10.dissolved_lines__n10_land_use.value
+
+    for line_fc in LINE.values():
+        dissolve_lines(input_fc=line_fc, output_fc=dissolved_fc, data_orc=data_orc)
+        arcpy.management.CopyFeatures(
+            in_features=dissolved_fc, out_feature_class=line_fc
+        )
 
     wfm.delete_created_files()
 
@@ -175,7 +185,11 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
         )
 
         existing_fields = [f.name for f in arcpy.ListFields(line_lyr)]
-        new_fields = [f.name for f in arcpy.ListFields(land_use_lyr) if f.name not in existing_fields]
+        new_fields = [
+            f.name
+            for f in arcpy.ListFields(land_use_lyr)
+            if f.name not in existing_fields
+        ]
 
         arcpy.management.JoinField(
             in_data=line_lyr,
@@ -247,3 +261,11 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
             erase_features=land_use_lyr,
             out_feature_class=line_fc,
         )
+
+# =======================
+
+if __name__ == "__main__":
+    # Example usage
+    land_use_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+    data_orc = InputDataOrchestrator(map_scale="N10", pipeline="land_use")
+    post_process_lines(land_use_fc=land_use_fc, data_orc=data_orc)
