@@ -65,12 +65,14 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
     remove_short_polygons(land_use_fc=land_use_fc, files=files)
     snap_lines(land_use_fc=land_use_fc, files=files)
 
-    dissolved_fc = files[Names.dissolved]
-
     for line_fc in LINE.values():
-        dissolve_lines(input_fc=line_fc, output_fc=dissolved_fc, data_orc=data_orc)
-        arcpy.management.CopyFeatures(
-            in_features=dissolved_fc, out_feature_class=line_fc
+        dissolve_lines(input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc)
+        arcpy.cartography.SmoothLine(
+            in_features=files[Names.dissolved],
+            out_feature_class=line_fc,
+            algorithm="PAEK",
+            endpoint_option="FIXED_CLOSED_ENDPOINT",
+            error_option="RESOLVE_ERRORS",
         )
 
     wfm.delete_created_files()
