@@ -66,7 +66,9 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
     snap_lines(land_use_fc=land_use_fc, files=files)
 
     for line_fc in LINE.values():
-        dissolve_lines(input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc)
+        dissolve_lines(
+            input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc
+        )
         arcpy.cartography.SmoothLine(
             in_features=files[Names.dissolved],
             out_feature_class=line_fc,
