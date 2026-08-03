@@ -20,6 +20,14 @@ generalization.n10.arealdekke.category\_tools.buff\_small\_polygon\_segments mod
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.category\_tools.line\_postprocessing module
+-------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.category_tools.line_postprocessing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.category\_tools.remove\_thin\_tracks module
 -------------------------------------------------------------------------
 

@@ -92,6 +92,14 @@ generalization.n10.arealdekke.overall\_tools.passability\_layer module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.overall\_tools.replace\_uncategorized module
+--------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.replace_uncategorized
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.overall\_tools.small\_features\_changer module
 ----------------------------------------------------------------------------
 
