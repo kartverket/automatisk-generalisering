@@ -6,7 +6,6 @@ from typing import Callable, Dict, Tuple
 from pathlib import Path
 import shutil
 from google.cloud import storage
-from minio import Minio
 
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
@@ -16,116 +15,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
-
-
-def create_s3_client(
-    endpoint_url: str,
-    access_key: str,
-    secret_key: str,
-) -> Minio:
-    """
-    Create an S3-compatible client for Scality.
-    """
-    return Minio(
-                endpoint=endpoint_url,
-                access_key=access_key,
-                secret_key=secret_key
-            )
-
-
-def download_scality_folder(
-    client: Minio,
-    bucket_name: str,
-    scality_folder: str,
-    local_folder: str,
-) -> None:
-    """
-    Download all files from a Scality/S3 folder/prefix to a local folder.
-
-    Args:
-        bucket_name: Name of the Scality bucket.
-        scality_folder: Folder/prefix inside the bucket, e.g. "data/input/"
-        local_folder: Local destination folder, e.g. "/tmp/mydata"
-    """
-
-    # Ensure prefix ends with /
-    if scality_folder and not scality_folder.endswith("/"):
-        scality_folder += "/"
-
-
-    objects = client.list_objects(
-        bucket_name=bucket_name,
-        prefix=scality_folder,
-        recursive=True,
-    )
-
-    local_base = Path(local_folder)
-    local_base.mkdir(parents=True, exist_ok=True)
-
-    for obj in objects:
-        # Skip "directory marker" objects
-        if obj.object_name.endswith("/"):
-            continue
-
-        # Preserve folder structure relative to scality_folder
-        relative_path = obj.object_name[len(scality_folder):]
-        local_path = local_base / relative_path
-
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-
-        client.fget_object(
-            bucket_name=bucket_name,
-            object_name=obj.object_name,
-            file_path=str(local_path),
-        )
-
-        print(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
-
-
-
-def upload_results_to_scality(
-    client: Minio,
-    bucket_name: str,
-    local_path: str,
-    object_name: str | None = None
-):
-    """
-    Upload a local ZIP file to a Scality bucket.
-
-    Args:
-        client: MinIO client instance.
-        bucket_name: Name of the Scality bucket.
-        local_zip_path: Path to local .zip file.
-        object_name: Destination object name in the bucket.
-                     If None, the local filename is used.
-
-    Example:
-        upload_zip_to_scality(
-            client,
-            bucket_name="my-bucket",
-            local_zip_path="/tmp/archive.zip",
-            object_name="backups/archive.zip"
-        )
-    """
-
-    local_zip_path = shutil.make_archive(
-        base_name=str(local_path),
-        format="zip",
-        root_dir=local_path.parent,
-        base_dir=local_path.name
-    )
-
-    print(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
-
-    client.fput_object(
-        bucket_name=bucket_name,
-        object_name=object_name,
-        file_path=local_zip_path,
-        content_type="application/zip"
-    )
-
-    print("ZIP upload completed.")
 
 
 
@@ -278,7 +167,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def gcs_main():
+def main():
     """
     temp main function to for GCS solution
     """
@@ -313,65 +202,6 @@ def gcs_main():
     )
 
 
-def on_prem_main():
-    """
-    Temp function to test on prem solution
-    """
-    endpoint_url = os.environ.get("SCALITY_ENDPOINT")
-    access_key = os.environ.get("scality_user")
-    secret_key = os.environ.get("scality_pass")
-    bucket_name = os.environ.get("SCALITY_BUCKET")
-
-    args = parse_args()
-    check_uid_gid()
-    check_read_only()
-    if not args.scale or not args.obj:
-        logger.error("Error: --scale and --object required (or set SCALE/OBJECT env)")
-        print_available()
-        sys.exit()
-
-    s3 = create_s3_client(
-        endpoint_url=endpoint_url,
-        access_key=access_key,
-        secret_key=secret_key,
-    )
-
-    download_scality_folder(
-        client=s3,
-        bucket_name=bucket_name,
-        scality_folder="GIS_Files/",
-        local_folder="/tmp/GIS_Files"
-    )
-
-
-    
-
-    key = (args.scale, args.obj)
-    handler = DISPATCH.get(key)
-    if handler is None:
-        logger.error(f"No pipeline for scale={args.scale} object={args.obj}")
-        print_available()
-        sys.exit()
-
-    handler(args)
-
-    upload_results_to_scality(
-        client=s3,
-        bucket_name=bucket_name,
-        local_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb/"),
-        object_name=f"outputs/{args.scale}_{args.obj}/road.gdb.zip",
-    )
-
-
-
-def main():
-    on_prem = os.environ.get("ON_PREM")
-    if on_prem == "False":
-        print("Running in GCS mode")
-        gcs_main()
-    else:
-        print("Running in on-prem mode")
-        on_prem_main()
 
 
 if __name__ == "__main__":

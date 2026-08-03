@@ -17,5 +17,4 @@ RUN /arcgis/server/startserver.sh
 
 # Make the project script the container entrypoint
 ENV SCALE=scale OBJECT=object
-CMD ["sh","-c","python main.py --scale ${SCALE} --object ${OBJECT}"]
 
