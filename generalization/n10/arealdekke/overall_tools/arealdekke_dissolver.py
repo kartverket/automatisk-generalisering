@@ -363,6 +363,7 @@ def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.dissolve_arealdekke_root.value
         ),
+        map_scale=data_orc.map_scale,
     )
     ArealdekkeDissolver(areal_dekke_dissolver_config=areal_dekke_config).run()
 

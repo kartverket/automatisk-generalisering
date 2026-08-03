@@ -3,14 +3,17 @@ import arcpy
 arcpy.env.overwriteOutput = True
 
 from enum import StrEnum
-from typing import DefaultDict
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
+from data_orchestrator.orchestrator import InputDataOrchestrator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     LINE,
+)
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
+    normal_call as dissolve_lines,
 )
 
 # ========================
@@ -18,7 +21,8 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
 # ========================
 
 
-IMPORTANT_FEATURE = "Samferdsel"
+IMPORTANT_FEATURE = ["Samferdsel", "Bane"]
+IMPORTANT_SQL = ",".join([f"'{feature}'" for feature in IMPORTANT_FEATURE])
 WATER_FEATURES = ["ElvFlate", "Innsjo", "InnsjoRegulert", "Kanal", "Hav"]
 WATER_SQL = ",".join([f"'{feature}'" for feature in WATER_FEATURES])
 
@@ -31,7 +35,9 @@ WATER_SQL = ",".join([f"'{feature}'" for feature in WATER_FEATURES])
 class Names(StrEnum):
     target_lines = "target_lines"
     spatial_join = "spatial_join"
+    joined_lines = "joined_lines"
     erased = "erased"
+    dissolved = "dissolved"
 
 
 # ========================
@@ -40,7 +46,7 @@ class Names(StrEnum):
 
 
 @timing_decorator
-def post_process_lines(land_use_fc: str) -> None:
+def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> None:
     """
     For each target feature corresponding to a specific line feature class,
     remove too small polygons and replace them with new lines, snap these
@@ -48,6 +54,7 @@ def post_process_lines(land_use_fc: str) -> None:
 
     Args:
         land_use_fc (str): The path to the land use feature class
+        data_orc (InputDataOrchestrator): The data orchestrator instance
     """
     working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -57,6 +64,18 @@ def post_process_lines(land_use_fc: str) -> None:
 
     remove_short_polygons(land_use_fc=land_use_fc, files=files)
     snap_lines(land_use_fc=land_use_fc, files=files)
+
+    for line_fc in LINE.values():
+        dissolve_lines(
+            input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc
+        )
+        arcpy.cartography.SmoothLine(
+            in_features=files[Names.dissolved],
+            out_feature_class=line_fc,
+            algorithm="PAEK",
+            endpoint_option="FIXED_CLOSED_ENDPOINT",
+            error_option="RESOLVE_ERRORS",
+        )
 
     wfm.delete_created_files()
 
@@ -164,6 +183,30 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
         if int(arcpy.management.GetCount(join_lyr)[0]) == 0:
             continue
 
+        # Fetch original attributes for the new lines
+        arcpy.analysis.SpatialJoin(
+            target_features=line_lyr,
+            join_features=land_use_lyr,
+            out_feature_class=files[Names.joined_lines],
+            join_operation="JOIN_ONE_TO_MANY",
+            match_option="CLOSEST",
+        )
+
+        existing_fields = [f.name for f in arcpy.ListFields(line_lyr)]
+        new_fields = [
+            f.name
+            for f in arcpy.ListFields(land_use_lyr)
+            if f.name not in existing_fields
+        ]
+
+        arcpy.management.JoinField(
+            in_data=line_lyr,
+            in_field="OBJECTID",
+            join_table=files[Names.joined_lines],
+            join_field="TARGET_FID",
+            fields=new_fields,
+        )
+
         arcpy.management.Append(
             inputs=line_lyr,
             target=line_fc,
@@ -172,8 +215,8 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
         arcpy.edit.Snap(
             in_features=line_fc,
             snap_environment=[
-                [line_fc, "END", "25 Meters"],
-                [line_fc, "EDGE", "15 Meters"],
+                [line_fc, "END", "15 Meters"],
+                [line_fc, "EDGE", "10 Meters"],
             ],
         )
 
@@ -209,7 +252,7 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
         )
         arcpy.edit.Snap(
             in_features=line_fc,
-            snap_environment=[[land_use_lyr, "EDGE", "20 Meters"]],
+            snap_environment=[[land_use_lyr, "EDGE", "10 Meters"]],
         )
         arcpy.analysis.Erase(
             in_features=line_fc,
@@ -219,10 +262,31 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view=land_use_lyr,
             selection_type="NEW_SELECTION",
-            where_clause=f"arealdekke='{IMPORTANT_FEATURE}'",
+            where_clause=f"arealdekke IN ({IMPORTANT_SQL})",
         )
         arcpy.analysis.Erase(
             in_features=files[Names.erased],
             erase_features=land_use_lyr,
             out_feature_class=line_fc,
         )
+
+        line_lyr = "line_lyr"
+        arcpy.management.MakeFeatureLayer(
+            in_features=line_fc,
+            out_layer=line_lyr,
+        )
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=line_lyr,
+            selection_type="NEW_SELECTION",
+            where_clause="Shape_Length < 5",
+        )
+        arcpy.management.DeleteFeatures(in_features=line_lyr)
+
+
+# =======================
+
+if __name__ == "__main__":
+    # Example usage
+    land_use_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+    data_orc = InputDataOrchestrator(map_scale="N10", pipeline="land_use")
+    post_process_lines(land_use_fc=land_use_fc, data_orc=data_orc)

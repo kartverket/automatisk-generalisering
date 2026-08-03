@@ -63,7 +63,7 @@ def pointify_thin_poly(
 
     find_segments_under_min(files=files, min_width=width)
     create_and_filter_line_data(files=files)
-    create_points(files=files)
+    create_points(input_fc=input_fc, files=files)
     remove_small_pieces(input_fc=input_fc, files=files)
     data_preparation(complete_fc=complete_fc, files=files, target=target)
     create_split_points(files=files, width=width)
@@ -121,6 +121,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         ),
         "filtered_lines": wfm.build_file_path(
             file_name="filtered_lines", file_type="gdb"
+        ),
+        "joined_points": wfm.build_file_path(
+            file_name="joined_points", file_type="gdb"
         ),
         "small_areas_single": wfm.build_file_path(
             file_name="small_areas_single", file_type="gdb"
@@ -186,19 +189,43 @@ def create_and_filter_line_data(files: dict) -> None:
     )
 
 
-def create_points(files: dict) -> None:
+def create_points(input_fc: str, files: dict) -> None:
     """
     Creates points along the created centre lines.
 
     Args:
+        input_fc (str): Feature class with input data
         files (dict): Dictionary with all the working files
     """
+    point_fc = Arealdekke_N10.poly_to_point_points__n10_land_use.value
+
     arcpy.management.GeneratePointsAlongLines(
         Input_Features=files["filtered_lines"],
-        Output_Feature_Class=Arealdekke_N10.poly_to_point_points__n10_land_use.value,
+        Output_Feature_Class=point_fc,
         Point_Placement="DISTANCE",
         Distance=20,  # TODO: Need to get a system for taking care of distance tolerances
         Include_End_Points="NO_END_POINTS",
+    )
+
+    arcpy.analysis.SpatialJoin(
+        target_features=point_fc,
+        join_features=input_fc,
+        out_feature_class=files["joined_points"],
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="CLOSEST",
+    )
+
+    existing_fields = [f.name for f in arcpy.ListFields(point_fc)]
+    new_fields = [
+        f.name for f in arcpy.ListFields(input_fc) if f.name not in existing_fields
+    ]
+
+    arcpy.management.JoinField(
+        in_data=point_fc,
+        in_field="OBJECTID",
+        join_table=files["joined_points"],
+        join_field="TARGET_FID",
+        fields=new_fields,
     )
 
 

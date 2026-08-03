@@ -4,11 +4,23 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
+from enum import StrEnum
+
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.validation import check_valid_feature_class
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+
+# ========================
+# Class
+# ========================
+
+
+class Names(StrEnum):
+    erased = "erased"
+    aggregated = "aggregated"
+
 
 # ========================
 # Main functions
@@ -62,6 +74,10 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     config = core_config.WorkFileConfig(root_file=fc)
     wfm = WorkFileManager(config=config)
 
+    files = {
+        name: wfm.build_file_path(file_name=name, file_type="gdb") for name in Names
+    }
+
     final_lyr = "final_lyr"
     features_to_keep = [
         "Samferdsel",
@@ -78,17 +94,15 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         in_layer_or_view=final_lyr, selection_type="NEW_SELECTION", where_clause=sql
     )
 
-    erased_fc = wfm.build_file_path(file_name="erased", file_type="gdb")
     arcpy.analysis.Erase(
         in_features=passability_fc,
         erase_features=final_lyr,
-        out_feature_class=erased_fc,
+        out_feature_class=files[Names.erased],
     )
 
-    aggregated_fc = wfm.build_file_path(file_name="aggregated", file_type="gdb")
     arcpy.cartography.AggregatePolygons(
-        in_features=erased_fc,
-        out_feature_class=aggregated_fc,
+        in_features=files[Names.erased],
+        out_feature_class=files[Names.aggregated],
         aggregation_distance="5 Meters",
         orthogonality_option="ORTHOGONAL",
         barrier_features=final_lyr,
@@ -99,7 +113,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         arcpy.management.Delete(passability_fc)
 
     arcpy.management.Dissolve(
-        in_features=aggregated_fc,
+        in_features=files[Names.aggregated],
         out_feature_class=passability_fc,
         dissolve_field=fremkommelighet,
         multi_part="SINGLE_PART",

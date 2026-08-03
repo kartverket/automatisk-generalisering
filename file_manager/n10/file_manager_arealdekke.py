@@ -169,6 +169,9 @@ class Arealdekke_N10(Enum):
     snap_lines__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=snap_lines, description="snap_lines"
     )
+    dissolved_lines__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=snap_lines, description="dissolved_lines"
+    )
 
     river_lines__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=river_lines, description="river_lines"

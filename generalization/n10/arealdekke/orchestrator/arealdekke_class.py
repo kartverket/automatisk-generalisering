@@ -593,6 +593,7 @@ class Arealdekke:
             ),
             lambda: post_process_lines(
                 land_use_fc=self.final_categories_fc,
+                data_orc=self.data_orc,
             ),
             lambda: fill_holes(
                 input_fc=self.final_categories_fc,
