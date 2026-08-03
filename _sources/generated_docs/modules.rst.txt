@@ -13,6 +13,7 @@ automatisk-generalisering
    file_manager
    generalization
    generate_pyvis_docu
-   main
+   main_on_cloud
+   main_on_prem
    paths
    tests

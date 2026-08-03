@@ -1,0 +1,7 @@
+main\_on\_cloud module
+======================
+
+.. automodule:: main_on_cloud
+   :members:
+   :show-inheritance:
+   :undoc-members:
