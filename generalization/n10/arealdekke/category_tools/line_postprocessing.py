@@ -19,7 +19,8 @@ from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import nor
 # ========================
 
 
-IMPORTANT_FEATURE = "Samferdsel"
+IMPORTANT_FEATURE = ["Samferdsel", "Bane"]
+IMPORTANT_SQL = ",".join([f"'{feature}'" for feature in IMPORTANT_FEATURE])
 WATER_FEATURES = ["ElvFlate", "Innsjo", "InnsjoRegulert", "Kanal", "Hav"]
 WATER_SQL = ",".join([f"'{feature}'" for feature in WATER_FEATURES])
 
@@ -34,6 +35,7 @@ class Names(StrEnum):
     spatial_join = "spatial_join"
     joined_lines = "joined_lines"
     erased = "erased"
+    dissolved = "dissolved"
 
 
 # ========================
@@ -61,7 +63,7 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
     remove_short_polygons(land_use_fc=land_use_fc, files=files)
     snap_lines(land_use_fc=land_use_fc, files=files)
 
-    dissolved_fc = Arealdekke_N10.dissolved_lines__n10_land_use.value
+    dissolved_fc = files[Names.dissolved]
 
     for line_fc in LINE.values():
         dissolve_lines(input_fc=line_fc, output_fc=dissolved_fc, data_orc=data_orc)
@@ -207,8 +209,8 @@ def remove_short_polygons(land_use_fc: str, files: dict) -> None:
         arcpy.edit.Snap(
             in_features=line_fc,
             snap_environment=[
-                [line_fc, "END", "25 Meters"],
-                [line_fc, "EDGE", "15 Meters"],
+                [line_fc, "END", "15 Meters"],
+                [line_fc, "EDGE", "10 Meters"],
             ],
         )
 
@@ -244,7 +246,7 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
         )
         arcpy.edit.Snap(
             in_features=line_fc,
-            snap_environment=[[land_use_lyr, "EDGE", "20 Meters"]],
+            snap_environment=[[land_use_lyr, "EDGE", "10 Meters"]],
         )
         arcpy.analysis.Erase(
             in_features=line_fc,
@@ -254,13 +256,26 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view=land_use_lyr,
             selection_type="NEW_SELECTION",
-            where_clause=f"arealdekke='{IMPORTANT_FEATURE}'",
+            where_clause=f"arealdekke IN ({IMPORTANT_SQL})",
         )
         arcpy.analysis.Erase(
             in_features=files[Names.erased],
             erase_features=land_use_lyr,
             out_feature_class=line_fc,
         )
+
+        line_lyr = "line_lyr"
+        arcpy.management.MakeFeatureLayer(
+            in_features=line_fc,
+            out_layer=line_lyr,
+        )
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=line_lyr,
+            selection_type="NEW_SELECTION",
+            where_clause="Shape_Length < 5",
+        )
+        arcpy.management.DeleteFeatures(in_features=line_lyr)
+
 
 # =======================
 
