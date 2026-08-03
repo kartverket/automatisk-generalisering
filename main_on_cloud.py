@@ -3,6 +3,9 @@ import os
 import sys
 import logging
 from typing import Callable, Dict, Tuple
+from pathlib import Path
+import shutil
+from google.cloud import storage
 
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
@@ -11,6 +14,75 @@ logging.basicConfig(
 
 
 logger = logging.getLogger(__name__)
+
+
+def upload_results_to_gcs(
+    gdb_path: str,
+    bucket_name: str,
+    gcs_folder: str,
+) -> None:
+    """ """
+    gdb_path = Path(gdb_path)
+    if gcs_folder and not gcs_folder.endswith("/"):
+        gcs_folder += "/"
+
+    zip_file = Path(
+        shutil.make_archive(
+            base_name=str(gdb_path),
+            format="zip",
+            root_dir=gdb_path.parent,
+            base_dir=gdb_path.name,
+        )
+    )
+
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+
+    blob_name = f"{gcs_folder}{zip_file.name}"
+    blob = bucket.blob(blob_name)
+    blob.upload_from_filename(str(zip_file))
+    logger.info(f"Uploaded {zip_file} -> gs://{bucket_name}/{blob_name}")
+
+
+def download_gcs_folder(
+    bucket_name: str,
+    gcs_folder: str,
+    local_folder: str,
+) -> None:
+    """
+    Download all files from a GCS folder/prefix to a local folder.
+
+    Args:
+        bucket_name: Name of the GCS bucket.
+        gcs_folder: Folder/prefix inside the bucket, e.g. "data/input/"
+        local_folder: Local destination folder, e.g. "/tmp/mydata"
+    """
+
+    # Ensure prefix ends with /
+    if gcs_folder and not gcs_folder.endswith("/"):
+        gcs_folder += "/"
+
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+
+    blobs = client.list_blobs(bucket_name, prefix=gcs_folder)
+
+    local_base = Path(local_folder)
+    local_base.mkdir(parents=True, exist_ok=True)
+
+    for blob in blobs:
+        # Skip "directory marker" objects
+        if blob.name.endswith("/"):
+            continue
+
+        # Preserve folder structure relative to gcs_folder
+        relative_path = blob.name[len(gcs_folder) :]
+        local_path = local_base / relative_path
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+
+        blob.download_to_filename(str(local_path))
+        print(f"Downloaded gs://{bucket_name}/{blob.name} -> {local_path}")
 
 
 def check_uid_gid():
@@ -86,9 +158,17 @@ def parse_args():
 
 
 def main():
+    """
+    temp main function to for GCS solution
+    """
     args = parse_args()
     check_uid_gid()
     check_read_only()
+    download_gcs_folder(
+        bucket_name=os.environ.get("GCS_BUCKET"),
+        gcs_folder="GIS_Files/",
+        local_folder="/tmp/GIS_Files",
+    )
 
     if not args.scale or not args.obj:
         logger.error("Error: --scale and --object required (or set SCALE/OBJECT env)")
@@ -103,6 +183,12 @@ def main():
         sys.exit()
 
     handler(args)
+
+    upload_results_to_gcs(
+        gdb_path="/tmp/GIS_Files/ag_outputs/n100/road.gdb/",
+        bucket_name=os.environ.get("GCS_BUCKET"),
+        gcs_folder=f"outputs/{args.scale}_{args.obj}/",
+    )
 
 
 if __name__ == "__main__":

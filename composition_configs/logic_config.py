@@ -11,6 +11,7 @@ from typing import (
 )
 
 from composition_configs import core_config, io_types, type_defs
+from file_manager.work_file_manager import WorkFileManager
 
 RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
@@ -547,6 +548,14 @@ class SegmentationConfig:
     interval_meters: float
     mode: SegmentationMode = SegmentationMode.EVEN
     tail_tolerance_meters: float = 0.0
+
+
+@dataclass(frozen=True)
+class RoadRampsConfig:
+    input_roads: io_types.GdbIOArg
+    output_roads: io_types.GdbIOArg
+    output_points: io_types.GdbIOArg
+    wfm_config: core_config.WorkFileConfig
 
 
 @dataclass(frozen=True)

@@ -8,9 +8,13 @@ from file_manager.n100.file_manager_roads import Road_N100
 from collections import deque, defaultdict
 from typing import Dict, Set, List, Any, Iterable, Optional
 
+from composition_configs.logic_config import RoadRampsConfig
+
 
 @timing_decorator
-def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
+def main(
+    ramp_config: RoadRampsConfig,
+):
     """
     creates points that symbolize a connection between two roads,
     give id of point to the roads that it symbolizes a connection between,
@@ -18,9 +22,12 @@ def main(input_fc: str, output_roads_fc: str, output_points_fc: str):
     removes all ramps from the roads,
     Not implemented yet but will restore connections between roads that get lost because of ramp removal when the connection isnt symbolized through a point
     """
-    config = core_config.WorkFileConfig(root_file=input_fc)
-    wfm = WorkFileManager(config=config)
+    wfm = WorkFileManager(config=ramp_config.wfm_config)
     files = create_wfm_gdbs(wfm=wfm)
+    input_fc = ramp_config.input_roads
+    output_roads_fc = ramp_config.output_roads
+    output_points_fc = ramp_config.output_points
+
     arcpy.management.CopyFeatures(input_fc, files["copy_of_input"])
 
     relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400)
@@ -280,6 +287,7 @@ def dissolve_and_return_connection(
         in_table=output_fc,
         field_name=orig_lines_id,
         field_type="TEXT",
+        field_length=1000,
     )
     orig_layer = "orig_layer"
     arcpy.management.MakeFeatureLayer(
@@ -3848,9 +3856,11 @@ if __name__ == "__main__":
     environment_setup.main()
 
     main(
-        input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        output_roads_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
-        output_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+        ramp_config=RoadRampsConfig(
+            input_roads=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            output_roads=Road_N100.ramps__generalized_ramps__n100_road.value,
+            output_points=Road_N100.ramps__potential_points__n100_road.value,
+        ),
     )
     """
     main_part_2(
