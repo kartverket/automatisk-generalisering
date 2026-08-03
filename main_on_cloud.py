@@ -16,41 +16,33 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
-
-
 def upload_results_to_gcs(
     gdb_path: str,
     bucket_name: str,
     gcs_folder: str,
 ) -> None:
-    """
-
-    """
+    """ """
     gdb_path = Path(gdb_path)
     if gcs_folder and not gcs_folder.endswith("/"):
         gcs_folder += "/"
-
 
     zip_file = Path(
         shutil.make_archive(
             base_name=str(gdb_path),
             format="zip",
             root_dir=gdb_path.parent,
-            base_dir=gdb_path.name
+            base_dir=gdb_path.name,
         )
     )
-
 
     client = storage.Client()
     bucket = client.bucket(bucket_name)
 
-
-    
     blob_name = f"{gcs_folder}{zip_file.name}"
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(str(zip_file))
     logger.info(f"Uploaded {zip_file} -> gs://{bucket_name}/{blob_name}")
+
 
 def download_gcs_folder(
     bucket_name: str,
@@ -84,15 +76,13 @@ def download_gcs_folder(
             continue
 
         # Preserve folder structure relative to gcs_folder
-        relative_path = blob.name[len(gcs_folder):]
+        relative_path = blob.name[len(gcs_folder) :]
         local_path = local_base / relative_path
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
         blob.download_to_filename(str(local_path))
         print(f"Downloaded gs://{bucket_name}/{blob.name} -> {local_path}")
-
-
 
 
 def check_uid_gid():
@@ -198,12 +188,8 @@ def main():
         gdb_path="/tmp/GIS_Files/ag_outputs/n100/road.gdb/",
         bucket_name=os.environ.get("GCS_BUCKET"),
         gcs_folder=f"outputs/{args.scale}_{args.obj}/",
-
     )
-
-
 
 
 if __name__ == "__main__":
     main()
-    

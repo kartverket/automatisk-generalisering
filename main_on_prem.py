@@ -16,8 +16,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
-
 def create_s3_client(
     endpoint_url: str,
     access_key: str,
@@ -26,11 +24,7 @@ def create_s3_client(
     """
     Create an S3-compatible client for Scality.
     """
-    return Minio(
-                endpoint=endpoint_url,
-                access_key=access_key,
-                secret_key=secret_key
-            )
+    return Minio(endpoint=endpoint_url, access_key=access_key, secret_key=secret_key)
 
 
 def download_scality_folder(
@@ -52,7 +46,6 @@ def download_scality_folder(
     if scality_folder and not scality_folder.endswith("/"):
         scality_folder += "/"
 
-
     objects = client.list_objects(
         bucket_name=bucket_name,
         prefix=scality_folder,
@@ -68,7 +61,7 @@ def download_scality_folder(
             continue
 
         # Preserve folder structure relative to scality_folder
-        relative_path = obj.object_name[len(scality_folder):]
+        relative_path = obj.object_name[len(scality_folder) :]
         local_path = local_base / relative_path
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -82,12 +75,8 @@ def download_scality_folder(
         print(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
 
 
-
 def upload_results_to_scality(
-    client: Minio,
-    bucket_name: str,
-    local_path: str,
-    object_name: str | None = None
+    client: Minio, bucket_name: str, local_path: str, object_name: str | None = None
 ):
     """
     Upload a local ZIP file to a Scality bucket.
@@ -112,7 +101,7 @@ def upload_results_to_scality(
         base_name=str(local_path),
         format="zip",
         root_dir=local_path.parent,
-        base_dir=local_path.name
+        base_dir=local_path.name,
     )
 
     print(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
@@ -121,7 +110,7 @@ def upload_results_to_scality(
         bucket_name=bucket_name,
         object_name=object_name,
         file_path=local_zip_path,
-        content_type="application/zip"
+        content_type="application/zip",
     )
 
     print("ZIP upload completed.")
@@ -198,6 +187,7 @@ def parse_args():
     )
     return parser.parse_args()
 
+
 def main():
     """
     Temp function to test on prem solution
@@ -225,11 +215,8 @@ def main():
         client=s3,
         bucket_name=bucket_name,
         scality_folder="GIS_Files/",
-        local_folder="/tmp/GIS_Files"
+        local_folder="/tmp/GIS_Files",
     )
-
-
-    
 
     key = (args.scale, args.obj)
     handler = DISPATCH.get(key)
@@ -250,4 +237,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
