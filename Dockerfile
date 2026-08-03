@@ -1,5 +1,5 @@
 # Use a small Python base image
-FROM ghcr.io/kartverket/arcpy-linux:12.0
+FROM ghcr.io/kartverket/arcpy-linux:12.0 AS base
 
 # Set working directory
 WORKDIR /app
@@ -17,4 +17,10 @@ RUN /arcgis/server/startserver.sh
 
 # Make the project script the container entrypoint
 ENV SCALE=scale OBJECT=object
+
+FROM base AS on_prem
+CMD ["python", "main_on_prem.py"]
+
+FROM base AS on_cloud
+CMD ["python", "main_on_cloud.py"]
 
