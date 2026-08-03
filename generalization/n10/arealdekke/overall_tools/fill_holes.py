@@ -25,7 +25,7 @@ from generalization.n10.arealdekke.category_tools.thin_poly_to_point import (
 # ========================
 
 
-class names(StrEnum):
+class Names(StrEnum):
     complete = "complete"
     filtered_lines = "filtered_lines"
     qualified_small = "qualified_small"
@@ -97,56 +97,7 @@ def file_setup(wfm: WorkFileManager) -> dict:
         dict: A dictionary with all the files as variables
     """
     return {
-        names.complete: wfm.build_file_path(file_name=names.complete, file_type="gdb"),
-        #
-        # Holes:
-        names.qualified_small: wfm.build_file_path(
-            file_name=names.qualified_small, file_type="gdb"
-        ),
-        #
-        names.qualified_as_line: wfm.build_file_path(
-            file_name=names.qualified_as_line, file_type="gdb"
-        ),
-        names.input_as_line: wfm.build_file_path(
-            file_name=names.input_as_line, file_type="gdb"
-        ),
-        names.touching_lines: wfm.build_file_path(
-            file_name=names.touching_lines, file_type="gdb"
-        ),
-        names.touching_points: wfm.build_file_path(
-            file_name=names.touching_points, file_type="gdb"
-        ),
-        names.identical: wfm.build_file_path(
-            file_name=names.identical, file_type="gdb"
-        ),
-        names.filtered_lines: wfm.build_file_path(
-            file_name=names.filtered_lines, file_type="gdb"
-        ),
-        names.line_endpoints: wfm.build_file_path(
-            file_name=names.line_endpoints, file_type="gdb"
-        ),
-        names.endpoint_buffer: wfm.build_file_path(
-            file_name=names.endpoint_buffer, file_type="gdb"
-        ),
-        names.spatial_join: wfm.build_file_path(
-            file_name=names.spatial_join, file_type="gdb"
-        ),
-        names.cutlines: wfm.build_file_path(file_name=names.cutlines, file_type="gdb"),
-        names.split_result: wfm.build_file_path(
-            file_name=names.split_result, file_type="gdb"
-        ),
-        names.surrounding_features: wfm.build_file_path(
-            file_name=names.surrounding_features, file_type="gdb"
-        ),
-        names.surrounding_lines: wfm.build_file_path(
-            file_name=names.surrounding_lines, file_type="gdb"
-        ),
-        names.intersecting_lines: wfm.build_file_path(
-            file_name=names.intersecting_lines, file_type="gdb"
-        ),
-        names.join_land_use: wfm.build_file_path(
-            file_name=names.join_land_use, file_type="gdb"
-        ),
+        name: wfm.build_file_path(file_name=name, file_type="gdb") for name in Names
     }
 
 
@@ -164,15 +115,15 @@ def data_sorting(input_fc: str, files: dict, min_size: int) -> None:
     active_line_layers = [val for val in LINE.values() if arcpy.Exists(val)]
     arcpy.management.FeatureToPolygon(
         in_features=[input_fc] + active_line_layers,
-        out_feature_class=files[names.complete],
+        out_feature_class=files[Names.complete],
     )
 
     # Removes the input from the complete set
     # => the remaining polygons are the holes
     arcpy.analysis.Erase(
-        in_features=files[names.complete],
+        in_features=files[Names.complete],
         erase_features=input_fc,
-        out_feature_class=files[names.qualified_small],
+        out_feature_class=files[Names.qualified_small],
     )
 
     # For all landd use types, fetch polygons smaller than
@@ -187,25 +138,25 @@ def data_sorting(input_fc: str, files: dict, min_size: int) -> None:
         )
         arcpy.management.Append(
             inputs=land_use_lyr,
-            target=files[names.qualified_small],
+            target=files[Names.qualified_small],
             schema_type="NO_TEST",
         )
 
     arcpy.management.RepairGeometry(
-        in_features=files[names.qualified_small],
+        in_features=files[Names.qualified_small],
         delete_null="DELETE_NULL",
         validation_method="ESRI",
     )
 
     arcpy.cartography.CollapseHydroPolygon(
-        in_features=files[names.qualified_small],
-        out_line_feature_class=files[names.filtered_lines],
+        in_features=files[Names.qualified_small],
+        out_line_feature_class=files[Names.filtered_lines],
         merge_adjacent_input_polygons="NO_MERGE",
     )
 
 
 def match_holes_with_surrounding_features(
-    files: dict, input_fc: str, output_fc: str
+    files: dict, input_fc: str, output_fc: str = None, strict: bool = True
 ) -> None:
     """
     Adds correct land use categories to the holes based on the surrounding features.
@@ -213,51 +164,55 @@ def match_holes_with_surrounding_features(
     Args:
         files (dict): Dictionary with all the working files
         input_fc (str): Original feature class used as source for the land use categories
-        output_fc (str): The feature class where the result should be saved
+        output_fc (str, optional): The feature class where the result should be saved (default: None)
+        strict (bool, optional): Whether to use strict rules for recategorization (default: True)
     """
     arcpy.analysis.Erase(
         in_features=input_fc,
-        erase_features=files[names.split_result],
-        out_feature_class=files[names.surrounding_features],
+        erase_features=files[Names.split_result],
+        out_feature_class=files[Names.surrounding_features],
     )
 
     land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=files[names.surrounding_features], out_layer=land_use_lyr
+        in_features=files[Names.surrounding_features], out_layer=land_use_lyr
     )
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=files[names.split_result],
+        select_features=files[Names.split_result],
         selection_type="NEW_SELECTION",
     )
     arcpy.management.PolygonToLine(
-        in_features=land_use_lyr, out_feature_class=files[names.surrounding_lines]
+        in_features=land_use_lyr, out_feature_class=files[Names.surrounding_lines]
     )
 
     arcpy.analysis.Intersect(
-        in_features=[files[names.surrounding_lines], files[names.split_result]],
-        out_feature_class=files[names.intersecting_lines],
+        in_features=[files[Names.surrounding_lines], files[Names.split_result]],
+        out_feature_class=files[Names.intersecting_lines],
         output_type="LINE",
     )
 
     arcpy.analysis.SpatialJoin(
-        target_features=files[names.split_result],
-        join_features=files[names.intersecting_lines],
-        out_feature_class=files[names.join_land_use],
+        target_features=files[Names.split_result],
+        join_features=files[Names.intersecting_lines],
+        out_feature_class=files[Names.join_land_use],
         join_operation="JOIN_ONE_TO_MANY",
         join_type="KEEP_ALL",
         match_option="INTERSECT",
     )
 
     poly_to_area = {
-        oid: area
-        for oid, area in arcpy.da.SearchCursor(land_use_lyr, ["OID@", "arealdekke"])
+        oid: [area, dgif, fish]
+        for oid, area, dgif, fish in arcpy.da.SearchCursor(
+            land_use_lyr,
+            ["OID@", "arealdekke", "dgfcd_feature_alpha", "FID_Fishnet_500m"],
+        )
     }
 
     line_to_poly = {}
     with arcpy.da.SearchCursor(
-        files[names.intersecting_lines],
+        files[Names.intersecting_lines],
         ["OID@", "LEFT_FID", "RIGHT_FID", "Shape_Length"],
     ) as cursor:
         for oid, left, right, length in cursor:
@@ -266,18 +221,20 @@ def match_holes_with_surrounding_features(
             elif right != -1 and right in poly_to_area:
                 line_to_poly[oid] = [poly_to_area[right], length]
 
-    split_fields = {field.name for field in arcpy.ListFields(files[names.split_result])}
-    if "arealdekke" not in split_fields:
-        arcpy.management.AddField(
-            in_table=files[names.split_result],
-            field_name="arealdekke",
-            field_type="TEXT",
-            field_length=100,
-        )
+    split_fields = {field.name for field in arcpy.ListFields(files[Names.split_result])}
+    attrs = ["arealdekke", "dgfcd_feature_alpha", "FID_Fishnet_500m"]
+    for attr in attrs:
+        if attr not in split_fields:
+            arcpy.management.AddField(
+                in_table=files[Names.split_result],
+                field_name="arealdekke",
+                field_type="TEXT",
+                field_length=100,
+            )
 
     join_to_line = defaultdict(list)
     with arcpy.da.SearchCursor(
-        files[names.join_land_use], ["TARGET_FID", "JOIN_FID"]
+        files[Names.join_land_use], ["TARGET_FID", "JOIN_FID"]
     ) as cursor:
         for target_oid, line_oid in cursor:
             if line_oid != -1:
@@ -295,22 +252,25 @@ def match_holes_with_surrounding_features(
         )
 
         i = 0
-        invalid_categories = ["samferdsel"]
+        invalid_categories = ["samferdsel"] if strict else []
         while len(prioritized_lines) > i:
             chosen_line = prioritized_lines[i]
-            if line_to_poly[chosen_line][0].lower() not in invalid_categories:
+            if line_to_poly[chosen_line][0][0].lower() not in invalid_categories:
                 target_to_category[target_oid] = line_to_poly[chosen_line][0]
                 i += len(prioritized_lines)
             i += 1
 
     with arcpy.da.UpdateCursor(
-        files[names.split_result], ["OID@", "arealdekke"]
+        files[Names.split_result],
+        ["OID@", "arealdekke", "dgfcd_feature_alpha", "FID_Fishnet_500m"],
     ) as cursor:
-        for oid, _ in cursor:
+        for oid, _, _, _ in cursor:
             if oid in target_to_category:
-                cursor.updateRow([oid, target_to_category[oid]])
+                area, dgf, fish = target_to_category[oid]
+                cursor.updateRow([oid, area, dgf, fish])
 
-    arcpy.management.Merge(
-        inputs=[files[names.split_result], files[names.surrounding_features]],
-        output=output_fc,
-    )
+    if strict and output_fc is not None:
+        arcpy.management.Merge(
+            inputs=[files[Names.split_result], files[Names.surrounding_features]],
+            output=output_fc,
+        )

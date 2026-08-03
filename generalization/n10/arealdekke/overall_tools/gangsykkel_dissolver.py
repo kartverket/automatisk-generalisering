@@ -258,7 +258,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["gangsykkel_final_merge"], max_iterations=5
+            input_fc=self.files["gangsykkel_final_merge"]
         )
 
         arcpy.management.MultipartToSinglepart(
@@ -267,7 +267,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["gangsykkel_final_merge_singlepart"], max_iterations=5
+            input_fc=self.files["gangsykkel_final_merge_singlepart"]
         )
 
         gangsykkel_final_merge_singlepart_lyr = (
@@ -357,9 +357,7 @@ class GangSykkelDissolver:
             out_feature_class=paths["clip_path"],
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=paths["clip_path"], max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=paths["clip_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["clip_path"],
@@ -367,7 +365,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=paths["singlepart_clipped_path"], max_iterations=5
+            input_fc=paths["singlepart_clipped_path"]
         )
 
         arcpy.analysis.Erase(
@@ -376,9 +374,7 @@ class GangSykkelDissolver:
             out_feature_class=paths["erased_path"],
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=paths["erased_path"], max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=paths["erased_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["erased_path"],
@@ -386,7 +382,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=paths["singlepart_erased_path"], max_iterations=5
+            input_fc=paths["singlepart_erased_path"]
         )
 
         return (

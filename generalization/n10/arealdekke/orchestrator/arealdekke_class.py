@@ -47,8 +47,11 @@ from generalization.n10.arealdekke.overall_tools.area_aggregator import aggregat
 from generalization.n10.arealdekke.category_tools.area_aggregator import (
     aggregate_category,
 )
-from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
-    snap_lines,
+from generalization.n10.arealdekke.category_tools.line_postprocessing import (
+    post_process_lines,
+)
+from generalization.n10.arealdekke.overall_tools.replace_uncategorized import (
+    replace_uncategorized_features,
 )
 
 from data_orchestrator.orchestrator import InputDataOrchestrator
@@ -588,9 +591,15 @@ class Arealdekke:
                 final_fc=self.final_categories_fc,
                 passability_fc=Arealdekke_N10.passability__n10_land_use.value,
             ),
+            lambda: post_process_lines(
+                land_use_fc=self.final_categories_fc,
+            ),
             lambda: fill_holes(
                 input_fc=self.final_categories_fc,
                 output_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
+            ),
+            lambda: replace_uncategorized_features(
+                input_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
             ),
             lambda: arealdekke_dissolver(
                 input_fc=Arealdekke_N10.fill_holes_output__n10_land_use.value,
@@ -598,5 +607,4 @@ class Arealdekke:
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
-            lambda: snap_lines(land_use_fc=self.final_output_fc),
         ]

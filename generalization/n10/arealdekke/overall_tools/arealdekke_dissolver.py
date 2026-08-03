@@ -340,9 +340,7 @@ class ArealdekkeDissolver:
         self.fetch_divide_data()
         self.dissolve()
         self.restore_data()
-        self.geometry_validator.check_repair_sequence(
-            input_fc=self.output_feature, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=self.output_feature)
         self.wfm.delete_created_files()
 
 
@@ -374,7 +372,7 @@ def partition_call(
 ):
     identity = Arealdekke_N10.identity.value
 
-    GeometryValidator().check_repair_sequence(input_fc=input_fc, max_iterations=5)
+    GeometryValidator().check_repair_sequence(input_fc=input_fc)
 
     fishnet = data_orc.get_dataset(dataset_name=dn.area).Fishnet_500m
 

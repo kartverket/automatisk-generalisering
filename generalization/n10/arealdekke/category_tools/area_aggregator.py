@@ -216,11 +216,14 @@ def boundary_adjustments(files: dict, target: str, boundary: str, sql: str) -> N
     ids_to_keep = [
         id for id, areas in id_to_area.items() if areas.issubset({target, boundary})
     ]
-    ids = ", ".join([f"{id}" for id in ids_to_keep])
+    where_clause = (
+        f"OBJECTID IN ({','.join(map(str, ids_to_keep))})" if ids_to_keep else "1=0"
+    )
+
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=lyr_2,
         selection_type="NEW_SELECTION",
-        where_clause=f"OBJECTID IN ({ids})",
+        where_clause=where_clause,
     )
     arcpy.management.SelectLayerByLocation(
         in_layer=lyr_1,
