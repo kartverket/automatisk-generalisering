@@ -2893,8 +2893,19 @@ def _connect_group_endpoints_3(
 
 
 def _write_new_lines_feature_class(
-    files: dict, endpoint_data_map: dict, new_lines: dict, spatial_reference
+    files: dict,
+    endpoint_data_map: dict,
+    new_lines: dict,
+    spatial_reference,
+    original_road_oid_geom: dict = None,
+    road_attributes: dict = None,
 ):
+    _MOTORVEGTYPE_SCORE = {
+    "Motorveg": 1,
+    "Motortrafikkveg": 2,
+    "Ikke motorveg": 3,
+    "Udefinert": 4,
+}
     if spatial_reference is None:
         spatial_reference = arcpy.Describe(files["copy_of_input"]).spatialReference
 
@@ -2915,8 +2926,21 @@ def _write_new_lines_feature_class(
 
     with arcpy.da.InsertCursor(files["new_lines"], fields) as i_cur:
         for uid, lines in new_lines.items():
-            data = endpoint_data_map.get(uid, {})
+            base_data = endpoint_data_map.get(uid, {})
             for line in lines:
+                data = dict(base_data)
+                if original_road_oid_geom is not None and road_attributes is not None:
+                    end_pg = arcpy.PointGeometry(line.lastPoint, line.spatialReference)
+                    touching = [
+                        road_attributes[oid]
+                        for oid, geom in original_road_oid_geom.items()
+                        if oid in road_attributes and not end_pg.disjoint(geom)
+                    ]
+                    if touching:
+                        data["motorvegtype"] = max(
+                            touching + [data.get("motorvegtype")],
+                            key=lambda v: _MOTORVEGTYPE_SCORE.get(v, 0),
+                        )
                 row = [line] + [data.get(field, None) for field in fields[1:]]
                 i_cur.insertRow(row)
 
@@ -3047,6 +3071,21 @@ def _load_non_ramp_road_mediums(files: dict) -> dict:
     return road_oid_medium
 
 
+def _load_non_ramp_road_motorvegtype(files: dict) -> dict:
+    road_attributes = {}
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"],
+        ["OID@", "motorvegtype", "typeveg"],
+    ) as s_cur:
+        for oid, motorvegtype, typeveg in s_cur:
+            if typeveg != "rampe":
+                road_attributes[oid] = motorvegtype
+    return road_attributes
+
+
+
+
+
 def _add_potential_points_to_adjacency(
     files: dict, adjacency: dict, adjacency_file: str
 ):
@@ -3133,7 +3172,9 @@ def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: 
         files=files, lines=files["relevant_roads_dissolved"]
     )
     road_oid_geom, valid_adjacency_oid = _load_non_ramp_roads(files)
+    original_road_oid_geom = dict(road_oid_geom)
     road_oid_medium = _load_non_ramp_road_mediums(files)
+    road_motorvegtype = _load_non_ramp_road_motorvegtype(files)
     counter = 0
     endpoints_per_rampid = _sort_rampids_by_avg_vegklasse(
         endpoints_per_rampid, endpoint_data_map
@@ -3180,6 +3221,8 @@ def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: 
         endpoint_data_map=endpoint_data_map,
         new_lines=all_new_lines,
         spatial_reference=last_sr,
+        original_road_oid_geom=original_road_oid_geom,
+        road_attributes=road_motorvegtype,
     )
     _finalize_new_lines(files["new_lines"])
 
@@ -3860,6 +3903,9 @@ if __name__ == "__main__":
             input_roads=Road_N100.data_preparation___road_single_part_2___n100_road.value,
             output_roads=Road_N100.ramps__generalized_ramps__n100_road.value,
             output_points=Road_N100.ramps__potential_points__n100_road.value,
+            wfm_config=core_config.WorkFileConfig(
+                root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
+            )
         ),
     )
     """
