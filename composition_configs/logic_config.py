@@ -11,7 +11,6 @@ from typing import (
 )
 
 from composition_configs import core_config, io_types, type_defs
-from file_manager.work_file_manager import WorkFileManager
 
 RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
