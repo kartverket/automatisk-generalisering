@@ -38,6 +38,7 @@ class Names(StrEnum):
     joined_lines = "joined_lines"
     erased = "erased"
     dissolved = "dissolved"
+    simplified = "simplified"
 
 
 # ========================
@@ -56,6 +57,10 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
         land_use_fc (str): The path to the land use feature class
         data_orc (InputDataOrchestrator): The data orchestrator instance
     """
+    if all(not arcpy.Exists(line_fc) for line_fc in LINE.values()):
+        print("No line feature classes found. Skipping post-processing of lines.")
+        return
+    
     working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
@@ -69,11 +74,17 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
         dissolve_lines(
             input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc
         )
-        arcpy.cartography.SmoothLine(
+        arcpy.cartography.SimplifyLine(
             in_features=files[Names.dissolved],
+            out_feature_class=files[Names.simplified],
+            algorithm="POINT_REMOVE",
+            tolerance=2,
+            error_option="RESOLVE_ERRORS",
+        )
+        arcpy.cartography.SmoothLine(
+            in_features=files[Names.simplified],
             out_feature_class=line_fc,
-            algorithm="PAEK",
-            endpoint_option="FIXED_CLOSED_ENDPOINT",
+            algorithm="BEZIER_INTERPOLATION",
             error_option="RESOLVE_ERRORS",
         )
 

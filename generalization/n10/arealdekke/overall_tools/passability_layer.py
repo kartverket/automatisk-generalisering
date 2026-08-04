@@ -94,7 +94,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         in_layer_or_view=final_lyr, selection_type="NEW_SELECTION", where_clause=sql
     )
 
-    arcpy.analysis.Erase(
+    arcpy.analysis.PairwiseErase(
         in_features=passability_fc,
         erase_features=final_lyr,
         out_feature_class=files[Names.erased],

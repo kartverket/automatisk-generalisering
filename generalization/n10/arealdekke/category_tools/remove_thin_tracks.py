@@ -45,9 +45,13 @@ def remove_thin_tracks(
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    width = get_min_width(
+    target_width = get_min_width(
         map_scale=map_scale,
         target=target,
+    )
+    track_width = get_min_width(
+        map_scale=map_scale,
+        target=track_type,
     )
 
     fetch_data(
@@ -55,10 +59,10 @@ def remove_thin_tracks(
         target=track_type,
         input_fc=input_fc,
         complete_fc=complete_fc,
-        width=width,
+        width=target_width,
     )
     if int(arcpy.management.GetCount(files[fc.target_fc])[0]) != 0:
-        find_segments_under_min(files=files, min_width=width)
+        find_segments_under_min(files=files, min_width=track_width)
         filter_candidates(files=files)
         cleanup(files=files, target=target, complete_fc=complete_fc)
 
@@ -167,8 +171,11 @@ def fetch_data(
         select_features=input_fc,
         selection_type="SUBSET_SELECTION",
     )
-    arcpy.management.CopyFeatures(
-        in_features=lyr, out_feature_class=files[fc.target_fc]
+    # Keep only overlapping geometry parts so full track polygons are not
+    # recategorized when they intersect the target area in just one location.
+    arcpy.analysis.PairwiseIntersect(
+        in_features=[lyr, input_fc],
+        out_feature_class=files[fc.target_fc],
     )
 
     arcpy.management.SelectLayerByAttribute(
