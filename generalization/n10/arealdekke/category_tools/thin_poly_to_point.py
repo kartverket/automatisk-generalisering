@@ -20,7 +20,7 @@ from generalization.n10.arealdekke.parameters.parameter_worker import get_min_wi
 from generalization.n100.land_use.rullebane import cluster_points
 
 # ========================
-# Class
+# Classes
 # ========================
 
 
@@ -53,8 +53,12 @@ class Names(StrEnum):
     intermediate_points = "intermediate_points"
 
 
+class PostProcessNames(StrEnum):
+    buffer = "buffer"
+
+
 # ========================
-# Main function
+# Main functions
 # ========================
 
 
@@ -111,6 +115,51 @@ def pointify_thin_poly(
     )
 
     wfm.delete_created_files()
+
+
+def postprocess_point_data(land_use_fc: str) -> None:
+    """
+    Postprocessing of point data so that only points located in the farmland areas are kept.
+
+    Args:
+        land_use_fc (str): Path to the feature class containing the land use data
+    """
+    point_fc = Arealdekke_N10.poly_to_point_points__n10_land_use.value
+
+    working_fc = Arealdekke_N10.poly_to_point__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=working_fc)
+    wfm = WorkFileManager(config=config)
+
+    files = {
+        name: wfm.build_file_path(file_name=name, file_type="gdb")
+        for name in PostProcessNames
+    }
+
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=land_use_fc, out_layer=land_use_lyr)
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause="arealdekke = 'Jordbruk'",
+    )
+
+    arcpy.analysis.Buffer(
+        in_features=land_use_lyr,
+        out_feature_class=files[PostProcessNames.buffer],
+        bufferdistance_or_field="-8 Meters",
+    )
+
+    point_lyr = "point_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=point_fc, out_layer=point_lyr)
+    arcpy.management.SelectLayerByLocation(
+        in_layer=point_lyr,
+        overlap_type="INTERSECT",
+        select_features=files[PostProcessNames.buffer],
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT",
+    )
+
+    arcpy.management.DeleteFeatures(point_lyr)
 
 
 # ========================
@@ -212,9 +261,7 @@ def create_points(input_fc: str, complete_fc: str, files: dict) -> None:
 
     with arcpy.da.InsertCursor(point_fc, ["SHAPE@"]) as insert:
         geom: arcpy.Polyline
-        for geom, length in arcpy.da.SearchCursor(
-            line_lyr, ["SHAPE@", "Shape_Length"]
-        ):
+        for geom, length in arcpy.da.SearchCursor(line_lyr, ["SHAPE@", "Shape_Length"]):
             num_points: int = max(1, int(length / (point_dist * 2)))
             spacing: float = length / (num_points + 1)
 

@@ -60,7 +60,7 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
     if all(not arcpy.Exists(line_fc) for line_fc in LINE.values()):
         print("No line feature classes found. Skipping post-processing of lines.")
         return
-    
+
     working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
