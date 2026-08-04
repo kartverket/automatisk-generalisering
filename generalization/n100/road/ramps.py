@@ -2897,8 +2897,8 @@ def _write_new_lines_feature_class(
     endpoint_data_map: dict,
     new_lines: dict,
     spatial_reference,
-    original_road_oid_geom: dict = None,
-    road_attributes: dict = None,
+    original_road_oid_geom: dict,
+    road_motorvegtype: dict,
 ):
     _MOTORVEGTYPE_SCORE = {
         "Motorveg": 1,
@@ -2929,18 +2929,17 @@ def _write_new_lines_feature_class(
             base_data = endpoint_data_map.get(uid, {})
             for line in lines:
                 data = dict(base_data)
-                if original_road_oid_geom is not None and road_attributes is not None:
-                    end_pg = arcpy.PointGeometry(line.lastPoint, line.spatialReference)
-                    touching = [
-                        road_attributes[oid]
-                        for oid, geom in original_road_oid_geom.items()
-                        if oid in road_attributes and not end_pg.disjoint(geom)
-                    ]
-                    if touching:
-                        data["motorvegtype"] = max(
-                            touching + [data.get("motorvegtype")],
-                            key=lambda v: _MOTORVEGTYPE_SCORE.get(v, 0),
-                        )
+                end_pg = arcpy.PointGeometry(line.lastPoint, line.spatialReference)
+                touching = [
+                    road_motorvegtype[oid]
+                    for oid, geom in original_road_oid_geom.items()
+                    if oid in road_motorvegtype and not end_pg.disjoint(geom)
+                ]
+                if touching:
+                    data["motorvegtype"] = max(
+                        touching + [data.get("motorvegtype")],
+                        key=lambda v: _MOTORVEGTYPE_SCORE.get(v, 0),
+                    )
                 row = [line] + [data.get(field, None) for field in fields[1:]]
                 i_cur.insertRow(row)
 
