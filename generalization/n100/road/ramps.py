@@ -2901,11 +2901,11 @@ def _write_new_lines_feature_class(
     road_attributes: dict = None,
 ):
     _MOTORVEGTYPE_SCORE = {
-    "Motorveg": 1,
-    "Motortrafikkveg": 2,
-    "Ikke motorveg": 3,
-    "Udefinert": 4,
-}
+        "Motorveg": 1,
+        "Motortrafikkveg": 2,
+        "Ikke motorveg": 3,
+        "Udefinert": 4,
+    }
     if spatial_reference is None:
         spatial_reference = arcpy.Describe(files["copy_of_input"]).spatialReference
 
@@ -3081,9 +3081,6 @@ def _load_non_ramp_road_motorvegtype(files: dict) -> dict:
             if typeveg != "rampe":
                 road_attributes[oid] = motorvegtype
     return road_attributes
-
-
-
 
 
 def _add_potential_points_to_adjacency(
@@ -3905,7 +3902,7 @@ if __name__ == "__main__":
             output_points=Road_N100.ramps__potential_points__n100_road.value,
             wfm_config=core_config.WorkFileConfig(
                 root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
-            )
+            ),
         ),
     )
     """
