@@ -188,7 +188,9 @@ def extract_data(files: dict, target_fc: str, input_fc: str, locked_fc: str) -> 
             in_features=land_use_lyr, out_feature_class=files[fc.locked_fc]
         )
     else:
-        arcpy.management.CopyFeatures(in_features=locked_fc, out_feature_class=files[fc.locked_fc])
+        arcpy.management.CopyFeatures(
+            in_features=locked_fc, out_feature_class=files[fc.locked_fc]
+        )
 
     arcpy.management.Delete(land_use_lyr)
 

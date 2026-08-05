@@ -280,12 +280,3 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
             erase_features=land_use_lyr,
             out_feature_class=line_fc,
         )
-
-
-# =======================
-
-if __name__ == "__main__":
-    # Example usage
-    land_use_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
-    data_orc = InputDataOrchestrator(map_scale="N10", pipeline="land_use")
-    post_process_lines(land_use_fc=land_use_fc, data_orc=data_orc)

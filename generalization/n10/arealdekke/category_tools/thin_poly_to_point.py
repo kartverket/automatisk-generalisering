@@ -251,20 +251,11 @@ def create_points(input_fc: str, complete_fc: str, files: dict) -> None:
         orthogonality_option="ORTHOGONAL",
     )
 
-    line_lyr = "line_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[Names.filtered_lines], out_layer=line_lyr
-    )
-    arcpy.management.SelectLayerByLocation(
-        in_layer=line_lyr,
-        overlap_type="INTERSECT",
-        select_features=files[Names.aggregated_farmland],
-        selection_type="NEW_SELECTION",
-    )
-
     with arcpy.da.InsertCursor(point_fc, ["SHAPE@"]) as insert:
         geom: arcpy.Polyline
-        for geom, length in arcpy.da.SearchCursor(line_lyr, ["SHAPE@", "Shape_Length"]):
+        for geom, length in arcpy.da.SearchCursor(
+            files[Names.filtered_lines], ["SHAPE@", "Shape_Length"]
+        ):
             num_points: int = max(1, int(length / (point_dist * 2)))
             spacing: float = length / (num_points + 1)
 

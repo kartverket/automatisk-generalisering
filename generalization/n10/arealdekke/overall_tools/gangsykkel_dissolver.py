@@ -232,7 +232,8 @@ class GangSykkelDissolver:
             )
         else:
             arcpy.management.CopyFeatures(
-                in_features=current_samferdsel, out_feature_class=self.files["not_grown"]
+                in_features=current_samferdsel,
+                out_feature_class=self.files["not_grown"],
             )
 
         self._dissolve_and_restore(
