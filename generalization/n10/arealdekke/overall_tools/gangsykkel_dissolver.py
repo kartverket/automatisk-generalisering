@@ -225,10 +225,15 @@ class GangSykkelDissolver:
             current_gangsykkel = paths["singlepart_erased_path"]
 
         # after loop
-        arcpy.management.Append(
-            inputs=current_samferdsel,
-            target=self.files["not_grown"],
-        )
+        if arcpy.Exists(self.files["not_grown"]):
+            arcpy.management.Append(
+                inputs=current_samferdsel,
+                target=self.files["not_grown"],
+            )
+        else:
+            arcpy.management.CopyFeatures(
+                in_features=current_samferdsel, out_feature_class=self.files["not_grown"]
+            )
 
         self._dissolve_and_restore(
             in_feature=self.files["not_grown"],
@@ -472,6 +477,12 @@ class GangSykkelDissolver:
 
     @timing_decorator
     def run(self) -> None:
+        if int(arcpy.management.GetCount(self.input_gangsykkel)[0]) == 0:
+            arcpy.management.CopyFeatures(
+                in_features=self.input_gangsykkel, out_feature_class=self.output_feature
+            )
+            return
+
         self._fetch_data()
         self._dissolve_looping(
             buffer_distance=f"{self.gang_sykkel_parameters.buffer_distance} Meters"

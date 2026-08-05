@@ -109,9 +109,6 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         aggregate_field=fremkommelighet,
     )
 
-    if arcpy.Exists(passability_fc):
-        arcpy.management.Delete(passability_fc)
-
     arcpy.management.Dissolve(
         in_features=files[Names.aggregated],
         out_feature_class=passability_fc,

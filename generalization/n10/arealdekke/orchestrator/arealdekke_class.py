@@ -612,6 +612,6 @@ class Arealdekke:
                 map_scale=self.__map_scale,
             ),
             lambda: postprocess_point_data(
-                input_fc=self.final_output_fc,
+                land_use_fc=self.final_output_fc,
             ),
         ]

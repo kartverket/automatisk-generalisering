@@ -187,6 +187,10 @@ def extract_data(files: dict, target_fc: str, input_fc: str, locked_fc: str) -> 
         arcpy.management.CopyFeatures(
             in_features=land_use_lyr, out_feature_class=files[fc.locked_fc]
         )
+    else:
+        arcpy.management.CopyFeatures(in_features=locked_fc, out_feature_class=files[fc.locked_fc])
+
+    arcpy.management.Delete(land_use_lyr)
 
     print("📦 Data extracted for target and locked areas")
 
@@ -322,6 +326,8 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
             out_feature_class=files[fc.locked_fc_outward_buffer],
         )
 
+    arcpy.management.Delete(land_use_lyr)
+
     print(
         "↔️ Shared boundaries between target and locked areas found and buffered outwards"
     )
@@ -427,6 +433,8 @@ def extract_below_limit(files: dict, target: str, min_width: int) -> None:
     arcpy.management.CopyFeatures(
         in_features=files[fc.intermediate_lines], out_feature_class=LINE[target]
     )
+
+    arcpy.management.Delete(land_use_lyr)
 
     print(
         f"📏 Especially small segments thinner than {lim} meters extracted from target polygon and stored in separate file."

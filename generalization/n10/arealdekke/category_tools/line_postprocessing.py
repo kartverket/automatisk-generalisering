@@ -281,18 +281,6 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
             out_feature_class=line_fc,
         )
 
-        line_lyr = "line_lyr"
-        arcpy.management.MakeFeatureLayer(
-            in_features=line_fc,
-            out_layer=line_lyr,
-        )
-        arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=line_lyr,
-            selection_type="NEW_SELECTION",
-            where_clause="Shape_Length < 5",
-        )
-        arcpy.management.DeleteFeatures(in_features=line_lyr)
-
 
 # =======================
 

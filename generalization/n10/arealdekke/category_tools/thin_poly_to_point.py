@@ -117,6 +117,7 @@ def pointify_thin_poly(
     wfm.delete_created_files()
 
 
+@timing_decorator
 def postprocess_point_data(land_use_fc: str) -> None:
     """
     Postprocessing of point data so that only points located in the farmland areas are kept.
@@ -146,7 +147,7 @@ def postprocess_point_data(land_use_fc: str) -> None:
     arcpy.analysis.Buffer(
         in_features=land_use_lyr,
         out_feature_class=files[PostProcessNames.buffer],
-        bufferdistance_or_field="-8 Meters",
+        buffer_distance_or_field="-8 Meters",
     )
 
     point_lyr = "point_lyr"
@@ -160,6 +161,8 @@ def postprocess_point_data(land_use_fc: str) -> None:
     )
 
     arcpy.management.DeleteFeatures(point_lyr)
+
+    wfm.delete_created_files()
 
 
 # ========================
@@ -301,9 +304,9 @@ def create_points(input_fc: str, complete_fc: str, files: dict) -> None:
     all_clustered_oids = {oid for cluster in clusters for oid in cluster}
 
     for cluster in clusters:
-        points = [points[oid] for oid in cluster]
-        avg_x = sum(x for x, _ in points) / len(points)
-        avg_y = sum(y for _, y in points) / len(points)
+        clustered_points = [points[oid] for oid in cluster]
+        avg_x = sum(x for x, _ in clustered_points) / len(clustered_points)
+        avg_y = sum(y for _, y in clustered_points) / len(clustered_points)
 
         new_points[cluster[0]] = arcpy.Point(X=avg_x, Y=avg_y)
 
