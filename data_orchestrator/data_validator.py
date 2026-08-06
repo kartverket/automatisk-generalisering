@@ -16,7 +16,7 @@ from paths import GIS_FILES_ROOT
 
 
 VALID_PIPELINES: list[str] = [
-    x.lower() for x in [dn.building, dn.object_arealdekke_flate, dn.road]
+    x.lower() for x in [dn.building, dn.object_arealdekke_flate, dn.road, dn.railway]
 ]
 VALID_SCALES: list[str] = [
     dn.scale_n10,
