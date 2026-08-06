@@ -6,6 +6,7 @@ from typing import Callable, Dict, Tuple
 from pathlib import Path
 import shutil
 from minio import Minio
+from generalization.n100.road.pipeline_checkpoint import ScalityPipelineCheckpoint
 
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
@@ -148,11 +149,11 @@ def check_read_only():
 
 
 # pipeline imports
-def pipeline_n100_road(args: argparse.Namespace) -> None:
+def pipeline_n100_road(args: argparse.Namespace, checkpoint: ScalityPipelineCheckpoint | None = None) -> None:
     from generalization.n100.road.data_preparation_2 import run as run_n100_road
 
     logger.info("Starting pipeline for %s", args)
-    run_n100_road()
+    run_n100_road(checkpoint=checkpoint)
 
 
 def pipeline_n10_arealdekke(args: argparse.Namespace) -> None:
@@ -225,7 +226,12 @@ def main():
         print_available()
         sys.exit()
 
-    handler(args)
+    checkpoint = ScalityPipelineCheckpoint(
+        client=s3,
+        bucket_name=bucket_name,
+        gdb_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb"),
+    )
+    handler(args, checkpoint=checkpoint)
 
     upload_results_to_scality(
         client=s3,
