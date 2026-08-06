@@ -14,9 +14,10 @@ train_path = Path.joinpath(
 # Setup feature class paths
 
 # N50 generalized data
+bane_fkb = Path.joinpath(train_path, dn.Bane_FKB)
 bane_n50 = Path.joinpath(train_path, dn.Bane_N50)
 jernbanestasjon_n50 = Path.joinpath(train_path, dn.JernbaneStasjon_N50)
 
 # Create dataset for imports
 
-DATA = [bane_n50, jernbanestasjon_n50]
+DATA = [bane_fkb, bane_n50, jernbanestasjon_n50]
