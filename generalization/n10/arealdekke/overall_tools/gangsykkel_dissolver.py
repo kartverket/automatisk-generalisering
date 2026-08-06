@@ -1,14 +1,11 @@
 from collections import defaultdict
-from pathlib import Path
 
 import arcpy
 
 from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
-from custom_tools.general_tools.param_utils import initialize_params
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -17,8 +14,8 @@ from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
 from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import (
     EliminateSmallPolygons,
 )
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    GangSykkelDissolverParameters,
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    initialize_parameters,
 )
 
 
@@ -43,12 +40,8 @@ class GangSykkelDissolver:
         self.files = self._create_wfm_gdbs(self.wfm)
 
         self.map_scale = gang_sykkel_dissolver_config.map_scale
-        params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-        self.scale_parameters = initialize_params(
-            params_path=params_path,
-            class_name="GangSykkelDissolver",
-            map_scale=self.map_scale,
-            dataclass=GangSykkelDissolverParameters,
+        self.gang_sykkel_parameters = initialize_parameters(
+            map_scale=self.map_scale, class_name="GangSykkelDissolver"
         )
 
         self.geometry_validator = GeometryValidator()
@@ -232,10 +225,16 @@ class GangSykkelDissolver:
             current_gangsykkel = paths["singlepart_erased_path"]
 
         # after loop
-        arcpy.management.Append(
-            inputs=current_samferdsel,
-            target=self.files["not_grown"],
-        )
+        if arcpy.Exists(self.files["not_grown"]):
+            arcpy.management.Append(
+                inputs=current_samferdsel,
+                target=self.files["not_grown"],
+            )
+        else:
+            arcpy.management.CopyFeatures(
+                in_features=current_samferdsel,
+                out_feature_class=self.files["not_grown"],
+            )
 
         self._dissolve_and_restore(
             in_feature=self.files["not_grown"],
@@ -265,7 +264,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["gangsykkel_final_merge"], max_iterations=5
+            input_fc=self.files["gangsykkel_final_merge"]
         )
 
         arcpy.management.MultipartToSinglepart(
@@ -274,7 +273,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["gangsykkel_final_merge_singlepart"], max_iterations=5
+            input_fc=self.files["gangsykkel_final_merge_singlepart"]
         )
 
         gangsykkel_final_merge_singlepart_lyr = (
@@ -283,7 +282,7 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_final_merge_singlepart"],
             out_layer=gangsykkel_final_merge_singlepart_lyr,
-            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < {self.scale_parameters.length_divide}",
+            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < {self.gang_sykkel_parameters.length_divide}",
         )
 
         arcpy.management.Eliminate(
@@ -364,9 +363,7 @@ class GangSykkelDissolver:
             out_feature_class=paths["clip_path"],
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=paths["clip_path"], max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=paths["clip_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["clip_path"],
@@ -374,7 +371,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=paths["singlepart_clipped_path"], max_iterations=5
+            input_fc=paths["singlepart_clipped_path"]
         )
 
         arcpy.analysis.Erase(
@@ -383,9 +380,7 @@ class GangSykkelDissolver:
             out_feature_class=paths["erased_path"],
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=paths["erased_path"], max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=paths["erased_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["erased_path"],
@@ -393,7 +388,7 @@ class GangSykkelDissolver:
         )
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=paths["singlepart_erased_path"], max_iterations=5
+            input_fc=paths["singlepart_erased_path"]
         )
 
         return (
@@ -417,12 +412,12 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=long_layer,
-            where_clause=f'"Shape_Length" > {self.scale_parameters.length_divide}',
+            where_clause=f'"Shape_Length" > {self.gang_sykkel_parameters.length_divide}',
         )
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=short_layer,
-            where_clause=f'"Shape_Length" <= {self.scale_parameters.length_divide}',
+            where_clause=f'"Shape_Length" <= {self.gang_sykkel_parameters.length_divide}',
         )
 
         arcpy.management.Append(
@@ -483,10 +478,15 @@ class GangSykkelDissolver:
 
     @timing_decorator
     def run(self) -> None:
-        environment_setup.main()
+        if int(arcpy.management.GetCount(self.input_gangsykkel)[0]) == 0:
+            arcpy.management.CopyFeatures(
+                in_features=self.input_gangsykkel, out_feature_class=self.output_feature
+            )
+            return
+
         self._fetch_data()
         self._dissolve_looping(
-            buffer_distance=f"{self.scale_parameters.buffer_distance} Meters"
+            buffer_distance=f"{self.gang_sykkel_parameters.buffer_distance} Meters"
         )
         e_kwargs = logic_config.EliminateSmallPolygonsInitKwargs(
             input_feature="",
@@ -524,6 +524,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
                 object=gangsykkel,
                 tag=dissolved_gangsykkel,
                 path=output_fc,
+                extraction_method=core_config.OutputExtractionMethod.CLIP,
             )
         ]
     )

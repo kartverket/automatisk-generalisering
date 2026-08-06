@@ -1,18 +1,16 @@
 import os
-from pathlib import Path
 
 import arcpy
 
 from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
-from custom_tools.general_tools.param_utils import initialize_params
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    EliminateSmallPolygonsParameters,
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    initialize_parameters,
+    get_min_area,
 )
 
 
@@ -33,13 +31,10 @@ class EliminateSmallPolygons:
         )
 
         self.map_scale = eliminate_small_polygons_config.map_scale
-        params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-        self.scale_parameters = initialize_params(
-            params_path=params_path,
-            class_name="EliminateSmallPolygons",
-            map_scale=self.map_scale,
-            dataclass=EliminateSmallPolygonsParameters,
+        self.eliminate_parameters = initialize_parameters(
+            map_scale=self.map_scale, class_name="EliminateSmallPolygons"
         )
+        self.area_parameters = get_min_area(map_scale=self.map_scale)
 
         self.files = self._create_wfm_gdbs(self.wfm)
 
@@ -126,7 +121,7 @@ class EliminateSmallPolygons:
         """
         include = "layer_include"
         exclude = "layer_exclude"
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.exclude)
+        quoted = ", ".join(f"'{v}'" for v in self.eliminate_parameters.exclude)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         not_exclusion_sql = f"arealdekke IN ({quoted})"
 
@@ -205,12 +200,12 @@ class EliminateSmallPolygons:
     def eliminate(self, input_fc, output_fc):
         """Eliminate small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel."""
         layer = "eliminate_layer"
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        quoted = ", ".join(f"'{v}'" for v in self.eliminate_parameters.dont_eliminate)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
-        numeric_clauses.append(f"area < {self.scale_parameters.max_area_b_iq}")
+        numeric_clauses.append(f"area < {self.eliminate_parameters.max_area_b_iq}")
         numeric_clauses.append(
-            f"iq_adjusted_area < {self.scale_parameters.min_iq_area}"
+            f"iq_adjusted_area < {self.eliminate_parameters.min_iq_area}"
         )
 
         # combine all parts into one where clause
@@ -227,20 +222,26 @@ class EliminateSmallPolygons:
             selection="LENGTH",
         )
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=output_fc, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=output_fc)
 
     @timing_decorator
     def eliminate_multiple_minimums(
         self, input_fc: str, output_fc: str, run: int
     ) -> None:
         layer = "eliminate_layer"
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        quoted = ", ".join(f"'{v}'" for v in self.eliminate_parameters.dont_eliminate)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
 
+        existing_land_use = [
+            row[0] for row in arcpy.da.SearchCursor(input_fc, ["arealdekke"])
+        ]
+
         temp_in = input_fc
-        for arealdekke, min_area in self.scale_parameters.min_area.items():
+        for arealdekke, min_area in (
+            (k, v)
+            for k, v in self.area_parameters.features.items()
+            if k in existing_land_use
+        ):
             print(f"Eliminating: {arealdekke} - {min_area}")
             clauses = []
             clauses.append(f"arealdekke = '{arealdekke}'")
@@ -279,14 +280,14 @@ class EliminateSmallPolygons:
 
         arcpy.management.CopyFeatures(temp_out, output_fc)
 
-        self.geometry_validator.check_repair_sequence(
-            input_fc=output_fc, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=output_fc)
 
     def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
         layer = "eliminate_after_elim_layer"
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
+        quoted = ", ".join(
+            f"'{v}'" for v in self.eliminate_parameters.dont_remove_spikes
+        )
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
 
         arcpy.management.MakeFeatureLayer(
@@ -297,12 +298,12 @@ class EliminateSmallPolygons:
         arcpy.analysis.Buffer(
             in_features=layer,
             out_feature_class=self.files["eliminate_selected_negative_buffers"],
-            buffer_distance_or_field=f"-{self.scale_parameters.spike_size} Meters",
+            buffer_distance_or_field=f"-{self.eliminate_parameters.spike_size} Meters",
         )
         arcpy.analysis.Buffer(
             in_features=self.files["eliminate_selected_negative_buffers"],
             out_feature_class=self.files["eliminate_selected_positive_buffers"],
-            buffer_distance_or_field=f"{self.scale_parameters.spike_size} Meters",
+            buffer_distance_or_field=f"{self.eliminate_parameters.spike_size} Meters",
         )
 
     def _clip_and_erase(self):
@@ -318,10 +319,10 @@ class EliminateSmallPolygons:
             out_feature_class=self.files["eliminate_erased"],
         )
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_clipped"], max_iterations=5
+            input_fc=self.files["eliminate_clipped"]
         )
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_erased"], max_iterations=5
+            input_fc=self.files["eliminate_erased"]
         )
 
         arcpy.management.MultipartToSinglepart(
@@ -344,10 +345,12 @@ class EliminateSmallPolygons:
         self.add_fields(self.files["eliminate_merged_clipped_erased"])
 
         self.geometry_validator.check_repair_sequence(
-            input_fc=self.files["eliminate_merged_clipped_erased"], max_iterations=5
+            input_fc=self.files["eliminate_merged_clipped_erased"]
         )
 
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
+        quoted = ", ".join(
+            f"'{v}'" for v in self.eliminate_parameters.dont_remove_spikes
+        )
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
         numeric_clauses.append(f"area < 100")
@@ -370,7 +373,7 @@ class EliminateSmallPolygons:
     def _integrate(self, input_fc):
         arcpy.management.Integrate(
             in_features=input_fc,
-            cluster_tolerance=f"{self.scale_parameters.integrate_tolerance} Meters",
+            cluster_tolerance=f"{self.eliminate_parameters.integrate_tolerance} Meters",
         )
 
     @staticmethod
@@ -438,12 +441,12 @@ class EliminateSmallPolygons:
             out_feature_class=potential_holes_polygons,
         )
 
-        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        quoted = ", ".join(f"'{v}'" for v in self.eliminate_parameters.dont_eliminate)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
-        numeric_clauses.append(f"area < {self.scale_parameters.max_area_b_iq}")
+        numeric_clauses.append(f"area < {self.eliminate_parameters.max_area_b_iq}")
         numeric_clauses.append(
-            f"iq_adjusted_area < {self.scale_parameters.min_iq_area}"
+            f"iq_adjusted_area < {self.eliminate_parameters.min_iq_area}"
         )
         where_parts = [exclusion_sql] + numeric_clauses
         where_clause = " AND ".join(where_parts)
@@ -473,8 +476,6 @@ class EliminateSmallPolygons:
 
     @timing_decorator
     def run(self):
-        environment_setup.main()
-
         self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
         self._exlude()
@@ -498,9 +499,7 @@ class EliminateSmallPolygons:
             in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
         )
-        self.geometry_validator.check_repair_sequence(
-            input_fc=self.output_feature, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=self.output_feature)
 
         self.wfm.delete_created_files()
 
@@ -568,7 +567,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
 
     # Run Config:
     partiton_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=5_000,
+        max_elements_per_partition=10_000,
         context_radius_meters=200,
         run_partition_optimization=False,
     )

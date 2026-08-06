@@ -550,6 +550,14 @@ class SegmentationConfig:
 
 
 @dataclass(frozen=True)
+class RoadRampsConfig:
+    input_roads: io_types.GdbIOArg
+    output_roads: io_types.GdbIOArg
+    output_points: io_types.GdbIOArg
+    wfm_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
 class FillLineGapsConfig:
     """
     Top-level configuration for FillLineGaps.

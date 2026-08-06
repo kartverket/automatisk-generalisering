@@ -5,7 +5,6 @@ import arcpy
 arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
-from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -14,7 +13,6 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 # ========================
 
 
-@timing_decorator
 def create_overlapping_land_use(
     input_fc: str,
     buffered_fc: str,
@@ -36,18 +34,17 @@ def create_overlapping_land_use(
 
     files = create_wfm_gdbs(wfm=wfm)
 
-    print("🔀 Merges buffered features with selected original land use …")
     arcpy.management.Merge(
         inputs=[buffered_fc, input_fc], output=files["temp_merge_fc"]
     )
-
-    print("🧩 Runs dissolve …")
     arcpy.management.Dissolve(
         in_features=files["temp_merge_fc"],
         out_feature_class=output_fc,
         dissolve_field=[],
         multi_part="SINGLE_PART",
     )
+
+    print("🗺️ Overlapping land use created and stored in output feature class")
 
     wfm.delete_created_files()
 

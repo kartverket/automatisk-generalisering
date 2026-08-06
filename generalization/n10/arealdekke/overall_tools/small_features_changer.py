@@ -1,7 +1,6 @@
 # Libraries
 
 import os
-from pathlib import Path
 
 import arcpy
 
@@ -9,12 +8,21 @@ arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    SmallFeatures,
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    get_min_area,
 )
+
+# ========================
+# Constants
+# ========================
+
+
+PARAMETER_MAPPING = {
+    "Bebygd": ["Snaumark", "Skog"],
+}
+
 
 # ========================
 # Program
@@ -22,16 +30,17 @@ from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
 
 
 @timing_decorator
-def change_attribute_value_main(working_fc: str) -> None:
-    params = fetch_parameters(map_scale="N10")
+def change_attribute_value_main(input_fc: str, map_scale: str, target: str) -> None:
+    min_area = get_min_area(map_scale=map_scale, target=target)
+    new_cat, ex_cat = PARAMETER_MAPPING[target]
 
     change_attribute_value_category(
-        working_fc=working_fc,
+        working_fc=input_fc,
         field="arealdekke",
-        category="Bebygd",
-        new_category="Snaumark",
-        size_limit=params.Bebygd,
-        exception_category="Skog",
+        category=target,
+        new_category=new_cat,
+        size_limit=min_area,
+        exception_category=ex_cat,
     )
 
 
@@ -252,26 +261,6 @@ def change_attribute_value_category(
 # ========================
 # Helper functions
 # ========================
-
-
-def fetch_parameters(map_scale: str) -> dict:
-    """
-    Fetches minimum area parameters for small features from the parameters.yml file for the given map scale.
-
-    Args:
-        map_scale (str): The map scale to fetch parameters for
-
-    Returns:
-        dict: A dictionary of minimum area parameters for small features for the given map scale
-    """
-    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-    scale_parameters = initialize_params(
-        params_path=params_path,
-        class_name="SmallFeatures",
-        map_scale=map_scale,
-        dataclass=SmallFeatures,
-    )
-    return scale_parameters
 
 
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:

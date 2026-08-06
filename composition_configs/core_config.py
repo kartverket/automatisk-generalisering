@@ -85,12 +85,29 @@ class InputEntry:
         )
 
 
+class OutputExtractionMethod(Enum):
+    """
+    How each partition's output is extracted before appending to the final output.
+
+    SELECTION: keep whole features owned by the partition (PARTITION_FIELD = 1, i.e.
+        features whose center lies in the partition). Avoids duplication via center-in
+        ownership.
+    CLIP: clip each iteration output by the partition polygon and append the result.
+        Cuts features at partition boundaries; non-overlapping partitions prevent
+        duplication. Does not rely on PARTITION_FIELD.
+    """
+
+    SELECTION = "selection"
+    CLIP = "clip"
+
+
 @dataclass(frozen=True)
 class OutputEntry:
     object: str
     data_type: DataType
     tag: str
     path: str
+    extraction_method: OutputExtractionMethod = OutputExtractionMethod.SELECTION
     """
     Represents a single output feature to be produced in partitioned processing.
 
@@ -102,16 +119,25 @@ class OutputEntry:
         data_type: Describes the data format (e.g., vector).
         tag: Identifier for the output version (e.g., 'after_rbc').
         path: Path where the output dataset will be written.
+        extraction_method: How this output's per-partition slice is produced before
+            being appended to the final output. Only meaningful for vector outputs.
     """
 
     @classmethod
-    def vector_output(cls, object: str, tag: str, path: str) -> "OutputEntry":
+    def vector_output(
+        cls,
+        object: str,
+        tag: str,
+        path: str,
+        extraction_method: OutputExtractionMethod = OutputExtractionMethod.SELECTION,
+    ) -> "OutputEntry":
         """Create a vector output entry."""
         return cls(
             object=object,
             data_type=DataType.VECTOR,
             tag=tag,
             path=path,
+            extraction_method=extraction_method,
         )
 
 
@@ -126,8 +152,8 @@ class ResolvedInputEntry:
     object: str
     tag: str
     path: str
-    input_type: str
-    data_type: str
+    input_type: InputType
+    data_type: DataType
 
 
 @dataclass(frozen=True)
@@ -135,7 +161,8 @@ class ResolvedOutputEntry:
     object: str
     tag: str
     path: str
-    data_type: str
+    data_type: DataType
+    extraction_method: OutputExtractionMethod
 
 
 @dataclass(frozen=True)
@@ -150,9 +177,25 @@ class PartitionOutputConfig:
 
 @dataclass
 class PartitionIOConfig:
+    """
+    Declares the input/output datasets and documentation location for a partition run.
+
+    Attributes:
+        input_config: Processing and context input entries.
+        output_config: Output entries to be produced.
+        documentation_directory: Where per-run JSON logs are written.
+        custom_partition_feature: Optional path to a user-supplied partition polygon
+            feature class. When set, the iterator does NOT generate cartographic
+            partitions and uses this feature directly. The caller is responsible for
+            providing a valid, topologically correct polygon feature class with
+            contiguous OBJECTIDs (1..N); only the geometry type (polygon) is validated.
+            Incompatible with run_partition_optimization=True.
+    """
+
     input_config: PartitionInputConfig
     output_config: PartitionOutputConfig
     documentation_directory: type_defs.SubdirectoryPath
+    custom_partition_feature: Optional[str] = None
 
 
 class PartitionMethod(Enum):

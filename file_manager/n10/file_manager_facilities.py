@@ -59,3 +59,8 @@ class Facility_N10(Enum):
     train_station__n10_facility = file_manager.generate_file_name_gdb(
         script_source_name=train_station_file, description="train_station_rotated"
     )
+
+    train_station_output__n10_facility = file_manager.generate_file_name_gdb(
+        script_source_name=train_station_file,
+        description="train_station_rotated_output",
+    )

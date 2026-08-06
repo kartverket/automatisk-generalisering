@@ -1,12 +1,10 @@
 from pathlib import Path
 
 from arealdekke_class import Arealdekke
-
 from custom_tools.decorators.timing_decorator import timing_decorator
-from env_setup import environment_setup
-
 from data_orchestrator.orchestrator import InputDataOrchestrator
 from data_orchestrator.data_names import DataNames as dn
+from env_setup import environment_setup
 
 MAP_SCALE = "N10"
 PIPELINE = "land_use"

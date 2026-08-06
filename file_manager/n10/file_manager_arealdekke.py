@@ -31,6 +31,9 @@ fill_holes = "fill_holes"
 small_features_changer = "small_features_changer"
 poly_to_point = "poly_to_point"
 remove_thin_tracks = "remove_thin_tracks"
+river_lines = "river_lines"
+snap_lines = "snap_lines"
+replace_uncategorized = "replace_uncategorized"
 
 
 class Arealdekke_N10(Enum):
@@ -163,6 +166,17 @@ class Arealdekke_N10(Enum):
         script_source_name=buff_polygon_segments, description="buffed_polygon_segments"
     )
 
+    snap_lines__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=snap_lines, description="snap_lines"
+    )
+    dissolved_lines__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=snap_lines, description="dissolved_lines"
+    )
+
+    river_lines__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=river_lines, description="river_lines"
+    )
+
     # ========================================
     #                   INNSJO HØYDE INTERVALL
     # ========================================
@@ -209,6 +223,10 @@ class Arealdekke_N10(Enum):
 
     fill_holes__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=fill_holes, description="fill_holes"
+    )
+
+    fill_holes_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=fill_holes, description="fill_holes_output"
     )
 
     # ========================================
@@ -261,4 +279,12 @@ class Arealdekke_N10(Enum):
 
     thin_tracks_remover__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=remove_thin_tracks, description="thin_tracks_remover"
+    )
+
+    # ========================================
+    #                    REPLACE UNCATEGORIZED
+    # ========================================
+
+    replace_uncategorized__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=replace_uncategorized, description="replace_uncategorized"
     )

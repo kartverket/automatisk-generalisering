@@ -65,7 +65,7 @@ def main() -> InputDataOrchestrator:
         Prepares the input data and files used in future processing steps.
     """
 
-    AREA_SELECTOR = "navn IN ('Kvitsøy')"
+    AREA_SELECTOR = "navn IN ('Asker')"
     SCALE = "n100"
     PIPELINE = "building"
 
@@ -314,6 +314,7 @@ def begrensningskurve_land_and_water_bodies():
     begrensningskurve_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=500_000,
         context_radius_meters=500,
+        run_partition_optimization=False,
     )
 
     partition_iterator_work_file_config = core_config.WorkFileConfig(

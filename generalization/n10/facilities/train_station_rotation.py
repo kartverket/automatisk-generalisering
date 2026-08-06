@@ -6,12 +6,16 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
-from data_orchestrator import input_n10
+from data_orchestrator.datasets import DatasetNamespace
 
 arcpy.env.overwriteOutput = True
 
 
-def main():
+MAP_SCALE = "N10"
+PIPELINE = "railway"
+
+
+def main(data_container: DatasetNamespace) -> None:
 
     environment_setup.main()
 
@@ -20,9 +24,12 @@ def main():
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    fetch_data(files=files)
+    output_fc = Facility_N10.train_station_output__n10_facility.value
 
-    find_track_rotation(files=files)
+    fetch_data(files=files, data_container=data_container)
+    find_track_rotation(files=files, output_fc=output_fc)
+
+    wfm.delete_created_files()
 
 
 @timing_decorator
@@ -58,21 +65,22 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 
 @timing_decorator
-def fetch_data(files: dict) -> None:
+def fetch_data(files: dict, data_container: DatasetNamespace) -> None:
     arcpy.management.CopyFeatures(
-        in_features=input_n10.bane, out_feature_class=files["train_track"]
+        in_features=data_container.Bane_FKB, out_feature_class=files["train_track"]
     )
     arcpy.management.CopyFeatures(
-        in_features=input_n10.jernbanestasjon, out_feature_class=files["train_station"]
+        in_features=data_container.JernbaneStasjon_N50,
+        out_feature_class=files["train_station"],
     )
     arcpy.management.CopyFeatures(
-        in_features=input_n10.jernbanestasjon,
+        in_features=data_container.JernbaneStasjon_N50,
         out_feature_class=files["train_station_snapped"],
     )
 
 
 @timing_decorator
-def find_track_rotation(files: dict) -> None:
+def find_track_rotation(files: dict, output_fc: str) -> None:
     arcpy.edit.Snap(
         files["train_station_snapped"], [[files["train_track"], "EDGE", "40 Meters"]]
     )
@@ -123,7 +131,6 @@ def find_track_rotation(files: dict) -> None:
         files["train_station"], ["OBJECTID", new_field_name]
     ) as original_cursor:
         for original_station in original_cursor:
-
             with arcpy.da.SearchCursor(
                 files["train_station_rotated"], ["OBJECTID", "LINE_BEARING"]
             ) as copy_cursor:
@@ -133,6 +140,11 @@ def find_track_rotation(files: dict) -> None:
                         original_station[1] = copy_station[1]
                         original_cursor.updateRow(original_station)
                         break
+
+    arcpy.management.CopyFeatures(
+        in_features=files["train_station"],
+        out_feature_class=output_fc,
+    )
 
 
 if __name__ == "__main__":

@@ -4,17 +4,13 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
-from pathlib import Path
 from collections import defaultdict
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
-    EliminateSmallPolygonsParameters,
-)
+from generalization.n10.arealdekke.parameters.parameter_worker import get_min_area
 
 # ========================
 # Main function
@@ -46,7 +42,7 @@ def aggregate_category(
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    min_area = fetch_min_area(map_scale=map_scale, target=target)
+    min_area = get_min_area(map_scale=map_scale, target=target)
     sql = ", ".join([f"'{lu}'" for lu in allowed])
 
     data_selection(
@@ -56,9 +52,12 @@ def aggregate_category(
         min_area=min_area,
         sql=sql,
     )
-    if boundary:
-        boundary_adjustments(files=files, target=target, boundary=boundary, sql=sql)
-    rewrite_attribute_info(files=files, target=target, boundary=boundary is not None)
+    if int(arcpy.management.GetCount(files["target"])[0]) > 0:
+        if boundary:
+            boundary_adjustments(files=files, target=target, boundary=boundary, sql=sql)
+        rewrite_attribute_info(
+            files=files, target=target, boundary=boundary is not None
+        )
 
     arcpy.management.CopyFeatures(
         in_features=files["copy_of_input"],
@@ -103,20 +102,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
             file_name="near_expanded", file_type="gdb"
         ),
     }
-
-
-def fetch_min_area(map_scale: str, target: str) -> int:
-    """
-    Fetches the minimum area for the target feature in the given map scale.
-    """
-    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-    params = initialize_params(
-        params_path=params_path,
-        class_name="EliminateSmallPolygons",
-        map_scale=map_scale.upper(),
-        dataclass=EliminateSmallPolygonsParameters,
-    )
-    return params.min_area[target]
 
 
 def data_selection(
@@ -231,11 +216,14 @@ def boundary_adjustments(files: dict, target: str, boundary: str, sql: str) -> N
     ids_to_keep = [
         id for id, areas in id_to_area.items() if areas.issubset({target, boundary})
     ]
-    ids = ", ".join([f"{id}" for id in ids_to_keep])
+    where_clause = (
+        f"OBJECTID IN ({','.join(map(str, ids_to_keep))})" if ids_to_keep else "1=0"
+    )
+
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=lyr_2,
         selection_type="NEW_SELECTION",
-        where_clause=f"OBJECTID IN ({ids})",
+        where_clause=where_clause,
     )
     arcpy.management.SelectLayerByLocation(
         in_layer=lyr_1,

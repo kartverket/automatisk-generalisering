@@ -8,8 +8,14 @@ from custom_tools.general_tools.isolated_line_remover import IsolatedLineRemover
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
+from data_orchestrator.orchestrator import InputDataOrchestrator
+from data_orchestrator.data_names import DataNames as dn
+
 from generalization.n10.facilities.railways_attributes import main as update_attributes
-from data_orchestrator import input_fkb
+from generalization.n10.facilities.train_station_rotation import main as rotate_stations
+
+MAP_SCALE = "N10"
+PIPELINE = "railway"
 
 
 def compute_line_azimuth(geom: arcpy.Polyline):
@@ -1511,6 +1517,11 @@ def main():
     # arcpy.env.XYTolerance, arcpy.env.XYResolution, arcpy.env.parallelProcessingFactor
     environment_setup.main()
 
+    # Sets up data orchestrator
+    data_orc = InputDataOrchestrator(map_scale=MAP_SCALE, pipeline=PIPELINE)
+    railway_data = data_orc.get_dataset(dn.railway)
+    input_data = railway_data.Bane_FKB
+
     tol = arcpy.env.XYTolerance
     res = arcpy.env.XYResolution
     ppf = arcpy.env.parallelProcessingFactor
@@ -1519,7 +1530,7 @@ def main():
     arcpy.ClearEnvironment("XYResolution")
     arcpy.ClearEnvironment("parallelProcessingFactor")
 
-    source_file, files, wfm = setup_workflow()
+    source_file, files, wfm = setup_workflow(source_file=input_data)
     lines_lyr, buffer_dissolved_mem = prepare_and_select(source_file, files)
     generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem)
     finalize_and_export(files, buffer_dissolved_mem)
@@ -1530,12 +1541,14 @@ def main():
     arcpy.env.parallelProcessingFactor = ppf
 
     # Update the attribute table (see: railways_attributes.py)
-    update_attributes()
+    update_attributes(data_container=railway_data)
+
+    # Rotate train stations as final step (see: railways_rotate_stations.py)
+    rotate_stations(data_container=railway_data)
 
 
 @timing_decorator
-def setup_workflow():
-    source_file = input_fkb.fkb_bane_senterlinje  # input_n10.Railways
+def setup_workflow(source_file: str):
     working_fc = Facility_N10.input_railway_n10.value
     work_config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=work_config)

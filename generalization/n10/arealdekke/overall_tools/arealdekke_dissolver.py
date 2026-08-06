@@ -6,7 +6,6 @@ from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -338,13 +337,10 @@ class ArealdekkeDissolver:
 
     @timing_decorator
     def run(self) -> None:
-        environment_setup.main()
         self.fetch_divide_data()
         self.dissolve()
         self.restore_data()
-        self.geometry_validator.check_repair_sequence(
-            input_fc=self.output_feature, max_iterations=5
-        )
+        self.geometry_validator.check_repair_sequence(input_fc=self.output_feature)
         self.wfm.delete_created_files()
 
 
@@ -367,6 +363,7 @@ def normal_call(input_fc: str, output_fc: str, data_orc: InputDataOrchestrator):
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.dissolve_arealdekke_root.value
         ),
+        map_scale=data_orc.map_scale,
     )
     ArealdekkeDissolver(areal_dekke_dissolver_config=areal_dekke_config).run()
 
@@ -376,7 +373,7 @@ def partition_call(
 ):
     identity = Arealdekke_N10.identity.value
 
-    GeometryValidator().check_repair_sequence(input_fc=input_fc, max_iterations=5)
+    GeometryValidator().check_repair_sequence(input_fc=input_fc)
 
     fishnet = data_orc.get_dataset(dataset_name=dn.area).Fishnet_500m
 

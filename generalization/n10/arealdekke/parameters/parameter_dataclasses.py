@@ -2,8 +2,17 @@ from pydantic.dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class MinArea:
+    features: dict[str, int]
+
+
+@dataclass(frozen=True)
+class MinWidth:
+    features: dict[str, int]
+
+
+@dataclass(frozen=True)
 class EliminateSmallPolygonsParameters:
-    min_area: dict[str, int]
     min_iq_area: int
     max_area_b_iq: int
     exclude: list[str]
@@ -17,13 +26,3 @@ class EliminateSmallPolygonsParameters:
 class GangSykkelDissolverParameters:
     buffer_distance: int
     length_divide: int
-
-
-@dataclass(frozen=True)
-class buff_small_polygon_segments_parameters:
-    min_width: dict
-
-
-@dataclass(frozen=True)
-class SmallFeatures:
-    Bebygd: int

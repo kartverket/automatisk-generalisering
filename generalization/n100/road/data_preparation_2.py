@@ -43,7 +43,11 @@ from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
     categories_major_road_crossings,
 )
-from generalization.n100.road.ramps_point import MovePointsToCrossings, ramp_points
+from generalization.n100.road.roundabouts import generalize_roundabouts
+from generalization.n100.road.vegsperring import remove_roadblock
+from generalization.n100.road.ramps import main as ramps
+from generalization.n100.road.ramps import main_part_2 as ramps_part_2
+from generalization.n100.road.ramps import correct_ramp_id_after_merge_divided_roads
 from generalization.n100.road.resolve_road_conflict_preparation import (
     remove_road_points_in_water,
     run_dissolve_with_intersections,
@@ -53,10 +57,16 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from data_orchestrator.data_names import DataNames as dn
 
-MERGE_DIVIDED_ROADS_ALTERATIVE = False
-SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
+from composition_configs.logic_config import RoadRampsConfig
 
-AREA_SELECTOR = "navn IN ('Kvitsøy')"
+MERGE_DIVIDED_ROADS_ALTERATIVE = False
+
+if require("SELECT_STUDY_AREA") == "False":
+    SELECT_STUDY_AREA = False
+else:
+    SELECT_STUDY_AREA = True
+
+AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -80,7 +90,7 @@ def main():
     generalize_roundabouts()
     remove_roadblock(data=area_data)
     trim_road_details()
-    ramp_points()
+    ramp_partition()
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -94,7 +104,11 @@ def main():
     resolve_road_conflicts(data_orc=data_orc)
     generalize_dam(area_data=area_data, building_data=building_data)
     final_output()
-    final_ramp_points()
+    ramps_part_2(
+        input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+        input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+        output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+    )
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
         f.write(
             f"Total amount of work files created: "
@@ -295,6 +309,71 @@ def trim_road_details():
         in_features=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
     )
+
+
+@timing_decorator
+def ramp_partition():
+    road = "road"
+    points = "points"
+
+    ramps_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            )
+        ]
+    )
+
+    ramps_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag="generalized",
+                path=Road_N100.ramps__generalized_ramps__n100_road.value,
+            ),
+            core_config.OutputEntry.vector_output(
+                object=points,
+                tag="output",
+                path=Road_N100.ramps__potential_points__n100_road.value,
+                extraction_method=core_config.OutputExtractionMethod.CLIP,
+            ),
+        ]
+    )
+
+    ramps_io_config = core_config.PartitionIOConfig(
+        input_config=ramps_input_config,
+        output_config=ramps_output_config,
+        documentation_directory=Road_N100.ramps_docu___n100_road.value,
+    )
+
+    ramp_config = core_config.FuncMethodEntryConfig(
+        func=ramps,
+        params=RoadRampsConfig(
+            input_roads=core_config.InjectIO(object=road, tag="input"),
+            output_roads=core_config.InjectIO(object=road, tag="generalized"),
+            output_points=core_config.InjectIO(object=points, tag="output"),
+            wfm_config=core_config.WorkFileConfig(
+                root_file=Road_N100.ramps__ramps_root__n100_road.value
+            ),
+        ),
+    )
+    method_config = core_config.MethodEntriesConfig([ramp_config])
+
+    run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=35_000,
+        context_radius_meters=500,
+        run_partition_optimization=False,
+    )
+
+    PartitionIterator(
+        partition_io_config=ramps_io_config,
+        partition_method_inject_config=method_config,
+        partition_iterator_run_config=run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
+        ),
+    ).run()
 
 
 @timing_decorator
@@ -601,6 +680,14 @@ def merge_divided_roads():
         out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
+        out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
+    )
+
+    # we need to correct ramp ids after merge divided roads to ensure all possible ramps points are included in the output
+    correct_ramp_id_after_merge_divided_roads(
+        merge_input=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        merge_output=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        merge_out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
     )
 
 
@@ -834,15 +921,8 @@ def final_output():
     )
 
 
-def final_ramp_points():
-    f = MovePointsToCrossings(
-        Road_N100.data_preparation___road_final_output___n100_road.value,
-        Road_N100.ramps__ramp_points_moved__n100_road.value,
-        Road_N100.ramps__ramp_points_moved_2__n100_road.value,
-        delete_points_not_on_crossings=True,
-        with_ramps=False,
-    )
-    f.run()
+def run():
+    main()
 
 
 if __name__ == "__main__":
