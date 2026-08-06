@@ -1,7 +1,16 @@
 import os
 import sys
 import time
+import logging
 from kubernetes import client, config
+
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 NAMESPACE = os.environ.get("NAMESPACE", "default")
@@ -29,10 +38,10 @@ def create_indexed_job(batch_api):
     Each completion gets a unique JOB_COMPLETION_INDEX, which we use as the
     partition index.
     """
-    print(f"Creating indexed Job: {PARTITION_JOB_NAME}")
-    print(f"Namespace: {NAMESPACE}")
-    print(f"Partitions: {PARTITION_COUNT}")
-    print(f"Parallelism: {PARALLELISM}")
+    logger.info(f"Creating indexed Job: {PARTITION_JOB_NAME}")
+    logger.info(f"Namespace: {NAMESPACE}")
+    logger.info(f"Partitions: {PARTITION_COUNT}")
+    logger.info(f"Parallelism: {PARALLELISM}")
 
     job = client.V1Job(
         api_version="batch/v1",
@@ -44,6 +53,11 @@ def create_indexed_job(batch_api):
                 "run-id": RUN_ID,
                 "pipeline-role": "partition-worker",
             },
+            annotations={
+                "argocd.argoproj.io/tracking-id": f"{os.environ.get('ARGOTRACKING')}{PARTITION_JOB_NAME}",
+                "argocd.argoproj.io/sync-options": "Prune=false",
+            }
+
         ),
         spec=client.V1JobSpec(
             completion_mode="Indexed",
@@ -60,7 +74,6 @@ def create_indexed_job(batch_api):
                     }
                 ),
                 spec=client.V1PodSpec(
-                    restart_policy="Never",
                     containers=[
                         client.V1Container(
                             name="worker",
@@ -88,24 +101,121 @@ def create_indexed_job(batch_api):
                                     ),
                                 ),
                             ],
+                            resources= {},
+                            security_context=client.V1SecurityContext(
+                                allow_privilege_escalation=False,
+                                capabilities=client.V1Capabilities(
+                                    drop=[
+                                        "ALL"
+                                    ]
+                                ),
+                                privileged=False,
+                                read_only_root_filesystem=True,
+                                run_as_group=150,
+                                run_as_non_root=True,
+                                run_as_user=150,
+                                seccomp_profile=client.V1SeccompProfile(
+                                    type="RuntimeDefault"
+                                ),
+                            ),
+                            termination_message_path="/dev/termination-log",
+                            termination_message_policy="File",
                         )
                     ],
+                    dns_policy="ClusterFirst",
+                    image_pull_secrets=[
+                        client.V1LocalObjectReference(
+                            name="github-auth"
+                        )
+                    ],
+                    priority_class_name="skip-medium",
+                    restart_policy="Never",
+                    scheduler_name="default-scheduler",
+                    security_context=client.V1PodSecurityContext(
+                        fs_group=150,
+                        seccomp_profile=client.V1SeccompProfile(
+                            type="RuntimeDefault"
+                        ),
+                        supplemental_groups=[150],
+                    ),
+                    termination_grace_period_seconds=30,
+                    topology_spread_constraints=[
+                        client.V1TopologySpreadConstraint(
+                            label_selector=client.V1LabelSelector(
+                                match_expressions=[
+                                    client.V1LabelSelectorRequirement(
+                                        key="app",
+                                        operator="In",
+                                        values=["partitioned-pipeline"],
+                                    )
+                                ]
+                            ),
+                            match_label_keys=["pod-template-hash"],
+                            max_skew=1,
+                            topology_key="kubernetes.io/hostname",
+                            when_unsatisfiable="ScheduleAnyway",
+                        ),
+                        client.V1TopologySpreadConstraint(
+                            label_selector=client.V1LabelSelector(
+                                match_expressions=[
+                                    client.V1LabelSelectorRequirement(
+                                        key="app",
+                                        operator="In",
+                                        values=["partitioned-pipeline"],
+                                    )
+                                ]
+                            ),
+                            match_label_keys=["pod-template-hash"],
+                            max_skew=1,
+                            topology_key="onprem.gke.io/failure-domain-name",
+                            when_unsatisfiable="ScheduleAnyway",
+                        ),
+                    ],
+                    volumes=[
+                        client.V1Volume(
+                            name="tmp",
+                            empty_dir=client.V1EmptyDirVolumeSource(
+                                medium="Memory"
+                            ),
+                        )
+                    ],
+                    
+ 
+        
                 ),
             ),
         ),
     )
 
-    batch_api.create_namespaced_job(
-        namespace=NAMESPACE,
-        body=job,
-    )
+    try:
+        created_job = batch_api.create_namespaced_job(
+            namespace=NAMESPACE,
+            body=job,
+        )
+        logger.info(
+            f"Created Job successfully: "
+            f"name={created_job.metadata.name}, "
+            f"namespace={created_job.metadata.namespace}, "
+            f"uid={created_job.metadata.uid}"
+        )
+    except client.exceptions.ApiException as e:
+        raise RuntimeError(
+            "Failed to create indexed Job "
+            f"name={PARTITION_JOB_NAME} namespace={NAMESPACE}. "
+            f"status={e.status}, reason={e.reason}, body={e.body}"
+        ) from e
+    except Exception as e:
+        raise RuntimeError(
+            "Unexpected error while creating indexed Job "
+            f"name={PARTITION_JOB_NAME} namespace={NAMESPACE}: {e}"
+        ) from e
 
 
 def wait_for_job(batch_api):
     """
     Waits until the indexed Job has completed all partitions.
     """
-    print(f"Waiting for Job to complete: {PARTITION_JOB_NAME}")
+    logger.info(f"Waiting for Job to complete: {PARTITION_JOB_NAME}")
 
     while True:
         job = batch_api.read_namespaced_job(
@@ -119,7 +229,7 @@ def wait_for_job(batch_api):
         failed = status.failed or 0
         active = status.active or 0
 
-        print(
+        logger.info(
             f"Job status: active={active}, "
             f"succeeded={succeeded}, "
             f"failed={failed}, "
@@ -127,7 +237,7 @@ def wait_for_job(batch_api):
         )
 
         if succeeded >= PARTITION_COUNT:
-            print("Indexed Job completed successfully")
+            logger.info("Indexed Job completed successfully")
             return
 
         if status.conditions:
@@ -139,25 +249,89 @@ def wait_for_job(batch_api):
 
         time.sleep(5)
 
+def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 120):
+    """
+    Deletes the partition Job and optionally waits until it is fully removed.
+
+    Requires RBAC permission:
+    - verbs: get, delete
+    - resource: jobs
+    - apiGroup: batch
+    """
+    logger.info(f"Deleting Job: {PARTITION_JOB_NAME} (namespace={NAMESPACE})")
+
+    try:
+        batch_api.delete_namespaced_job(
+            name=PARTITION_JOB_NAME,
+            namespace=NAMESPACE,
+            body=client.V1DeleteOptions(
+                propagation_policy="Background",
+                grace_period_seconds=0,
+            ),
+        )
+        logger.info(f"Delete request accepted for Job: {PARTITION_JOB_NAME}")
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            logger.info(f"Job already absent: {PARTITION_JOB_NAME}")
+            return
+        raise RuntimeError(
+            "Failed to delete indexed Job "
+            f"name={PARTITION_JOB_NAME} namespace={NAMESPACE}. "
+            f"status={e.status}, reason={e.reason}, body={e.body}"
+        ) from e
+    except Exception as e:
+        raise RuntimeError(
+            "Unexpected error while deleting indexed Job "
+            f"name={PARTITION_JOB_NAME} namespace={NAMESPACE}: {e}"
+        ) from e
+
+    if not wait:
+        return
+
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            batch_api.read_namespaced_job(
+                name=PARTITION_JOB_NAME,
+                namespace=NAMESPACE,
+            )
+            logger.info(f"Waiting for Job deletion: {PARTITION_JOB_NAME}")
+            time.sleep(2)
+        except client.exceptions.ApiException as e:
+            if e.status == 404:
+                logger.info(f"Job deleted: {PARTITION_JOB_NAME}")
+                return
+            raise RuntimeError(
+                "Error while verifying Job deletion "
+                f"name={PARTITION_JOB_NAME} namespace={NAMESPACE}. "
+                f"status={e.status}, reason={e.reason}, body={e.body}"
+            ) from e
+
+    raise TimeoutError(
+        f"Timed out waiting for Job deletion: {PARTITION_JOB_NAME} "
+        f"(timeout_seconds={timeout_seconds})"
+    )
 
 def main():
-    print("Pipeline driver started")
-    print(f"Namespace: {NAMESPACE}")
-    print(f"Run ID: {RUN_ID}")
+    logger.info("Pipeline driver started")
+    logger.info(f"Namespace: {NAMESPACE}")
+    logger.info(f"Run ID: {RUN_ID}")
 
     load_kube_config()
 
     batch_api = client.BatchV1Api()
 
+    delete_partition_job(batch_api, wait=True, timeout_seconds=60)
     create_indexed_job(batch_api)
     wait_for_job(batch_api)
+    delete_partition_job(batch_api, wait=False)
 
-    print("Pipeline driver completed successfully")
+    logger.info("Pipeline driver completed successfully")
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as error:
-        print(f"Driver failed: {error}", file=sys.stderr)
+        logger.info(f"Driver failed: {error}")
         sys.exit(1)
