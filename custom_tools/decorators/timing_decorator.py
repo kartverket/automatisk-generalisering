@@ -1,11 +1,15 @@
 import inspect
 import os
 import time
+import logging
 from functools import wraps
 
 from file_manager.n100.file_manager_buildings import Building_N100
 
 TIMING_DECORATOR_LOG_FILE_USED = False
+
+
+logger = logging.getLogger(__name__)
 
 
 def timing_decorator(func):
@@ -64,7 +68,7 @@ def log_to_console_and_file(function_name, elapsed_time):
 
 def log_to_console(message):
     """Prints a given message to the console"""
-    print(message)
+    logger.info(message)
 
 
 def log_to_file(message):
