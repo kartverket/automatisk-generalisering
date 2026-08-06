@@ -17,7 +17,7 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
     find_segments_under_min,
 )
 from generalization.n10.arealdekke.parameters.parameter_worker import get_min_width
-from generalization.n100.land_use.rullebane import cluster_points
+
 
 # ========================
 # Classes
