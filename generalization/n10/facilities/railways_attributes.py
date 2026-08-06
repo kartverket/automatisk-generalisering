@@ -12,7 +12,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
-from data_orchestrator import input_n50
+from data_orchestrator.datasets import DatasetNamespace
 
 # ========================
 # Program
@@ -20,9 +20,12 @@ from data_orchestrator import input_n50
 
 
 @timing_decorator
-def main():
+def main(data_container: DatasetNamespace):
     """
     The main program for updating the railroad attributes in FKB.
+
+    Args:
+        data_container (DatasetNamespace): Data container with input data
     """
     environment_setup.main()
     print("\nUpdates railroad attributes in FKB...\n")
@@ -35,7 +38,7 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
 
     # Program
-    fetch_data(files=files)
+    fetch_data(files=files, data_container=data_container)
     create_buffers(files=files)
     intersect_fkb_n50(files=files)
     small_buffer = build_railroad_network_fkb_safe(files=files)
@@ -127,7 +130,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 
 @timing_decorator
-def fetch_data(files: dict) -> None:
+def fetch_data(files: dict, data_container: DatasetNamespace) -> None:
     """
     Fetches relevant data.
 
@@ -136,7 +139,7 @@ def fetch_data(files: dict) -> None:
     """
     railroad_lyr = "railroad_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_n50.Bane, out_layer=railroad_lyr
+        in_features=data_container.Bane_N50, out_layer=railroad_lyr
     )
 
     # Fetch N50 railroad
@@ -315,15 +318,15 @@ def build_railroad_network_fkb_safe(files: dict) -> arcpy.Geometry:
     arcpy.MakeFeatureLayer_management(intersect, intersect_lyr)
 
     oid_list = ",".join(map(str, valid_oids))
+    sql = f"OBJECTID IN ({oid_list})" if oid_list else "1 = 0"
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=intersect_lyr,
         selection_type="NEW_SELECTION",
-        where_clause=f"OBJECTID IN ({oid_list})",
+        where_clause=sql,
     )
 
-    valid_railroad_FKB = files["valid_railroad_FKB"]
     arcpy.management.CopyFeatures(
-        in_features=intersect_lyr, out_feature_class=valid_railroad_FKB
+        in_features=intersect_lyr, out_feature_class=files["valid_railroad_FKB"]
     )
 
     return buffer_geom
@@ -804,7 +807,7 @@ def fetch_edge_case_ends(files: dict) -> None:
                 changed = True
 
     # 5) Update the attributes
-    sql = f"OBJECTID IN ({','.join(map(str, to_edit))})"
+    sql = f"OBJECTID IN ({','.join(map(str, to_edit))})" if to_edit else "1 = 0"
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=fkb_lyr, selection_type="NEW_SELECTION", where_clause=sql
     )
@@ -889,7 +892,7 @@ def is_museumsbane(files: dict) -> None:
         railroad_lyr = "railroad_lyr"
         arcpy.management.MakeFeatureLayer(railroad_fc, railroad_lyr)
 
-        sql = f"OBJECTID IN ({','.join(map(str, to_change))})"
+        sql = f"OBJECTID IN ({','.join(map(str, to_change))})" if to_change else "1 = 0"
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view=railroad_lyr,
             selection_type="NEW_SELECTION",
