@@ -3218,7 +3218,7 @@ def extending_roads(files: dict, endpoints_per_rampid: dict, endpoint_data_map: 
         new_lines=all_new_lines,
         spatial_reference=last_sr,
         original_road_oid_geom=original_road_oid_geom,
-        road_attributes=road_motorvegtype,
+        road_motorvegtype=road_motorvegtype,
     )
     _finalize_new_lines(files["new_lines"])
 
