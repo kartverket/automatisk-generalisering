@@ -58,7 +58,7 @@ class PostProcessNames(StrEnum):
 
 
 # ========================
-# Main functions
+# Main function
 # ========================
 
 
@@ -113,54 +113,6 @@ def pointify_thin_poly(
         output_fc=output_fc,
         locked_categories=locked_categories,
     )
-
-    wfm.delete_created_files()
-
-
-@timing_decorator
-def postprocess_point_data(land_use_fc: str) -> None:
-    """
-    Postprocessing of point data so that only points located in the farmland areas are kept.
-
-    Args:
-        land_use_fc (str): Path to the feature class containing the land use data
-    """
-    point_fc = Arealdekke_N10.poly_to_point_points__n10_land_use.value
-
-    working_fc = Arealdekke_N10.poly_to_point__n10_land_use.value
-    config = core_config.WorkFileConfig(root_file=working_fc)
-    wfm = WorkFileManager(config=config)
-
-    files = {
-        name: wfm.build_file_path(file_name=name, file_type="gdb")
-        for name in PostProcessNames
-    }
-
-    land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=land_use_fc, out_layer=land_use_lyr)
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=land_use_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause="arealdekke = 'Jordbruk'",
-    )
-
-    arcpy.analysis.Buffer(
-        in_features=land_use_lyr,
-        out_feature_class=files[PostProcessNames.buffer],
-        buffer_distance_or_field="-8 Meters",
-    )
-
-    point_lyr = "point_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=point_fc, out_layer=point_lyr)
-    arcpy.management.SelectLayerByLocation(
-        in_layer=point_lyr,
-        overlap_type="INTERSECT",
-        select_features=files[PostProcessNames.buffer],
-        selection_type="NEW_SELECTION",
-        invert_spatial_relationship="INVERT",
-    )
-
-    arcpy.management.DeleteFeatures(point_lyr)
 
     wfm.delete_created_files()
 
@@ -234,7 +186,7 @@ def create_points(input_fc: str, complete_fc: str, files: dict) -> None:
     )
 
     point_dist = (
-        10  # [m] TODO: Need to get a system for taking care of distance tolerances
+        20  # [m] TODO: Need to get a system for taking care of distance tolerances
     )
 
     land_use_lyr = "land_use_lyr"
@@ -283,41 +235,6 @@ def create_points(input_fc: str, complete_fc: str, files: dict) -> None:
         join_field="TARGET_FID",
         fields=new_fields,
     )
-
-    points = {
-        oid: (geom.centroid.X, geom.centroid.Y)
-        for oid, geom in arcpy.da.SearchCursor(point_fc, ["OID@", "SHAPE@"])
-    }
-
-    clusters = cluster_points(points=points, eps=point_dist * 1.1, min_pts=2)
-
-    new_points = {}
-    all_clustered_oids = {oid for cluster in clusters for oid in cluster}
-
-    for cluster in clusters:
-        clustered_points = [points[oid] for oid in cluster]
-        avg_x = sum(x for x, _ in clustered_points) / len(clustered_points)
-        avg_y = sum(y for _, y in clustered_points) / len(clustered_points)
-
-        new_points[cluster[0]] = arcpy.Point(X=avg_x, Y=avg_y)
-
-    if not all_clustered_oids:
-        return
-
-    point_lyr = "point_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=point_fc, out_layer=point_lyr)
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=point_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=f"OBJECTID NOT IN ({','.join(map(str, all_clustered_oids))})",
-    )
-
-    with arcpy.da.UpdateCursor(point_lyr, ["OID@", "SHAPE@"]) as update:
-        for oid, geom in update:
-            if oid in new_points:
-                update.updateRow([oid, new_points[oid]])
-            else:
-                update.deleteRow()
 
 
 def remove_small_pieces(input_fc: str, files: dict) -> None:

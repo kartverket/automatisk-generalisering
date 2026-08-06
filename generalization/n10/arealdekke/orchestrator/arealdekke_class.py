@@ -53,8 +53,8 @@ from generalization.n10.arealdekke.category_tools.line_postprocessing import (
 from generalization.n10.arealdekke.overall_tools.replace_uncategorized import (
     replace_uncategorized_features,
 )
-from generalization.n10.arealdekke.category_tools.thin_poly_to_point import (
-    postprocess_point_data,
+from generalization.n10.arealdekke.category_tools.postprocess_points import (
+    postprocess_points,
 )
 
 from data_orchestrator.orchestrator import InputDataOrchestrator
@@ -611,7 +611,7 @@ class Arealdekke:
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,
             ),
-            lambda: postprocess_point_data(
+            lambda: postprocess_points(
                 land_use_fc=self.final_output_fc,
             ),
         ]

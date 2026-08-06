@@ -38,7 +38,6 @@ class Names(StrEnum):
     joined_lines = "joined_lines"
     erased = "erased"
     dissolved = "dissolved"
-    simplified = "simplified"
 
 
 # ========================
@@ -76,15 +75,9 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
         )
         arcpy.cartography.SimplifyLine(
             in_features=files[Names.dissolved],
-            out_feature_class=files[Names.simplified],
+            out_feature_class=line_fc,
             algorithm="POINT_REMOVE",
             tolerance=2,
-            error_option="RESOLVE_ERRORS",
-        )
-        arcpy.cartography.SmoothLine(
-            in_features=files[Names.simplified],
-            out_feature_class=line_fc,
-            algorithm="BEZIER_INTERPOLATION",
             error_option="RESOLVE_ERRORS",
         )
 
