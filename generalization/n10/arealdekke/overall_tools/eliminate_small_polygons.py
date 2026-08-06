@@ -232,8 +232,16 @@ class EliminateSmallPolygons:
         quoted = ", ".join(f"'{v}'" for v in self.eliminate_parameters.dont_eliminate)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
 
+        existing_land_use = [
+            row[0] for row in arcpy.da.SearchCursor(input_fc, ["arealdekke"])
+        ]
+
         temp_in = input_fc
-        for arealdekke, min_area in self.area_parameters.features.items():
+        for arealdekke, min_area in (
+            (k, v)
+            for k, v in self.area_parameters.features.items()
+            if k in existing_land_use
+        ):
             print(f"Eliminating: {arealdekke} - {min_area}")
             clauses = []
             clauses.append(f"arealdekke = '{arealdekke}'")

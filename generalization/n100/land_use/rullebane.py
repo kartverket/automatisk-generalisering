@@ -1,19 +1,18 @@
 # Libraries
 
 import arcpy
+import numpy as np
+import os
 
 arcpy.env.overwriteOutput = True
 
-import os
-
-import numpy as np
-from tqdm import tqdm
+from collections import defaultdict, deque
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_land_use import Land_Use_N100
-from data_orchestrator import input_fkb, input_n50
+from data_orchestrator import input_fkb
 
 # ========================
 # Program
@@ -134,9 +133,9 @@ def find_runways(files: dict) -> None:
     )
 
     airport_n50_lyr = "airport_n50_lyr"
-    arcpy.management.MakeFeatureLayer(
+    """arcpy.management.MakeFeatureLayer(
         in_features=input_n50.ArealdekkeFlate, out_layer=airport_n50_lyr
-    )
+    )"""
 
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=airport_n50_lyr,
@@ -223,7 +222,7 @@ def create_runway_centerline(files: dict, overlaps: dict) -> None:
     new_file = files["new_runway_centerline"]
     create_centerline_layer(new_file, files["runway_n50"])
 
-    for key in tqdm(overlaps, desc="Adding runway lines", colour="yellow", leave=False):
+    for key in overlaps:
         if overlaps[key]["poly"] and overlaps[key]["line"]:
             centerline_poly(key, overlaps[key]["poly"], new_file, files)
             centerline_line(key, overlaps[key]["line"], new_file, files)
@@ -252,16 +251,8 @@ def remove_noisy_runway_lines(files: dict) -> None:
     centerlines_lyr = "centerlines_lyr"
     arcpy.management.MakeFeatureLayer(files["new_runway_centerline"], centerlines_lyr)
 
-    n50_count = int(arcpy.management.GetCount(files["runway_n50"]).getOutput(0))
-
     with arcpy.da.SearchCursor(files["runway_n50"], ["SHAPE@"]) as search_cursor:
-        for row in tqdm(
-            search_cursor,
-            total=n50_count,
-            desc="Removing noisy runway lines",
-            colour="yellow",
-            leave=False,
-        ):
+        for row in search_cursor:
             runway_geom = row[0]
 
             if runway_geom is None:
@@ -502,56 +493,104 @@ def euclid(p1: list, p2: list) -> float:
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def cluster_points(points, eps, min_pts) -> list:
+def cluster_points(
+    points: list[tuple[float, float]] | dict[int, tuple[float, float]],
+    eps: float,
+    min_pts: int,
+) -> list:
     """
-    Clusters a list of points using DBSCAN algorithm.
+    Cluster 2D points using the DBSCAN algorithm. Spatial grid is used to speed up
+    the performance and make the neighbor search more efficient.
 
     Args:
-        points (list): List of points as (x, y)
+        points (list|dict): List of points as [(x, y), ...] or dictionary of points as {id: (x, y), ...}
         eps (float): The maximum distance between two points to be considered neighbors
         min_pts (int): The minimum number of points required to form a cluster
 
     Returns:
-        list: A list of clusters, where each cluster is a list of points
+        list: A list of clusters, where each cluster is a list of points or point IDs
     """
-    clusters = []
+    if not points:
+        return []
+
+    is_dict = isinstance(points, dict)
+
+    if is_dict:
+        ids = list(points.keys())
+        coords = points
+    else:
+        ids = list(range(len(points)))
+        coords = {i: p for i, p in enumerate(points)}
+
+    eps_sq = eps**2
+
+    #
+    # Build spatial index
+    #
+    cell_size = eps
+    grid = defaultdict(list)
+
+    def cell(point):
+        x, y = point
+        return np.floor(x / cell_size), np.floor(y / cell_size)
+
+    for oid, point in coords.items():
+        grid[cell(point)].append(oid)
+
+    def neighbors(oid):
+        """
+        Return all point ids within eps of oid.
+        """
+        px, py = coords[oid]
+        cx, cy = cell((px, py))
+
+        result = []
+
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                for candidate in grid[(cx + dx, cy + dy)]:
+                    qx, qy = coords[candidate]
+                    dist_sq = (px - qx) ** 2 + (py - qy) ** 2
+                    if dist_sq <= eps_sq:
+                        result.append(candidate)
+
+        return result
+
     visited = set()
     assigned = set()
+    clusters = []
 
-    def region_query(p):
-        return [q for q in points if euclid(p, q) <= eps]
-
-    for p in points:
-        if p in visited:
+    for oid in ids:
+        if oid in visited:
             continue
 
-        neighbors = region_query(p)
+        visited.add(oid)
 
-        if len(neighbors) < min_pts:
-            visited.add(p)
+        seed_neighbors = neighbors(oid)
+
+        if len(seed_neighbors) < min_pts:
             continue
 
         cluster = []
         clusters.append(cluster)
 
-        cluster.append(p)
-        visited.add(p)
-        assigned.add(p)
+        queue = deque(seed_neighbors)
 
-        while neighbors:
-            n = neighbors.pop()
-            if n not in visited:
-                visited.add(n)
-                n_neighbors = region_query(n)
-                if len(n_neighbors) >= min_pts:
-                    neighbors.extend(n_neighbors)
-            if n not in assigned:
-                cluster.append(n)
-                assigned.add(n)
+        while queue:
+            current = queue.popleft()
+            if current not in visited:
+                visited.add(current)
+                current_neighbors = neighbors(current)
+                if len(current_neighbors) >= min_pts:
+                    queue.extend(current_neighbors)
+            if current not in assigned:
+                cluster.append(current)
+                assigned.add(current)
 
-    clusters = [c for c in clusters if len(c) >= min_pts]
+    if is_dict:
+        return clusters
 
-    return clusters
+    return [[coords[i] for i in cluster] for cluster in clusters]
 
 
 def cluster_center(points) -> tuple:

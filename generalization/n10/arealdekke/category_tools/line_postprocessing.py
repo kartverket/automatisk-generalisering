@@ -56,6 +56,10 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
         land_use_fc (str): The path to the land use feature class
         data_orc (InputDataOrchestrator): The data orchestrator instance
     """
+    if all(not arcpy.Exists(line_fc) for line_fc in LINE.values()):
+        print("No line feature classes found. Skipping post-processing of lines.")
+        return
+
     working_fc = Arealdekke_N10.snap_lines__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
@@ -69,11 +73,11 @@ def post_process_lines(land_use_fc: str, data_orc: InputDataOrchestrator) -> Non
         dissolve_lines(
             input_fc=line_fc, output_fc=files[Names.dissolved], data_orc=data_orc
         )
-        arcpy.cartography.SmoothLine(
+        arcpy.cartography.SimplifyLine(
             in_features=files[Names.dissolved],
             out_feature_class=line_fc,
-            algorithm="PAEK",
-            endpoint_option="FIXED_CLOSED_ENDPOINT",
+            algorithm="POINT_REMOVE",
+            tolerance=2,
             error_option="RESOLVE_ERRORS",
         )
 
@@ -269,24 +273,3 @@ def snap_lines(land_use_fc: str, files: dict) -> None:
             erase_features=land_use_lyr,
             out_feature_class=line_fc,
         )
-
-        line_lyr = "line_lyr"
-        arcpy.management.MakeFeatureLayer(
-            in_features=line_fc,
-            out_layer=line_lyr,
-        )
-        arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=line_lyr,
-            selection_type="NEW_SELECTION",
-            where_clause="Shape_Length < 5",
-        )
-        arcpy.management.DeleteFeatures(in_features=line_lyr)
-
-
-# =======================
-
-if __name__ == "__main__":
-    # Example usage
-    land_use_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
-    data_orc = InputDataOrchestrator(map_scale="N10", pipeline="land_use")
-    post_process_lines(land_use_fc=land_use_fc, data_orc=data_orc)

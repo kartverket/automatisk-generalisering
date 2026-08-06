@@ -49,8 +49,8 @@ def island_controller(input_fc: str, output_fc: str) -> None:
             files=files, feature_ids=features_to_remove, output_fc=output_fc
         )
     else:
-        print("\nNo small polygons with multiple land use features inside.\n")
-        print("Copies original data to output.")
+        print("\nNo small polygons with multiple land use features inside.")
+        print("Copies original data to output.\n")
 
         arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
