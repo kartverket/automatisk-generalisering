@@ -3,7 +3,6 @@ import arcpy
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
 from data_orchestrator.datasets import DatasetNamespace
@@ -16,15 +15,16 @@ PIPELINE = "railway"
 
 
 def main(data_container: DatasetNamespace) -> None:
+    output_fc = Facility_N10.train_station_output__n10_facility.value
 
-    environment_setup.main()
+    if arcpy.Exists(output_fc):
+        return
 
     working_fc = Facility_N10.train_station__n10_facility.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    output_fc = Facility_N10.train_station_output__n10_facility.value
 
     fetch_data(files=files, data_container=data_container)
     find_track_rotation(files=files, output_fc=output_fc)
@@ -145,7 +145,3 @@ def find_track_rotation(files: dict, output_fc: str) -> None:
         in_features=files["train_station"],
         out_feature_class=output_fc,
     )
-
-
-if __name__ == "__main__":
-    main()
