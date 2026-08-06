@@ -18,7 +18,6 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
 )
 from generalization.n10.arealdekke.parameters.parameter_worker import get_min_width
 
-
 # ========================
 # Classes
 # ========================
