@@ -110,6 +110,12 @@ def create_indexed_job(batch_api):
                                     )
                                 )
                             ],
+                            volume_mounts=[
+                                client.V1VolumeMount(
+                                    name="tmp",
+                                    mount_path="/tmp",
+                                )
+                            ],
                                     
                             resources= {},
                             security_context=client.V1SecurityContext(
