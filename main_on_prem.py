@@ -237,7 +237,7 @@ def main():
     handler(args, checkpoint=checkpoint)
 
     if os.environ.get("AREA"):
-        object_name = f"outputs/{args.scale}_{args.obj}_{area}/road.gdb.zip"
+        object_name = f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/road.gdb.zip"
     else:
         object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"
     upload_results_to_scality(
