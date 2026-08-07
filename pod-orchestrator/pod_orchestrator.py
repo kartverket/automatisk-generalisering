@@ -13,10 +13,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-NAMESPACE = os.environ.get("NAMESPACE", "default")
-RUN_ID = os.environ.get("RUN_ID", "test-run-001")
-
-PARTITION_COUNT = int(os.environ.get("PARTITION_COUNT", "5"))
+NAMESPACE = os.environ.get("NAMESPACE")
+RUN_ID = os.environ.get("RUN_ID")
+AREAS = os.environ.get("PARTITION_STUDY_AREAS")
+AREAS_LIST = os.environ["PARTITION_STUDY_AREAS"].split(",")
+PARTITION_COUNT = len(AREAS_LIST)
 PARALLELISM = int(os.environ.get("PARALLELISM", "2"))
 
 PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
@@ -41,6 +42,7 @@ def create_indexed_job(batch_api):
     logger.info(f"Creating indexed Job: {PARTITION_JOB_NAME}")
     logger.info(f"Namespace: {NAMESPACE}")
     logger.info(f"Partitions: {PARTITION_COUNT}")
+    logger.info(f"Areas: {AREAS_LIST}")
     logger.info(f"Parallelism: {PARALLELISM}")
 
     job = client.V1Job(
@@ -63,7 +65,7 @@ def create_indexed_job(batch_api):
             completion_mode="Indexed",
             completions=PARTITION_COUNT,
             parallelism=PARALLELISM,
-            backoff_limit=2,
+            backoff_limit=1,
             ttl_seconds_after_finished=300,
             template=client.V1PodTemplateSpec(
                 metadata=client.V1ObjectMeta(
@@ -77,16 +79,7 @@ def create_indexed_job(batch_api):
                     containers=[
                         client.V1Container(
                             name="worker",
-                            image="alpine:3.20",
-                            command=["sh", "-c"],
-                            args=[
-                                """
-                                echo "Processing partition index: ${JOB_COMPLETION_INDEX}"
-                                echo "Run ID: ${RUN_ID}"
-                                sleep 10
-                                echo "Finished partition index: ${JOB_COMPLETION_INDEX}"
-                                """
-                            ],
+                            image="ghcr.io/kartverket/automatisk-generalisering:on_prem",
                             env=[
                                 client.V1EnvVar(
                                     name="RUN_ID",
@@ -100,7 +93,24 @@ def create_indexed_job(batch_api):
                                         )
                                     ),
                                 ),
+                                client.V1EnvVar(
+                                    name="AREAS",
+                                    value=AREAS,
+                                ),
                             ],
+                            env_from=[
+                                client.V1EnvFromSource(
+                                    config_map_ref=client.V1ConfigMapEnvSource(
+                                        name="on-prem-config"
+                                    )   
+                                ),
+                                client.V1EnvFromSource(
+                                    secret_ref=client.V1SecretEnvSource(
+                                        name="scality-credentials"
+                                    )
+                                )
+                            ],
+                                    
                             resources= {},
                             security_context=client.V1SecurityContext(
                                 allow_privilege_escalation=False,

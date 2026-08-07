@@ -1,6 +1,7 @@
 # Importing packages
 import arcpy
 
+import os
 # Importing custom input files modules
 from data_orchestrator.datasets import DatasetNamespace
 from data_orchestrator.orchestrator import InputDataOrchestrator
@@ -67,7 +68,11 @@ if require("SELECT_STUDY_AREA") == "False":
 else:
     SELECT_STUDY_AREA = True
 
-AREA_SELECTOR = "navn IN ('Ås')"
+
+if os.environ.get("AREA"):
+    AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
+else:
+    AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000

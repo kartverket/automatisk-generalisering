@@ -198,6 +198,9 @@ def main():
     secret_key = os.environ.get("scality_pass")
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
+    if os.environ.get("JOB_COMPLETION_INDEX"):
+        area = os.environ.get("PARTITION_STUDY_AREAS").split(",")[os.environ.get("JOB_COMPLETION_INDEX")]
+        os.environ["AREA"] = area
     args = parse_args()
     check_uid_gid()
     check_read_only()
@@ -233,11 +236,15 @@ def main():
     )
     handler(args, checkpoint=checkpoint)
 
+    if os.environ.get("AREA"):
+        object_name = f"outputs/{args.scale}_{args.obj}_{area}/road.gdb.zip"
+    else:
+        object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"
     upload_results_to_scality(
         client=s3,
         bucket_name=bucket_name,
         local_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb/"),
-        object_name=f"outputs/{args.scale}_{args.obj}/road.gdb.zip",
+        object_name=object_name,
     )
 
 
