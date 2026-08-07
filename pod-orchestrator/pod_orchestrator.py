@@ -80,6 +80,7 @@ def create_indexed_job(batch_api):
                         client.V1Container(
                             name="worker",
                             image="ghcr.io/kartverket/automatisk-generalisering:on_prem",
+                            image_pull_policy="Always",
                             env=[
                                 client.V1EnvVar(
                                     name="RUN_ID",

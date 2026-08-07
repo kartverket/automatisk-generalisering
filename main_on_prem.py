@@ -199,7 +199,7 @@ def main():
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
     if os.environ.get("JOB_COMPLETION_INDEX"):
-        area = os.environ.get("PARTITION_STUDY_AREAS").split(",")[os.environ.get("JOB_COMPLETION_INDEX")]
+        area = os.environ.get("AREAS").split(",")[int(os.environ.get("JOB_COMPLETION_INDEX"))]
         os.environ["AREA"] = area
     args = parse_args()
     check_uid_gid()
