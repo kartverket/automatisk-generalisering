@@ -325,14 +325,20 @@ class EliminateSmallPolygons:
             input_fc=self.files["eliminate_erased"]
         )
 
-        arcpy.management.MultipartToSinglepart(
-            in_features=self.files["eliminate_erased"],
-            out_feature_class=self.files["eliminate_erased_singlepart"],
-        )
-        arcpy.management.MultipartToSinglepart(
-            in_features=self.files["eliminate_clipped"],
-            out_feature_class=self.files["eliminate_clipped_singlepart"],
-        )
+        for input_file, output_file in [
+            [self.files["eliminate_erased"], self.files["eliminate_erased_singlepart"]],
+            [self.files["eliminate_clipped"], self.files["eliminate_clipped_singlepart"]],
+        ]:
+            try:
+                arcpy.management.MultipartToSinglepart(
+                    in_features=input_file,
+                    out_feature_class=output_file,
+                )
+            except:
+                arcpy.management.CopyFeatures(
+                    in_features=input_file,
+                    out_feature_class=output_file,
+                )
 
         arcpy.management.Merge(
             inputs=[
