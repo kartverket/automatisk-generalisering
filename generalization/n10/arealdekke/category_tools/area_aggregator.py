@@ -75,11 +75,18 @@ def aggregate_category(
     if int(arcpy.management.GetCount(files[Names.target])[0]) < 1:
         return
 
-    if boundary:
-        group_inside_boundary(
-            input_fc=input_fc, files=files, target=target, boundary=boundary, sql=sql
-        )
-    # rewrite_attribute_info(input_fc=input_fc, files=files, target=target, boundary=boundary is not None)
+    oid_to_dissolved = group_inside_boundary(
+        input_fc=input_fc,
+        files=files,
+        target=target,
+        boundary=boundary,
+        sql=sql,
+        max_area=min_area,
+    )
+    oid_to_dissolved = find_large_allowed_features(
+        files=files, max_area=min_area * 2, oid_match=oid_to_dissolved
+    )
+    rewrite_attribute_info(files=files)
 
     # wfm.delete_created_files()
 
@@ -132,16 +139,25 @@ def data_selection(
     )
 
     # Fetches relevant nearby features that is allowed to change
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke IN ({sql})",
+    )
+    arcpy.management.Dissolve(
+        in_features=land_use_lyr,
+        out_feature_class=files[Names.dissolved_allowed],
+        dissolve_field="arealdekke",
+        multi_part="SINGLE_PART",
+    )
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.dissolved_allowed], out_layer=land_use_lyr
+    )
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="BOUNDARY_TOUCHES",
         select_features=files[Names.target],
         selection_type="NEW_SELECTION",
-    )
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=land_use_lyr,
-        selection_type="SUBSET_SELECTION",
-        where_clause=f"arealdekke IN ({sql})",
     )
     arcpy.management.CopyFeatures(
         in_features=land_use_lyr, out_feature_class=files[Names.near_1]
@@ -160,8 +176,8 @@ def data_selection(
 
 
 def group_inside_boundary(
-    input_fc: str, files: dict, target: str, boundary: str, sql: str
-) -> None:
+    input_fc: str, files: dict, target: str, boundary: str, sql: str, max_area: int
+) -> dict:
     """
     Collects data that is connected to target and near features and investigates whether
     they are completely surrounded by the boundary feature. If so, they are also changed
@@ -173,41 +189,25 @@ def group_inside_boundary(
         target (str): Target land use to change to for the relevant features
         boundary (str): Boundary feature class for aggregation
         sql (str): SQL query string for selecting allowed land use types
+        max_area (int): Maximum area to be considered relevant
+
+    Returns:
+        dict: A dictionary mapping target feature IDs to sets of connected feature IDs
     """
     land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
-    # Fetches features that can be changed
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=land_use_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=f"arealdekke IN ({sql})",
-    )
-
-    # Dissolves these
-    arcpy.management.Dissolve(
-        in_features=land_use_lyr,
-        out_feature_class=files[Names.dissolved_allowed],
-        dissolve_field="arealdekke",
-        multi_part="SINGLE_PART",
-    )
 
     # Finds intersecting features
-    arcpy.management.SelectLayerByLocation(
-        in_layer=land_use_lyr,
-        overlap_type="INTERSECT",
-        select_features=input_fc,
-        selection_type="NEW_SELECTION",
-    )
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=land_use_lyr,
-        selection_type="SUBSET_SELECTION",
+        selection_type="NEW_SELECTION",
         where_clause=f"arealdekke NOT IN ({sql})",
     )
 
     # Performes spatial join to identify surrounded targets
     arcpy.analysis.SpatialJoin(
         target_features=files[Names.target],
-        join_features=files[Names.dissolved_allowed],
+        join_features=files[Names.near_1],
         out_feature_class=files[Names.spatial_join_target],
         join_operation="JOIN_ONE_TO_MANY",
         join_type="KEEP_ALL",
@@ -215,7 +215,7 @@ def group_inside_boundary(
     )
 
     arcpy.analysis.SpatialJoin(
-        target_features=files[Names.dissolved_allowed],
+        target_features=files[Names.near_1],
         join_features=land_use_lyr,
         out_feature_class=files[Names.spatial_join_other],
         join_operation="JOIN_ONE_TO_MANY",
@@ -232,12 +232,18 @@ def group_inside_boundary(
 
     oid_match_other = defaultdict(set)
     with arcpy.da.SearchCursor(
-        files[Names.spatial_join_other], ["TARGET_FID", "arealdekke_1"]
+        files[Names.spatial_join_other], ["TARGET_FID", "arealdekke_1", "Shape_Area"]
     ) as cursor:
-        for oid, area in cursor:
-            oid_match_other[oid].add(area)
+        for oid, arealdekke, area in cursor:
+            if area > max_area:
+                continue
+            oid_match_other[oid].add(arealdekke)
 
-    allowed = set(sql.split(",")) | {target, boundary}
+    allowed = (
+        set(sql.split(",")) | {target, boundary}
+        if boundary
+        else set(sql.split(",")) | {target}
+    )
 
     oid_match_other = {
         oid: areas for oid, areas in oid_match_other.items() if areas.issubset(allowed)
@@ -276,10 +282,46 @@ def group_inside_boundary(
     return oid_match_target
 
 
+def find_large_allowed_features(files: dict, max_area: int, oid_match: dict) -> dict:
+    """
+    Identifies and processes allowed features that exceed the specified maximum area.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        max_area (int): Maximum area to be considered relevant
+        oid_match (dict): Dictionary mapping target feature IDs to sets of connected feature IDs
+
+    Returns:
+        dict: Updated oid_match dictionary
+    """
+    where_clause = f"Shape_Area > {max_area}"
+    large_polygons = {
+        row[0]
+        for row in arcpy.da.SearchCursor(
+            files[Names.dissolved_allowed], ["OID@"], where_clause=where_clause
+        )
+    }
+
+    is_large = large_polygons.__contains__
+
+    return {
+        oid: [[o, "l"] if is_large(o) else [o, "s"] for o in oids]
+        for oid, oids in oid_match.items()
+    }
+
+
+def rewrite_attribute_info(files: dict) -> None:
+    """
+    ...
+    """
+    return
+
+
+"""
 def rewrite_attribute_info(
     input_fc: str, files: dict, target: str, boundary: bool
 ) -> None:
-    """
+    
     Changes attribute information of adjacent geometries to fit with new status.
 
     Args:
@@ -287,7 +329,7 @@ def rewrite_attribute_info(
         files (dict): Dictionary with all the working files
         target (str): Target land use to change to for the relevant features
         boundary (bool): Whether boundary features are used or not
-    """
+    
     land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
     arcpy.management.SelectLayerByLocation(
@@ -300,6 +342,7 @@ def rewrite_attribute_info(
     with arcpy.da.UpdateCursor(land_use_lyr, ["arealdekke"]) as cur:
         for _ in cur:
             cur.updateRow([target])
+"""
 
 
 if __name__ == "__main__":
