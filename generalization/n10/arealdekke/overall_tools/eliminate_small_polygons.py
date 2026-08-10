@@ -327,7 +327,10 @@ class EliminateSmallPolygons:
 
         for input_file, output_file in [
             [self.files["eliminate_erased"], self.files["eliminate_erased_singlepart"]],
-            [self.files["eliminate_clipped"], self.files["eliminate_clipped_singlepart"]],
+            [
+                self.files["eliminate_clipped"],
+                self.files["eliminate_clipped_singlepart"],
+            ],
         ]:
             try:
                 arcpy.management.MultipartToSinglepart(

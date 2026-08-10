@@ -550,13 +550,14 @@ class Arealdekke:
             ),
             lambda: aggregate_category(
                 input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
                 map_scale=self.__map_scale,
                 target="Høyblokkbebyggelse",
                 allowed=["Bebygd"],
                 boundary="Samferdsel",
             ),
             lambda: arealdekke_dissolver(
-                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                input_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.dissolve_arealdekke.value,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,

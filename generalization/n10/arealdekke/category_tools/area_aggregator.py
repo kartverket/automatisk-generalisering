@@ -13,7 +13,6 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.parameters.parameter_worker import get_min_area
 
-
 # ========================
 # Class
 # ========================
@@ -21,10 +20,14 @@ from generalization.n10.arealdekke.parameters.parameter_worker import get_min_ar
 
 class Names(StrEnum):
     target = "target"
-    near = "near"
+    near_1 = "near_1"
+    near_2 = "near_2"
+    working_features = "working_features"
+    temp_output_1 = "temp_output_1"
+    temp_output_2 = "temp_output_2"
     dissolved_allowed = "dissolved_allowed"
-    not_dissolved_allowed = "not_dissolved_allowed"
-    spatial_join_output = "spatial_join_output"
+    spatial_join_target = "spatial_join_target"
+    spatial_join_other = "spatial_join_other"
     near_expanded = "near_expanded"
 
 
@@ -37,6 +40,7 @@ class Names(StrEnum):
 def aggregate_category(
     target: str,
     input_fc: str,
+    output_fc: str,
     map_scale: str,
     allowed: list,
     boundary: str = None,
@@ -67,14 +71,17 @@ def aggregate_category(
         min_area=min_area,
         sql=sql,
     )
-    if int(arcpy.management.GetCount(files[Names.target])[0]) > 0:
-        if boundary:
-            boundary_adjustments(input_fc=input_fc, files=files, target=target, boundary=boundary, sql=sql)
-        rewrite_attribute_info(
-            input_fc=input_fc, files=files, target=target, boundary=boundary is not None
-        )
 
-    wfm.delete_created_files()
+    if int(arcpy.management.GetCount(files[Names.target])[0]) < 1:
+        return
+
+    if boundary:
+        group_inside_boundary(
+            input_fc=input_fc, files=files, target=target, boundary=boundary, sql=sql
+        )
+    # rewrite_attribute_info(input_fc=input_fc, files=files, target=target, boundary=boundary is not None)
+
+    # wfm.delete_created_files()
 
 
 # ========================
@@ -112,10 +119,9 @@ def data_selection(
         sql (str): SQL query string for selecting allowed land use types
     """
     land_use_lyr = "land_use_lyr"
-    arcpy.MakeFeatureLayer_management(
-        in_features=input_fc, out_layer=land_use_lyr
-    )
+    arcpy.MakeFeatureLayer_management(in_features=input_fc, out_layer=land_use_lyr)
 
+    # Fetches target features under size limit
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=land_use_lyr,
         selection_type="NEW_SELECTION",
@@ -125,6 +131,7 @@ def data_selection(
         in_features=land_use_lyr, out_feature_class=files[Names.target]
     )
 
+    # Fetches relevant nearby features that is allowed to change
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="BOUNDARY_TOUCHES",
@@ -137,11 +144,24 @@ def data_selection(
         where_clause=f"arealdekke IN ({sql})",
     )
     arcpy.management.CopyFeatures(
-        in_features=land_use_lyr, out_feature_class=files[Names.near]
+        in_features=land_use_lyr, out_feature_class=files[Names.near_1]
+    )
+
+    # Combines filtered data and store the remaining in output
+    arcpy.management.Merge(
+        inputs=[files[Names.target], files[Names.near_1]],
+        output=files[Names.working_features],
+    )
+    arcpy.analysis.Erase(
+        in_features=input_fc,
+        erase_features=files[Names.working_features],
+        out_feature_class=files[Names.temp_output_1],
     )
 
 
-def boundary_adjustments(input_fc: str, files: dict, target: str, boundary: str, sql: str) -> None:
+def group_inside_boundary(
+    input_fc: str, files: dict, target: str, boundary: str, sql: str
+) -> None:
     """
     Collects data that is connected to target and near features and investigates whether
     they are completely surrounded by the boundary feature. If so, they are also changed
@@ -154,83 +174,111 @@ def boundary_adjustments(input_fc: str, files: dict, target: str, boundary: str,
         boundary (str): Boundary feature class for aggregation
         sql (str): SQL query string for selecting allowed land use types
     """
-    lyr_1 = "lyr_1"
-    lyr_2 = "lyr_2"
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_fc, out_layer=lyr_1
-    )
-
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
+    # Fetches features that can be changed
     arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=lyr_1,
+        in_layer_or_view=land_use_lyr,
         selection_type="NEW_SELECTION",
         where_clause=f"arealdekke IN ({sql})",
     )
 
+    # Dissolves these
     arcpy.management.Dissolve(
-        in_features=lyr_1,
+        in_features=land_use_lyr,
         out_feature_class=files[Names.dissolved_allowed],
         dissolve_field="arealdekke",
         multi_part="SINGLE_PART",
     )
 
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[Names.dissolved_allowed], out_layer=lyr_2
-    )
+    # Finds intersecting features
     arcpy.management.SelectLayerByLocation(
-        in_layer=lyr_2,
+        in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=files[Names.near],
+        select_features=input_fc,
         selection_type="NEW_SELECTION",
     )
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="SUBSET_SELECTION",
+        where_clause=f"arealdekke NOT IN ({sql})",
+    )
 
-    arcpy.analysis.Erase(
-        in_features=input_fc,
-        erase_features=lyr_2,
-        out_feature_class=files[Names.not_dissolved_allowed],
+    # Performes spatial join to identify surrounded targets
+    arcpy.analysis.SpatialJoin(
+        target_features=files[Names.target],
+        join_features=files[Names.dissolved_allowed],
+        out_feature_class=files[Names.spatial_join_target],
+        join_operation="JOIN_ONE_TO_MANY",
+        join_type="KEEP_ALL",
+        match_option="INTERSECT",
     )
 
     arcpy.analysis.SpatialJoin(
-        target_features=lyr_2,
-        join_features=files[Names.not_dissolved_allowed],
-        out_feature_class=files[Names.spatial_join_output],
+        target_features=files[Names.dissolved_allowed],
+        join_features=land_use_lyr,
+        out_feature_class=files[Names.spatial_join_other],
         join_operation="JOIN_ONE_TO_MANY",
         join_type="KEEP_ALL",
+        match_option="INTERSECT",
     )
 
-    id_to_area = defaultdict(set)
+    oid_match_target = defaultdict(set)
     with arcpy.da.SearchCursor(
-        files[Names.spatial_join_output], ["TARGET_FID", "arealdekke_1"]
+        files[Names.spatial_join_target], ["TARGET_FID", "JOIN_FID"]
     ) as cursor:
-        for id, area in cursor:
-            id_to_area[id].add(area)
+        for target_oid, join_oid in cursor:
+            oid_match_target[target_oid].add(join_oid)
 
-    ids_to_keep = [
-        id for id, areas in id_to_area.items() if areas.issubset({target, boundary})
-    ]
-    where_clause = (
-        f"OBJECTID IN ({','.join(map(str, ids_to_keep))})" if ids_to_keep else "1=0"
+    oid_match_other = defaultdict(set)
+    with arcpy.da.SearchCursor(
+        files[Names.spatial_join_other], ["TARGET_FID", "arealdekke_1"]
+    ) as cursor:
+        for oid, area in cursor:
+            oid_match_other[oid].add(area)
+
+    allowed = set(sql.split(",")) | {target, boundary}
+
+    oid_match_other = {
+        oid: areas for oid, areas in oid_match_other.items() if areas.issubset(allowed)
+    }
+
+    relevant_oids = set(oid_match_other) & set(
+        oid for oids in oid_match_target.values() for oid in oids
     )
 
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=lyr_2,
-        selection_type="NEW_SELECTION",
-        where_clause=where_clause,
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.dissolved_allowed],
+        out_layer=land_use_lyr,
+        where_clause=(
+            f"OBJECTID IN ({','.join(map(str, relevant_oids))})"
+            if relevant_oids
+            else "1=0"
+        ),
     )
-    arcpy.management.SelectLayerByLocation(
-        in_layer=lyr_1,
-        overlap_type="INTERSECT",
-        select_features=lyr_2,
-        selection_type="NEW_SELECTION",
+
+    for in_f, out_f in [
+        [files[Names.temp_output_1], files[Names.temp_output_2]],
+        [files[Names.near_1], files[Names.near_2]],
+    ]:
+        arcpy.analysis.Erase(
+            in_features=in_f, erase_features=land_use_lyr, out_feature_class=out_f
+        )
+
+    with arcpy.da.UpdateCursor(land_use_lyr, ["arealdekke"]) as cur:
+        for _ in cur:
+            cur.updateRow([target])
+
+    arcpy.management.Append(
+        inputs=[land_use_lyr], target=files[Names.temp_output_2], schema_type="NO_TEST"
     )
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=lyr_1,
-        selection_type="SUBSET_SELECTION",
-        where_clause=f"arealdekke NOT IN ('{boundary}')",
-    )
-    arcpy.management.Merge(inputs=[lyr_1, files[Names.near]], output=files[Names.near_expanded])
+
+    return oid_match_target
 
 
-def rewrite_attribute_info(input_fc: str, files: dict, target: str, boundary: bool) -> None:
+def rewrite_attribute_info(
+    input_fc: str, files: dict, target: str, boundary: bool
+) -> None:
     """
     Changes attribute information of adjacent geometries to fit with new status.
 
@@ -241,9 +289,7 @@ def rewrite_attribute_info(input_fc: str, files: dict, target: str, boundary: bo
         boundary (bool): Whether boundary features are used or not
     """
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_fc, out_layer=land_use_lyr
-    )
+    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="ARE_IDENTICAL_TO",
@@ -254,3 +300,15 @@ def rewrite_attribute_info(input_fc: str, files: dict, target: str, boundary: bo
     with arcpy.da.UpdateCursor(land_use_lyr, ["arealdekke"]) as cur:
         for _ in cur:
             cur.updateRow([target])
+
+
+if __name__ == "__main__":
+    # Example usage
+    aggregate_category(
+        input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+        output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
+        map_scale="N10",
+        target="Høyblokkbebyggelse",
+        allowed=["Bebygd"],
+        boundary="Samferdsel",
+    )
