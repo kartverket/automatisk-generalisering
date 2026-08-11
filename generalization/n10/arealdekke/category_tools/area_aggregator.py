@@ -1,10 +1,11 @@
 # Libraries
 
 import arcpy
+import os
 
 arcpy.env.overwriteOutput = True
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from enum import StrEnum
 
 from composition_configs import core_config
@@ -28,7 +29,18 @@ class Names(StrEnum):
     dissolved_allowed = "dissolved_allowed"
     spatial_join_target = "spatial_join_target"
     spatial_join_other = "spatial_join_other"
-    near_expanded = "near_expanded"
+    dissolved_boundary = "dissolved_boundary"
+    boundary_lines = "boundary_lines"
+    too_small = "too_small"
+    should_split = "should_split"
+    near_lines = "near_lines"
+    all_points = "all_points"
+    near_points = "near_points"
+    cutlines = "cutlines"
+    splitted_features = "splitted_features"
+    candidates = "candidates"
+    enlarge_1 = "enlarge_1"
+    enlarge_2 = "enlarge_2"
 
 
 # ========================
@@ -87,6 +99,9 @@ def aggregate_category(
         files=files, max_area=min_area * 2, oid_match=oid_to_dissolved
     )
     rewrite_attribute_info_small(files=files, target=target, oid_match=oid_to_dissolved)
+    create_split_points(files=files, split_area=boundary, min_area=min_area)
+    create_cutlines(files=files)
+    enlarge_small_features(files=files, target=target, min_area=min_area)
 
     # wfm.delete_created_files()
 
@@ -173,6 +188,7 @@ def data_selection(
         erase_features=files[Names.working_features],
         out_feature_class=files[Names.temp_output_1],
     )
+    print("Data selection completed")
 
 
 def group_inside_boundary(
@@ -280,6 +296,8 @@ def group_inside_boundary(
         inputs=[land_use_lyr], target=files[Names.temp_output_2], schema_type="NO_TEST"
     )
 
+    print("Grouping inside boundary completed")
+
     return oid_match_target
 
 
@@ -304,6 +322,8 @@ def find_large_allowed_features(files: dict, max_area: int, oid_match: dict) -> 
     }
 
     is_large = large_polygons.__contains__
+
+    print(f"Found {len(large_polygons)} large allowed features exceeding {max_area} area")
 
     return {
         oid: [[o, "l"] if is_large(o) else [o, "s"] for o in oids]
@@ -347,6 +367,245 @@ def rewrite_attribute_info_small(files: dict, target: str, oid_match: dict) -> N
         erase_features=land_use_lyr,
         out_feature_class=files[Names.near_1],
     )
+
+    print("Attribute information rewrite for small features completed")
+
+
+def create_split_points(files: dict, split_area: str, min_area: int) -> None:
+    """
+    Find nearby boundary features and create points at the endpoints of these lines.
+    The points that are shared with only one line as well as intersecting the
+    area of interest are kept.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        split_area (str): Name of the boundary feature class to consider for splitting
+        min_area (int): Minimum area threshold for the features to be considered
+    """
+    # Fetching border features
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.temp_output_1], out_layer=land_use_lyr
+    )
+
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke = '{split_area}'"
+    )
+
+    arcpy.management.Dissolve(
+        in_features=land_use_lyr,
+        out_feature_class=files[Names.dissolved_boundary],
+        dissolve_field="arealdekke",
+        multi_part="SINGLE_PART"
+    )
+
+    # Dividing features of interest into small and large
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.near_1], out_layer=land_use_lyr
+    )
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"Shape_Area < {min_area}"
+    )
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files[Names.too_small]
+    )
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="SWITCH_SELECTION"
+    )
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files[Names.should_split]
+    )
+
+    # Creating lines of the split features
+    arcpy.cartography.CollapseHydroPolygon(
+        in_features=files[Names.dissolved_boundary],
+        out_line_feature_class=files[Names.boundary_lines],
+    )
+
+    line_lyr = "line_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.boundary_lines], out_layer=line_lyr
+    )
+    arcpy.management.SelectLayerByLocation(
+        in_layer=line_lyr,
+        overlap_type="BOUNDARY_TOUCHES",
+        select_features=files[Names.should_split],
+        selection_type="NEW_SELECTION",
+    )
+
+    arcpy.management.CopyFeatures(
+        in_features=line_lyr,
+        out_feature_class=files[Names.near_lines]
+    )
+
+    # Fetching the closest dead end points
+    endpoint_count = Counter()
+
+    with arcpy.da.SearchCursor(files[Names.near_lines], ["SHAPE@"]) as cursor:
+        for (shape,) in cursor:
+            endpoint_count[(shape.firstPoint.X, shape.firstPoint.Y)] += 1
+            endpoint_count[(shape.lastPoint.X, shape.lastPoint.Y)] += 1
+
+    arcpy.management.CreateFeatureclass(
+        out_path=os.path.dirname(files[Names.all_points]),
+        out_name=os.path.basename(files[Names.all_points]),
+        geometry_type="POINT",
+        spatial_reference=arcpy.Describe(
+            files[Names.near_lines]
+        ).spatialReference,
+    )
+
+    with arcpy.da.InsertCursor(files[Names.all_points], ["SHAPE@XY"]) as icur:
+        for xy, count in endpoint_count.items():
+            if count == 1:
+                icur.insertRow([xy])
+
+    point_lyr = "point_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.all_points], out_layer=point_lyr
+    )
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=point_lyr,
+        overlap_type="INTERSECT",
+        select_features=files[Names.near_1],
+        selection_type="NEW_SELECTION",
+    )
+
+    arcpy.management.CopyFeatures(
+        in_features=point_lyr, out_feature_class=files[Names.near_points]
+    )
+
+    print(f"Created {arcpy.management.GetCount(files[Names.near_points])[0]} split points for features larger than {min_area} area")
+
+
+def create_cutlines(files: dict, cutline_length: int=100) -> None:
+    """
+    Creates cutlines at the endpoints of the nearby lines to split the features of interest.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        cutline_length (int): Length of the cutlines to be created (default is 100)
+    """
+    arcpy.management.CreateFeatureclass(
+        out_path=os.path.dirname(files[Names.cutlines]),
+        out_name=os.path.basename(files[Names.cutlines]),
+        geometry_type="POLYLINE",
+        spatial_reference=arcpy.Describe(files[Names.near_points]).spatialReference,
+    )
+
+    with arcpy.da.InsertCursor(files[Names.cutlines], ["SHAPE@"]) as icur:
+        with arcpy.da.SearchCursor(files[Names.near_points], ["SHAPE@XY"]) as scur:
+            for (x, y), in scur:
+                # North - South line
+                icur.insertRow([
+                    arcpy.Polyline(
+                        arcpy.Array([
+                            arcpy.Point(x - cutline_length, y),
+                            arcpy.Point(x + cutline_length, y)
+                        ])
+                    )
+                ])
+                # East - West line
+                icur.insertRow([
+                    arcpy.Polyline(
+                        arcpy.Array([
+                            arcpy.Point(x, y - cutline_length),
+                            arcpy.Point(x, y + cutline_length)
+                        ])
+                    )
+                ])
+
+    print(f"Created {arcpy.management.GetCount(files[Names.cutlines])[0]} cutlines")
+
+
+def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
+    """
+    ...
+    """
+    arcpy.management.FeatureToPolygon(
+        in_features=[files[Names.should_split], files[Names.cutlines]],
+        out_feature_class=files[Names.splitted_features],
+        attributes="ATTRIBUTES",
+    )
+
+    arcpy.management.Merge(
+        inputs=[files[Names.splitted_features], files[Names.too_small]],
+        output=files[Names.candidates]
+    )
+
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.candidates], out_layer=land_use_lyr
+    )
+
+    main_target = files[Names.target]
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=land_use_lyr,
+        overlap_type="INTERSECT",
+        select_features=main_target,
+        selection_type="NEW_SELECTION",
+    )
+
+    previous = sum(
+        1 for (_, area) in arcpy.da.SearchCursor(main_target, ["OID@", "Shape_Area"])
+        if area < min_area
+    )
+
+    iterations = 0
+
+    while True:
+        iterations += 1
+        arcpy.management.Merge(
+            inputs=[land_use_lyr, main_target],
+            output=files[Names.enlarge_1]
+        )
+        arcpy.management.CalculateField(
+            in_table=files[Names.enlarge_1],
+            field="arealdekke",
+            expression=f"'{target}'",
+            expression_type="PYTHON3",
+        )
+        arcpy.management.Dissolve(
+            in_features=files[Names.enlarge_1],
+            out_feature_class=files[Names.enlarge_2],
+            dissolve_field="arealdekke",
+            multi_part="SINGLE_PART",
+        )
+
+        main_target = files[Names.enlarge_2]
+        current = sum(
+        1 for (_, area) in arcpy.da.SearchCursor(main_target, ["OID@", "Shape_Area"])
+        if area < min_area
+    )
+
+        if current == 0:
+            print("All polygons meet minimum area requirement")
+            break
+        elif current >= previous:
+            print("No additional polygons can be enlarged")
+            break
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=land_use_lyr,
+            overlap_type="INTERSECT",
+            select_features=main_target,
+            selection_type="NEW_SELECTION",
+        )
+
+        if arcpy.management.GetCount(land_use_lyr)[0] == 0:
+            print("No more nearby features to enlarge")
+            break
+
+        previous = current
+
+    print(f"Enlarged small features in {iterations} iterations to meet minimum area of {min_area}")
 
 
 """
