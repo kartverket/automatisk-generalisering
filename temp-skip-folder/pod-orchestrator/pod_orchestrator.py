@@ -264,7 +264,7 @@ def wait_for_job(batch_api):
                         f"Job failed: {condition.reason} - {condition.message}"
                     )
 
-        time.sleep(5)
+        time.sleep(300)
 
 def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 120):
     """

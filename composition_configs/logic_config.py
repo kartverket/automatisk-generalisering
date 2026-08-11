@@ -14,6 +14,12 @@ from composition_configs import core_config, io_types, type_defs
 
 RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
+@dataclass(frozen=True)
+class DataRef:
+    """
+
+    """
+    path: str
 
 @dataclass(frozen=True)
 class SymbologyLayerSpec:
