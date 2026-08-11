@@ -70,11 +70,11 @@ def fetch_data(files: dict, data_container: DatasetNamespace) -> None:
         in_features=data_container.Bane_FKB, out_feature_class=files["train_track"]
     )
     arcpy.management.CopyFeatures(
-        in_features=data_container.JernbaneStasjon_N50,
+        in_features=data_container.JernbaneStasjon_BaneNor,
         out_feature_class=files["train_station"],
     )
     arcpy.management.CopyFeatures(
-        in_features=data_container.JernbaneStasjon_N50,
+        in_features=data_container.JernbaneStasjon_BaneNor,
         out_feature_class=files["train_station_snapped"],
     )
 

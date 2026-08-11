@@ -11,6 +11,7 @@ from file_manager.n10.file_manager_roads import Road_N10
 
 arcpy.env.overwriteOutput = True
 
+
 """
 This function finds the rotation of a collection of points based on the angle of nearby lines.
 It is expected that the points have been snapped to the correct lines on beforehand.
@@ -21,6 +22,7 @@ out_feature_class -> feature class the processed points will be saved to
 """
 
 
+@timing_decorator
 def point_rotation_tool(
     in_features_point, in_features_line, out_feature_class, rotation_difference: int
 ):
@@ -47,6 +49,8 @@ def point_rotation_tool(
         out_feature_class=out_feature_class,
         rotation_difference=rotation_difference,
     )
+
+    wfm.delete_created_files()
 
 
 class fc(Enum):
@@ -236,7 +240,3 @@ def rotate_roadblocks(files: dict, out_feature_class, rotation_difference) -> No
     arcpy.management.CopyFeatures(
         in_features=input_point_lyr, out_feature_class=out_feature_class
     )
-
-
-if __name__ == "__main__":
-    tool()
