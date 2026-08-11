@@ -81,12 +81,12 @@ def aggregate_category(
         target=target,
         boundary=boundary,
         sql=sql,
-        max_area=min_area,
+        max_area=min_area * 2,
     )
     oid_to_dissolved = find_large_allowed_features(
         files=files, max_area=min_area * 2, oid_match=oid_to_dissolved
     )
-    rewrite_attribute_info(files=files)
+    rewrite_attribute_info_small(files=files, target=target, oid_match=oid_to_dissolved)
 
     # wfm.delete_created_files()
 
@@ -228,7 +228,8 @@ def group_inside_boundary(
         files[Names.spatial_join_target], ["TARGET_FID", "JOIN_FID"]
     ) as cursor:
         for target_oid, join_oid in cursor:
-            oid_match_target[target_oid].add(join_oid)
+            if join_oid != -1:
+                oid_match_target[target_oid].add(join_oid)
 
     oid_match_other = defaultdict(set)
     with arcpy.da.SearchCursor(
@@ -298,7 +299,7 @@ def find_large_allowed_features(files: dict, max_area: int, oid_match: dict) -> 
     large_polygons = {
         row[0]
         for row in arcpy.da.SearchCursor(
-            files[Names.dissolved_allowed], ["OID@"], where_clause=where_clause
+            files[Names.near_1], ["OID@"], where_clause=where_clause
         )
     }
 
@@ -310,11 +311,42 @@ def find_large_allowed_features(files: dict, max_area: int, oid_match: dict) -> 
     }
 
 
-def rewrite_attribute_info(files: dict) -> None:
+def rewrite_attribute_info_small(files: dict, target: str, oid_match: dict) -> None:
     """
-    ...
+    Selects and updates the attribute information of small features that are
+    connected to target features having connections to small features only.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        target (str): Target land use to change to for the relevant features
+        oid_match (dict): Dictionary mapping target feature IDs to sets of connected feature IDs
     """
-    return
+    keep = set()
+    for oids in oid_match.values():
+        if any(size == "l" for _, size in oids):
+            keep.update(oid for oid, _ in oids)
+
+    sql = f"OBJECTID NOT IN ({','.join(map(str, keep))})" if keep else "1=0"
+
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.near_2], out_layer=land_use_lyr, where_clause=sql
+    )
+
+    with arcpy.da.UpdateCursor(land_use_lyr, ["arealdekke"]) as cur:
+        for _ in cur:
+            cur.updateRow([target])
+
+    arcpy.management.Merge(
+        inputs=[land_use_lyr, files[Names.temp_output_2]],
+        output=files[Names.temp_output_1],
+    )
+
+    arcpy.analysis.Erase(
+        in_features=files[Names.near_2],
+        erase_features=land_use_lyr,
+        out_feature_class=files[Names.near_1],
+    )
 
 
 """
