@@ -172,7 +172,7 @@ Snaumark_impediment,IdrettsOmr,Golfanlegg,*,Golfbane,None
 Snaumark_impediment,IdrettsOmr,*,*,IdrettsOmr,None
 Snaumark_impediment,*,*,Blokkmark,Snaumark,Blokkmark
 Snaumark_impediment,*,*,Fjell_i_dagen,Snaumark,Fjell_i_dagen
-Snaumark_impediment,*,*,*,Snaumark
+Snaumark_impediment,*,*,*,Snaumark, None
 Snaumark_konstruert,GroenneOmr,GravUrnelund,*,GravUrnelund,None
 Snaumark_konstruert,GroenneOmr,Lekeplass,*,Snaumark,None
 Snaumark_konstruert,GroenneOmr,*,*,Park,None

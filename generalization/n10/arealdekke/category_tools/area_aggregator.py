@@ -40,6 +40,8 @@ class Names(StrEnum):
     near_points = "near_points"
     cutlines = "cutlines"
     splitted_features = "splitted_features"
+    splitted_features_cleaned = "splitted_features_cleaned"
+    splitted_features_multipart = "splitted_features_multipart"
     candidates = "candidates"
     enlarge_1 = "enlarge_1"
     enlarge_2 = "enlarge_2"
@@ -109,13 +111,15 @@ def aggregate_category(
     rewrite_attribute_info_small(files=files, target=target, oid_match=oid_to_dissolved)
     create_split_points(files=files, split_area=boundary, min_area=min_area)
     create_cutlines(files=files)
-    enlarge_small_features(files=files, target=target, min_area=min_area)
-    clean_areas(files=files, boundary=boundary)
+    enlarge_small_features(
+        files=files, target=target, allowed=allowed, min_area=min_area
+    )
+    clean_areas(files=files, boundary=allowed + [target])
     fetch_orig_attributes(input_fc=input_fc, output_fc=output_fc, files=files, sql=sql)
 
     print(f"\n{'===' * 20}\n")
 
-    wfm.delete_created_files()
+    # wfm.delete_created_files()
 
 
 # ========================
@@ -555,7 +559,9 @@ def create_cutlines(files: dict, cutline_length: int = 100) -> None:
     )
 
 
-def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
+def enlarge_small_features(
+    files: dict, target: str, allowed: list, min_area: int
+) -> None:
     """
     Dissolves the built up areas iteratively until all target features meet the
     minimum area requirement or no more nearby features can be enlarged.
@@ -563,6 +569,7 @@ def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
     Args:
         files (dict): Dictionary with all the working files
         target (str): Target land use to change to for the relevant features
+        allowed (list): List of allowed land use types for enlargement
         min_area (int): Minimum area requirement for the features
     """
     arcpy.management.FeatureToPolygon(
@@ -571,28 +578,53 @@ def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
         attributes="ATTRIBUTES",
     )
 
+    land_use_lyr = "land_use_lyr"
+    sql = ", ".join(f"'{lu}'" for lu in allowed + [target])
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[Names.temp_output_1],
+        out_layer=land_use_lyr,
+        where_clause=f"arealdekke NOT IN ({sql})",
+    )
+
+    arcpy.analysis.Erase(
+        in_features=files[Names.splitted_features],
+        erase_features=land_use_lyr,
+        out_feature_class=files[Names.splitted_features_cleaned],
+    )
+    arcpy.management.MultipartToSinglepart(
+        in_features=files[Names.splitted_features_cleaned],
+        out_feature_class=files[Names.splitted_features_multipart],
+    )
+    arcpy.management.Delete(land_use_lyr)
+
     arcpy.management.Merge(
-        inputs=[files[Names.splitted_features], files[Names.too_small]],
+        inputs=[files[Names.splitted_features_multipart], files[Names.too_small]],
         output=files[Names.candidates],
     )
 
-    land_use_lyr = "land_use_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[Names.candidates], out_layer=land_use_lyr
     )
 
     main_target = files[Names.target]
+    target_lyr = "target_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=main_target, out_layer=target_lyr)
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=target_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"Shape_Area < {min_area}",
+    )
 
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=main_target,
+        select_features=target_lyr,
         selection_type="NEW_SELECTION",
     )
 
     previous = sum(
         1
-        for row in arcpy.da.SearchCursor(main_target, ["Shape_Area"])
+        for row in arcpy.da.SearchCursor(target_lyr, ["Shape_Area"])
         if row[0] < min_area
     )
 
@@ -617,14 +649,24 @@ def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
         )
 
         main_target = files[Names.enlarge_2]
+
+        arcpy.management.MakeFeatureLayer(in_features=main_target, out_layer=target_lyr)
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=target_lyr,
+            selection_type="NEW_SELECTION",
+            where_clause=f"Shape_Area < {min_area}",
+        )
+
         current = sum(
             1
-            for row in arcpy.da.SearchCursor(main_target, ["Shape_Area"])
+            for row in arcpy.da.SearchCursor(target_lyr, ["Shape_Area"])
             if row[0] < min_area
         )
 
         if current == 0:
-            print("✅ Enlargement\t\t\t| All polygons meet the minimum area requirement")
+            print(
+                "✅ Enlargement\t\t\t| All polygons meet the minimum area requirement"
+            )
             break
         elif current >= previous:
             print("⛔ Enlargement\t\t\t| No additional polygons can be enlarged")
@@ -633,7 +675,7 @@ def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
         arcpy.management.SelectLayerByLocation(
             in_layer=land_use_lyr,
             overlap_type="INTERSECT",
-            select_features=main_target,
+            select_features=target_lyr,
             selection_type="NEW_SELECTION",
         )
 
@@ -652,19 +694,20 @@ def enlarge_small_features(files: dict, target: str, min_area: int) -> None:
     )
 
 
-def clean_areas(files: dict, boundary: str) -> None:
+def clean_areas(files: dict, boundary: list) -> None:
     """
     Removes overlapping areas so that the different feature classes creates one complete dataset.
 
     Args:
         files (dict): Dictionary with all the working files
-        boundary (str): Boundary feature class for aggregation
+        boundary (list): List of boundary feature classes for aggregation
     """
     boundary_lyr = "boundary_lyr"
+    sql = ", ".join(f"'{b}'" for b in boundary)
     arcpy.management.MakeFeatureLayer(
         in_features=files[Names.temp_output_1],
         out_layer=boundary_lyr,
-        where_clause=f"arealdekke = '{boundary}'",
+        where_clause=f"arealdekke NOT IN ({sql})",
     )
     arcpy.analysis.Erase(
         in_features=files[Names.enlarge_2],
@@ -750,3 +793,14 @@ def fetch_orig_attributes(input_fc: str, output_fc: str, files: dict, sql: str) 
     )
 
     print("🎉 Final Output\t\t\t| Original attributes restored")
+
+
+if __name__ == "__main__":
+    aggregate_category(
+        input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+        output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
+        map_scale="N10",
+        target="Høyblokkbebyggelse",
+        allowed=["Bebygd"],
+        boundary="Samferdsel",
+    )
