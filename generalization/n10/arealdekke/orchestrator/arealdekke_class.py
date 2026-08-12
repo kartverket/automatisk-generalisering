@@ -486,6 +486,8 @@ class Arealdekke:
             in_features=temp_lyr, out_feature_class=self.files["locked_fc"]
         )
 
+        arcpy.management.Delete(temp_lyr)
+
     def get_category(self, category_title: str) -> None:
         """
         Copies land use geometries of current category into an
@@ -505,6 +507,8 @@ class Arealdekke:
         arcpy.management.CopyFeatures(
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
+
+        arcpy.management.Delete(temp_lyr)
 
     def get_arealdekke_data(self, input_data: str) -> None:
         """
@@ -550,14 +554,14 @@ class Arealdekke:
             ),
             lambda: aggregate_category(
                 input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-                output_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
                 map_scale=self.__map_scale,
                 target="Høyblokkbebyggelse",
                 allowed=["Bebygd"],
                 boundary="Samferdsel",
             ),
             lambda: arealdekke_dissolver(
-                input_fc=Arealdekke_N10.area_aggregator_output__n10_land_use.value,
+                input_fc=Arealdekke_N10.category_aggregator_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.dissolve_arealdekke.value,
                 data_orc=self.data_orc,
                 map_scale=self.__map_scale,

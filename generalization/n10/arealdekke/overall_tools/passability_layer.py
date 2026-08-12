@@ -51,6 +51,7 @@ def create_passability_layer(input_fc: str, output_fc: str) -> None:
         dissolve_field=["arealdekke", "fremkommelighet"],
         multi_part="SINGLE_PART",
     )
+    arcpy.management.Delete(land_use_lyr)
 
 
 @timing_decorator
@@ -115,5 +116,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
         dissolve_field=fremkommelighet,
         multi_part="SINGLE_PART",
     )
+
+    arcpy.management.Delete(final_lyr)
 
     wfm.delete_created_files()
