@@ -82,6 +82,7 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
         clip_features=clip_lyr,
         out_feature_class=output_fc,
     )
+    arcpy.management.Delete(clip_lyr)
     print("📍 Clipping completed.\n")
 
 

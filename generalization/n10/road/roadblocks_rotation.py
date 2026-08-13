@@ -9,14 +9,21 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_roads import Road_N10
-from data_orchestrator import input_roads
+from data_orchestrator.orchestrator import InputDataOrchestrator
+from data_orchestrator.data_names import DataNames as dn
 
 arcpy.env.overwriteOutput = True
+
+MAP_SCALE = "N10"
+PIPELINE = "road"
 
 
 def main():
 
     environment_setup.main()
+
+    data_orc = InputDataOrchestrator(map_scale=MAP_SCALE, pipeline=PIPELINE)
+    road_data = data_orc.get_dataset(dn.road)
 
     # Sets up work file manager and creates temporarily files
     working_fc = Road_N10.data_selection__roadblock__n10_road.value
@@ -24,7 +31,7 @@ def main():
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    fetch_data(files=files)
+    fetch_data(files=files, input_data=road_data)
 
     point_rotation_tool(
         in_features_line=files[fc.non_overlapping_roads],
@@ -72,16 +79,16 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 
 @timing_decorator
-def fetch_data(files: dict) -> None:
+def fetch_data(files: dict, input_data) -> None:
 
     orig_points_unsnapped_lyr = "orig_points_unsnapped_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_road.road_vegsperring, out_layer=orig_points_unsnapped_lyr
+        in_features=input_data.vegsperring, out_layer=orig_points_unsnapped_lyr
     )
 
     orig_road_lyr = "orig_road_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_road.road_veglenke, out_layer=orig_road_lyr
+        in_features=input_data.elveg_and_sti, out_layer=orig_road_lyr
     )
 
     arcpy.edit.Snap(

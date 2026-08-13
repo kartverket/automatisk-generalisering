@@ -9,7 +9,6 @@ arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
 from data_orchestrator.datasets import DatasetNamespace
@@ -27,7 +26,10 @@ def main(data_container: DatasetNamespace):
     Args:
         data_container (DatasetNamespace): Data container with input data
     """
-    environment_setup.main()
+    output = Facility_N10.railway_output__n10_facility.value
+    if arcpy.Exists(output):
+        return
+
     print("\nUpdates railroad attributes in FKB...\n")
 
     # Sets up work file manager and creates temporarily files
@@ -51,7 +53,6 @@ def main(data_container: DatasetNamespace):
     add_railroad_under_construction(files=files)
 
     # Clean up of files
-    output = Facility_N10.railway_output__n10_facility.value
     arcpy.management.CopyFeatures(
         in_features=files["new_FKB"], out_feature_class=output
     )
@@ -146,7 +147,7 @@ def fetch_data(files: dict, data_container: DatasetNamespace) -> None:
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=railroad_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="objtype = 'Bane' and jernbanestatus = 'N'",
+        where_clause="objtype = 'Bane' and banestatus = 'N'",
     )
     arcpy.management.CopyFeatures(
         in_features=railroad_lyr, out_feature_class=files["railroad_N50_N"]
@@ -154,7 +155,7 @@ def fetch_data(files: dict, data_container: DatasetNamespace) -> None:
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=railroad_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="objtype = 'Bane' and jernbanestatus = 'P'",
+        where_clause="objtype = 'Bane' and banestatus = 'P'",
     )
     arcpy.management.CopyFeatures(
         in_features=railroad_lyr, out_feature_class=files["railroad_N50_P"]
@@ -466,8 +467,8 @@ def collect_unusable_railroads(files: dict, small_buffer: arcpy.Geometry) -> Non
 def update_railroad_attributes(files: dict) -> None:
     """
     Updates the FKB attribute data based on closest N50 line.
-    - If the N50 line has 'jernbanetype' = 'M' -> FKB gets 'jernbanestatus' = 'N' and 'jernbanetype' = 'M'
-    - If the N50 line har 'jernbanestatus' = 'N' -> FKB gets 'jernbanestatus' = 'N'
+    - If the N50 line has 'jernbanetype' = 'M' -> FKB gets 'banestatus' = 'N' and 'jernbanetype' = 'M'
+    - If the N50 line har 'banestatus' = 'N' -> FKB gets 'banestatus' = 'N'
 
     Args:
         files (dict): Dictionary with all the working files
@@ -482,10 +483,10 @@ def update_railroad_attributes(files: dict) -> None:
     # 1) Copy the FKB data to the output
     arcpy.management.CopyFeatures(fkb, out_fc)
 
-    # 2) Add the "jernbanestatus" field to the output and set default value to "I"
+    # 2) Add the "banestatus" field to the output and set default value to "I"
     arcpy.management.AddField(
         in_table=out_fc,
-        field_name="jernbanestatus",
+        field_name="banestatus",
         field_type="TEXT",
         field_length=10,
     )
@@ -513,13 +514,13 @@ def update_railroad_attributes(files: dict) -> None:
 
     # 5) Create a look-up dict: N50_OID -> (status, type)
     n50_lookup = {}
-    with arcpy.da.SearchCursor(n50, ["OID@", "jernbanestatus", "jernbanetype"]) as cur:
+    with arcpy.da.SearchCursor(n50, ["OID@", "banestatus", "anleggstype"]) as cur:
         for oid, status, jtype in cur:
             n50_lookup[oid] = (status, jtype)
 
     # 6) Update FKB based on NEAR_FID
     with arcpy.da.UpdateCursor(
-        out_fc, ["OID@", "NEAR_FID", "jernbanestatus", "jernbanetype"]
+        out_fc, ["OID@", "NEAR_FID", "banestatus", "jernbanetype"]
     ) as cur:
         for oid, near_oid, _, fkb_type in cur:
             if near_oid in n50_lookup:
@@ -554,7 +555,7 @@ def fetch_remaining_railroads(files: dict) -> None:
     arcpy.management.Dissolve(
         in_features=fkb_fc,
         out_feature_class=dissolved_fc,
-        dissolve_field=["medium", "jernbanestatus"],
+        dissolve_field=["medium", "banestatus"],
         multi_part="SINGLE_PART",
     )
 
@@ -575,7 +576,7 @@ def fetch_remaining_railroads(files: dict) -> None:
     # 4) Build an overview of segments for the chosen dissolved segments only
     segments = {}
     with arcpy.da.SearchCursor(
-        dissolved_lyr, ["OID@", "SHAPE@", "jernbanestatus"]
+        dissolved_lyr, ["OID@", "SHAPE@", "banestatus"]
     ) as cursor:
         for oid, geom, status in cursor:
             start = geom.firstPoint
@@ -635,7 +636,7 @@ def fetch_remaining_railroads(files: dict) -> None:
                 original_to_update.add(oid)
 
     # 8) Update original FKB
-    with arcpy.da.UpdateCursor(fkb_fc, ["OID@", "jernbanestatus"]) as cursor:
+    with arcpy.da.UpdateCursor(fkb_fc, ["OID@", "banestatus"]) as cursor:
         for oid, status in cursor:
             if oid in original_to_update and status == "I":
                 cursor.updateRow([oid, "N"])
@@ -659,9 +660,9 @@ def classify_within_n50_buffer(files: dict) -> None:
     fkb_lyr = "fkb_lyr"
     arcpy.management.MakeFeatureLayer(fkb_fc, fkb_lyr)
 
-    # 2) Collect all railroads with 'jernbanestatus' = 'I'
+    # 2) Collect all railroads with 'banestatus' = 'I'
     arcpy.management.SelectLayerByAttribute(
-        fkb_lyr, "NEW_SELECTION", "jernbanestatus = 'I'"
+        fkb_lyr, "NEW_SELECTION", "banestatus = 'I'"
     )
 
     # 3) Create a tiny buffer of 5 m around all the chosen railroads
@@ -701,8 +702,8 @@ def classify_within_n50_buffer(files: dict) -> None:
         selection_type="SUBSET_SELECTION",
     )
 
-    # 7) Adjust the chosen railroads to jernbanestatus = 'N'
-    with arcpy.da.UpdateCursor(fkb_lyr, ["jernbanestatus"]) as cursor:
+    # 7) Adjust the chosen railroads to banestatus = 'N'
+    with arcpy.da.UpdateCursor(fkb_lyr, ["banestatus"]) as cursor:
         for _ in cursor:
             cursor.updateRow(["N"])
 
@@ -751,7 +752,7 @@ def fetch_edge_case_ends(files: dict) -> None:
     # 3) Create a mapping of fkb elements
     fkb_railroad = {}
     endpoint_count = {}
-    with arcpy.da.SearchCursor(fkb_lyr, ["OID@", "SHAPE@", "jernbanestatus"]) as cur:
+    with arcpy.da.SearchCursor(fkb_lyr, ["OID@", "SHAPE@", "banestatus"]) as cur:
         for oid, geom, status in cur:
             start = geom.firstPoint
             end = geom.lastPoint
@@ -812,7 +813,7 @@ def fetch_edge_case_ends(files: dict) -> None:
         in_layer_or_view=fkb_lyr, selection_type="NEW_SELECTION", where_clause=sql
     )
 
-    with arcpy.da.UpdateCursor(fkb_lyr, ["jernbanestatus"]) as cur:
+    with arcpy.da.UpdateCursor(fkb_lyr, ["banestatus"]) as cur:
         for _ in cur:
             cur.updateRow(["N"])
 
@@ -820,7 +821,7 @@ def fetch_edge_case_ends(files: dict) -> None:
 @timing_decorator
 def is_museumsbane(files: dict) -> None:
     """
-    For all railroads that are marked with jernbanestatus = 'N', if the railroad
+    For all railroads that are marked with banestatus = 'N', if the railroad
     is part of a chain where at least one element is categorised as museumsbane,
     all elements should have jernbanetype = 'M'.
 
@@ -830,13 +831,13 @@ def is_museumsbane(files: dict) -> None:
     # Data set
     railroad_fc = files["new_FKB"]
 
-    # OID -> [start, end, jernbanetype] (jernbanestatus = 'N')
+    # OID -> [start, end, jernbanetype] (banestatus = 'N')
     oid_to_railroad = {
         oid: [geom.firstPoint, geom.lastPoint, jernbanetype]
-        for oid, geom, jernbanestatus, jernbanetype in arcpy.da.SearchCursor(
-            railroad_fc, ["OID@", "SHAPE@", "jernbanestatus", "jernbanetype"]
+        for oid, geom, banestatus, jernbanetype in arcpy.da.SearchCursor(
+            railroad_fc, ["OID@", "SHAPE@", "banestatus", "jernbanetype"]
         )
-        if jernbanestatus == "N"
+        if banestatus == "N"
     }
 
     museumsbane = {
@@ -954,9 +955,3 @@ def prepare_fkb_for_network(files: dict) -> str:
     arcpy.management.Integrate(in_features=[fkb_clean], cluster_tolerance="0.5 Meters")
 
     return fkb_clean
-
-
-# ========================
-
-if __name__ == "__main__":
-    main()

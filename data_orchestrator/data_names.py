@@ -67,7 +67,7 @@ class DataNames(StrEnum):
     # Railway
     Bane_FKB = "Bane_FKB"
     Bane_N50 = "Bane_N50"
-    JernbaneStasjon_N50 = "JernbaneStasjon_N50"
+    JernbaneStasjon_BaneNor = "JernbaneStasjon_BaneNor"
 
     # Road
     elveg_and_sti = "elveg_and_sti"

@@ -486,6 +486,8 @@ class Arealdekke:
             in_features=temp_lyr, out_feature_class=self.files["locked_fc"]
         )
 
+        arcpy.management.Delete(temp_lyr)
+
     def get_category(self, category_title: str) -> None:
         """
         Copies land use geometries of current category into an
@@ -505,6 +507,8 @@ class Arealdekke:
         arcpy.management.CopyFeatures(
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
+
+        arcpy.management.Delete(temp_lyr)
 
     def get_arealdekke_data(self, input_data: str) -> None:
         """

@@ -1530,15 +1530,16 @@ def main():
     arcpy.ClearEnvironment("XYResolution")
     arcpy.ClearEnvironment("parallelProcessingFactor")
 
-    source_file, files, wfm = setup_workflow(source_file=input_data)
-    lines_lyr, buffer_dissolved_mem = prepare_and_select(source_file, files)
-    generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem)
-    finalize_and_export(files, buffer_dissolved_mem)
+    if not arcpy.Exists(Facility_N10.output_railway_n10.value):
+        source_file, files, wfm = setup_workflow(source_file=input_data)
+        lines_lyr, buffer_dissolved_mem = prepare_and_select(source_file, files)
+        generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem)
+        finalize_and_export(files, buffer_dissolved_mem)
 
-    wfm.delete_created_files()
-    arcpy.env.XYTolerance = tol
-    arcpy.env.XYResolution = res
-    arcpy.env.parallelProcessingFactor = ppf
+        wfm.delete_created_files()
+        arcpy.env.XYTolerance = tol
+        arcpy.env.XYResolution = res
+        arcpy.env.parallelProcessingFactor = ppf
 
     # Update the attribute table (see: railways_attributes.py)
     update_attributes(data_container=railway_data)
