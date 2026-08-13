@@ -119,7 +119,7 @@ def aggregate_category(
 
     print(f"\n{'===' * 20}\n")
 
-    # wfm.delete_created_files()
+    wfm.delete_created_files()
 
 
 # ========================
