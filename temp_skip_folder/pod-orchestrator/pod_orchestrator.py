@@ -17,8 +17,9 @@ NAMESPACE = os.environ.get("NAMESPACE")
 RUN_ID = os.environ.get("RUN_ID")
 AREAS = os.environ.get("PARTITION_STUDY_AREAS")
 AREAS_LIST = os.environ["PARTITION_STUDY_AREAS"].split(",")
-PARTITION_COUNT = len(AREAS_LIST)
+PARTITION_COUNT = 2
 PARALLELISM = int(os.environ.get("PARALLELISM", "2"))
+STAGE_NAME = os.environ.get("STAGE_NAME", "ramps")
 
 PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
 
@@ -79,7 +80,7 @@ def create_indexed_job(batch_api):
                     containers=[
                         client.V1Container(
                             name="worker",
-                            image="ghcr.io/kartverket/automatisk-generalisering:on_prem",
+                            image="ghcr.io/kartverket/automatisk-generalisering:run_partition",
                             image_pull_policy="Always",
                             env=[
                                 client.V1EnvVar(
@@ -97,6 +98,18 @@ def create_indexed_job(batch_api):
                                 client.V1EnvVar(
                                     name="AREAS",
                                     value=AREAS,
+                                ),
+                                client.V1EnvVar(
+                                    name="ENVIRONMENT",
+                                    value="on_prem",
+                                ),
+                                client.V1EnvVar(
+                                    name="PIPELINE_NAME",
+                                    value="n100_roads",
+                                ),
+                                client.V1EnvVar(
+                                    name="STAGE_NAME",
+                                    value=STAGE_NAME,
                                 ),
                             ],
                             env_from=[
@@ -264,7 +277,7 @@ def wait_for_job(batch_api):
                         f"Job failed: {condition.reason} - {condition.message}"
                     )
 
-        time.sleep(300)
+        time.sleep(120)
 
 def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 120):
     """

@@ -7,6 +7,8 @@ WORKDIR /app
 # Copy project files
 COPY . /app
 
+ENV PYTHONPATH=/app
+
 #install dependencies
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
@@ -27,3 +29,5 @@ CMD ["python", "main_on_prem.py"]
 FROM base AS on_cloud
 CMD ["python", "main_on_cloud.py"]
 
+FROM base AS run_partition
+CMD ["python", "temp_skip_folder/core/pipelines/run_partition.py"]
