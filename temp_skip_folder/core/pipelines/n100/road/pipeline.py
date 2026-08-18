@@ -6,6 +6,6 @@ n100_roads_pipeline = PipelineDefinition(
     name="n100_roads",
     stages={
         "thin_road": thin_road_stage,
-        "ramps": ramps_stage,                                             
+        "ramps": ramps_stage,
     }
 )
