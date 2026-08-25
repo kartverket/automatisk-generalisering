@@ -1,0 +1,86 @@
+# Execution catalog
+#
+# Each stage declares:
+# - inputs: artifacts it requires
+# - outputs: artifacts it produces
+#
+# Artifact IDs must exist in dependencies.yaml under the artifacts section.
+
+stages:
+  n50_roads:generalize:
+    scale: n50
+    pipeline: n50_roads
+    module: generalization.n50.road.generalize
+    function: run
+    owner: roads-team
+    runtime:
+      partitioned: true
+    inputs: []
+    outputs:
+      - n50.roads.generalized
+
+  n50_rivers:generalize:
+    scale: n50
+    pipeline: n50_rivers
+    module: generalization.n50.river.generalize
+    function: run
+    owner: hydro-team
+    runtime:
+      partitioned: true
+    inputs: []
+    outputs:
+      - n50.rivers.generalized
+
+  n100_roads:ramps:
+    scale: n100
+    pipeline: n100_roads
+    module: generalization.n100.road.ramps
+    function: run
+    owner: roads-team
+    runtime:
+      partitioned: true
+    inputs:
+      - n50.roads.generalized
+      - n50.rivers.generalized
+    outputs:
+      - n100.roads.ramps
+
+  n100_roads:thin_road:
+    scale: n100
+    pipeline: n100_roads
+    module: generalization.n100.road.thin_road
+    function: run
+    owner: roads-team
+    runtime:
+      partitioned: true
+    inputs:
+      - n100.roads.ramps
+    outputs:
+      - n100.roads.thin
+
+  n100_buildings:integrate_roads:
+    scale: n100
+    pipeline: n100_buildings
+    module: generalization.n100.building.integrate_roads
+    function: run
+    owner: buildings-team
+    runtime:
+      partitioned: true
+    inputs:
+      - n100.roads.thin
+      - n50.rivers.generalized
+    outputs:
+      - n100.buildings.integrated
+
+  n250_roads:generalize:
+    scale: n250
+    pipeline: n250_roads
+    module: generalization.n250.road.generalize
+    function: run
+    owner: roads-team
+    runtime:
+      partitioned: true
+    inputs:
+      - n100.roads.thin
+    outputs:
+      - n250.roads.generalized

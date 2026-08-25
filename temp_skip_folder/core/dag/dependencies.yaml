@@ -1,0 +1,37 @@
+# Logical Data DAG
+#
+# This file defines artifact-level dependencies only.
+# Execution ownership, stage implementation, and runtime metadata are defined
+# in execution_catalog.yaml.
+
+artifacts:
+  n50.roads.generalized:
+    kind: dataset
+    dependencies: []
+
+  n50.rivers.generalized:
+    kind: dataset
+    dependencies: []
+
+  n100.roads.ramps:
+    kind: dataset
+    dependencies:
+      - n50.roads.generalized
+      - n50.rivers.generalized
+
+  n100.roads.thin:
+    kind: dataset
+    dependencies:
+      - n100.roads.ramps
+
+  n100.buildings.integrated:
+    kind: dataset
+    dependencies:
+      - n100.roads.thin
+      - n50.rivers.generalized
+
+  n250.roads.generalized:
+    kind: dataset
+    dependencies:
+      - n100.roads.thin
+

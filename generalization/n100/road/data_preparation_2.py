@@ -1,6 +1,8 @@
 # Importing packages
 import arcpy
 
+import os
+
 # Importing custom input files modules
 from data_orchestrator.datasets import DatasetNamespace
 from data_orchestrator.orchestrator import InputDataOrchestrator
@@ -58,6 +60,7 @@ from generalization.n100.road.vegsperring import remove_roadblock
 from data_orchestrator.data_names import DataNames as dn
 
 from composition_configs.logic_config import RoadRampsConfig
+from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -66,7 +69,11 @@ if require("SELECT_STUDY_AREA") == "False":
 else:
     SELECT_STUDY_AREA = True
 
-AREA_SELECTOR = "navn IN ('Bergen')"
+
+if os.environ.get("AREA"):
+    AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
+else:
+    AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -74,46 +81,79 @@ OBJECT_LIMIT = 100_000
 
 
 @timing_decorator
-def main():
+def main(checkpoint: PipelineCheckpoint | None = None):
     environment_setup.main()
     arcpy.env.referenceScale = 100000
 
     data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.road)
-
     area_data = data_orc.get_dataset(dn.area)
     building_data = data_orc.get_dataset(dn.building)
 
-    data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)
+    def _write_workfile_count():
+        with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
+            f.write(
+                f"Total amount of work files created: "
+                f"{WorkFileManager._build_file_counter}"
+            )
 
-    reclassify_medium()
-    categories_major_road_crossings()
-    generalize_roundabouts()
-    remove_roadblock(data=area_data)
-    trim_road_details()
-    ramp_partition()
-    admin_boarder()
-    adding_fields()
-    collapse_road_detail()
-    simplify_road()
-    thin_roads()
-    thin_sti_and_forest_roads()
-    merge_divided_roads()
-    smooth_line()
-    generalize_road_triangles(scale=SCALE)
-    pre_resolve_road_conflicts(area_selection=AREA_SELECTOR, area_data=area_data)
-    resolve_road_conflicts(data_orc=data_orc)
-    generalize_dam(area_data=area_data, building_data=building_data)
-    final_output()
-    ramps_part_2(
-        input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
-        input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-        output_points_fc=Road_N100.ramps__final_points__n100_road.value,
-    )
-    with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
-        f.write(
-            f"Total amount of work files created: "
-            f"{WorkFileManager._build_file_counter}"
-        )
+    steps: list[tuple[str, object]] = [
+        (
+            "data_selection_and_validation",
+            lambda: data_selection_and_validation(
+                area_selection=AREA_SELECTOR, data_orc=data_orc
+            ),
+        ),
+        ("reclassify_medium", reclassify_medium),
+        ("categories_major_road_crossings", categories_major_road_crossings),
+        ("generalize_roundabouts", generalize_roundabouts),
+        ("remove_roadblock", lambda: remove_roadblock(data=area_data)),
+        ("trim_road_details", trim_road_details),
+        ("ramp_partition", ramp_partition),
+        ("admin_boarder", admin_boarder),
+        ("adding_fields", adding_fields),
+        ("collapse_road_detail", collapse_road_detail),
+        ("simplify_road", simplify_road),
+        ("thin_roads", thin_roads),
+        ("thin_sti_and_forest_roads", thin_sti_and_forest_roads),
+        ("merge_divided_roads", merge_divided_roads),
+        ("smooth_line", smooth_line),
+        ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
+        (
+            "pre_resolve_road_conflicts",
+            lambda: pre_resolve_road_conflicts(
+                area_selection=AREA_SELECTOR, area_data=area_data
+            ),
+        ),
+        ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
+        (
+            "generalize_dam",
+            lambda: generalize_dam(area_data=area_data, building_data=building_data),
+        ),
+        ("final_output", final_output),
+        (
+            "ramps_part_2",
+            lambda: ramps_part_2(
+                input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+                input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+                output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+            ),
+        ),
+        ("write_workfile_count", _write_workfile_count),
+    ]
+
+    last_completed = checkpoint.load() if checkpoint else None
+    step_names = [name for name, _ in steps]
+    start_index = 0
+    if last_completed and last_completed in step_names:
+        start_index = step_names.index(last_completed) + 1
+
+    for name, fn in steps[start_index:]:
+        fn()
+        if checkpoint:
+            checkpoint.save(name)
+
+    if checkpoint:
+        checkpoint.delete()
 
 
 @timing_decorator
@@ -921,8 +961,8 @@ def final_output():
     )
 
 
-def run():
-    main()
+def run(checkpoint: PipelineCheckpoint | None = None):
+    main(checkpoint=checkpoint)
 
 
 if __name__ == "__main__":

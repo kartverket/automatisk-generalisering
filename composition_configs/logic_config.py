@@ -15,6 +15,28 @@ from composition_configs import core_config, io_types, type_defs
 RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
 
+class DataRefTag(str, Enum):
+    CLOUD_OK = "CLOUD_OK"
+    PREM_ONLY = "PREM_ONLY"
+
+
+@dataclass(frozen=True)
+class DataRef:
+    """ """
+
+    path: str
+    tag: DataRefTag
+
+    def __post_init__(self) -> None:
+        if not self.path:
+            raise ValueError("DataRef.path must be a non-empty string")
+
+        if isinstance(self.tag, str):
+            object.__setattr__(self, "tag", DataRefTag(self.tag))
+        elif not isinstance(self.tag, DataRefTag):
+            raise TypeError("DataRef.tag must be a DataRefTag")
+
+
 @dataclass(frozen=True)
 class SymbologyLayerSpec:
     unique_name: str
