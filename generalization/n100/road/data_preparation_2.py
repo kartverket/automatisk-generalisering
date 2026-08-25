@@ -2,6 +2,7 @@
 import arcpy
 
 import os
+
 # Importing custom input files modules
 from data_orchestrator.datasets import DatasetNamespace
 from data_orchestrator.orchestrator import InputDataOrchestrator
@@ -96,7 +97,12 @@ def main(checkpoint: PipelineCheckpoint | None = None):
             )
 
     steps: list[tuple[str, object]] = [
-        ("data_selection_and_validation", lambda: data_selection_and_validation(area_selection=AREA_SELECTOR, data_orc=data_orc)),
+        (
+            "data_selection_and_validation",
+            lambda: data_selection_and_validation(
+                area_selection=AREA_SELECTOR, data_orc=data_orc
+            ),
+        ),
         ("reclassify_medium", reclassify_medium),
         ("categories_major_road_crossings", categories_major_road_crossings),
         ("generalize_roundabouts", generalize_roundabouts),
@@ -112,15 +118,26 @@ def main(checkpoint: PipelineCheckpoint | None = None):
         ("merge_divided_roads", merge_divided_roads),
         ("smooth_line", smooth_line),
         ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
-        ("pre_resolve_road_conflicts", lambda: pre_resolve_road_conflicts(area_selection=AREA_SELECTOR, area_data=area_data)),
+        (
+            "pre_resolve_road_conflicts",
+            lambda: pre_resolve_road_conflicts(
+                area_selection=AREA_SELECTOR, area_data=area_data
+            ),
+        ),
         ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
-        ("generalize_dam", lambda: generalize_dam(area_data=area_data, building_data=building_data)),
+        (
+            "generalize_dam",
+            lambda: generalize_dam(area_data=area_data, building_data=building_data),
+        ),
         ("final_output", final_output),
-        ("ramps_part_2", lambda: ramps_part_2(
-            input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
-            input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-            output_points_fc=Road_N100.ramps__final_points__n100_road.value,
-        )),
+        (
+            "ramps_part_2",
+            lambda: ramps_part_2(
+                input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+                input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+                output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+            ),
+        ),
         ("write_workfile_count", _write_workfile_count),
     ]
 

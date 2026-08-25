@@ -13,24 +13,29 @@ from typing import Any, Dict, List, Set
 
 class DAGValidationError(Exception):
     """Raised when DAG validation fails."""
+
     pass
 
 
 @dataclass(frozen=True)
 class DAGNode:
     """Base class for dataflow nodes."""
+
     name: str
     dependencies: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate that dependencies is a list."""
         if not isinstance(self.dependencies, list):
-            raise ValueError(f"dependencies must be a list, got {type(self.dependencies)}")
+            raise ValueError(
+                f"dependencies must be a list, got {type(self.dependencies)}"
+            )
 
 
 @dataclass(frozen=True)
 class ArtifactNode(DAGNode):
     """Node representing an artifact in the logical dataflow DAG."""
+
     kind: str = field(default="artifact")
 
 

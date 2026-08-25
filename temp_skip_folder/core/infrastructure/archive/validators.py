@@ -35,6 +35,5 @@ def validate_dataref_for_environment(data_ref: DataRef, environment: str) -> Non
 def validate_environment(environment: str) -> None:
     if environment not in {"on_prem", "on_cloud"}:
         raise ValueError(
-            "ENVIRONMENT must be one of: on_prem, on_cloud. "
-            f"Got: {environment}"
+            "ENVIRONMENT must be one of: on_prem, on_cloud. " f"Got: {environment}"
         )

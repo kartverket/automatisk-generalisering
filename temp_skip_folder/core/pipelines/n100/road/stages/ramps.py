@@ -27,7 +27,7 @@ def process_ramps(input_root: DataRef, output_root: DataRef) -> None:
         path=f"{output_root.path}/output_points",
         tag=output_root.tag,
     )
-    
+
     ramps(
         input=input_fc,
         output_line=output_fc,

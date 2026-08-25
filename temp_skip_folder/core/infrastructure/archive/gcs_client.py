@@ -11,7 +11,6 @@ from .interface import ArchiveClient
 from .local_client import LocalArchiveClient
 from .validators import is_gs_path
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -36,36 +35,43 @@ class GcsArchiveClient(ArchiveClient):
             return self._local_client.read(remote)
 
         bucket_name, blob_prefix = _parse_gs_uri(remote.path)
-        
+
         # Ensure prefix ends with / for folder-like paths
         prefix = blob_prefix if blob_prefix.endswith("/") else blob_prefix + "/"
-        
+
         logger.info("[GcsArchiveClient] Downloading %s", remote.path)
         bucket = self._storage_client.bucket(bucket_name)
-        blobs = self._storage_client.list_blobs(bucket_or_name=bucket_name, prefix=prefix)
-        
+        blobs = self._storage_client.list_blobs(
+            bucket_or_name=bucket_name, prefix=prefix
+        )
+
         local_input_path = self._local_client.local_input_path
         local_base = Path(local_input_path)
         local_base.mkdir(parents=True, exist_ok=True)
-        
+
         has_objects = False
         for blob in blobs:
             # Skip "directory marker" objects
             if blob.name.endswith("/"):
                 continue
             has_objects = True
-            
+
             # Preserve folder structure relative to prefix
-            relative_path = blob.name[len(prefix):]
+            relative_path = blob.name[len(prefix) :]
             local_path = local_base / relative_path
             local_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             blob.download_to_filename(str(local_path))
-            logger.info("[GcsArchiveClient] Downloaded gs://%s/%s -> %s", bucket_name, blob.name, local_path)
-        
+            logger.info(
+                "[GcsArchiveClient] Downloaded gs://%s/%s -> %s",
+                bucket_name,
+                blob.name,
+                local_path,
+            )
+
         if not has_objects:
             raise ValueError(f"No objects found at GCS path: {remote.path}")
-        
+
         return DataRef(path=str(local_base), tag=remote.tag)
 
     def write(self, local: DataRef, remote: DataRef) -> None:
@@ -100,8 +106,14 @@ class GcsArchiveClient(ArchiveClient):
             return self._local_client.list_objects(path)
 
         bucket_name, prefix = _parse_gs_uri(path)
-        blobs = self._storage_client.list_blobs(bucket_or_name=bucket_name, prefix=prefix)
-        return [f"gs://{bucket_name}/{blob.name}" for blob in blobs if not blob.name.endswith("/")]
+        blobs = self._storage_client.list_blobs(
+            bucket_or_name=bucket_name, prefix=prefix
+        )
+        return [
+            f"gs://{bucket_name}/{blob.name}"
+            for blob in blobs
+            if not blob.name.endswith("/")
+        ]
 
     def get_object(self, path: str) -> bytes:
         if not is_gs_path(path):

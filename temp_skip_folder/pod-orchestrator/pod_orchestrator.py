@@ -59,8 +59,7 @@ def create_indexed_job(batch_api):
             annotations={
                 "argocd.argoproj.io/tracking-id": f"{os.environ.get('ARGOTRACKING')}{PARTITION_JOB_NAME}",
                 "argocd.argoproj.io/sync-options": "Prune=false",
-            }
-
+            },
         ),
         spec=client.V1JobSpec(
             completion_mode="Indexed",
@@ -116,13 +115,13 @@ def create_indexed_job(batch_api):
                                 client.V1EnvFromSource(
                                     config_map_ref=client.V1ConfigMapEnvSource(
                                         name="on-prem-config"
-                                    )   
+                                    )
                                 ),
                                 client.V1EnvFromSource(
                                     secret_ref=client.V1SecretEnvSource(
                                         name="scality-credentials"
                                     )
-                                )
+                                ),
                             ],
                             volume_mounts=[
                                 client.V1VolumeMount(
@@ -130,15 +129,10 @@ def create_indexed_job(batch_api):
                                     mount_path="/tmp",
                                 )
                             ],
-                                    
-                            resources= {},
+                            resources={},
                             security_context=client.V1SecurityContext(
                                 allow_privilege_escalation=False,
-                                capabilities=client.V1Capabilities(
-                                    drop=[
-                                        "ALL"
-                                    ]
-                                ),
+                                capabilities=client.V1Capabilities(drop=["ALL"]),
                                 privileged=False,
                                 read_only_root_filesystem=True,
                                 run_as_group=150,
@@ -154,18 +148,14 @@ def create_indexed_job(batch_api):
                     ],
                     dns_policy="ClusterFirst",
                     image_pull_secrets=[
-                        client.V1LocalObjectReference(
-                            name="github-auth"
-                        )
+                        client.V1LocalObjectReference(name="github-auth")
                     ],
                     priority_class_name="skip-medium",
                     restart_policy="Never",
                     scheduler_name="default-scheduler",
                     security_context=client.V1PodSecurityContext(
                         fs_group=150,
-                        seccomp_profile=client.V1SeccompProfile(
-                            type="RuntimeDefault"
-                        ),
+                        seccomp_profile=client.V1SeccompProfile(type="RuntimeDefault"),
                         supplemental_groups=[150],
                     ),
                     termination_grace_period_seconds=30,
@@ -204,14 +194,9 @@ def create_indexed_job(batch_api):
                     volumes=[
                         client.V1Volume(
                             name="tmp",
-                            empty_dir=client.V1EmptyDirVolumeSource(
-                                medium="Memory"
-                            ),
+                            empty_dir=client.V1EmptyDirVolumeSource(medium="Memory"),
                         )
                     ],
-                    
- 
-        
                 ),
             ),
         ),
@@ -279,6 +264,7 @@ def wait_for_job(batch_api):
 
         time.sleep(120)
 
+
 def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 120):
     """
     Deletes the partition Job and optionally waits until it is fully removed.
@@ -341,6 +327,7 @@ def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 12
         f"Timed out waiting for Job deletion: {PARTITION_JOB_NAME} "
         f"(timeout_seconds={timeout_seconds})"
     )
+
 
 def main():
     logger.info("Pipeline driver started")

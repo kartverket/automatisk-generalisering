@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-
 StageFunction = Callable[..., None]
 
 
@@ -19,5 +18,3 @@ class PipelineDefinition:
                 f"Invalid stage '{stage_name}' for pipeline '{self.name}'. "
                 f"Valid stages: {valid_stages}"
             ) from None
-
-

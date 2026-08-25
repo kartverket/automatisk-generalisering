@@ -20,30 +20,30 @@ def make_stage(
 ) -> Callable:
     """
     Factory function that creates a stage function from a process function.
-    
+
     Handles the boilerplate of:
     - Reading input data via the read() callback
     - Constructing local DataRef paths with configured subdirectories
     - Writing output data via the write() callback
-    
+
     Args:
         process_fn: A callable that accepts named parameters:
             - input_root: DataRef pointing to the local input root directory
             - output_root: DataRef pointing to the local output root directory
             - **kwargs: Any additional parameters
-            
+
             The process_fn is responsible for constructing both input and output paths
             from these roots. This allows:
             - Single input stage: construct one input_fc from input_root
             - Multi-input stage: construct multiple input_fc (e.g., roads, buildings)
             - Single output stage: construct one output_fc from output_root
             - Multi-output stage: construct multiple output_fc (e.g., output, output_points)
-            
-    
+
+
     Returns:
         A stage function with the standard signature:
         stage(*, input: DataRef, output: DataRef, read: Callable, write: Callable) -> None
-    
+
     Example:
         # Single input, single output stage
         def process_thin_road(input_root, output_root):
@@ -56,9 +56,9 @@ def make_stage(
                 tag=output_root.tag
             )
             thin_road_network(input=input_fc, output=output_fc)
-        
+
         thin_road_stage = make_stage(process_thin_road)
-        
+
         # Multi-output stage
         def process_ramps(input_root, output_root):
             input_fc = DataRef(
@@ -78,9 +78,9 @@ def make_stage(
                 output_line=output_fc,
                 output_point=output_points_fc,
             )
-        
+
         ramps_stage = make_stage(process_ramps)
-        
+
         # Multi-input, single output stage
         def process_conflict_resolution(input_root, output_root):
             input_roads = DataRef(
@@ -100,10 +100,10 @@ def make_stage(
                 buildings=input_buildings,
                 output=output_fc
             )
-        
+
         conflict_resolution_stage = make_stage(process_conflict_resolution)
     """
-    
+
     def stage(
         *,
         input: DataRef,
@@ -113,19 +113,19 @@ def make_stage(
     ) -> None:
         # Read input data to local filesystem
         local_input_root = read(input)
-        
+
         # Construct local output root path
         local_output_root = DataRef(
             path=make_local_output_path(output.path),
             tag=output.tag,
         )
-        
+
         # Call the process function
         # The process_fn is responsible for constructing all input_fc and output_fc
         # from the roots (e.g., /input, /output, /output_points, /roads, /buildings)
         process_fn(input_root=local_input_root, output_root=local_output_root)
-        
+
         # Write output data back to remote storage
         write(local_output_root, output)
-    
+
     return stage

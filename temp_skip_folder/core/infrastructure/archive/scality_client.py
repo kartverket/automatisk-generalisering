@@ -12,7 +12,6 @@ from .interface import ArchiveClient
 from .local_client import LocalArchiveClient
 from .validators import is_s3_path
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -49,39 +48,39 @@ class ScalityArchiveClient(ArchiveClient):
 
         # Ensure prefix ends with / for folder-like paths
         prefix = object_key if object_key.endswith("/") else object_key + "/"
-        
+
         # List all objects with this prefix
         objects = self._client.list_objects(
             bucket_name=bucket_name,
             prefix=prefix,
             recursive=True,
         )
-        
+
         local_input_path = self._local_client.local_input_path
         local_base = Path(local_input_path)
         local_base.mkdir(parents=True, exist_ok=True)
-        
+
         has_objects = False
         for obj in objects:
             if obj.object_name.endswith("/"):
                 continue
             has_objects = True
-            
+
             # Preserve folder structure
-            relative_path = obj.object_name[len(prefix):]
+            relative_path = obj.object_name[len(prefix) :]
             local_path = local_base / relative_path
             local_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             logger.info("[ScalityArchiveClient] Downloading %s", obj.object_name)
             self._client.fget_object(
                 bucket_name=bucket_name,
                 object_name=obj.object_name,
                 file_path=str(local_path),
             )
-        
+
         if not has_objects:
             raise ValueError(f"No objects found at S3 path: {remote.path}")
-        
+
         return DataRef(path=str(local_base), tag=remote.tag)
 
     def write(self, local: DataRef, remote: DataRef) -> None:
@@ -128,7 +127,9 @@ class ScalityArchiveClient(ArchiveClient):
         bucket_name, prefix = _parse_s3_uri(path)
         return [
             f"s3://{bucket_name}/{obj.object_name}"
-            for obj in self._client.list_objects(bucket_name=bucket_name, prefix=prefix, recursive=True)
+            for obj in self._client.list_objects(
+                bucket_name=bucket_name, prefix=prefix, recursive=True
+            )
             if not obj.object_name.endswith("/")
         ]
 
@@ -137,7 +138,9 @@ class ScalityArchiveClient(ArchiveClient):
             return self._local_client.get_object(path)
 
         bucket_name, object_key = _parse_s3_uri(path)
-        response = self._client.get_object(bucket_name=bucket_name, object_name=object_key)
+        response = self._client.get_object(
+            bucket_name=bucket_name, object_name=object_key
+        )
         try:
             return response.read()
         finally:

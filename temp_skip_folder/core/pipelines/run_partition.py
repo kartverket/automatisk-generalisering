@@ -4,12 +4,17 @@ from dataclasses import dataclass
 import arcpy
 
 from temp_skip_folder.core.infrastructure.archive.factory import create_archive_client
-from temp_skip_folder.core.infrastructure.archive.validators import validate_dataref_for_environment, validate_environment
+from temp_skip_folder.core.infrastructure.archive.validators import (
+    validate_dataref_for_environment,
+    validate_environment,
+)
 from composition_configs.logic_config import DataRef, DataRefTag
-from temp_skip_folder.core.pipelines.utilities import append_partition_index, make_local_output_path
+from temp_skip_folder.core.pipelines.utilities import (
+    append_partition_index,
+    make_local_output_path,
+)
 from temp_skip_folder.core.pipelines.n100.road.pipeline import n100_roads_pipeline
 from env_setup import environment_setup
-
 
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
@@ -57,8 +62,7 @@ def _build_context() -> WorkerContext:
         partition_index += 1  # Glemte 0 i test data, så vi starter på 1 i stedet for 0. Dette er kun for test.
     except ValueError as error:
         raise ValueError(
-            "JOB_COMPLETION_INDEX must be an integer, "
-            f"got: {raw_partition_index}"
+            "JOB_COMPLETION_INDEX must be an integer, " f"got: {raw_partition_index}"
         ) from error
 
     bucket = _required_env("SCALITY_BUCKET")
@@ -68,7 +72,9 @@ def _build_context() -> WorkerContext:
         bucket = f"s3://{bucket}"
 
     input_path = f"{bucket}/partition_data/{partition_index}/test_partition_{partition_index}.gdb"
-    output_path = f"{bucket}/partition_data/{partition_index}/output_{partition_index}.gdb"
+    output_path = (
+        f"{bucket}/partition_data/{partition_index}/output_{partition_index}.gdb"
+    )
 
     return WorkerContext(
         run_id=run_id,
@@ -77,18 +83,18 @@ def _build_context() -> WorkerContext:
         stage_name=stage_name,
         partition_index=partition_index,
         indexed_input_path=input_path,
-        indexed_output_path=output_path
+        indexed_output_path=output_path,
     )
 
+
 def _build_local_ouput_gdb(context: WorkerContext) -> str:
-    """
-    
-    """
+    """ """
     local_output_path = make_local_output_path(context.indexed_output_path)
     arcpy.management.CreateFileGDB(
         out_folder_path=os.path.dirname(local_output_path),
         out_name=os.path.basename(local_output_path),
     )
+
 
 def _tag_for_environment(environment: str) -> DataRefTag:
     if environment == "on_cloud":

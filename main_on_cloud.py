@@ -118,7 +118,9 @@ def check_read_only():
 
 
 # pipeline imports
-def pipeline_n100_road(args: argparse.Namespace, checkpoint: GCSPipelineCheckpoint | None = None) -> None:
+def pipeline_n100_road(
+    args: argparse.Namespace, checkpoint: GCSPipelineCheckpoint | None = None
+) -> None:
     from generalization.n100.road.data_preparation_2 import run as run_n100_road
 
     logger.info("Starting pipeline for %s", args)

@@ -80,7 +80,9 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
         zip_path = _zip_gdb(self._gdb_path)
         try:
             bucket.blob(_state_object()).upload_from_filename(str(zip_path))
-            bucket.blob(_log_object()).upload_from_string(step_name, content_type="text/plain")
+            bucket.blob(_log_object()).upload_from_string(
+                step_name, content_type="text/plain"
+            )
             logger.info("Checkpoint saved after step: %s", step_name)
         finally:
             shutil.rmtree(zip_path.parent, ignore_errors=True)

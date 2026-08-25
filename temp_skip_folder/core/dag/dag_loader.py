@@ -18,10 +18,13 @@ from .dag_model import (
 
 class DAGLoadError(Exception):
     """Raised when DAG configuration cannot be loaded or parsed."""
+
     pass
 
 
-def load_dag(config_path: str | Path, catalog_path: str | Path | None = None) -> DataflowDAG:
+def load_dag(
+    config_path: str | Path, catalog_path: str | Path | None = None
+) -> DataflowDAG:
     """Load and validate a dataflow DAG and execution catalog.
 
     Logical DAG file schema:
@@ -91,7 +94,9 @@ def _load_yaml(path: Path, label: str) -> Dict[str, Any]:
     if config is None:
         return {}
     if not isinstance(config, dict):
-        raise DAGLoadError(f"{label.capitalize()} root must be a dict, got {type(config)}")
+        raise DAGLoadError(
+            f"{label.capitalize()} root must be a dict, got {type(config)}"
+        )
 
     return config
 
@@ -129,7 +134,9 @@ def _parse_artifacts(artifacts_config: Any) -> Dict[str, ArtifactNode]:
 
         kind = artifact_data.get("kind", "artifact")
         if not isinstance(kind, str):
-            raise DAGLoadError(f"Artifact '{artifact_id}' kind must be a string, got {type(kind)}")
+            raise DAGLoadError(
+                f"Artifact '{artifact_id}' kind must be a string, got {type(kind)}"
+            )
 
         artifacts[artifact_id] = ArtifactNode(
             name=artifact_id,
@@ -165,11 +172,17 @@ def _parse_execution_catalog(catalog_config: Dict[str, Any]) -> ExecutionCatalog
         runtime = stage_data.get("runtime", {})
 
         if not isinstance(inputs, list):
-            raise DAGLoadError(f"Stage '{stage_name}' inputs must be a list, got {type(inputs)}")
+            raise DAGLoadError(
+                f"Stage '{stage_name}' inputs must be a list, got {type(inputs)}"
+            )
         if not isinstance(outputs, list):
-            raise DAGLoadError(f"Stage '{stage_name}' outputs must be a list, got {type(outputs)}")
+            raise DAGLoadError(
+                f"Stage '{stage_name}' outputs must be a list, got {type(outputs)}"
+            )
         if not isinstance(runtime, dict):
-            raise DAGLoadError(f"Stage '{stage_name}' runtime must be a dict, got {type(runtime)}")
+            raise DAGLoadError(
+                f"Stage '{stage_name}' runtime must be a dict, got {type(runtime)}"
+            )
 
         stages[stage_name] = StageSpec(
             name=stage_name,

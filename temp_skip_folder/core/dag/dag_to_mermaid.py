@@ -30,10 +30,7 @@ logger = logging.getLogger(__name__)
 def _sanitize(node_id: str) -> str:
     """Convert node IDs to Mermaid-safe identifiers."""
     return (
-        node_id.replace(":", "__")
-        .replace("-", "_")
-        .replace(".", "_")
-        .replace("/", "_")
+        node_id.replace(":", "__").replace("-", "_").replace(".", "_").replace("/", "_")
     )
 
 
@@ -178,7 +175,8 @@ def build_mermaid_markdown(config_path: Path) -> str:
             for stage_name, spec in dag.execution_catalog.stages.items()
         }
         stage_to_scale = {
-            stage_name: spec.scale for stage_name, spec in dag.execution_catalog.stages.items()
+            stage_name: spec.scale
+            for stage_name, spec in dag.execution_catalog.stages.items()
         }
         pipeline_names = set(stage_to_pipeline.values())
         scale_names = set(stage_to_scale.values())
@@ -196,7 +194,9 @@ def build_mermaid_markdown(config_path: Path) -> str:
         "Execution catalog: core/dag/execution_catalog.yaml",
         "",
     ]
-    lines.extend(_build_section("Artifacts (Filenames Only)", artifacts, producers=None))
+    lines.extend(
+        _build_section("Artifacts (Filenames Only)", artifacts, producers=None)
+    )
     lines.extend(
         _build_hierarchy_section(
             title="Hierarchy Dependencies",
@@ -218,7 +218,9 @@ def parse_args() -> argparse.Namespace:
     default_config = script_dir / "dependencies.yaml"
     default_output = script_dir / "dependencies_diagram.md"
 
-    parser = argparse.ArgumentParser(description="Generate Mermaid diagrams from DAG YAML.")
+    parser = argparse.ArgumentParser(
+        description="Generate Mermaid diagrams from DAG YAML."
+    )
     parser.add_argument(
         "--config",
         type=Path,

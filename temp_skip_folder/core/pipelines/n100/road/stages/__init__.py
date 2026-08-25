@@ -9,6 +9,6 @@ from .thin_road import thin_road_stage
 from .ramps import ramps_stage
 
 __all__ = [
-    'thin_road_stage',
-    'ramps_stage',
+    "thin_road_stage",
+    "ramps_stage",
 ]

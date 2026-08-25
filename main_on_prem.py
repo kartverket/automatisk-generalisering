@@ -149,7 +149,9 @@ def check_read_only():
 
 
 # pipeline imports
-def pipeline_n100_road(args: argparse.Namespace, checkpoint: ScalityPipelineCheckpoint | None = None) -> None:
+def pipeline_n100_road(
+    args: argparse.Namespace, checkpoint: ScalityPipelineCheckpoint | None = None
+) -> None:
     from generalization.n100.road.data_preparation_2 import run as run_n100_road
 
     logger.info("Starting pipeline for %s", args)
@@ -199,7 +201,9 @@ def main():
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
     if os.environ.get("JOB_COMPLETION_INDEX"):
-        area = os.environ.get("AREAS").split(",")[int(os.environ.get("JOB_COMPLETION_INDEX"))]
+        area = os.environ.get("AREAS").split(",")[
+            int(os.environ.get("JOB_COMPLETION_INDEX"))
+        ]
         os.environ["AREA"] = area
     args = parse_args()
     check_uid_gid()
@@ -237,7 +241,9 @@ def main():
     handler(args, checkpoint=checkpoint)
 
     if os.environ.get("AREA"):
-        object_name = f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/road.gdb.zip"
+        object_name = (
+            f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/road.gdb.zip"
+        )
     else:
         object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"
     upload_results_to_scality(

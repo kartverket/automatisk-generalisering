@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def process_thin_road(input_root: DataRef, output_root: DataRef) -> None:
     """
     Process function for thinning road networks.
-    
+
     Constructs input and output paths from the roots and calls the thin road network processing function.
     """
     input_fc = DataRef(
@@ -24,7 +24,7 @@ def process_thin_road(input_root: DataRef, output_root: DataRef) -> None:
         path=f"{output_root.path}/output",
         tag=output_root.tag,
     )
-    
+
     thin_road_network(
         input=input_fc,
         output=output_fc,

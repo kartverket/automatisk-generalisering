@@ -3,7 +3,9 @@ from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNet
 from generalization.n100.road.ramps import main as ramps_main
 
 
-def thin_road_network(*, input: logic_config.DataRef, output: logic_config.DataRef) -> None:
+def thin_road_network(
+    *, input: logic_config.DataRef, output: logic_config.DataRef
+) -> None:
     cfg = logic_config.ThinRoadNetworkKwargs(
         input_road_line=input.path,
         output_road_line=output.path,
@@ -20,7 +22,13 @@ def thin_road_network(*, input: logic_config.DataRef, output: logic_config.DataR
 
     ThinRoadNetwork(cfg).run()
 
-def ramps(*, input: logic_config.DataRef, output_line: logic_config.DataRef, output_point: logic_config.DataRef) -> None:
+
+def ramps(
+    *,
+    input: logic_config.DataRef,
+    output_line: logic_config.DataRef,
+    output_point: logic_config.DataRef
+) -> None:
     cfg = logic_config.RoadRampsConfig(
         input_roads=input.path,
         output_roads=output_line.path,

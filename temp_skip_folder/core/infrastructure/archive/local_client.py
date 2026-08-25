@@ -8,7 +8,6 @@ from composition_configs.logic_config import DataRef
 
 from .interface import ArchiveClient
 
-
 logger = logging.getLogger(__name__)
 
 

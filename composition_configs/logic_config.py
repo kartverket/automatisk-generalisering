@@ -19,11 +19,11 @@ class DataRefTag(str, Enum):
     CLOUD_OK = "CLOUD_OK"
     PREM_ONLY = "PREM_ONLY"
 
+
 @dataclass(frozen=True)
 class DataRef:
-    """
+    """ """
 
-    """
     path: str
     tag: DataRefTag
 
@@ -35,6 +35,7 @@ class DataRef:
             object.__setattr__(self, "tag", DataRefTag(self.tag))
         elif not isinstance(self.tag, DataRefTag):
             raise TypeError("DataRef.tag must be a DataRefTag")
+
 
 @dataclass(frozen=True)
 class SymbologyLayerSpec:
