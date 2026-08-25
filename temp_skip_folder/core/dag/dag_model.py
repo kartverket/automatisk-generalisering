@@ -1,26 +1,14 @@
-"""
-DAG model for defining and validating dependencies across scales, pipelines, and stages.
+"""Models for a dataflow-first DAG and execution catalog.
 
-A DAG (Directed Acyclic Graph) is used to represent hierarchical dependencies:
-- Scales can only depend on other scales
-- Pipelines can only depend on other pipelines
-- Stages can only depend on other stages (referenced as "pipeline:stage")
-
-Example:
-    >>> dag = PipelineDAG(
-    ...     scales={"n100": ScaleNode("n100", ["n50"]), "n50": ScaleNode("n50", [])},
-    ...     pipelines={...},
-    ...     stages={...}
-    ... )
-    >>> dag.validate_dag()  # Raises ValidationError if invalid
-    >>> dag.get_dependencies("scale", "n100")
-    ["n50"]
+The logical DAG is defined strictly in terms of artifacts and their dependencies.
+Execution concerns (which stage can produce which artifacts, ownership, runtime
+settings) live in a separate execution catalog.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 
 class DAGValidationError(Exception):
@@ -30,13 +18,7 @@ class DAGValidationError(Exception):
 
 @dataclass(frozen=True)
 class DAGNode:
-    """
-    Base class for all DAG nodes.
-    
-    Attributes:
-        name: Unique identifier for the node.
-        dependencies: List of node names this node depends on.
-    """
+    """Base class for dataflow nodes."""
     name: str
     dependencies: List[str] = field(default_factory=list)
 
@@ -47,200 +29,175 @@ class DAGNode:
 
 
 @dataclass(frozen=True)
-class ScaleNode(DAGNode):
-    """Node representing a scale (e.g., n100, n50, n250)."""
-    pass
+class ArtifactNode(DAGNode):
+    """Node representing an artifact in the logical dataflow DAG."""
+    kind: str = field(default="artifact")
 
 
 @dataclass(frozen=True)
-class PipelineNode(DAGNode):
-    """Node representing a pipeline (e.g., n100_roads, n100_buildings)."""
-    pass
+class StageSpec:
+    """Execution metadata for a stage that can produce artifacts."""
 
-
-@dataclass(frozen=True)
-class StageNode(DAGNode):
-    """
-    Node representing a stage within a pipeline.
-    
-    Stages are referenced as "pipeline:stage" to avoid naming conflicts.
-    Dependencies can reference other stages in the same or different pipelines.
-    """
-    pipeline: str = field(default="")  # The pipeline this stage belongs to
+    name: str
+    scale: str
+    pipeline: str
+    module: str
+    function: str
+    inputs: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=list)
+    owner: str = field(default="")
+    runtime: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate that dependencies is a list."""
-        super().__post_init__()
+        """Validate shape of stage metadata."""
+        if not self.scale:
+            raise ValueError(f"Stage '{self.name}' scale must not be empty")
         if not self.pipeline:
-            raise ValueError("pipeline must not be empty for StageNode")
-
-    def full_name(self) -> str:
-        """Return the fully qualified name 'pipeline:stage'."""
-        return f"{self.pipeline}:{self.name}"
+            raise ValueError(f"Stage '{self.name}' pipeline must not be empty")
+        if not self.module:
+            raise ValueError(f"Stage '{self.name}' module must not be empty")
+        if not self.function:
+            raise ValueError(f"Stage '{self.name}' function must not be empty")
+        if not isinstance(self.inputs, list):
+            raise ValueError(f"Stage '{self.name}' inputs must be a list")
+        if not isinstance(self.outputs, list):
+            raise ValueError(f"Stage '{self.name}' outputs must be a list")
+        if not self.outputs:
+            raise ValueError(f"Stage '{self.name}' must declare at least one output")
+        if not isinstance(self.runtime, dict):
+            raise ValueError(f"Stage '{self.name}' runtime must be a dict")
 
 
 @dataclass
-class PipelineDAG:
-    """
-    Container for all DAG nodes representing the system's dependency structure.
-    
-    Attributes:
-        scales: Dict mapping scale names to ScaleNode instances.
-        pipelines: Dict mapping pipeline names to PipelineNode instances.
-        stages: Dict mapping "pipeline:stage" to StageNode instances.
-    """
-    scales: Dict[str, ScaleNode] = field(default_factory=dict)
-    pipelines: Dict[str, PipelineNode] = field(default_factory=dict)
-    stages: Dict[str, StageNode] = field(default_factory=dict)
+class ExecutionCatalog:
+    """Execution metadata index keyed by stage name."""
+
+    stages: Dict[str, StageSpec] = field(default_factory=dict)
+
+    def producers_by_artifact(self) -> Dict[str, str]:
+        """Return artifact -> producing stage mapping."""
+        result: Dict[str, str] = {}
+        for stage_name, stage in self.stages.items():
+            for output in stage.outputs:
+                result[output] = stage_name
+        return result
+
+
+@dataclass
+class DataflowDAG:
+    """Logical artifact dependency graph and optional execution catalog."""
+
+    artifacts: Dict[str, ArtifactNode] = field(default_factory=dict)
+    execution_catalog: ExecutionCatalog | None = field(default=None)
 
     def validate_dag(self) -> None:
-        """
-        Validate the entire DAG structure.
-        
-        Checks:
-        1. All scale dependencies reference only scales.
-        2. All pipeline dependencies reference only pipelines.
-        3. All stage dependencies reference only stages.
-        4. All referenced nodes exist.
-        5. No cycles exist in the graph.
-        
-        Raises:
-            DAGValidationError: If any validation check fails.
-        """
-        self._validate_node_types()
+        """Validate the logical artifact DAG."""
         self._validate_references()
         self._validate_no_cycles()
 
-    def _validate_node_types(self) -> None:
-        """Validate that each node type only depends on the same type."""
-        for name, scale_node in self.scales.items():
-            for dep in scale_node.dependencies:
-                if dep not in self.scales:
-                    raise DAGValidationError(
-                        f"Scale '{name}' depends on '{dep}', which is not a scale."
-                    )
-
-        for name, pipeline_node in self.pipelines.items():
-            for dep in pipeline_node.dependencies:
-                if dep not in self.pipelines:
-                    raise DAGValidationError(
-                        f"Pipeline '{name}' depends on '{dep}', which is not a pipeline."
-                    )
-
-        for full_name, stage_node in self.stages.items():
-            for dep in stage_node.dependencies:
-                if dep not in self.stages:
-                    raise DAGValidationError(
-                        f"Stage '{full_name}' depends on '{dep}', which is not a stage."
-                    )
-
     def _validate_references(self) -> None:
-        """Validate that all referenced nodes exist."""
-        # Already checked in _validate_node_types, but kept for clarity
-        pass
+        """Validate that every artifact dependency points to an existing artifact."""
+        for artifact_id, node in self.artifacts.items():
+            for dep in node.dependencies:
+                if dep not in self.artifacts:
+                    raise DAGValidationError(
+                        f"Artifact '{artifact_id}' depends on missing artifact '{dep}'."
+                    )
 
     def _validate_no_cycles(self) -> None:
-        """Check for cycles in all dependency graphs."""
+        """Check for cycles in the artifact graph."""
         visited: Set[str] = set()
         rec_stack: Set[str] = set()
 
-        def has_cycle_dfs(node_type: str, node_name: str) -> bool:
+        def has_cycle_dfs(node_name: str) -> bool:
             """DFS to detect cycles."""
-            visited.add(f"{node_type}:{node_name}")
-            rec_stack.add(f"{node_type}:{node_name}")
+            visited.add(node_name)
+            rec_stack.add(node_name)
 
-            dependencies = self.get_dependencies(node_type, node_name)
+            dependencies = self.get_dependencies(node_name)
             for dep in dependencies:
-                dep_id = f"{node_type}:{dep}"
-                if dep_id not in visited:
-                    if has_cycle_dfs(node_type, dep):
+                if dep not in visited:
+                    if has_cycle_dfs(dep):
                         return True
-                elif dep_id in rec_stack:
+                elif dep in rec_stack:
                     return True
 
-            rec_stack.remove(f"{node_type}:{node_name}")
+            rec_stack.remove(node_name)
             return False
 
-        for scale_name in self.scales:
-            if f"scale:{scale_name}" not in visited:
-                if has_cycle_dfs("scale", scale_name):
-                    raise DAGValidationError(f"Cycle detected in scale dependencies at '{scale_name}'")
+        for artifact_id in self.artifacts:
+            if artifact_id not in visited and has_cycle_dfs(artifact_id):
+                raise DAGValidationError(
+                    f"Cycle detected in artifact dependencies at '{artifact_id}'."
+                )
 
-        visited.clear()
-        rec_stack.clear()
+    def validate_with_catalog(self, catalog: ExecutionCatalog) -> None:
+        """Validate logical DAG against execution catalog declarations."""
+        produced_artifacts: Dict[str, str] = {}
 
-        for pipeline_name in self.pipelines:
-            if f"pipeline:{pipeline_name}" not in visited:
-                if has_cycle_dfs("pipeline", pipeline_name):
+        for stage_name, stage in catalog.stages.items():
+            for artifact in stage.inputs:
+                if artifact not in self.artifacts:
                     raise DAGValidationError(
-                        f"Cycle detected in pipeline dependencies at '{pipeline_name}'"
+                        f"Stage '{stage_name}' input '{artifact}' does not exist in logical DAG."
                     )
 
-        visited.clear()
-        rec_stack.clear()
-
-        for stage_full_name in self.stages:
-            if f"stage:{stage_full_name}" not in visited:
-                if has_cycle_dfs("stage", stage_full_name):
+            for artifact in stage.outputs:
+                if artifact not in self.artifacts:
                     raise DAGValidationError(
-                        f"Cycle detected in stage dependencies at '{stage_full_name}'"
+                        f"Stage '{stage_name}' output '{artifact}' does not exist in logical DAG."
+                    )
+                if artifact in produced_artifacts:
+                    raise DAGValidationError(
+                        f"Artifact '{artifact}' has multiple producers: "
+                        f"'{produced_artifacts[artifact]}' and '{stage_name}'."
+                    )
+                produced_artifacts[artifact] = stage_name
+
+                logical_dependencies = set(self.artifacts[artifact].dependencies)
+                stage_inputs = set(stage.inputs)
+                if not logical_dependencies.issubset(stage_inputs):
+                    raise DAGValidationError(
+                        f"Stage '{stage_name}' output '{artifact}' is missing required logical "
+                        f"inputs: {sorted(logical_dependencies - stage_inputs)}"
                     )
 
-    def get_dependencies(self, node_type: str, node_name: str) -> List[str]:
-        """
-        Get direct dependencies of a node.
-        
-        Args:
-            node_type: One of "scale", "pipeline", or "stage".
-            node_name: The name of the node. For stages, use "pipeline:stage" format.
-            
-        Returns:
-            List of dependency names.
-            
-        Raises:
-            ValueError: If node_type is invalid or node not found.
-        """
-        if node_type == "scale":
-            if node_name not in self.scales:
-                raise ValueError(f"Scale '{node_name}' not found.")
-            return self.scales[node_name].dependencies
-        elif node_type == "pipeline":
-            if node_name not in self.pipelines:
-                raise ValueError(f"Pipeline '{node_name}' not found.")
-            return self.pipelines[node_name].dependencies
-        elif node_type == "stage":
-            if node_name not in self.stages:
-                raise ValueError(f"Stage '{node_name}' not found.")
-            return self.stages[node_name].dependencies
-        else:
-            raise ValueError(f"Invalid node_type: {node_type}. Must be 'scale', 'pipeline', or 'stage'.")
+    def get_dependencies(self, artifact_id: str) -> List[str]:
+        """Get direct dependencies for one artifact."""
+        if artifact_id not in self.artifacts:
+            raise ValueError(f"Artifact '{artifact_id}' not found.")
+        return self.artifacts[artifact_id].dependencies
 
-    def get_transitive_dependencies(self, node_type: str, node_name: str) -> List[str]:
-        """
-        Get all transitive dependencies of a node (full dependency tree).
-        
-        Args:
-            node_type: One of "scale", "pipeline", or "stage".
-            node_name: The name of the node. For stages, use "pipeline:stage" format.
-            
-        Returns:
-            Sorted list of all dependencies (direct and transitive).
-            
-        Raises:
-            ValueError: If node_type is invalid or node not found.
-        """
+    def get_transitive_dependencies(self, artifact_id: str) -> List[str]:
+        """Get all transitive dependencies for an artifact."""
         all_deps: Set[str] = set()
         visited: Set[str] = set()
 
-        def collect_deps(nt: str, nn: str) -> None:
-            if f"{nt}:{nn}" in visited:
+        def collect_deps(current_artifact: str) -> None:
+            if current_artifact in visited:
                 return
-            visited.add(f"{nt}:{nn}")
+            visited.add(current_artifact)
 
-            deps = self.get_dependencies(nt, nn)
+            deps = self.get_dependencies(current_artifact)
             for dep in deps:
                 all_deps.add(dep)
-                collect_deps(nt, dep)
+                collect_deps(dep)
 
-        collect_deps(node_type, node_name)
+        collect_deps(artifact_id)
         return sorted(list(all_deps))
+
+    def get_producer(self, artifact_id: str) -> str | None:
+        """Return stage name that produces artifact, if catalog is attached."""
+        if artifact_id not in self.artifacts:
+            raise ValueError(f"Artifact '{artifact_id}' not found.")
+        if self.execution_catalog is None:
+            return None
+
+        for stage_name, stage in self.execution_catalog.stages.items():
+            if artifact_id in stage.outputs:
+                return stage_name
+        return None
+
+
+# Backward-compatible alias while moving to a dataflow-first naming model.
+PipelineDAG = DataflowDAG

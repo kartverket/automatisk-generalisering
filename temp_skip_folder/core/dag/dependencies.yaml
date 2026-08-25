@@ -1,61 +1,37 @@
-# Directed Acyclic Graph (DAG) configuration for pipeline dependencies
+# Logical Data DAG
 #
-# This file defines dependencies across three levels of the pipeline system:
-# 1. SCALES: Coarse levels of detail (e.g., n100, n50, n250)
-# 2. PIPELINES: Processing workflows within a scale (e.g., roads, buildings, railways)
-# 3. STAGES: Individual processing steps within a pipeline (e.g., thin_road, ramps)
-#
-# Dependency Rules:
-# - Scales can only depend on other scales
-# - Pipelines can only depend on other pipelines
-# - Stages can only depend on other stages (referenced as "pipeline:stage")
-#
-# The DAG is validated for:
-# - Type consistency (no cross-type dependencies)
-# - Reference existence (all referenced nodes must exist)
-# - Cycle-free structure (no circular dependencies)
+# This file defines artifact-level dependencies only.
+# Execution ownership, stage implementation, and runtime metadata are defined
+# in execution_catalog.yaml.
 
-scales:
-  # n50 scale has no dependencies
-  n50:
+artifacts:
+  n50.roads.generalized:
+    kind: dataset
     dependencies: []
 
-  # n100 scale depends on n50 scale
-  n100:
+  n50.rivers.generalized:
+    kind: dataset
+    dependencies: []
+
+  n100.roads.ramps:
+    kind: dataset
     dependencies:
-      - n50
+      - n50.roads.generalized
+      - n50.rivers.generalized
 
-  # n250 scale has no dependencies (can be added as needed)
-  n250:
-    dependencies: 
-      - n100
-
-pipelines:
-  n50_roads:
-    dependencies: []
-  n50_rivers:
-    dependencies: []
-  # n100_roads pipeline has no dependencies at pipeline level
-  n100_roads:
-    dependencies: 
-      - n50_roads
-      - n50_rivers
-
-  # n100_buildings pipeline depends on n100_roads pipeline
-  n100_buildings:
+  n100.roads.thin:
+    kind: dataset
     dependencies:
-      - n100_roads
+      - n100.roads.ramps
 
+  n100.buildings.integrated:
+    kind: dataset
+    dependencies:
+      - n100.roads.thin
+      - n50.rivers.generalized
 
-stages:
-  # Stages within n100_roads pipeline
-  n100_roads:
-    # thin_road stage depends on ramps stage
-    thin_road:
-      dependencies:
-        - n100_roads:ramps
-
-    # ramps stage has no dependencies
-    ramps:
-      dependencies: []
+  n250.roads.generalized:
+    kind: dataset
+    dependencies:
+      - n100.roads.thin
 
