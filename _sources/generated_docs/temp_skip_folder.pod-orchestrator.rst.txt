@@ -1,0 +1,21 @@
+temp\_skip\_folder.pod\-orchestrator package
+============================================
+
+Submodules
+----------
+
+temp\_skip\_folder.pod\-orchestrator.pod\_orchestrator module
+-------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.pod-orchestrator.pod_orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: temp_skip_folder.pod-orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:

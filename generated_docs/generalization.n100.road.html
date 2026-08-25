@@ -71,6 +71,7 @@
 <li class="toctree-l2"><a class="reference internal" href="main_on_cloud.html">main_on_cloud module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="main_on_prem.html">main_on_prem module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="temp_skip_folder.html">temp_skip_folder package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
 </ul>
 </li>
@@ -193,6 +194,84 @@ Hvis None snappes alle dangle-ender (gammel oppførsel).</p>
 </section>
 <section id="generalization-n100-road-major-road-crossings-module">
 <h2>generalization.n100.road.major_road_crossings module<a class="headerlink" href="#generalization-n100-road-major-road-crossings-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-generalization.n100.road.pipeline_checkpoint">
+<span id="generalization-n100-road-pipeline-checkpoint-module"></span><h2>generalization.n100.road.pipeline_checkpoint module<a class="headerlink" href="#module-generalization.n100.road.pipeline_checkpoint" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">generalization.n100.road.pipeline_checkpoint.</span></span><span class="sig-name descname"><span class="pre">PipelineCheckpoint</span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#PipelineCheckpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.save">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#PipelineCheckpoint.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.save" title="Link to this definition"></a></dt>
+<dd><p>Upload log.txt (step name) and zipped GDB to the bucket.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.load">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#PipelineCheckpoint.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.load" title="Link to this definition"></a></dt>
+<dd><p>Download and restore GDB from bucket if a checkpoint exists.
+Returns the last completed step name, or None for a clean start.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.delete">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#PipelineCheckpoint.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint.delete" title="Link to this definition"></a></dt>
+<dd><p>Remove log.txt and state.gdb.zip from the bucket.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">generalization.n100.road.pipeline_checkpoint.</span></span><span class="sig-name descname"><span class="pre">GCSPipelineCheckpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdb_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#GCSPipelineCheckpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint" title="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineCheckpoint</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#GCSPipelineCheckpoint.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.save" title="Link to this definition"></a></dt>
+<dd><p>Upload log.txt (step name) and zipped GDB to the bucket.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#GCSPipelineCheckpoint.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.load" title="Link to this definition"></a></dt>
+<dd><p>Download and restore GDB from bucket if a checkpoint exists.
+Returns the last completed step name, or None for a clean start.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#GCSPipelineCheckpoint.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.GCSPipelineCheckpoint.delete" title="Link to this definition"></a></dt>
+<dd><p>Remove log.txt and state.gdb.zip from the bucket.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">generalization.n100.road.pipeline_checkpoint.</span></span><span class="sig-name descname"><span class="pre">ScalityPipelineCheckpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdb_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#ScalityPipelineCheckpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint" title="generalization.n100.road.pipeline_checkpoint.PipelineCheckpoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineCheckpoint</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#ScalityPipelineCheckpoint.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.save" title="Link to this definition"></a></dt>
+<dd><p>Upload log.txt (step name) and zipped GDB to the bucket.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#ScalityPipelineCheckpoint.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.load" title="Link to this definition"></a></dt>
+<dd><p>Download and restore GDB from bucket if a checkpoint exists.
+Returns the last completed step name, or None for a clean start.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/pipeline_checkpoint.html#ScalityPipelineCheckpoint.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.pipeline_checkpoint.ScalityPipelineCheckpoint.delete" title="Link to this definition"></a></dt>
+<dd><p>Remove log.txt and state.gdb.zip from the bucket.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="generalization-n100-road-ramps-module">
 <h2>generalization.n100.road.ramps module<a class="headerlink" href="#generalization-n100-road-ramps-module" title="Link to this heading"></a></h2>

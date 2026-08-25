@@ -1,0 +1,37 @@
+temp\_skip\_folder.core.dag package
+===================================
+
+Submodules
+----------
+
+temp\_skip\_folder.core.dag.dag\_loader module
+----------------------------------------------
+
+.. automodule:: temp_skip_folder.core.dag.dag_loader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.dag.dag\_model module
+---------------------------------------------
+
+.. automodule:: temp_skip_folder.core.dag.dag_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.dag.dag\_to\_mermaid module
+---------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.dag.dag_to_mermaid
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: temp_skip_folder.core.dag
+   :members:
+   :show-inheritance:
+   :undoc-members:

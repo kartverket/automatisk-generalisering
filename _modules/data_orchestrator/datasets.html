@@ -82,7 +82,7 @@
 <div class="viewcode-block" id="DatasetNamespace">
 <a class="viewcode-back" href="../../generated_docs/data_orchestrator.html#data_orchestrator.datasets.DatasetNamespace">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DatasetNamespace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Lightweight container class that exposes dataset feature classes as attributes.</span>
 
 <span class="sd">    The class dynamically assigns each key/value pair from the input dictionary</span>
@@ -92,16 +92,16 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        &lt;dynamic&gt;: Each key in the provided dictionary becomes an attribute</span>
 <span class="sd">                   on the instance, pointing to the corresponding dataset path.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the namespace with the provided dataset dictionary.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (dict): A dictionary where keys are feature class names and</span>
 <span class="sd">                values are paths (Path or str) to the corresponding feature classes.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
@@ -109,13 +109,13 @@
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return a readable representation listing available feature classes.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            str: A formatted string showing the dataset&#39;s attribute names.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;Dataset </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+<span class="sd">            str: A formatted string showing the dataset's attribute names.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"&lt;Dataset </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&gt;"</span></div>
 
 </pre></div>
 

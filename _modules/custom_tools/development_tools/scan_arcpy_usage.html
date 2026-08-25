@@ -86,18 +86,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
 <span class="n">EXCLUDE_DIRS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;.git&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;__pycache__&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.mypy_cache&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.pytest_cache&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.ruff_cache&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.tox&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.venv&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;venv&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;env&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;dist&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;site-packages&quot;</span><span class="p">,</span>
+    <span class="s2">".git"</span><span class="p">,</span>
+    <span class="s2">"__pycache__"</span><span class="p">,</span>
+    <span class="s2">".mypy_cache"</span><span class="p">,</span>
+    <span class="s2">".pytest_cache"</span><span class="p">,</span>
+    <span class="s2">".ruff_cache"</span><span class="p">,</span>
+    <span class="s2">".tox"</span><span class="p">,</span>
+    <span class="s2">".venv"</span><span class="p">,</span>
+    <span class="s2">"venv"</span><span class="p">,</span>
+    <span class="s2">"env"</span><span class="p">,</span>
+    <span class="s2">"build"</span><span class="p">,</span>
+    <span class="s2">"dist"</span><span class="p">,</span>
+    <span class="s2">"site-packages"</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -113,7 +113,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_git_repo</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
-            <span class="p">[</span><span class="s2">&quot;git&quot;</span><span class="p">,</span> <span class="s2">&quot;rev-parse&quot;</span><span class="p">,</span> <span class="s2">&quot;--is-inside-work-tree&quot;</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"rev-parse"</span><span class="p">,</span> <span class="s2">"--is-inside-work-tree"</span><span class="p">],</span>
             <span class="n">cwd</span><span class="o">=</span><span class="n">root</span><span class="p">,</span>
             <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
             <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -127,14 +127,14 @@
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.development_tools.html#custom_tools.development_tools.scan_arcpy_usage.iter_python_files">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">iter_python_files</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">use_git</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
     <span class="k">if</span> <span class="n">use_git</span> <span class="ow">and</span> <span class="n">_is_git_repo</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s2">&quot;git&quot;</span><span class="p">,</span> <span class="s2">&quot;ls-files&quot;</span><span class="p">,</span> <span class="s2">&quot;*.py&quot;</span><span class="p">],</span> <span class="n">cwd</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"ls-files"</span><span class="p">,</span> <span class="s2">"*.py"</span><span class="p">],</span> <span class="n">cwd</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
             <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
                 <span class="k">yield</span> <span class="n">path</span>
         <span class="k">return</span>
 
-    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*.py"</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">part</span> <span class="ow">in</span> <span class="n">EXCLUDE_DIRS</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">parts</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -143,9 +143,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_attr_chain</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert an Attribute/Name tree like a.b.c into [&quot;a&quot;,&quot;b&quot;,&quot;c&quot;].</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Convert an Attribute/Name tree like a.b.c into ["a","b","c"].</span>
+<span class="sd">    """</span>
     <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">cur</span> <span class="o">=</span> <span class="n">node</span>
     <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
@@ -159,7 +159,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_local_to_arcpy_aliases</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Map local names to fully-qualified arcpy paths based on imports.</span>
 
 <span class="sd">    Examples:</span>
@@ -167,64 +167,64 @@
 <span class="sd">      import arcpy.management as mgmt    =&gt; mgmt -&gt; arcpy.management</span>
 <span class="sd">      from arcpy import management as m  =&gt; m -&gt; arcpy.management</span>
 <span class="sd">      from arcpy.management import Buffer as Buf =&gt; Buf -&gt; arcpy.management.Buffer</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">local_to</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arcpy&quot;</span><span class="p">:</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">}</span>
+<span class="sd">    """</span>
+    <span class="n">local_to</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arcpy"</span><span class="p">:</span> <span class="s2">"arcpy"</span><span class="p">}</span>
 
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">:</span>
-                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;arcpy&quot;</span>
-                <span class="k">elif</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;arcpy.&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"arcpy"</span><span class="p">:</span>
+                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="s2">"arcpy"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"arcpy"</span>
+                <span class="k">elif</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"arcpy."</span><span class="p">):</span>
                     <span class="c1"># import arcpy.management as mgmt</span>
-                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span>
+                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span>
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="o">==</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="o">==</span> <span class="s2">"arcpy"</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;arcpy.</span><span class="si">{</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">elif</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;arcpy.&quot;</span><span class="p">):</span>
+                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"arcpy.</span><span class="si">{</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">elif</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"arcpy."</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">local_to</span><span class="p">[</span><span class="n">alias</span><span class="o">.</span><span class="n">asname</span> <span class="ow">or</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="k">return</span> <span class="n">local_to</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_split_toolbox_and_tool</span><span class="p">(</span><span class="n">full</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Turn a resolved call name into (toolbox, tool).</span>
 
 <span class="sd">    Examples:</span>
-<span class="sd">      arcpy.management.Buffer                  -&gt; (&quot;management&quot;, &quot;Buffer&quot;)</span>
-<span class="sd">      arcpy.cartography.ResolveBuildingConflicts -&gt; (&quot;cartography&quot;, &quot;ResolveBuildingConflicts&quot;)</span>
-<span class="sd">      arcpy.da.SearchCursor                    -&gt; (&quot;da&quot;, &quot;SearchCursor&quot;)</span>
-<span class="sd">      arcpy.FeatureVerticesToPoints_management -&gt; (&quot;management&quot;, &quot;FeatureVerticesToPoints&quot;)  (legacy style)</span>
-<span class="sd">      arcpy.Exists                             -&gt; (&quot;core&quot;, &quot;Exists&quot;)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">parts</span> <span class="ow">or</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="n">full</span><span class="p">)</span>
+<span class="sd">      arcpy.management.Buffer                  -&gt; ("management", "Buffer")</span>
+<span class="sd">      arcpy.cartography.ResolveBuildingConflicts -&gt; ("cartography", "ResolveBuildingConflicts")</span>
+<span class="sd">      arcpy.da.SearchCursor                    -&gt; ("da", "SearchCursor")</span>
+<span class="sd">      arcpy.FeatureVerticesToPoints_management -&gt; ("management", "FeatureVerticesToPoints")  (legacy style)</span>
+<span class="sd">      arcpy.Exists                             -&gt; ("core", "Exists")</span>
+<span class="sd">    """</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parts</span> <span class="ow">or</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"arcpy"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">"unknown"</span><span class="p">,</span> <span class="n">full</span><span class="p">)</span>
 
     <span class="c1"># arcpy.&lt;toolbox&gt;.&lt;tool&gt;[.&lt;more&gt;]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
         <span class="n">toolbox</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">tool</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>  <span class="c1"># keep deeper names if any</span>
+        <span class="n">tool</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>  <span class="c1"># keep deeper names if any</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">toolbox</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span>
 
     <span class="c1"># arcpy.&lt;something&gt;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">"unknown"</span>
     <span class="c1"># legacy GP style: ToolName_management, ToolName_analysis, ...</span>
-    <span class="k">if</span> <span class="s2">&quot;_&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
-        <span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"_"</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+        <span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">suffix</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">suffix</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s2">"core"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="scan_file">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.development_tools.html#custom_tools.development_tools.scan_arcpy_usage.scan_file">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">scan_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Occurrence</span><span class="p">]]:</span>
-    <span class="n">src</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">SyntaxError</span><span class="p">:</span>
@@ -242,7 +242,7 @@
         <span class="c1"># Case: Buf(...) where Buf was imported from arcpy.*</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">local_to</span><span class="p">:</span>
             <span class="n">resolved</span> <span class="o">=</span> <span class="n">local_to</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">resolved</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;arcpy.&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">resolved</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"arcpy."</span><span class="p">):</span>
                 <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resolved</span><span class="p">,</span> <span class="n">Occurrence</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">)))</span>
             <span class="k">continue</span>
 
@@ -255,10 +255,10 @@
         <span class="k">if</span> <span class="n">head</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">local_to</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="n">resolved_head</span> <span class="o">=</span> <span class="n">local_to</span><span class="p">[</span><span class="n">head</span><span class="p">]</span>  <span class="c1"># &quot;arcpy&quot; or &quot;arcpy.management&quot; etc.</span>
-        <span class="n">resolved_parts</span> <span class="o">=</span> <span class="n">resolved_head</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">chain</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="k">if</span> <span class="n">resolved_parts</span> <span class="ow">and</span> <span class="n">resolved_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;arcpy&quot;</span><span class="p">:</span>
-            <span class="n">resolved</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved_parts</span><span class="p">)</span>
+        <span class="n">resolved_head</span> <span class="o">=</span> <span class="n">local_to</span><span class="p">[</span><span class="n">head</span><span class="p">]</span>  <span class="c1"># "arcpy" or "arcpy.management" etc.</span>
+        <span class="n">resolved_parts</span> <span class="o">=</span> <span class="n">resolved_head</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="o">+</span> <span class="n">chain</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">resolved_parts</span> <span class="ow">and</span> <span class="n">resolved_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"arcpy"</span><span class="p">:</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved_parts</span><span class="p">)</span>
             <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resolved</span><span class="p">,</span> <span class="n">Occurrence</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">)))</span>
 
     <span class="k">return</span> <span class="n">hits</span></div>
@@ -269,22 +269,22 @@
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.development_tools.html#custom_tools.development_tools.scan_arcpy_usage.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Find real ArcPy call sites, then summarize toolboxes/tools used.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Find real ArcPy call sites, then summarize toolboxes/tools used."</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--root&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Project root (default: .)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"."</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Project root (default: .)"</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--no-git&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Walk filesystem instead of git ls-files&quot;</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--min-count&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Only show tools used at least N times&quot;</span>
+        <span class="s2">"--no-git"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Walk filesystem instead of git ls-files"</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--list-tools&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print tools per toolbox&quot;</span>
+        <span class="s2">"--min-count"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Only show tools used at least N times"</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--with-locations&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show file:line locations for each tool&quot;</span><span class="p">,</span>
+        <span class="s2">"--list-tools"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Print tools per toolbox"</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--with-locations"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Show file:line locations for each tool"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
@@ -310,16 +310,16 @@
         <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tb</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">unique_tools_per_toolbox</span><span class="p">[</span><span class="n">tb</span><span class="p">]),</span> <span class="n">tb</span><span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scanned: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2"> Python files&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Scanned: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2"> Python files"</span><span class="p">)</span>
     <span class="n">total_unique</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">unique_tools_per_toolbox</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found:   </span><span class="si">{</span><span class="n">total_unique</span><span class="si">}</span><span class="s2"> unique ArcPy tools</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found:   </span><span class="si">{</span><span class="n">total_unique</span><span class="si">}</span><span class="s2"> unique ArcPy tools</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Toolboxes (unique tools):&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Toolboxes (unique tools):"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="n">sorted_toolboxes</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">tb</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">unique_tools_per_toolbox</span><span class="p">[</span><span class="n">tb</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">tb</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">unique_tools_per_toolbox</span><span class="p">[</span><span class="n">tb</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">list_tools</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Tools:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Tools:"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="n">sorted_toolboxes</span><span class="p">:</span>
             <span class="n">tools_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
                 <span class="n">toolbox_tool_counts</span><span class="p">[</span><span class="n">tb</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
@@ -330,9 +330,9 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tools_sorted</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[</span><span class="si">{</span><span class="n">tb</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[</span><span class="si">{</span><span class="n">tb</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tool</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">tools_sorted</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">with_locations</span><span class="p">:</span>
                     <span class="c1"># locations are keyed by fully resolved name; reconstruct candidate full names</span>
                     <span class="c1"># for printing locations, match any resolved full that maps to this (tb, tool)</span>
@@ -341,13 +341,13 @@
                         <span class="k">if</span> <span class="n">tb2</span> <span class="o">==</span> <span class="n">tb</span> <span class="ow">and</span> <span class="n">tool2</span> <span class="o">==</span> <span class="n">tool</span><span class="p">:</span>
                             <span class="k">for</span> <span class="n">occ</span> <span class="ow">in</span> <span class="n">occs</span><span class="p">:</span>
                                 <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">occ</span><span class="o">.</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
-                                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    - </span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">occ</span><span class="o">.</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    - </span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">occ</span><span class="o">.</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </pre></div>
 

@@ -1,0 +1,61 @@
+temp\_skip\_folder.core.infrastructure.archive package
+======================================================
+
+Submodules
+----------
+
+temp\_skip\_folder.core.infrastructure.archive.factory module
+-------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.factory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.infrastructure.archive.gcs\_client module
+-----------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.gcs_client
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.infrastructure.archive.interface module
+---------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.interface
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.infrastructure.archive.local\_client module
+-------------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.local_client
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.infrastructure.archive.scality\_client module
+---------------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.scality_client
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+temp\_skip\_folder.core.infrastructure.archive.validators module
+----------------------------------------------------------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive.validators
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: temp_skip_folder.core.infrastructure.archive
+   :members:
+   :show-inheritance:
+   :undoc-members:

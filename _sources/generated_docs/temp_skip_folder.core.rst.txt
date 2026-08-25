@@ -1,0 +1,20 @@
+temp\_skip\_folder.core package
+===============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   temp_skip_folder.core.dag
+   temp_skip_folder.core.infrastructure
+   temp_skip_folder.core.pipelines
+
+Module contents
+---------------
+
+.. automodule:: temp_skip_folder.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

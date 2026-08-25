@@ -16,4 +16,5 @@ automatisk-generalisering
    main_on_cloud
    main_on_prem
    paths
+   temp_skip_folder
    tests

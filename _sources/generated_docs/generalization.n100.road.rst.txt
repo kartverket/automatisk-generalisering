@@ -52,6 +52,14 @@ generalization.n100.road.major\_road\_crossings module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.pipeline\_checkpoint module
+----------------------------------------------------
+
+.. automodule:: generalization.n100.road.pipeline_checkpoint
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.ramps module
 -------------------------------------
 

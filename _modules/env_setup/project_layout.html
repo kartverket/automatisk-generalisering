@@ -84,7 +84,7 @@
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.project_layout.ProjectLayout">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProjectLayout</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single source of truth for the project&#39;s output directory layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Single source of truth for the project's output directory layout."""</span>
 
     <span class="n">output_root</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">main_directory_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">global_config</span><span class="o">.</span><span class="n">main_directory_name</span>
@@ -105,7 +105,7 @@
 <div class="viewcode-block" id="ProjectLayout.gdb">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.project_layout.ProjectLayout.gdb">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">gdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_dir</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.gdb&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_dir</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.gdb"</span></div>
 
 
 <div class="viewcode-block" id="ProjectLayout.lyrx_dir">

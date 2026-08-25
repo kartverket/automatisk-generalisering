@@ -1,0 +1,19 @@
+temp\_skip\_folder package
+==========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   temp_skip_folder.core
+   temp_skip_folder.pod-orchestrator
+
+Module contents
+---------------
+
+.. automodule:: temp_skip_folder
+   :members:
+   :show-inheritance:
+   :undoc-members:
