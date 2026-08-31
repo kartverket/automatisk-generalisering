@@ -1,6 +1,6 @@
 # Libraries
 
-from .DataValidator import DataValidator
+from .dataValidator import DataValidator
 
 ##########################
 # Classes
