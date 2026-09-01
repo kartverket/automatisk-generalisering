@@ -1,0 +1,350 @@
+=== bebygdSamferdsel ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | bebygd                                  | Beredskap                | Beredskap                | ikkeRelevant     | 27
+ 2 | bebygd                                  | Boligbebyggelse          | AnnenBolig               | ikkeRelevant     | 268
+ 3 | bebygd                                  | Boligbebyggelse          | BoligNaering             | ikkeRelevant     | 318
+ 4 | bebygd                                  | Boligbebyggelse          | FrittliggSmaahus         | ikkeRelevant     | 19548
+ 5 | bebygd                                  | Boligbebyggelse          | KonsSmaahus              | ikkeRelevant     | 2068
+ 6 | bebygd                                  | Boligbebyggelse          | StoreBoligbygg           | ikkeRelevant     | 861
+ 7 | bebygd                                  | Fritidsbebyggelse        | FritidsBeb               | ikkeRelevant     | 39938
+ 8 | bebygd                                  | GroenneOmr               | GravUrnelund             | ikkeRelevant     | 336
+ 9 | bebygd                                  | GroenneOmr               | Lekeplass                | ikkeRelevant     | 1341
+10 | bebygd                                  | GroenneOmr               | Park                     | ikkeRelevant     | 301
+11 | bebygd                                  | HelseSosial              | LegeHelse                | ikkeRelevant     | 74
+12 | bebygd                                  | HelseSosial              | SykehjemMm               | ikkeRelevant     | 251
+13 | bebygd                                  | HelseSosial              | Sykehus                  | ikkeRelevant     | 14
+14 | bebygd                                  | IdrettsOmr               | Alpinanlegg              | ikkeRelevant     | 95
+15 | bebygd                                  | IdrettsOmr               | Golfanlegg               | ikkeRelevant     | 21
+16 | bebygd                                  | IdrettsOmr               | IdrettsBygning           | ikkeRelevant     | 457
+17 | bebygd                                  | IdrettsOmr               | Skytebane                | ikkeRelevant     | 43
+18 | bebygd                                  | IdrettsOmr               | SportIdrPlass            | ikkeRelevant     | 1113
+19 | bebygd                                  | KulturReligion           | KinoTeaterMm             | ikkeRelevant     | 263
+20 | bebygd                                  | KulturReligion           | MuseerBibliotek          | ikkeRelevant     | 152
+21 | bebygd                                  | KulturReligion           | Religion                 | ikkeRelevant     | 301
+22 | bebygd                                  | LandbrukFiske            | FiskeBeb                 | ikkeRelevant     | 289
+23 | bebygd                                  | LandbrukFiske            | TunOmr                   | ikkeRelevant     | 22153
+24 | bebygd                                  | LandbrukFiske            | UtmarksBeb               | ikkeRelevant     | 4399
+25 | bebygd                                  | NaeringTjeneste          | Industri                 | ikkeRelevant     | 3156
+26 | bebygd                                  | NaeringTjeneste          | KontorForretning         | ikkeRelevant     | 1159
+27 | bebygd                                  | NaeringTjeneste          | OvernattingMm            | ikkeRelevant     | 1537
+28 | bebygd                                  | TeknInfrastr             | Energiforsyning          | ikkeRelevant     | 4794
+29 | bebygd                                  | TeknInfrastr             | VannAvlRenov             | ikkeRelevant     | 538
+30 | bebygd                                  | TransportTelek           | KaiHavnOmr               | ikkeRelevant     | 1111
+31 | bebygd                                  | TransportTelek           | LufthavnOmr              | ikkeRelevant     | 23
+32 | bebygd                                  | TransportTelek           | Parkering                | ikkeRelevant     | 567
+33 | bebygd                                  | TransportTelek           | TerminalEksped           | ikkeRelevant     | 134
+34 | bebygd                                  | TransportTelek           | VegTrafikkTilsyn         | ikkeRelevant     | 48
+35 | bebygd                                  | UklassifisertBeb         | UklassifisertBeb         | ikkeRelevant     | 38633
+36 | bebygd                                  | UndervisnBhage           | AnnetUndervisn           | ikkeRelevant     | 115
+37 | bebygd                                  | UndervisnBhage           | BarneUngdSkole           | ikkeRelevant     | 186
+38 | bebygd                                  | UndervisnBhage           | Barnehage                | ikkeRelevant     | 276
+39 | bebygd                                  | UndervisnBhage           | UniversitetMm            | ikkeRelevant     | 17
+40 | bebygd                                  | UndervisnBhage           | VideregSkole             | ikkeRelevant     | 33
+41 | bebygd                                  | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 138
+42 | samferdsel                              | TransportTelek           | AnnenBane                | ikkeRelevant     | 45
+43 | samferdsel                              | TransportTelek           | AnnenBilveg              | ikkeRelevant     | 48074
+44 | samferdsel                              | TransportTelek           | AnnenVeg                 | ikkeRelevant     | 1571
+45 | samferdsel                              | TransportTelek           | GangSykkelVeg            | ikkeRelevant     | 5501
+46 | samferdsel                              | TransportTelek           | HovedVeg                 | ikkeRelevant     | 13994
+47 | samferdsel                              | TransportTelek           | Jernbane                 | ikkeRelevant     | 479
+48 | samferdsel                              | TransportTelek           | MotorTrafikkVeg          | ikkeRelevant     | 96
+49 | samferdsel                              | TransportTelek           | Motorveg                 | ikkeRelevant     | 222
+50 | samferdsel                              | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 22
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== ferskvann ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | ferskvannElvBekk                        | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 7979
+ 2 | ferskvannInnsjoTjern                    | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 88028
+ 3 | ferskvannInnsjoTjernRegulert            | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 238
+ 4 | ferskvannKanal                          | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 205
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== hav ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | hav                                     | ikkeRelevant             | ikkeRelevant             | ikkeRelevant     | 122
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== jordbruk ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | jordbrukFulldyrka                       | Boligbebyggelse          | FrittliggSmaahus         | jorddekt         | 17
+ 2 | jordbrukFulldyrka                       | Boligbebyggelse          | FrittliggSmaahus         | organiskeJordlag | 1
+ 3 | jordbrukFulldyrka                       | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 11
+ 4 | jordbrukFulldyrka                       | GroenneOmr               | GravUrnelund             | jorddekt         | 9
+ 5 | jordbrukFulldyrka                       | GroenneOmr               | Lekeplass                | jorddekt         | 27
+ 6 | jordbrukFulldyrka                       | GroenneOmr               | Park                     | jorddekt         | 2
+ 7 | jordbrukFulldyrka                       | IdrettsOmr               | Alpinanlegg              | jorddekt         | 16
+ 8 | jordbrukFulldyrka                       | IdrettsOmr               | Golfanlegg               | jorddekt         | 13
+ 9 | jordbrukFulldyrka                       | IdrettsOmr               | IdrettsBygning           | jorddekt         | 2
+10 | jordbrukFulldyrka                       | IdrettsOmr               | Skytebane                | jorddekt         | 1
+11 | jordbrukFulldyrka                       | KulturReligion           | KinoTeaterMm             | jorddekt         | 1
+12 | jordbrukFulldyrka                       | LandbrukFiske            | FiskeBeb                 | jorddekt         | 3
+13 | jordbrukFulldyrka                       | LandbrukFiske            | TunOmr                   | jorddekt         | 389
+14 | jordbrukFulldyrka                       | LandbrukFiske            | TunOmr                   | organiskeJordlag | 5
+15 | jordbrukFulldyrka                       | LandbrukFiske            | UtmarksBeb               | jorddekt         | 1
+16 | jordbrukFulldyrka                       | NaeringTjeneste          | Bergverk                 | jorddekt         | 38
+17 | jordbrukFulldyrka                       | NaeringTjeneste          | KontorForretning         | jorddekt         | 1
+18 | jordbrukFulldyrka                       | NaeringTjeneste          | OvernattingMm            | jorddekt         | 18
+19 | jordbrukFulldyrka                       | TeknInfrastr             | VannAvlRenov             | jorddekt         | 1
+20 | jordbrukFulldyrka                       | TransportTelek           | LufthavnOmr              | jorddekt         | 1
+21 | jordbrukFulldyrka                       | UklassifisertBeb         | UklassifisertBeb         | jorddekt         | 3
+22 | jordbrukFulldyrka                       | UndervisnBhage           | BarneUngdSkole           | jorddekt         | 1
+23 | jordbrukFulldyrka                       | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 18691
+24 | jordbrukFulldyrka                       | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 947
+25 | jordbrukInnmarksbeiteApen               | Boligbebyggelse          | FrittliggSmaahus         | jorddekt         | 6
+26 | jordbrukInnmarksbeiteApen               | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 11
+27 | jordbrukInnmarksbeiteApen               | GroenneOmr               | Lekeplass                | grunnlendt       | 1
+28 | jordbrukInnmarksbeiteApen               | GroenneOmr               | Lekeplass                | jorddekt         | 7
+29 | jordbrukInnmarksbeiteApen               | GroenneOmr               | Park                     | grunnlendt       | 1
+30 | jordbrukInnmarksbeiteApen               | IdrettsOmr               | Alpinanlegg              | jorddekt         | 24
+31 | jordbrukInnmarksbeiteApen               | IdrettsOmr               | Golfanlegg               | jorddekt         | 1
+32 | jordbrukInnmarksbeiteApen               | KulturReligion           | MuseerBibliotek          | jorddekt         | 2
+33 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | FiskeBeb                 | jorddekt         | 2
+34 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | FiskeBeb                 | organiskeJordlag | 1
+35 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | TunOmr                   | grunnlendt       | 7
+36 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | TunOmr                   | jorddekt         | 245
+37 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | TunOmr                   | organiskeJordlag | 2
+38 | jordbrukInnmarksbeiteApen               | LandbrukFiske            | UtmarksBeb               | jorddekt         | 14
+39 | jordbrukInnmarksbeiteApen               | NaeringTjeneste          | Bergverk                 | jorddekt         | 6
+40 | jordbrukInnmarksbeiteApen               | NaeringTjeneste          | OvernattingMm            | jorddekt         | 6
+41 | jordbrukInnmarksbeiteApen               | TeknInfrastr             | VannAvlRenov             | jorddekt         | 1
+42 | jordbrukInnmarksbeiteApen               | UklassifisertBeb         | UklassifisertBeb         | jorddekt         | 6
+43 | jordbrukInnmarksbeiteApen               | UndervisnBhage           | AnnetUndervisn           | jorddekt         | 1
+44 | jordbrukInnmarksbeiteApen               | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 376
+45 | jordbrukInnmarksbeiteApen               | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 8344
+46 | jordbrukInnmarksbeiteApen               | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 211
+47 | jordbrukInnmarksbeiteTresattBarblanding | IdrettsOmr               | Alpinanlegg              | jorddekt         | 1
+48 | jordbrukInnmarksbeiteTresattBarblanding | LandbrukFiske            | TunOmr                   | jorddekt         | 2
+49 | jordbrukInnmarksbeiteTresattBarblanding | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 21
+50 | jordbrukInnmarksbeiteTresattBarblanding | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 506
+51 | jordbrukInnmarksbeiteTresattBarblanding | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 4
+52 | jordbrukInnmarksbeiteTresattBlanding    | LandbrukFiske            | TunOmr                   | jorddekt         | 1
+53 | jordbrukInnmarksbeiteTresattBlanding    | NaeringTjeneste          | Bergverk                 | jorddekt         | 1
+54 | jordbrukInnmarksbeiteTresattBlanding    | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 31
+55 | jordbrukInnmarksbeiteTresattBlanding    | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 701
+56 | jordbrukInnmarksbeiteTresattBlanding    | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 2
+57 | jordbrukInnmarksbeiteTresattFuru        | Boligbebyggelse          | FrittliggSmaahus         | jorddekt         | 1
+58 | jordbrukInnmarksbeiteTresattFuru        | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 1
+59 | jordbrukInnmarksbeiteTresattFuru        | GroenneOmr               | Lekeplass                | grunnlendt       | 2
+60 | jordbrukInnmarksbeiteTresattFuru        | LandbrukFiske            | TunOmr                   | jorddekt         | 2
+61 | jordbrukInnmarksbeiteTresattFuru        | NaeringTjeneste          | OvernattingMm            | jorddekt         | 2
+62 | jordbrukInnmarksbeiteTresattFuru        | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 58
+63 | jordbrukInnmarksbeiteTresattFuru        | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 879
+64 | jordbrukInnmarksbeiteTresattFuru        | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 5
+65 | jordbrukInnmarksbeiteTresattGran        | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 1
+66 | jordbrukInnmarksbeiteTresattGran        | GroenneOmr               | Lekeplass                | jorddekt         | 1
+67 | jordbrukInnmarksbeiteTresattGran        | IdrettsOmr               | Alpinanlegg              | jorddekt         | 2
+68 | jordbrukInnmarksbeiteTresattGran        | LandbrukFiske            | TunOmr                   | jorddekt         | 5
+69 | jordbrukInnmarksbeiteTresattGran        | UklassifisertBeb         | UklassifisertBeb         | jorddekt         | 1
+70 | jordbrukInnmarksbeiteTresattGran        | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 57
+71 | jordbrukInnmarksbeiteTresattGran        | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 2628
+72 | jordbrukInnmarksbeiteTresattGran        | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 19
+73 | jordbrukInnmarksbeiteTresattLauv        | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 1
+74 | jordbrukInnmarksbeiteTresattLauv        | GroenneOmr               | GravUrnelund             | jorddekt         | 1
+75 | jordbrukInnmarksbeiteTresattLauv        | GroenneOmr               | Lekeplass                | jorddekt         | 2
+76 | jordbrukInnmarksbeiteTresattLauv        | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 3
+77 | jordbrukInnmarksbeiteTresattLauv        | IdrettsOmr               | Alpinanlegg              | jorddekt         | 10
+78 | jordbrukInnmarksbeiteTresattLauv        | IdrettsOmr               | Golfanlegg               | jorddekt         | 1
+79 | jordbrukInnmarksbeiteTresattLauv        | LandbrukFiske            | TunOmr                   | jorddekt         | 39
+80 | jordbrukInnmarksbeiteTresattLauv        | LandbrukFiske            | UtmarksBeb               | jorddekt         | 1
+81 | jordbrukInnmarksbeiteTresattLauv        | NaeringTjeneste          | Bergverk                 | jorddekt         | 1
+82 | jordbrukInnmarksbeiteTresattLauv        | NaeringTjeneste          | OvernattingMm            | jorddekt         | 1
+83 | jordbrukInnmarksbeiteTresattLauv        | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 251
+84 | jordbrukInnmarksbeiteTresattLauv        | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 5272
+85 | jordbrukInnmarksbeiteTresattLauv        | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 55
+86 | jordbrukOverflatedyrka                  | Boligbebyggelse          | FrittliggSmaahus         | jorddekt         | 2
+87 | jordbrukOverflatedyrka                  | Fritidsbebyggelse        | FritidsBeb               | jorddekt         | 2
+88 | jordbrukOverflatedyrka                  | GroenneOmr               | GravUrnelund             | jorddekt         | 1
+89 | jordbrukOverflatedyrka                  | GroenneOmr               | Lekeplass                | jorddekt         | 3
+90 | jordbrukOverflatedyrka                  | IdrettsOmr               | Alpinanlegg              | jorddekt         | 10
+91 | jordbrukOverflatedyrka                  | IdrettsOmr               | Skytebane                | organiskeJordlag | 1
+92 | jordbrukOverflatedyrka                  | KulturReligion           | MuseerBibliotek          | jorddekt         | 1
+93 | jordbrukOverflatedyrka                  | LandbrukFiske            | TunOmr                   | grunnlendt       | 1
+94 | jordbrukOverflatedyrka                  | LandbrukFiske            | TunOmr                   | jorddekt         | 59
+95 | jordbrukOverflatedyrka                  | NaeringTjeneste          | Bergverk                 | jorddekt         | 5
+96 | jordbrukOverflatedyrka                  | NaeringTjeneste          | OvernattingMm            | jorddekt         | 4
+97 | jordbrukOverflatedyrka                  | UklassifisertBeb         | UklassifisertBeb         | jorddekt         | 1
+98 | jordbrukOverflatedyrka                  | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 72
+99 | jordbrukOverflatedyrka                  | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 2355
+100 | jordbrukOverflatedyrka                  | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 52
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== myr ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | myrApen                                 | IdrettsOmr               | Alpinanlegg              | organiskeJordlag | 58
+ 2 | myrApen                                 | IdrettsOmr               | Golfanlegg               | organiskeJordlag | 21
+ 3 | myrApen                                 | IdrettsOmr               | Skytebane                | organiskeJordlag | 12
+ 4 | myrApen                                 | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 52040
+ 5 | myrTresattBarblanding                   | IdrettsOmr               | Golfanlegg               | organiskeJordlag | 1
+ 6 | myrTresattBarblanding                   | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 1576
+ 7 | myrTresattBlanding                      | IdrettsOmr               | Golfanlegg               | organiskeJordlag | 1
+ 8 | myrTresattBlanding                      | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 659
+ 9 | myrTresattFuru                          | IdrettsOmr               | Alpinanlegg              | organiskeJordlag | 1
+10 | myrTresattFuru                          | IdrettsOmr               | Golfanlegg               | organiskeJordlag | 2
+11 | myrTresattFuru                          | IdrettsOmr               | Skytebane                | organiskeJordlag | 5
+12 | myrTresattFuru                          | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 10786
+13 | myrTresattGran                          | IdrettsOmr               | Alpinanlegg              | organiskeJordlag | 2
+14 | myrTresattGran                          | IdrettsOmr               | Skytebane                | organiskeJordlag | 1
+15 | myrTresattGran                          | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 12760
+16 | myrTresattLauv                          | IdrettsOmr               | Alpinanlegg              | organiskeJordlag | 3
+17 | myrTresattLauv                          | IdrettsOmr               | Golfanlegg               | organiskeJordlag | 5
+18 | myrTresattLauv                          | IdrettsOmr               | Skytebane                | organiskeJordlag | 1
+19 | myrTresattLauv                          | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 3189
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== skog ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | skogBarblanding                         | GroenneOmr               | Lekeplass                | grunnlendt       | 1
+ 2 | skogBarblanding                         | GroenneOmr               | Lekeplass                | jorddekt         | 5
+ 3 | skogBarblanding                         | GroenneOmr               | Park                     | jorddekt         | 1
+ 4 | skogBarblanding                         | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 2
+ 5 | skogBarblanding                         | IdrettsOmr               | Alpinanlegg              | jorddekt         | 14
+ 6 | skogBarblanding                         | IdrettsOmr               | Golfanlegg               | jorddekt         | 13
+ 7 | skogBarblanding                         | IdrettsOmr               | Skytebane                | grunnlendt       | 2
+ 8 | skogBarblanding                         | IdrettsOmr               | Skytebane                | jorddekt         | 9
+ 9 | skogBarblanding                         | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 19
+10 | skogBarblanding                         | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 352
+11 | skogBarblanding                         | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 9565
+12 | skogBarblanding                         | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 21588
+13 | skogBarblanding                         | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 369
+14 | skogBlanding                            | GroenneOmr               | GravUrnelund             | jorddekt         | 3
+15 | skogBlanding                            | GroenneOmr               | Lekeplass                | grunnlendt       | 1
+16 | skogBlanding                            | GroenneOmr               | Lekeplass                | jorddekt         | 5
+17 | skogBlanding                            | GroenneOmr               | Park                     | jorddekt         | 2
+18 | skogBlanding                            | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 1
+19 | skogBlanding                            | IdrettsOmr               | Alpinanlegg              | jorddekt         | 15
+20 | skogBlanding                            | IdrettsOmr               | Golfanlegg               | jorddekt         | 23
+21 | skogBlanding                            | IdrettsOmr               | Skytebane                | jorddekt         | 4
+22 | skogBlanding                            | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 30
+23 | skogBlanding                            | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 190
+24 | skogBlanding                            | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 4807
+25 | skogBlanding                            | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 16590
+26 | skogBlanding                            | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 175
+27 | skogFuru                                | GroenneOmr               | GravUrnelund             | grunnlendt       | 1
+28 | skogFuru                                | GroenneOmr               | GravUrnelund             | jorddekt         | 1
+29 | skogFuru                                | GroenneOmr               | Lekeplass                | fjellIDagen      | 1
+30 | skogFuru                                | GroenneOmr               | Lekeplass                | grunnlendt       | 13
+31 | skogFuru                                | GroenneOmr               | Lekeplass                | jorddekt         | 21
+32 | skogFuru                                | GroenneOmr               | Park                     | jorddekt         | 12
+33 | skogFuru                                | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 31
+34 | skogFuru                                | IdrettsOmr               | Alpinanlegg              | jorddekt         | 57
+35 | skogFuru                                | IdrettsOmr               | Golfanlegg               | jorddekt         | 63
+36 | skogFuru                                | IdrettsOmr               | Skytebane                | fjellIDagen      | 1
+37 | skogFuru                                | IdrettsOmr               | Skytebane                | grunnlendt       | 18
+38 | skogFuru                                | IdrettsOmr               | Skytebane                | jorddekt         | 61
+39 | skogFuru                                | IdrettsOmr               | Skytebane                | organiskeJordlag | 2
+40 | skogFuru                                | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 208
+41 | skogFuru                                | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 4616
+42 | skogFuru                                | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 68994
+43 | skogFuru                                | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 96649
+44 | skogFuru                                | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 1991
+45 | skogGran                                | GroenneOmr               | Lekeplass                | jorddekt         | 2
+46 | skogGran                                | GroenneOmr               | Park                     | jorddekt         | 1
+47 | skogGran                                | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 34
+48 | skogGran                                | IdrettsOmr               | Alpinanlegg              | jorddekt         | 131
+49 | skogGran                                | IdrettsOmr               | Golfanlegg               | jorddekt         | 32
+50 | skogGran                                | IdrettsOmr               | Skytebane                | grunnlendt       | 5
+51 | skogGran                                | IdrettsOmr               | Skytebane                | jorddekt         | 14
+52 | skogGran                                | IdrettsOmr               | Skytebane                | organiskeJordlag | 2
+53 | skogGran                                | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 136
+54 | skogGran                                | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 2633
+55 | skogGran                                | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 66136
+56 | skogGran                                | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 92426
+57 | skogGran                                | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 1824
+58 | skogLauv                                | GroenneOmr               | GravUrnelund             | jorddekt         | 17
+59 | skogLauv                                | GroenneOmr               | Lekeplass                | grunnlendt       | 4
+60 | skogLauv                                | GroenneOmr               | Lekeplass                | jorddekt         | 21
+61 | skogLauv                                | GroenneOmr               | Park                     | grunnlendt       | 1
+62 | skogLauv                                | GroenneOmr               | Park                     | jorddekt         | 35
+63 | skogLauv                                | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 45
+64 | skogLauv                                | IdrettsOmr               | Alpinanlegg              | jorddekt         | 221
+65 | skogLauv                                | IdrettsOmr               | Golfanlegg               | jorddekt         | 91
+66 | skogLauv                                | IdrettsOmr               | Skytebane                | grunnlendt       | 2
+67 | skogLauv                                | IdrettsOmr               | Skytebane                | jorddekt         | 10
+68 | skogLauv                                | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 332
+69 | skogLauv                                | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 581
+70 | skogLauv                                | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 12549
+71 | skogLauv                                | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 55587
+72 | skogLauv                                | ikkeRegistrert           | ikkeRegistrert           | organiskeJordlag | 428
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== snaumark ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | snaumarkFrisk                           | GroenneOmr               | GravUrnelund             | jorddekt         | 7
+ 2 | snaumarkFrisk                           | GroenneOmr               | Lekeplass                | jorddekt         | 39
+ 3 | snaumarkFrisk                           | GroenneOmr               | Park                     | jorddekt         | 31
+ 4 | snaumarkFrisk                           | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 22
+ 5 | snaumarkFrisk                           | IdrettsOmr               | Alpinanlegg              | jorddekt         | 119
+ 6 | snaumarkFrisk                           | IdrettsOmr               | Golfanlegg               | jorddekt         | 88
+ 7 | snaumarkFrisk                           | IdrettsOmr               | Skytebane                | grunnlendt       | 1
+ 8 | snaumarkFrisk                           | IdrettsOmr               | Skytebane                | jorddekt         | 23
+ 9 | snaumarkFrisk                           | TransportTelek           | LufthavnOmr              | jorddekt         | 1
+10 | snaumarkFrisk                           | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 109
+11 | snaumarkFrisk                           | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 687
+12 | snaumarkFrisk                           | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 4565
+13 | snaumarkFrisk                           | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 11072
+14 | snaumarkImpediment                      | IdrettsOmr               | Alpinanlegg              | fjellIDagen      | 1
+15 | snaumarkImpediment                      | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 1
+16 | snaumarkImpediment                      | IdrettsOmr               | Alpinanlegg              | jorddekt         | 4
+17 | snaumarkImpediment                      | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 44
+18 | snaumarkImpediment                      | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 949
+19 | snaumarkImpediment                      | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 45
+20 | snaumarkImpediment                      | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 74
+21 | snaumarkKonstruert                      | GroenneOmr               | GravUrnelund             | konstruert       | 1
+22 | snaumarkKonstruert                      | GroenneOmr               | Lekeplass                | konstruert       | 9
+23 | snaumarkKonstruert                      | GroenneOmr               | Park                     | konstruert       | 1
+24 | snaumarkKonstruert                      | IdrettsOmr               | Alpinanlegg              | konstruert       | 17
+25 | snaumarkKonstruert                      | IdrettsOmr               | Skytebane                | konstruert       | 31
+26 | snaumarkKonstruert                      | NaeringTjeneste          | Bergverk                 | konstruert       | 681
+27 | snaumarkKonstruert                      | TransportTelek           | LufthavnOmr              | konstruert       | 1
+28 | snaumarkKonstruert                      | ikkeRegistrert           | ikkeRegistrert           | konstruert       | 1912
+29 | snaumarkMiddelsFrisk                    | GroenneOmr               | Lekeplass                | jorddekt         | 1
+30 | snaumarkMiddelsFrisk                    | IdrettsOmr               | Alpinanlegg              | blokkmark        | 1
+31 | snaumarkMiddelsFrisk                    | IdrettsOmr               | Alpinanlegg              | fjellIDagen      | 5
+32 | snaumarkMiddelsFrisk                    | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 45
+33 | snaumarkMiddelsFrisk                    | IdrettsOmr               | Alpinanlegg              | jorddekt         | 50
+34 | snaumarkMiddelsFrisk                    | IdrettsOmr               | Golfanlegg               | jorddekt         | 13
+35 | snaumarkMiddelsFrisk                    | TransportTelek           | LufthavnOmr              | jorddekt         | 2
+36 | snaumarkMiddelsFrisk                    | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 292
+37 | snaumarkMiddelsFrisk                    | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 1260
+38 | snaumarkMiddelsFrisk                    | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 9499
+39 | snaumarkMiddelsFrisk                    | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 6526
+40 | snaumarkSkrinn                          | IdrettsOmr               | Alpinanlegg              | fjellIDagen      | 11
+41 | snaumarkSkrinn                          | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 23
+42 | snaumarkSkrinn                          | IdrettsOmr               | Alpinanlegg              | jorddekt         | 33
+43 | snaumarkSkrinn                          | IdrettsOmr               | Golfanlegg               | jorddekt         | 6
+44 | snaumarkSkrinn                          | TransportTelek           | LufthavnOmr              | jorddekt         | 2
+45 | snaumarkSkrinn                          | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 241
+46 | snaumarkSkrinn                          | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 566
+47 | snaumarkSkrinn                          | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 6241
+48 | snaumarkSkrinn                          | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 2727
+49 | snaumarkUspesifisert                    | GroenneOmr               | GravUrnelund             | jorddekt         | 3
+50 | snaumarkUspesifisert                    | GroenneOmr               | Lekeplass                | jorddekt         | 66
+51 | snaumarkUspesifisert                    | GroenneOmr               | Park                     | jorddekt         | 73
+52 | snaumarkUspesifisert                    | IdrettsOmr               | Alpinanlegg              | blokkmark        | 2
+53 | snaumarkUspesifisert                    | IdrettsOmr               | Alpinanlegg              | fjellIDagen      | 4
+54 | snaumarkUspesifisert                    | IdrettsOmr               | Alpinanlegg              | grunnlendt       | 25
+55 | snaumarkUspesifisert                    | IdrettsOmr               | Alpinanlegg              | ikkeRegistrert   | 5
+56 | snaumarkUspesifisert                    | IdrettsOmr               | Alpinanlegg              | jorddekt         | 141
+57 | snaumarkUspesifisert                    | IdrettsOmr               | Golfanlegg               | jorddekt         | 101
+58 | snaumarkUspesifisert                    | IdrettsOmr               | Skytebane                | grunnlendt       | 1
+59 | snaumarkUspesifisert                    | IdrettsOmr               | Skytebane                | jorddekt         | 30
+60 | snaumarkUspesifisert                    | TransportTelek           | LufthavnOmr              | jorddekt         | 9
+61 | snaumarkUspesifisert                    | ikkeRegistrert           | ikkeRegistrert           | blokkmark        | 1781
+62 | snaumarkUspesifisert                    | ikkeRegistrert           | ikkeRegistrert           | fjellIDagen      | 3414
+63 | snaumarkUspesifisert                    | ikkeRegistrert           | ikkeRegistrert           | grunnlendt       | 7659
+64 | snaumarkUspesifisert                    | ikkeRegistrert           | ikkeRegistrert           | ikkeRegistrert   | 10076
+65 | snaumarkUspesifisert                    | ikkeRegistrert           | ikkeRegistrert           | jorddekt         | 30778
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+
+=== snoIsbre ===
+Nr | arealdekkeNiva2                         | arealbrukLandHovedklasse | arealbrukLandUnderklasse | grunnforhold     | Count
+---+-----------------------------------------+--------------------------+--------------------------+------------------+-------
+ 1 | snoIsbre                                | ikkeRegistrert           | ikkeRegistrert           | ikkeRelevant     | 56

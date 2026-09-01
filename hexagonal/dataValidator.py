@@ -1,9 +1,9 @@
 # Libraries
 
-import arcpy # TODO: Til slutt skal ikke denne ha arcpy
+import arcpy  # TODO: Til slutt skal ikke denne ha arcpy
 
 from collections import defaultdict
-
+from featureDependencies import FeatureDependencies
 
 ##########################
 # Classes
@@ -11,16 +11,12 @@ from collections import defaultdict
 
 
 class DataValidator:
-    def __init__(self, feature: str, geometry_type: str):
+    def __init__(self, feature: str):
         # TODO: Skal gå an å si "valider road", og så vet den road -> line -> vector
         self.feature = feature
-        self.geometry_type = geometry_type
 
-        self.feature_validators = {
-            "building": [],
-            "land_use": [],
-            "river": [],
-            "road": [],
+        self.data_validators = {
+            "vector": [self.validate_vector],
         }
 
         self.geometry_validators = {
@@ -29,11 +25,22 @@ class DataValidator:
             "point": [self.validate_point_data],
         }
 
+        self.feature_validators = {
+            "building": [],
+            "land_use": [],
+            "river": [],
+            "road": [],
+        }
+
+        self.validators = [
+            self.data_validators,
+            self.geometry_validators,
+            self.feature_validators,
+        ]
 
     ##########################
     # Main functions
     ##########################
-
 
     def data_exists(self, fc: str) -> bool:
         """
@@ -47,7 +54,6 @@ class DataValidator:
         """
         return arcpy.Exists(fc)
 
-
     def feature_class_has_data(self, fc: str) -> bool:
         """
         Check if the input feature class contains any features.
@@ -60,7 +66,6 @@ class DataValidator:
         """
         return self._get_num_obj(fc) > 0
 
-
     def validation_orchestrator(
         self, output_fc: str, input_fc: str | None = None
     ) -> None:
@@ -71,10 +76,18 @@ class DataValidator:
             output_fc (str): The path to the output feature class
             input_fc (str | None): The path to the input feature class (optional)
         """
-        validations = [self.validate_vector]
+        validation_categories = FeatureDependencies(
+            feature=self.feature
+        ).get_dependencies()
+        validations = []
 
-        validations.extend(self.geometry_validators.get(self.geometry_type, []))
-        validations.extend(self.feature_validators.get(self.feature, []))
+        for i, feature in enumerate(validation_categories):
+            validators = self.validators[i]
+            if isinstance(feature, list):
+                for f in feature:
+                    validations.extend(validators.get(f, []))
+            elif isinstance(feature, str):
+                validations.extend(validators.get(feature, []))
 
         feature_classes = (
             {"input": input_fc, "output": output_fc}
@@ -93,11 +106,9 @@ class DataValidator:
         # TODO: Gi en status hvis veldig stor endring
         # TODO: Legg inn diff
 
-
     ##########################
     # Helper functions
     ##########################
-
 
     def print_validation_results(self, results: dict, level: int = 0) -> None:
         """
@@ -119,7 +130,6 @@ class DataValidator:
         if level == 0:
             print(f"\n{'==='*20}\n")
 
-
     def validate_vector(self, fc: str) -> dict:
         exists = self.data_exists(fc)
 
@@ -130,34 +140,29 @@ class DataValidator:
             object_count = 0
             vertex_count = 0
 
-        return { # TODO: Finne null geometri
+        return {  # TODO: Finne null geometri
             "exists": exists,
             "is_valid": object_count > 0,
             "object_count": object_count,
             "vertex_count": vertex_count,
         }
 
-
     def validate_polygon_data(self, fc: str) -> dict:
         r1 = self._get_polygon_stats(fc)
-        
-        return r1
 
+        return r1
 
     def validate_line_data(self, fc: str) -> dict:
         r1 = self._get_line_stats(fc)
 
         return r1
 
-
     def validate_point_data(self, fc: str) -> dict:
         return {}
-
 
     ##########################
     # Toolbox
     ##########################
-
 
     def _get_num_obj(self, fc: str) -> int:
         """
@@ -170,7 +175,6 @@ class DataValidator:
             int: The number of objects in the feature class
         """
         return int(arcpy.management.GetCount(fc)[0])
-
 
     def _get_num_vertices(self, fc: str) -> int:
         """
@@ -190,7 +194,6 @@ class DataValidator:
                     total_vertices += geometry.pointCount
 
         return total_vertices
-
 
     def _get_polygon_stats(self, fc: str) -> dict:
         """
@@ -228,7 +231,6 @@ class DataValidator:
             "avg_area": total_area / count,
         }
 
-
     def _get_line_stats(self, fc: str) -> dict:
         """
         Get statistics about the lines in the feature class.
@@ -249,6 +251,7 @@ class DataValidator:
         total_length = 0.0
         min_length = float("inf")
         max_length = float("-inf")
+        decimals = 5
 
         points = defaultdict(list)
 
@@ -262,11 +265,18 @@ class DataValidator:
                 fp, lp = geom.firstPoint, geom.lastPoint
 
                 for p in [fp, lp]:
-                    point_key = (p.X, p.Y)
+                    point_key = (round(p.X, decimals), round(p.Y, decimals))
                     points[point_key].append(oid)
 
         if count == 0:
-            return {"total_length": 0, "min_length": 0, "max_length": 0, "avg_length": 0, "dangle_count_absolute": 0, "dangle_count_relative": 0}
+            return {
+                "total_length": 0,
+                "min_length": 0,
+                "max_length": 0,
+                "avg_length": 0,
+                "dangle_count_absolute": 0,
+                "dangle_count_relative": 0,
+            }
 
         # Estimate dangles
         abs_dangles = sum(1 for oids in points.values() if len(oids) == 1)
@@ -285,11 +295,12 @@ class DataValidator:
 
 
 if __name__ == "__main__":
-    feature = "land_use"
-    geometry_type = "polygon"
-    output_fc = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke"
-    input_fc = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke_input"
+    feature = "river"
+    output_fc = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Elvelinjer"
+    # output_fc = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke"
+    # input_fc = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke_input"
 
-    validator = DataValidator(feature=feature, geometry_type=geometry_type)
+    validator = DataValidator(feature=feature)
 
-    validator.validation_orchestrator(output_fc=output_fc, input_fc=input_fc)
+    validator.validation_orchestrator(output_fc=output_fc)
+    # validator.validation_orchestrator(output_fc=output_fc, input_fc=input_fc)

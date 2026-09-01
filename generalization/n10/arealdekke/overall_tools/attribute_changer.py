@@ -18,6 +18,7 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     load_rules,
     sort_results,
+    write_to_file,
 )
 
 # ========================
@@ -43,9 +44,7 @@ def attribute_changer(input_fc: str, output_fc: str):
     if MUNICIPALITY:
         clip_data(input_fc=working_fc, output_fc=clip_fc, area=MUNICIPALITY)
         working_fc = clip_fc
-        print("\n✅ Data is ready.\n")
-    else:
-        print("✅ Data is ready.\n")
+    print("✅ Data is ready.\n")
 
     partition_area_attribute_changer = prepare_partition_iterator(
         input_fc=working_fc, new_field=new_field, new_type=new_type, output_fc=output_fc
@@ -237,7 +236,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     def lookup(a, h, u, g):
         if a not in rule_set:
-            return a
+            return [a, None]
 
         for rule in rule_set[a]:
             if match(rule, a, h, u, g):
@@ -379,6 +378,46 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
 
     result = sort_results(result)
 
-    # write_to_file(result, attribute_text_file)
+    """
+    attribute_text_file = r""
+    write_to_file(result, attribute_text_file, attribute_list[1:])
+    """
 
     print("\n📘 Finished writing combinations.\n")
+
+
+# =======================
+# Slett alt under dette
+# =======================
+
+def list_feature_classes(folder: str) -> list[str]:
+    """Return full paths to all feature classes in a folder or geodatabase."""
+    if not arcpy.Exists(folder):
+        raise ValueError(f"Folder or geodatabase does not exist: {folder}")
+
+    feature_classes = []
+    for directory, _, names in arcpy.da.Walk(folder, datatype="FeatureClass"):
+        feature_classes.extend(os.path.join(directory, name) for name in names)
+
+    return feature_classes
+
+
+if __name__ == "__main__":
+    folder = r""
+    feature_classes = list_feature_classes(folder)
+    """
+    fc = r""
+    write_unique_combinations_and_counts_to_file(fc, ["arealdekkeNiva1", "arealdekkeNiva2", "arealbrukLandHovedklasse", "arealbrukLandUnderklasse", "grunnforhold"])
+    """
+    #"""
+    k = 1
+    n = len(feature_classes)
+
+    for feature_class in feature_classes:
+        print(f"Processing feature class {k}/{n}: {feature_class}")
+        attribute_changer(
+            input_fc=feature_class,
+            output_fc=f"{feature_class}_attributes_changed",
+        )
+        k += 1
+    #"""
