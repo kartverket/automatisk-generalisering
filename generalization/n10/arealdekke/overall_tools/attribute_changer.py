@@ -38,7 +38,7 @@ def attribute_changer(input_fc: str, output_fc: str):
     working_fc = input_fc
     clip_fc = Arealdekke_N10.attribute_changer__n10_land_use.value
     MUNICIPALITY = None
-    new_field = ["gammel_arealdekke", "fremkommelighet"]
+    new_fields = ["arealdekke", "fremkommelighet"]
     new_type = "TEXT"
 
     if MUNICIPALITY:
@@ -47,7 +47,7 @@ def attribute_changer(input_fc: str, output_fc: str):
     print("✅ Data is ready.\n")
 
     partition_area_attribute_changer = prepare_partition_iterator(
-        input_fc=working_fc, new_field=new_field, new_type=new_type, output_fc=output_fc
+        input_fc=working_fc, new_fields=new_fields, new_type=new_type, output_fc=output_fc
     )
 
     partition_area_attribute_changer.run()
@@ -87,7 +87,7 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
 
 def prepare_partition_iterator(
     input_fc: str,
-    new_field: list,
+    new_fields: list,
     new_type: str,
     output_fc: str,
 ) -> PartitionIterator:
@@ -96,7 +96,7 @@ def prepare_partition_iterator(
 
     Args:
         input_fc (str): The feature class with the input data
-        new_field (list): List of field name(s) of the new field(s) in the fc to be created
+        new_fields (list): List of field name(s) of the new field(s) in the fc to be created
         new_type (str): Field type of the new field in the fc to be created
 
     Returns:
@@ -145,7 +145,7 @@ def prepare_partition_iterator(
     arealdekke_init_config = logic_config.AttributeChangerInitKwargs(
         input_feature=partition_input,
         output_feature=partition_ouput,
-        new_field=new_field,
+        new_fields=new_fields,
         new_type=new_type,
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.attribute_changer_root__n10_land_use.value
@@ -200,7 +200,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
             with attribute changer. The element contains:
                 - input_feature
                 - output_feature
-                - new_field
+                - new_fields
                 - new_type
                 - work_file_manager_config
     """
@@ -208,49 +208,62 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     input_fc = init.input_feature
     output_fc = init.output_feature
-    new_field = init.new_field
+    new_fields = init.new_fields
     new_type = init.new_type
 
-    existing_fields = [field.name for field in arcpy.Describe(input_fc).fields]
+    existing_fields = [
+        field.name for field in arcpy.Describe(input_fc).fields
+    ]
 
     create_new_fc(
         input_fc=input_fc,
         output_fc=output_fc,
-        new_field=new_field,
+        new_fields=new_fields,
         new_type=new_type,
     )
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
-    rule_set = load_rules(
+    rule_set, rule_columns = load_rules(
         Path.joinpath(Path(__file__).parent, "attribute_prioritizing.csv")
     )
 
-    def match(rule, a, h, u, g):
+    def field_match(rule_value: str, actual_value: str):
         return (
-            (rule["arealdekke"] == a or rule["arealdekke"] == "*")
-            and (rule["hovedklasse"] == h or rule["hovedklasse"] == "*")
-            and (rule["underklasse"] == u or rule["underklasse"] == "*")
-            and (rule["grunnforhold"] == g or rule["grunnforhold"] == "*")
+            rule_value == "*"
+            or rule_value == actual_value
+            or (
+                rule_value.endswith("*")
+                and actual_value.startswith(rule_value[:-1])
+            )
+        )
+    
+    def match(rule, attribute_values):
+        return all(
+            field_match(rule[col], attribute_values[col])
+            for col in rule_columns[:4]
         )
 
-    def lookup(a, h, u, g):
-        if a not in rule_set:
-            return [a, None]
+    def lookup(attribute_values):
+        a = attribute_values[rule_columns[0]]
 
-        for rule in rule_set[a]:
-            if match(rule, a, h, u, g):
-                return [rule["ny_arealdekke"], rule["fremkommelighet"]]
+        candidate_rules = []
+        candidate_rules.extend(rule_set.get(a, []))
+
+        for pattern, rules in rule_set.items():
+            if pattern.endswith("*") and a.startswith(pattern[:-1]):
+                candidate_rules.extend(rules)
+
+        for rule in candidate_rules:
+            if match(rule, attribute_values):
+                return [rule[col] for col in rule_columns[4:]]
 
         return [a, None]
 
     total_count = int(arcpy.management.GetCount(input_fc)[0])
 
     relevant_fields = {
-        "arealdekke": None,
-        "hovedklasse": None,
-        "underklasse": None,
-        "grunnforhold": None,
+        col: None for col in rule_columns[:4]
     }
     for field in relevant_fields:
         for i, f in enumerate(existing_fields):
@@ -270,7 +283,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
             break
 
     with arcpy.da.SearchCursor(input_fc, existing_fields) as src:
-        with arcpy.da.InsertCursor(output_fc, existing_fields + new_field) as ins:
+        with arcpy.da.InsertCursor(output_fc, existing_fields + new_fields) as ins:
             for row in tqdm(
                 src,
                 desc="Rewrites attributes",
@@ -279,15 +292,11 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
                 leave=False,
             ):
                 row = list(row)
-                row.append(row[relevant_fields["arealdekke"]])
-                new_land_use, accessibility = lookup(
-                    a=row[relevant_fields["arealdekke"]],
-                    h=row[relevant_fields["hovedklasse"]],
-                    u=row[relevant_fields["underklasse"]],
-                    g=row[relevant_fields["grunnforhold"]],
-                )
-                row[relevant_fields["arealdekke"]] = new_land_use
-                row.append(accessibility)
+                land_use, accessibility = lookup({
+                    col: row[relevant_fields[col]]
+                    for col in rule_columns[:4]
+                })
+                row.extend([land_use, accessibility])
                 ins.insertRow(row)
 
     print("✅ Attributes updated.\n")
@@ -299,7 +308,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
 
 def create_new_fc(
-    input_fc: str, output_fc: str, new_field: str = None, new_type: str = None
+    input_fc: str, output_fc: str, new_fields: list = None, new_type: str = None
 ):
     """
     Creates a new fc with the same attributes as
@@ -308,7 +317,7 @@ def create_new_fc(
     Args:
         input_fc (str): The feature class with the original table
         output_fc (str): The feature class to create
-        new_field (list, optional): List of field name(s) of new field(s) to be created (default: None)
+        new_fields (list, optional): List of field name(s) of new field(s) to be created (default: None)
         new_type (str, optional): Type of the new field (default: None)
     """
     # 1) Fetch fc setup-data / -details
@@ -342,8 +351,8 @@ def create_new_fc(
             existing_fields.add(field.name.lower())
 
     # 4) Add new field
-    if new_field and new_type:
-        for field in new_field:
+    if new_fields and new_type:
+        for field in new_fields:
             arcpy.management.AddField(
                 in_table=output_fc, field_name=field, field_type=new_type
             )
@@ -403,12 +412,15 @@ def list_feature_classes(folder: str) -> list[str]:
 
 
 if __name__ == "__main__":
+    #"""
     folder = r""
     feature_classes = list_feature_classes(folder)
+    #"""
     """
     fc = r""
     write_unique_combinations_and_counts_to_file(fc, ["arealdekkeNiva1", "arealdekkeNiva2", "arealbrukLandHovedklasse", "arealbrukLandUnderklasse", "grunnforhold"])
-    """
+    #"""
+    #fc = r"C:\GIS_Files\ag_inputs\raw_data\area.gdb\Arealdekke_Test"
     #"""
     k = 1
     n = len(feature_classes)

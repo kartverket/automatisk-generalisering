@@ -290,7 +290,7 @@ class AngleTargetMode(str, Enum):
 class AttributeChangerInitKwargs:
     input_feature: str
     output_feature: str
-    new_field: list
+    new_fields: list
     new_type: str
     work_file_manager_config: core_config.WorkFileConfig
 

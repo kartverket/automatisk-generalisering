@@ -78,13 +78,17 @@ def write_to_file(
             prev_group_key = group_key
 
 
-def load_rules(csv_path: str) -> dict:
+def load_rules(csv_path: str, group_by_column: str | None = None) -> tuple[dict, list[str]]:
     rules = defaultdict(list)
 
     with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+
+        # Use provided column or default to first column
+        group_key = group_by_column or fieldnames[0]
 
         for row in reader:
-            rules[row["arealdekke"]].append(row)
+            rules[row[group_key]].append(row)
 
-    return dict(rules)
+    return dict(rules), fieldnames
