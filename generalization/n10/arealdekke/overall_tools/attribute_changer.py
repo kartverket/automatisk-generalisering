@@ -390,6 +390,7 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
 # Slett alt under dette
 # =======================
 
+
 def list_feature_classes(folder: str) -> list[str]:
     """Return full paths to all feature classes in a folder or geodatabase."""
     if not arcpy.Exists(folder):
@@ -409,7 +410,7 @@ if __name__ == "__main__":
     fc = r""
     write_unique_combinations_and_counts_to_file(fc, ["arealdekkeNiva1", "arealdekkeNiva2", "arealbrukLandHovedklasse", "arealbrukLandUnderklasse", "grunnforhold"])
     """
-    #"""
+    # """
     k = 1
     n = len(feature_classes)
 
@@ -420,4 +421,4 @@ if __name__ == "__main__":
             output_fc=f"{feature_class}_attributes_changed",
         )
         k += 1
-    #"""
+    # """

@@ -6,14 +6,14 @@
 first_level_features = {1: "vector", 2: "raster"}
 
 second_level_features = {
-    # second level feature id: (feature_type, first level feature id)
+    # second_level_feature_id: (feature_type, first_level_feature_id)
     1: ("point", 1),
     2: ("line", 1),
     3: ("polygon", 1),
 }
 
 third_level_features = {
-    # feature_type: second level feature id
+    # feature_type: second_level_feature_id
     "admin": 3,
     "building": 3,
     "facility": 1,
