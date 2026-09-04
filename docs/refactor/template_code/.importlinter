@@ -1,0 +1,73 @@
+# TEMPLATE — layer contracts for the executable companion.
+#
+# Run: lint-imports   (from this directory)
+#
+# On promotion this file moves to the repository root beside `src/ag/` and the
+# `root_packages` line is the only thing that changes.
+#
+# WHY A LINTER AND NOT A CONVENTION. `ag.sources` and `ag.products` are only useful as
+# leaves. One convenience import — a source module reaching into a pipeline for a
+# constant — makes them a cycle, and the property they exist for ("read one file and
+# see everything entering the project") is gone silently. A docstring saying "leaf
+# module" is not enforcement; this is.
+#
+# NOT YET EXPRESSIBLE: the `ports` / `adapters` rows of 03-architecture §4.2, and the
+# "arcpy appears in exactly one module" forbidden contract. Both need those packages to
+# have content. See ag/ports/__init__.py.
+
+[importlinter]
+root_package = ag
+
+[importlinter:contract:identity-modules-are-leaves]
+name = sources and products import nothing but core
+type = forbidden
+source_modules =
+    ag.sources
+    ag.products
+forbidden_modules =
+    ag.operations
+    ag.pipelines
+    ag.staging
+    ag.runtime
+    ag.orchestrator
+    ag.tuning
+    ag.helpers
+
+[importlinter:contract:layers]
+name = the package stack, top to bottom
+type = layers
+layers =
+    ag.orchestrator
+    ag.runtime
+    ag.pipelines
+    ag.operations
+    ag.staging
+    ag.core
+
+[importlinter:contract:core-is-pure]
+name = core imports nothing above it
+type = forbidden
+source_modules =
+    ag.core
+forbidden_modules =
+    ag.sources
+    ag.products
+    ag.operations
+    ag.pipelines
+    ag.staging
+    ag.runtime
+    ag.orchestrator
+    ag.adapters
+    ag.helpers
+    ag.observability
+
+[importlinter:contract:operations-know-no-data-objects]
+name = an operation never sees a DataObject
+type = forbidden
+source_modules =
+    ag.operations
+forbidden_modules =
+    ag.core.data_objects
+    ag.core.pipeline
+    ag.sources
+    ag.products
