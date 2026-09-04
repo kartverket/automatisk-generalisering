@@ -77,92 +77,120 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
 
 <div class="viewcode-block" id="sort_results">
 <a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.attribute_analyzer.sort_results">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sort_results</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]))</span></div>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="write_to_file">
 <a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.attribute_analyzer.write_to_file">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_to_file</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_to_file</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Write data to a formatted file with arbitrary number of columns.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: List of tuples with arbitrary number of elements.</span>
+<span class="sd">              First element is used as group key, last element is count</span>
+<span class="sd">        filepath: Output file path</span>
+<span class="sd">        headers: List of column headers (excluding count)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">or</span> <span class="n">headers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Calculate number of columns (total elements - 1 for group key)</span>
+    <span class="n">num_cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="c1"># If headers don't match data columns (excluding count), adjust</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_cols</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"Col</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_cols</span><span class="p">)]</span>
+
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">prev_w1</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">type_count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">prev_group_key</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="c1"># Group by first element</span>
         <span class="n">groups</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">w3</span><span class="p">,</span> <span class="n">w4</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">w2</span><span class="p">,</span> <span class="n">w3</span><span class="p">,</span> <span class="n">w4</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">group_key</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">row_data</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">group_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row_data</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">w1</span><span class="p">,</span> <span class="n">rows</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">max_w2</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="s2">"Hovedklasse"</span><span class="p">))</span>
-            <span class="n">max_w3</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="s2">"Underklasse"</span><span class="p">))</span>
-            <span class="n">max_w4</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="s2">"Grunnforhold"</span><span class="p">))</span>
+        <span class="c1"># Calculate column widths for all columns</span>
+        <span class="n">col_widths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">col_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_cols</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">max_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">[</span><span class="n">col_idx</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">rows_in_group</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows_in_group</span><span class="p">:</span>
+                    <span class="n">max_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_width</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col_idx</span><span class="p">])))</span>
+            <span class="n">col_widths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_width</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">prev_w1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"---+"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w4</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                    <span class="sa">f</span><span class="s2">"-------</span><span class="se">\n\n</span><span class="s2">"</span>
+        <span class="c1"># Write groups</span>
+        <span class="k">for</span> <span class="n">group_key</span><span class="p">,</span> <span class="n">rows</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Separator between groups</span>
+            <span class="k">if</span> <span class="n">prev_group_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">separator</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"---+"</span>
+                    <span class="o">+</span> <span class="s2">"+"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">col_widths</span><span class="p">)</span>
+                    <span class="o">+</span> <span class="s2">"+-------</span><span class="se">\n\n</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">separator</span><span class="p">)</span>
 
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"=== </span><span class="si">{</span><span class="n">w1</span><span class="si">}</span><span class="s2"> ===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"=== </span><span class="si">{</span><span class="n">group_key</span><span class="si">}</span><span class="s2"> ===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Nr | "</span>
-                <span class="sa">f</span><span class="s2">"Hovedklasse"</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w2</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" "</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="s2">"Hovedklasse"</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_w2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" | "</span>
-                <span class="sa">f</span><span class="s2">"Underklasse"</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w3</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" "</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="s2">"Underklasse"</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_w3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" | "</span>
-                <span class="sa">f</span><span class="s2">"Grunnforhold"</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w4</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" "</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="s2">"Grunnforhold"</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_w4</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="o">+</span> <span class="s2">" | "</span>
-                <span class="sa">f</span><span class="s2">"Count</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="c1"># Header row</span>
+            <span class="n">header_row</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"Nr | "</span>
+                <span class="o">+</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">col_widths</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">headers</span><span class="p">))</span>
+                <span class="o">+</span> <span class="s2">" | Count</span><span class="se">\n</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header_row</span><span class="p">)</span>
 
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"---+"</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'-'</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">max_w4</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">+"</span>
-                <span class="sa">f</span><span class="s2">"-------</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="c1"># Header separator</span>
+            <span class="n">separator</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"---+"</span> <span class="o">+</span> <span class="s2">"+"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">col_widths</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"+-------</span><span class="se">\n</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">separator</span><span class="p">)</span>
 
-            <span class="n">type_count</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">for</span> <span class="n">w2</span><span class="p">,</span> <span class="n">w3</span><span class="p">,</span> <span class="n">w4</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">type_count</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> | "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">w2</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w2</span><span class="p">)</span><span class="si">}</span><span class="s2"> | "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">w3</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w3</span><span class="p">)</span><span class="si">}</span><span class="s2"> | "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">w4</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_w4</span><span class="p">)</span><span class="si">}</span><span class="s2"> | "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="c1"># Data rows</span>
+            <span class="k">for</span> <span class="n">row_num</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">row_str</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row_num</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> | "</span>
+                    <span class="o">+</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col_idx</span><span class="p">])</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">col_widths</span><span class="p">[</span><span class="n">col_idx</span><span class="p">])</span>
+                        <span class="k">for</span> <span class="n">col_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_cols</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">" | </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
                 <span class="p">)</span>
-                <span class="n">type_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">row_str</span><span class="p">)</span>
 
-            <span class="n">prev_w1</span> <span class="o">=</span> <span class="n">w1</span></div>
+            <span class="n">prev_group_key</span> <span class="o">=</span> <span class="n">group_key</span></div>
 
 
 
 <div class="viewcode-block" id="load_rules">
 <a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.attribute_analyzer.load_rules">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_rules</span><span class="p">(</span><span class="n">csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_rules</span><span class="p">(</span>
+    <span class="n">csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">group_by_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
     <span class="n">rules</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">fieldnames</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span>
+
+        <span class="c1"># Use provided column or default to first column</span>
+        <span class="n">group_key</span> <span class="o">=</span> <span class="n">group_by_column</span> <span class="ow">or</span> <span class="n">fieldnames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
-            <span class="n">rules</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">"arealdekke"</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">rules</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="n">group_key</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">rules</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">rules</span><span class="p">),</span> <span class="n">fieldnames</span></div>
 
 </pre></div>
 
