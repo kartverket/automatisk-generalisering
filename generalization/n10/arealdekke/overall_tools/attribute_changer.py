@@ -11,10 +11,7 @@ from collections import Counter
 
 from tqdm import tqdm
 
-from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.partition_iterator import PartitionIterator
-from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     load_rules,
     sort_results,
@@ -36,21 +33,23 @@ def attribute_changer(input_fc: str, output_fc: str):
     print("📦 Fetches and prepares data...\n")
 
     working_fc = input_fc
-    clip_fc = Arealdekke_N10.attribute_changer__n10_land_use.value
-    MUNICIPALITY = None
     new_fields = ["arealdekke", "fremkommelighet"]
     new_type = "TEXT"
 
-    if MUNICIPALITY:
-        clip_data(input_fc=working_fc, output_fc=clip_fc, area=MUNICIPALITY)
-        working_fc = clip_fc
     print("✅ Data is ready.\n")
 
-    partition_area_attribute_changer = prepare_partition_iterator(
-        input_fc=working_fc, new_fields=new_fields, new_type=new_type, output_fc=output_fc
+    create_new_fc(
+        input_fc=input_fc,
+        output_fc=output_fc,
+        new_fields=new_fields,
+        new_type=new_type,
     )
 
-    partition_area_attribute_changer.run()
+    change_attributes(
+        input_fc=working_fc,
+        output_fc=output_fc,
+        new_fields=new_fields,
+    )
 
     print("\n🎉 Finished! Attributes are updated and data is processed.\n")
 
@@ -60,167 +59,27 @@ def attribute_changer(input_fc: str, output_fc: str):
 # ========================
 
 
-def clip_data(input_fc: str, output_fc: str, area: str) -> None:
-    """
-    Clips relevant data to desired area.
-
-    Args:
-        input_fc (str): Feature class containing the input data
-        output_fc (str): Feature class to store the relevant data in
-        area (str): Municipality name to clip data to
-    """
-    print("📥 Reads raw data...")
-
-    print(f"✂️ Clips data according to municipality: {area}")
-    clip_lyr = "clip_lyr"
-    """arcpy.management.MakeFeatureLayer(
-        input_n100.AdminFlate, clip_lyr, f"NAVN = '{area}'"
-    )"""
-    arcpy.analysis.Clip(
-        in_features=input_fc,
-        clip_features=clip_lyr,
-        out_feature_class=output_fc,
-    )
-    arcpy.management.Delete(clip_lyr)
-    print("📍 Clipping completed.\n")
-
-
-def prepare_partition_iterator(
-    input_fc: str,
-    new_fields: list,
-    new_type: str,
-    output_fc: str,
-) -> PartitionIterator:
-    """
-    Initializes the partition iterator with correct configurations.
-
-    Args:
-        input_fc (str): The feature class with the input data
-        new_fields (list): List of field name(s) of the new field(s) in the fc to be created
-        new_type (str): Field type of the new field in the fc to be created
-
-    Returns:
-        PartitionIterator: A PartitionIterator instance modified for attribute modification of land use
-    """
-    print("⚙️ Initializing partition iterator...")
-    print("📥 Loading input configuration...")
-
-    # Constants
-    arealdekke = "arealdekke"
-    arealdekke_attributt = "arealdekke_attributt"
-
-    # Input data
-    print(f"🗂️ Setting up input entry for: {arealdekke}")
-    partition_area_input_config = core_config.PartitionInputConfig(
-        entries=[
-            core_config.InputEntry.processing_input(object=arealdekke, path=input_fc)
-        ]
-    )
-
-    # Output data
-    print(f"📤 Preparing output configuration for: {arealdekke_attributt}")
-    partition_area_output_config = core_config.PartitionOutputConfig(
-        entries=[
-            core_config.OutputEntry.vector_output(
-                object=arealdekke,
-                tag=arealdekke_attributt,
-                path=output_fc,
-            )
-        ]
-    )
-
-    # Documentation of the partitions
-    print("📝 Linking documentation directory...")
-    partition_area_io_config = core_config.PartitionIOConfig(
-        input_config=partition_area_input_config,
-        output_config=partition_area_output_config,
-        documentation_directory=Arealdekke_N10.attribute_changer_documentation__n10_land_use.value,
-    )
-
-    # Method Config
-    print("🔧 Injecting method configurations...")
-    partition_input = core_config.InjectIO(object=arealdekke, tag="input")
-    partition_ouput = core_config.InjectIO(object=arealdekke, tag=arealdekke_attributt)
-
-    arealdekke_init_config = logic_config.AttributeChangerInitKwargs(
-        input_feature=partition_input,
-        output_feature=partition_ouput,
-        new_fields=new_fields,
-        new_type=new_type,
-        work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Arealdekke_N10.attribute_changer_root__n10_land_use.value
-        ),
-    )
-
-    print("🧩 Registering attribute changer methods...")
-    arealdekke_method = core_config.FuncMethodEntryConfig(
-        func=change_attributes, params=arealdekke_init_config
-    )
-
-    partition_area_method_config = core_config.MethodEntriesConfig(
-        entries=[arealdekke_method]
-    )
-
-    # Run Config
-    print("🚀 Defining run configuration...")
-    partition_area_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500_000,
-        context_radius_meters=0,
-        run_partition_optimization=False,
-    )
-
-    # WorkFileConfig:
-    print("📁 Setting up workfile configuration...")
-    partition_area_workfile_config = core_config.WorkFileConfig(
-        root_file=Arealdekke_N10.attribute_changer_partition_root__n10_land_use.value,
-    )
-
-    # PartitionIterator Config:
-    print("🔄 Creating PartitionIterator instance...")
-    partition_area_attribute_changer = PartitionIterator(
-        partition_io_config=partition_area_io_config,
-        partition_method_inject_config=partition_area_method_config,
-        partition_iterator_run_config=partition_area_run_config,
-        work_file_manager_config=partition_area_workfile_config,
-    )
-
-    print("✅ Partition iterator ready.\n")
-    return partition_area_attribute_changer
-
-
-def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
+def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
     """
     Copies all attributes from the input feature class to the output,
     and updates 'arealdekke' based on a specific rules set. The old
     value of 'arealdekke' is kept in the new field 'gammel_arealdekke'.
 
     Args:
-        init (logic_config.AttributeChangerInitKwargs):
-            A specific initialization object for partition iterator
-            with attribute changer. The element contains:
-                - input_feature
-                - output_feature
-                - new_fields
-                - new_type
-                - work_file_manager_config
+        input_fc (str): Input feature class
+        output_fc (str): Output feature class
+        new_fields (list): List of new fields to be added and updated
     """
     print("🔄 Changes land use based on rule set...\n")
 
-    input_fc = init.input_feature
-    output_fc = init.output_feature
-    new_fields = init.new_fields
-    new_type = init.new_type
+    if not arcpy.Exists(input_fc):
+        raise ValueError(f"Input feature class does not exist: {input_fc}")
+    if not arcpy.Exists(output_fc):
+        raise ValueError(f"Output feature class does not exist: {output_fc}")
 
     existing_fields = [
         field.name for field in arcpy.Describe(input_fc).fields
     ]
-
-    create_new_fc(
-        input_fc=input_fc,
-        output_fc=output_fc,
-        new_fields=new_fields,
-        new_type=new_type,
-    )
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
@@ -262,42 +121,43 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     total_count = int(arcpy.management.GetCount(input_fc)[0])
 
-    relevant_fields = {
-        col: None for col in rule_columns[:4]
-    }
-    for field in relevant_fields:
+    # Map rule column names to field indices
+    relevant_fields = {}
+    for rule_col in rule_columns[:4]:
+        field_idx = None
         for i, f in enumerate(existing_fields):
-            if field in f.lower():
-                relevant_fields[field] = i
+            if rule_col.lower() in f.lower():
+                field_idx = i + 1  # +1 because SHAPE@ is at index 0
                 break
+        if field_idx is None:
+            raise ValueError(f"Required field '{rule_col}' not found in input feature class. Available fields: {existing_fields}")
+        relevant_fields[rule_col] = field_idx
 
-    control = 0
-    attribute_replace = {"objectid": "OID@", "shape": "SHAPE@"}
-    keys = attribute_replace.keys()
-    for i in range(len(existing_fields)):
-        field = existing_fields[i].lower()
-        if field in keys:
-            existing_fields[i] = attribute_replace[field]
-            control += 1
-        if control == 2:
-            break
+    # Include SHAPE@ to copy geometry to the output feature class
+    cursor_fields = ["SHAPE@"] + existing_fields
 
-    with arcpy.da.SearchCursor(input_fc, existing_fields) as src:
-        with arcpy.da.InsertCursor(output_fc, existing_fields + new_fields) as ins:
-            for row in tqdm(
-                src,
-                desc="Rewrites attributes",
-                total=total_count,
-                colour="yellow",
-                leave=False,
-            ):
-                row = list(row)
-                land_use, accessibility = lookup({
-                    col: row[relevant_fields[col]]
-                    for col in rule_columns[:4]
-                })
-                row.extend([land_use, accessibility])
-                ins.insertRow(row)
+    try:
+        with arcpy.da.SearchCursor(input_fc, cursor_fields) as src:
+            with arcpy.da.InsertCursor(output_fc, cursor_fields + new_fields) as ins:
+                for row in tqdm(
+                    src,
+                    desc="Rewrites attributes",
+                    total=total_count,
+                    colour="yellow",
+                    leave=False,
+                ):
+                    row = list(row)
+                    # Build attribute values dictionary for lookup
+                    attribute_values = {
+                        col: row[relevant_fields[col]]
+                        for col in rule_columns[:4]
+                    }
+                    land_use, accessibility = lookup(attribute_values)
+                    row.extend([land_use, accessibility])
+                    ins.insertRow(row)
+    except Exception as e:
+        print(f"❌ Error during attribute processing: {e}")
+        raise
 
     print("✅ Attributes updated.\n")
 
@@ -336,10 +196,10 @@ def create_new_fc(
 
     # 3) Copy fields from input fc
     print("📋 Copying fields from input...\n")
-    existing_fields = {f.name.lower() for f in arcpy.Describe(output_fc).fields}
-
+    system_fields = {"objectid", "shape", "shape_length", "shape_area"}
+    
     for field in desc.fields:
-        if field.name.lower() not in existing_fields:
+        if field.name.lower() not in system_fields:
             arcpy.management.AddField(
                 in_table=output_fc,
                 field_name=field.name,
@@ -348,7 +208,6 @@ def create_new_fc(
                 field_precision=field.precision,
                 field_scale=field.scale,
             )
-            existing_fields.add(field.name.lower())
 
     # 4) Add new field
     if new_fields and new_type:
@@ -393,43 +252,3 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
     """
 
     print("\n📘 Finished writing combinations.\n")
-
-
-# =======================
-# Slett alt under dette
-# =======================
-
-def list_feature_classes(folder: str) -> list[str]:
-    """Return full paths to all feature classes in a folder or geodatabase."""
-    if not arcpy.Exists(folder):
-        raise ValueError(f"Folder or geodatabase does not exist: {folder}")
-
-    feature_classes = []
-    for directory, _, names in arcpy.da.Walk(folder, datatype="FeatureClass"):
-        feature_classes.extend(os.path.join(directory, name) for name in names)
-
-    return feature_classes
-
-
-if __name__ == "__main__":
-    #"""
-    folder = r""
-    feature_classes = list_feature_classes(folder)
-    #"""
-    """
-    fc = r""
-    write_unique_combinations_and_counts_to_file(fc, ["arealdekkeNiva1", "arealdekkeNiva2", "arealbrukLandHovedklasse", "arealbrukLandUnderklasse", "grunnforhold"])
-    #"""
-    #fc = r"C:\GIS_Files\ag_inputs\raw_data\area.gdb\Arealdekke_Test"
-    #"""
-    k = 1
-    n = len(feature_classes)
-
-    for feature_class in feature_classes:
-        print(f"Processing feature class {k}/{n}: {feature_class}")
-        attribute_changer(
-            input_fc=feature_class,
-            output_fc=f"{feature_class}_attributes_changed",
-        )
-        k += 1
-    #"""
