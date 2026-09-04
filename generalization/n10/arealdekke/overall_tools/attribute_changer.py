@@ -77,9 +77,7 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
     if not arcpy.Exists(output_fc):
         raise ValueError(f"Output feature class does not exist: {output_fc}")
 
-    existing_fields = [
-        field.name for field in arcpy.Describe(input_fc).fields
-    ]
+    existing_fields = [field.name for field in arcpy.Describe(input_fc).fields]
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
@@ -91,16 +89,12 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
         return (
             rule_value == "*"
             or rule_value == actual_value
-            or (
-                rule_value.endswith("*")
-                and actual_value.startswith(rule_value[:-1])
-            )
+            or (rule_value.endswith("*") and actual_value.startswith(rule_value[:-1]))
         )
-    
+
     def match(rule, attribute_values):
         return all(
-            field_match(rule[col], attribute_values[col])
-            for col in rule_columns[:4]
+            field_match(rule[col], attribute_values[col]) for col in rule_columns[:4]
         )
 
     def lookup(attribute_values):
@@ -130,7 +124,9 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
                 field_idx = i + 1  # +1 because SHAPE@ is at index 0
                 break
         if field_idx is None:
-            raise ValueError(f"Required field '{rule_col}' not found in input feature class. Available fields: {existing_fields}")
+            raise ValueError(
+                f"Required field '{rule_col}' not found in input feature class. Available fields: {existing_fields}"
+            )
         relevant_fields[rule_col] = field_idx
 
     # Include SHAPE@ to copy geometry to the output feature class
@@ -149,8 +145,7 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
                     row = list(row)
                     # Build attribute values dictionary for lookup
                     attribute_values = {
-                        col: row[relevant_fields[col]]
-                        for col in rule_columns[:4]
+                        col: row[relevant_fields[col]] for col in rule_columns[:4]
                     }
                     land_use, accessibility = lookup(attribute_values)
                     row.extend([land_use, accessibility])
@@ -197,7 +192,7 @@ def create_new_fc(
     # 3) Copy fields from input fc
     print("📋 Copying fields from input...\n")
     system_fields = {"objectid", "shape", "shape_length", "shape_area"}
-    
+
     for field in desc.fields:
         if field.name.lower() not in system_fields:
             arcpy.management.AddField(

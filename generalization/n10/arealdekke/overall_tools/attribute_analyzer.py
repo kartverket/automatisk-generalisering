@@ -53,32 +53,47 @@ def write_to_file(
         for group_key, rows in groups.items():
             # Separator between groups
             if prev_group_key is not None:
-                separator = "---+" + "+".join("-" * (w + 2) for w in col_widths) + "+-------\n\n"
+                separator = (
+                    "---+"
+                    + "+".join("-" * (w + 2) for w in col_widths)
+                    + "+-------\n\n"
+                )
                 f.write(separator)
 
             f.write(f"=== {group_key} ===\n")
 
             # Header row
-            header_row = "Nr | " + " | ".join(
-                h.ljust(col_widths[i]) for i, h in enumerate(headers)
-            ) + " | Count\n"
+            header_row = (
+                "Nr | "
+                + " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers))
+                + " | Count\n"
+            )
             f.write(header_row)
 
             # Header separator
-            separator = "---+" + "+".join("-" * (w + 2) for w in col_widths) + "+-------\n"
+            separator = (
+                "---+" + "+".join("-" * (w + 2) for w in col_widths) + "+-------\n"
+            )
             f.write(separator)
 
             # Data rows
             for row_num, row in enumerate(rows, 1):
-                row_str = f"{row_num:>2} | " + " | ".join(
-                    str(row[col_idx]).ljust(col_widths[col_idx]) for col_idx in range(num_cols - 1)
-                ) + f" | {row[-1]}\n"
+                row_str = (
+                    f"{row_num:>2} | "
+                    + " | ".join(
+                        str(row[col_idx]).ljust(col_widths[col_idx])
+                        for col_idx in range(num_cols - 1)
+                    )
+                    + f" | {row[-1]}\n"
+                )
                 f.write(row_str)
 
             prev_group_key = group_key
 
 
-def load_rules(csv_path: str, group_by_column: str | None = None) -> tuple[dict, list[str]]:
+def load_rules(
+    csv_path: str, group_by_column: str | None = None
+) -> tuple[dict, list[str]]:
     rules = defaultdict(list)
 
     with open(csv_path, encoding="utf-8") as f:
