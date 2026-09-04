@@ -1,81 +1,109 @@
 import csv
 from collections import defaultdict
 
-import numpy as np
-
 
 def sort_results(data: list) -> list:
-    return sorted(data, key=lambda x: (x[0], x[1], x[2], x[3], x[4]))
+    return sorted(data, key=lambda x: tuple(x))
 
 
-def write_to_file(data: list, filepath: str) -> None:
+def write_to_file(
+    data: list,
+    filepath: str,
+    headers: list[str],
+) -> None:
+    """
+    Write data to a formatted file with arbitrary number of columns.
+
+    Args:
+        data: List of tuples with arbitrary number of elements.
+              First element is used as group key, last element is count
+        filepath: Output file path
+        headers: List of column headers (excluding count)
+    """
+    if not data or headers is None:
+        return
+
+    # Calculate number of columns (total elements - 1 for group key)
+    num_cols = len(data[0]) - 1
+
+    # If headers don't match data columns (excluding count), adjust
+    if len(headers) != num_cols - 1:
+        headers = [f"Col{i}" for i in range(1, num_cols)]
+
     with open(filepath, "w", encoding="utf-8") as f:
-        prev_w1 = None
-        type_count = 1
+        prev_group_key = None
 
+        # Group by first element
         groups = {}
-        for w1, w2, w3, w4, c in data:
-            groups.setdefault(w1, []).append((w2, w3, w4, c))
+        for row in data:
+            group_key = row[0]
+            row_data = row[1:]
+            groups.setdefault(group_key, []).append(row_data)
 
-        for w1, rows in groups.items():
-            max_w2 = max(max(len(r[0]) for r in rows), len("Hovedklasse"))
-            max_w3 = max(max(len(r[1]) for r in rows), len("Underklasse"))
-            max_w4 = max(max(len(r[2]) for r in rows), len("Grunnforhold"))
+        # Calculate column widths for all columns
+        col_widths = []
+        for col_idx in range(num_cols - 1):
+            max_width = len(headers[col_idx])
+            for rows_in_group in groups.values():
+                for row in rows_in_group:
+                    max_width = max(max_width, len(str(row[col_idx])))
+            col_widths.append(max_width)
 
-            if prev_w1 is not None:
-                f.write(
-                    f"---+"
-                    f"{'-' * (max_w2 + 2)}+"
-                    f"{'-' * (max_w3 + 2)}+"
-                    f"{'-' * (max_w4 + 2)}+"
-                    f"-------\n\n"
+        # Write groups
+        for group_key, rows in groups.items():
+            # Separator between groups
+            if prev_group_key is not None:
+                separator = (
+                    "---+"
+                    + "+".join("-" * (w + 2) for w in col_widths)
+                    + "+-------\n\n"
                 )
+                f.write(separator)
 
-            f.write(f"=== {w1} ===\n")
+            f.write(f"=== {group_key} ===\n")
 
-            f.write(
-                f"Nr | "
-                f"Hovedklasse".ljust(max_w2)
-                + " " * (np.abs(len("Hovedklasse") - max_w2) - 1)
-                + " | "
-                f"Underklasse".ljust(max_w3)
-                + " " * (np.abs(len("Underklasse") - max_w3) - 2)
-                + " | "
-                f"Grunnforhold".ljust(max_w4)
-                + " " * (np.abs(len("Grunnforhold") - max_w4) - 1)
-                + " | "
-                f"Count\n"
+            # Header row
+            header_row = (
+                "Nr | "
+                + " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers))
+                + " | Count\n"
             )
+            f.write(header_row)
 
-            f.write(
-                f"---+"
-                f"{'-' * (max_w2 + 2)}+"
-                f"{'-' * (max_w3 + 2)}+"
-                f"{'-' * (max_w4 + 2)}+"
-                f"-------\n"
+            # Header separator
+            separator = (
+                "---+" + "+".join("-" * (w + 2) for w in col_widths) + "+-------\n"
             )
+            f.write(separator)
 
-            type_count = 1
-            for w2, w3, w4, c in rows:
-                f.write(
-                    f"{type_count:>2} | "
-                    f"{w2.ljust(max_w2)} | "
-                    f"{w3.ljust(max_w3)} | "
-                    f"{w4.ljust(max_w4)} | "
-                    f"{c}\n"
+            # Data rows
+            for row_num, row in enumerate(rows, 1):
+                row_str = (
+                    f"{row_num:>2} | "
+                    + " | ".join(
+                        str(row[col_idx]).ljust(col_widths[col_idx])
+                        for col_idx in range(num_cols - 1)
+                    )
+                    + f" | {row[-1]}\n"
                 )
-                type_count += 1
+                f.write(row_str)
 
-            prev_w1 = w1
+            prev_group_key = group_key
 
 
-def load_rules(csv_path: str) -> dict:
+def load_rules(
+    csv_path: str, group_by_column: str | None = None
+) -> tuple[dict, list[str]]:
     rules = defaultdict(list)
 
     with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+
+        # Use provided column or default to first column
+        group_key = group_by_column or fieldnames[0]
 
         for row in reader:
-            rules[row["arealdekke"]].append(row)
+            rules[row[group_key]].append(row)
 
-    return dict(rules)
+    return dict(rules), fieldnames
