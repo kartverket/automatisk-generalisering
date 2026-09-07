@@ -87,8 +87,15 @@ class LineValidator(VectorValidator):
                     points[point_key].append(oid)
 
         if count == 0:
-            return {"total_length": 0, "min_length": 0, "max_length": 0, "avg_length": 0, "dangle_count_absolute": 0, "dangle_count_relative": 0}
-    
+            return {
+                "total_length": 0,
+                "min_length": 0,
+                "max_length": 0,
+                "avg_length": 0,
+                "dangle_count_absolute": 0,
+                "dangle_count_relative": 0,
+            }
+
         # Estimate dangles
         abs_dangles = sum(1 for oids in points.values() if len(oids) == 1)
 
