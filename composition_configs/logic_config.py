@@ -287,15 +287,6 @@ class AngleTargetMode(str, Enum):
 
 
 @dataclass(frozen=True)
-class AttributeChangerInitKwargs:
-    input_feature: str
-    output_feature: str
-    new_field: list
-    new_type: str
-    work_file_manager_config: core_config.WorkFileConfig
-
-
-@dataclass(frozen=True)
 class LandUseInitKwargs:
     input_feature: str
     output_feature: str
