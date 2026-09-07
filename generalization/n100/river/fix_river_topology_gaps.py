@@ -1,7 +1,7 @@
 import arcpy
 
 # Importing custom files
-from data_orchestrator import input_raster
+from data_orchestrator.features import input_raster
 from custom_tools.general_tools import custom_arcpy, line_topology
 from file_manager.n100.file_manager_rivers import River_N100
 from file_manager.n100.file_manager_roads import Road_N100
