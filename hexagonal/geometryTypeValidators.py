@@ -39,6 +39,8 @@ class PolygonValidator(VectorValidator):
                 min_area = min(min_area, area)
                 max_area = max(max_area, area)
 
+        print("Polygon stats collected")
+
         if count == 0:
             return {"total_area": 0, "min_area": 0, "max_area": 0, "avg_area": 0}
 
@@ -76,15 +78,19 @@ class LineValidator(VectorValidator):
         with arcpy.da.SearchCursor(fc, ["OID@", "SHAPE@", "SHAPE@LENGTH"]) as cursor:
             for oid, geom, length in cursor:
                 count += 1
-                total_length += length
-                min_length = min(min_length, length)
-                max_length = max(max_length, length)
+                if length:
+                    total_length += length
+                    min_length = min(min_length, length)
+                    max_length = max(max_length, length)
 
-                fp, lp = geom.firstPoint, geom.lastPoint
+                if geom:
+                    fp, lp = geom.firstPoint, geom.lastPoint
 
-                for p in [fp, lp]:
-                    point_key = (p.X, p.Y)
-                    points[point_key].append(oid)
+                    for p in [fp, lp]:
+                        point_key = (p.X, p.Y)
+                        points[point_key].append(oid)
+
+        print("Line stats collected")
 
         if count == 0:
             return {
@@ -107,3 +113,19 @@ class LineValidator(VectorValidator):
             "dangle_count_absolute": abs_dangles,
             "dangle_count_relative": abs_dangles / count,
         }
+
+
+class PointValidator(VectorValidator):
+
+    ##########################
+    # Main functions
+    ##########################
+
+    def validate(self, fc: str) -> dict:
+        r1 = super().validate(fc=fc)
+        r2 = {}
+        return {**r1, **r2}
+
+    ##########################
+    # Helper functions
+    ##########################

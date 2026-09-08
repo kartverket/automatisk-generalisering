@@ -25,29 +25,18 @@ class ValidatorOrchestrator:
 
         current_path = Path.joinpath(output_dir, f"validation_{self.step}.json")
 
+        difference = {}
+        if self.previous_path and self.previous_path.exists():
+            with open(self.previous_path, "r", encoding="utf-8") as f:
+                previous_payload = json.load(f)
+            previous_results = previous_payload.get("results", {})
+            difference = self.calculate_diff(previous_results, results)
+
         payload = {
             "run": self.step,
             "results": results,
-            "diff": {},
+            "difference": difference,
         }
-
-        if self.previous_path and self.previous_path.exists():
-            with open(self.previous_path, "r", encoding="utf-8") as f:
-                previous_results = json.load(f)
-            previous_results = previous_results.get("results", {})
-            payload["diff"] = self.calculate_diff(previous_results, results)
-
-        if payload["diff"]:
-            for key in payload["results"]:
-                if payload["diff"].get(key):
-                    payload["results"][key] = [
-                        payload["results"][key],
-                        payload["diff"].get(key),
-                    ]
-                else:
-                    payload["results"][key] = payload["results"][key]
-
-        payload.pop("diff", None)
 
         with open(current_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=4, ensure_ascii=False)
@@ -66,13 +55,13 @@ class ValidatorOrchestrator:
         for key in all_keys:
             old_value = previous.get(key)
             new_value = current.get(key)
+            if type(new_value) not in (int, float, dict):
+                continue
             if type(old_value) == type(new_value):
-                if isinstance(old_value, int) or isinstance(old_value, float):
+                if isinstance(old_value, (int, float)):
                     diff[key] = new_value - old_value
-                else:
-                    diff[key] = None
-            else:
-                diff[key] = None
+                elif isinstance(old_value, dict):
+                    diff[key] = self.calculate_diff(old_value, new_value)
 
         return diff
 

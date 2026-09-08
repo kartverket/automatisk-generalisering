@@ -8,7 +8,6 @@ from hexagonal.validatorOrchestrator import ValidatorOrchestrator
 # Classes
 ##########################
 
-# TODO: Finn ut av hvordan det skal logges
 # TODO: Gi en status hvis veldig stor endring
 
 
@@ -22,7 +21,9 @@ class VectorValidator(ValidatorOrchestrator):
         exists = self.data_exists(fc)
 
         object_count = self.get_num_obj(fc) if exists else 0
-        vertex_count, null_count = self.get_geom_data(fc)
+        vertex_count, null_count = self.get_geom_data(fc) if exists else (0, 0)
+
+        print("Vector stats collected")
 
         return {
             "exists": exists,
