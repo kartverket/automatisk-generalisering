@@ -4,6 +4,7 @@ import arcpy
 
 from collections import Counter
 
+from generalization.n10.arealdekke.parameters.parameter_worker import get_min_area
 from hexagonal.geometryTypeValidators import LineValidator, PolygonValidator
 
 ##########################
@@ -63,25 +64,32 @@ class LanduseValidator(PolygonValidator):
 
     def validate(self, fc: str) -> dict:
         r1 = super().validate(fc=fc)
-        r2 = self.get_num_types(fc=fc)
+        r2 = self.get_landuse_stats(fc=fc)
         return {**r1, **r2}
 
     ##########################
     # Helper functions
     ##########################
 
-    def get_num_types(self, fc: str) -> dict:
+    def get_landuse_stats(self, fc: str) -> dict:
         field = "arealdekke"
+        min_count = 0
+        field_count = Counter()
 
         try:
-            with arcpy.da.SearchCursor(fc, [field]) as cursor:
-                counts = Counter([row[0] for row in cursor])
+            minimum_area: dict = get_min_area(map_scale=self.scale).features
+
+            with arcpy.da.SearchCursor(fc, ["SHAPE@", field]) as cursor:
+                for g, f in cursor:
+                    if g.area < minimum_area.get(f, 0):
+                        min_count += 1
+                    field_count[f] += 1
+
             print("Landuse stats collected")
         except Exception as e:
             print(f"Error collecting landuse stats: {e}")
-            counts = Counter()
 
-        return {"landuse_categories": dict(counts)}
+        return {"landuse_categories": dict(field_count), "minimum_count": min_count}
 
 
 ##########################
@@ -89,7 +97,7 @@ class LanduseValidator(PolygonValidator):
 
 if __name__ == "__main__":
     
-    validator = LanduseValidator()
+    validator = LanduseValidator(scale="N10")
     for p in [path_1, path_2, path_3]:
         results = validator.validate(fc=p)
         validator.save_validation_results(results=results)

@@ -8,8 +8,6 @@ from hexagonal.validatorOrchestrator import ValidatorOrchestrator
 # Classes
 ##########################
 
-# TODO: Gi en status hvis veldig stor endring
-
 
 class VectorValidator(ValidatorOrchestrator):
 

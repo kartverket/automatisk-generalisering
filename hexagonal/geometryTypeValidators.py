@@ -124,6 +124,7 @@ class PointValidator(VectorValidator):
     def validate(self, fc: str) -> dict:
         r1 = super().validate(fc=fc)
         r2 = {}
+        print("Point stats collected")
         return {**r1, **r2}
 
     ##########################
