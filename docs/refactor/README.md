@@ -49,12 +49,13 @@ where two of them described the same thing and neither declared which was author
 | [0011](decisions/0011-operation-decorator-and-handle-namespaces.md) | Declarations come from signatures and class attributes, not from strings |
 | [0012](decisions/0012-identities-are-declared-centrally.md) | Sources and products are declared once, centrally, as symbols |
 | [0013](decisions/0013-tuning-is-base-plus-one-delta.md) | Tuning is base plus one delta, with no resolution mechanism |
+| [0014](decisions/0014-runtime-injected-parameters.md) | Runtime-injected parameters are recognised by a marker base class |
 
 **0001–0010** were extracted in one pass from design documents written earlier, not argued one at
 a time over months — read them as the reasoning behind a single design, not as a decision log.
 
-**0011–0013** were argued individually, against working code, and each supersedes something the
-design documents said. 0012 in particular supersedes
+**0011–0014** were argued individually, against working code, and each supersedes or extends
+something the design documents said. 0012 in particular supersedes
 [02-runtime §2.2](02-runtime.md#22-data-objects) on how identities are declared.
 
 An ADR is warranted when a developer joining after the first commit would ask "why is it like

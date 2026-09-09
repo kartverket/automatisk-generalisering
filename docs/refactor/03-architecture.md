@@ -168,6 +168,23 @@ rather than as magic relations:
   that way so a SQL or dataframe adapter has something to compile. This is the rule fan-in
   uses to decide feature ownership.
 
+**The general form, because this recurs across the cartography toolbox.** An arcpy tool with
+no OGC counterpart usually decomposes into **two standard operations plus one explicit rule**,
+and expressing it that way rather than adopting it as a port method is the default:
+
+| vendor tool | standard operations | the rule |
+|---|---|---|
+| `HAVE_THEIR_CENTER_IN` | `centroid`, `s_within` | apply the second to the first |
+| `Identity` | `intersection`, `difference` | `merge` the two results |
+| `FeatureToPoint(inside=)` | `point_on_surface`, `centroid` | pick by whether the point must lie on the feature |
+
+The test is whether the rule is something a cartographer would state. If it is, it belongs in
+the domain layer where someone can argue with it; a port method named after the vendor's
+composite hides it, and buys a future adapter a primitive nothing else has. If the rule is
+arbitrary — true bookkeeping internal to one engine — that is the case for a port method
+instead. The worked decomposition is `_attach_area_attributes` in
+[`template_code`](template_code/ag/operations/road/__init__.py).
+
 **Geometry operations: OGC Simple Features.** `buffer`, `intersection`, `difference`,
 `union`, `convex_hull`, `centroid`, `boundary` carry the same semantics in PostGIS, GEOS,
 shapely and DuckDB. `erase` becomes `difference`; `clip` stays `clip`, meaning dataset-level
@@ -849,6 +866,14 @@ not by interface segregation ([§4.7](#47-deliberate-deviations)).
 **Q-C — Does `GraphOps` know about datasets?** Whether graph construction is a `GraphOps`
 method taking a `ScratchHandle`, or a helper that calls `read_rows` and hands edges to a
 pure `GraphOps`. The second is cleaner; confirm against the strahler code first.
+
+*Evidence so far, and it is not enough to close this.* `template_code/` takes the pure form
+and one caller was writable against it — `_build_topology` in `operations/road`, reaching two
+of six methods. One caller is evidence that one caller was writable, not evidence about a
+port's shape, and the strahler code this question actually turns on has not been read. Left
+open deliberately: if it wants graph and geometry together, the dataset-aware form costs a
+rewrite of that one helper and **no operation signature changes**, which is what makes
+deferring cheap rather than evasive.
 
 **Q-D — Who authors symbol dimensions.** Cartographer-authored means an `ExternalSource` with a
 vintage and pinning; developer-authored means pipeline parameters.
