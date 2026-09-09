@@ -2,57 +2,59 @@
 
 Road generalization operations and their config types.
 
-In reality this is `generalization/road/operations.py`. SCALE-AGNOSTIC: nothing here
-knows about N100. The same `thin_road_network` is used at N50 with a different
-config.
+SCALE-AGNOSTIC: nothing here knows about N100. The same `thin_road_network` runs at
+N50 with a different config.
 
-TWO HALVES, AND NEITHER IS BOILERPLATE
+THREE HALVES, AND NONE OF THEM IS BOILERPLATE
 
     the CONFIG    a frozen dataclass per operation, holding everything tunable.
                   Declared here, next to the operation it constrains, because its
                   FIELDS change when the operation changes. Its VALUES change per
                   scale and live in the tuning modules.
-    the FUNCTION  In/Out handles, one `config`, and an optional ScratchScope.
+    the FUNCTION  In/Out handles, one `config`, a Toolbox and a ScratchScope.
                   @operation makes it its own declaration factory.
+    the HELPERS   undecorated, never named in a stage, taking whatever they need.
+                  They receive `tb` and a derived scope exactly as an operation does.
 
-The hand-written factory twin that used to sit under each function is gone;
-@operation reads the operation name, the parameter names, the input/output split and
-`wants_scratch` off the signature.
+WHAT CHANGED WHEN PORTS ARRIVED. These functions used to raise NotImplementedError
+with the arcpy tools they would have run. Now they run port calls, and the arcpy tool
+names live in `adapters/arcpy/` where a second adapter can replace them. Read any
+function below and the ONLY vendor-shaped thing left is the CQL2 in an `Attr(...)`,
+which names fields in data we do not own and is a value, not a vendor idiom.
 
-WHY CONFIG IS A SEPARATE OBJECT AND IO IS NOT
-
-They have different reasons to change. `minimum_length_m` gets retuned at N100
-without this file changing at all - that is a second axis and it earns its own
-record. `roads`, `ranks`, `output` and `dropped` change exactly when the signature
-changes, which is the same reason and the same moment, so wrapping them in a second
-dataclass would be structure with nothing behind it.
-
-The payoff is concrete: `OperationCall.parameters` is uniformly
-`{"config": <frozen dataclass>}`, so a run manifest gets a JSON-able tuning record
-per operation from `dataclasses.asdict` with no special-casing. @operation enforces
-that shape at import - a stray `minimum_length_m=400` is a TypeError, not a
-precedent.
+That move is also the design's own acceptance test. If an operation could not be
+written without reaching for something arcpy-specific, the port surface would be
+wrong - and twice it was: `Identity` and `FeatureToPoint(inside=...)` had no OGC
+counterpart, and both decomposed into standard operations plus an explicit rule
+rather than becoming a method. See `_attach_area_attributes`.
 
 NO `scale` FIELD IN ANY CONFIG. If an operation can read the scale it can branch on
-it, and "an operation never knows what scale it is running at" stops being enforced
-by anything. The scale selects WHICH config; it is never IN the config.
-
-EVERY OPERATION TAKES ITS INTERNAL FILES FROM THE SCRATCHFILEMANAGER. None of them
-constructs a path, a name prefix, or a temp workspace. `scratch("dissolved")` lands
-in this operation's own workspace; a helper tool gets `scratch.child("label")` and
-never learns its own trail, so the same helper is callable from any operation.
+it, and "an operation never knows what scale it is running at" stops being enforced by
+anything. The scale selects WHICH config; it is never IN the config.
 
 Note what appears NOWHERE in this file: ExternalSource, ProductIdentity, Derived,
-location, scale, role, context radius, run id, partition index,
-arcpy.env.scratchWorkspace.
+location, scale, role, context radius, run id, partition index, an adapter, or
+`import arcpy`.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
-from ag.core.types import DataType
 from ag.core.operations import INJECTED, In, Out, ScratchScope, operation
+from ag.core.types import DataType
+from ag.ports import (
+    NOT_INJECTED,
+    Attr,
+    DissolveOption,
+    Field,
+    FieldType,
+    Intersects,
+    Row,
+    Toolbox,
+    VertexPosition,
+)
 
 TABLE = DataType.TABLE
 
@@ -161,58 +163,198 @@ class SmoothConfig:
 
 
 # ---------------------------------------------------------------------------
+# Field names
+#
+# LITERALS, DELIBERATELY. These name columns in data the project does not own -
+# NVDB's schema and the published product schema - so by ADR-0011's identifier/value
+# test they are values. A different string could be correct here; only the data
+# decides.
+# ---------------------------------------------------------------------------
+
+ROAD_CLASS = "vegkategori"
+RANK = "rank"
+MUNICIPALITY = "kommunenummer"
+FEATURE_ID = "feature_id"
+
+_MATCH_REPORT_FIELDS = (
+    Field(name=FEATURE_ID, type=FieldType.LONG),
+    Field(name="reason", type=FieldType.TEXT, length=32),
+)
+
+
+# ---------------------------------------------------------------------------
 # Shared helper tools
 #
-# A helper receives a scope the way an operation does - derive downward. It never
-# learns its own trail, which is what makes it reusable from anywhere. Its files land
-# in the CALLING OPERATION's workspace, under the label the caller chose.
+# A helper receives `tb` and a derived scope the way an operation does - derive
+# downward. It never learns its own trail, which is what makes it reusable from
+# anywhere. Its files land in the CALLING OPERATION's workspace, under the label the
+# caller chose.
 #
 # Helpers are NOT decorated: they are not operations, they never appear in a stage,
 # and they take whatever arguments they need.
 # ---------------------------------------------------------------------------
 
 
-def _repair_geometry(
-    *, features: In, output: Out, errors: Out, scratch: ScratchScope
-) -> None:
-    """Fix self-intersections and null geometry, reporting what it touched."""
-    checked = scratch("checked")
-    repaired = scratch("repaired")
-    raise NotImplementedError(
-        f"CheckGeometry -> {checked}, RepairGeometry -> {repaired}, "
-        f"then split into {output} and {errors}"
-    )
+def _repair_geometry(*, features: In, output: Out, errors: Out, tb: Toolbox) -> None:
+    """Fix self-intersections and null geometry, reporting what it touched.
+
+    TWO PORT CALLS AND NO SCRATCH AT ALL, where the pre-port version needed two
+    intermediates. `validate_geometry` writes its findings straight to `errors` and
+    `make_valid` writes straight to `output`; there is nothing in between to hold.
+    That is the ordinary shape of this change - a port method that names the whole
+    operation absorbs the plumbing the tool sequence used to need.
+    """
+    tb.geometry.validate_geometry(input=features, output=errors)
+    tb.geometry.make_valid(input=features, output=output)
 
 
 def _build_topology(
-    *, roads: In, nodes: Out, edges: Out, scratch: ScratchScope
+    *, roads: In, nodes: Out, edges: Out, tb: Toolbox, scratch: ScratchScope
 ) -> None:
     """Node/edge topology over a line network.
+
+    THE ONLY CALLER OF `GraphOps` IN EITHER WORKED PIPELINE, and the shape Q-C is
+    about. The graph work is three lines in the middle, and note what they operate
+    on: plain `(int, int)` tuples. `tb.graph` never sees a ScratchHandle, a workspace
+    or a geometry - reading the dataset is this helper's job, and deciding which
+    fields carry the node ids is a domain question answered here rather than a port
+    parameter every adapter would have to honour.
 
     Called TWICE inside thin_road_network, which is the case that forces
     ScratchScope.child to auto-index: the first call's files render under
     `build_topology__`, the second under `build_topology_reranked__`. Neither
     developer has to know about the other.
     """
-    dangles = scratch("dangles")
-    junctions = scratch("junctions")
-    raise NotImplementedError(
-        f"FeatureVerticesToPoints -> {junctions}, dangle detection -> {dangles}, "
-        f"then emit {nodes} and {edges}"
+    endpoints = scratch("endpoints")
+    tb.geometry.extract_vertices(
+        input=roads, output=endpoints, position=VertexPosition.BOTH_ENDS
+    )
+
+    rows = list(tb.table.read_rows(input=endpoints, fields=(FEATURE_ID,)))
+    # BOTH_ENDS emits start then end per feature, so the rows pair off two at a time.
+    edge_list = [
+        (_node_id(start), _node_id(end))
+        for start, end in zip(rows[::2], rows[1::2])
+    ]
+    degrees = tb.graph.degree(edges=edge_list)
+    components = tb.graph.connected_components(edges=edge_list)
+
+    tb.table.write_table(
+        output=nodes,
+        fields=(
+            Field(name="node_id", type=FieldType.LONG),
+            Field(name="degree", type=FieldType.LONG),
+            Field(name="component", type=FieldType.LONG),
+        ),
+        rows=_node_rows(degrees, components),
+    )
+    tb.geometry.copy(input=roads, output=edges)
+
+
+def _node_id(row: Row) -> int:
+    """Narrow one attribute to the int `GraphOps` needs.
+
+    ONE GUARD AT THE BOUNDARY, rather than a cast at every read. `Row.attributes` is
+    a union over what a cell can hold, so this is where the assumption "feature_id is
+    a LONG field" is stated and checked - instead of being silently asserted by a
+    `cast` and surfacing later as a TypeError inside a graph algorithm, or worse, as
+    a graph built over string keys that never matches anything.
+    """
+    value = row.attributes[FEATURE_ID]
+    if not isinstance(value, int):
+        raise TypeError(
+            f"{FEATURE_ID} must be a LONG field to serve as a node id, got "
+            f"{type(value).__name__}. Topology is built over feature ids, so a TEXT "
+            "or null id means the edge list is not the network."
+        )
+    return value
+
+
+def _node_rows(
+    degrees: Mapping[int, int], components: tuple[frozenset[int], ...]
+) -> tuple[Row, ...]:
+    """Two `GraphOps` results into rows `write_table` accepts.
+
+    ORDINARY PYTHON OVER PLAIN VALUES, and that is the point of the pure `GraphOps`
+    shape: the graph port returned a mapping and a tuple of frozensets, so turning
+    them into rows needs no adapter, no fixture and no geometry. Under a
+    dataset-aware `GraphOps` this function would not exist and the same logic would
+    be inside an adapter, where a test would need a workspace to reach it.
+    """
+    component_of = {
+        node: index for index, part in enumerate(components) for node in part
+    }
+    return tuple(
+        Row(
+            attributes={
+                "node_id": node,
+                "degree": degree,
+                "component": component_of.get(node, -1),
+            }
+        )
+        for node, degree in degrees.items()
     )
 
 
 def _vertex_deltas(
-    *, before: In, after: In, output: Out, scratch: ScratchScope
+    *, before: In, after: In, output: Out, tb: Toolbox, scratch: ScratchScope
 ) -> None:
     """Per-vertex displacement between two versions of the same features."""
     vertices_before = scratch("vertices_before")
     vertices_after = scratch("vertices_after")
     paired = scratch("paired", TABLE)
-    raise NotImplementedError(
-        f"FeatureVerticesToPoints on both -> {vertices_before} / {vertices_after}, "
-        f"join on (fid, vertex_index) -> {paired}, then summarize into {output}"
+
+    tb.geometry.extract_vertices(input=before, output=vertices_before)
+    tb.geometry.extract_vertices(input=after, output=vertices_after)
+    tb.geometry.nearest_neighbors(
+        input=vertices_before,
+        near=vertices_after,
+        output=paired,
+        search_radius_m=1000.0,
     )
+    tb.table.join_field(
+        input=paired,
+        key="near_fid",
+        join=vertices_after,
+        join_key=FEATURE_ID,
+        fields=(FEATURE_ID,),
+    )
+    tb.table.write_table(
+        output=output,
+        fields=(
+            Field(name=FEATURE_ID, type=FieldType.LONG),
+            Field(name="delta_m", type=FieldType.DOUBLE),
+        ),
+        rows=tb.table.read_rows(input=paired),
+    )
+
+
+def _attach_area_attributes(
+    *, roads: In, areas: In, output: Out, tb: Toolbox, scratch: ScratchScope
+) -> None:
+    """arcpy's Identity, decomposed. THE GENERAL FORM, WRITTEN OUT ONCE.
+
+    `Identity` keeps every input feature, splits those that cross an overlay
+    boundary, and attaches the overlay's attributes where they coincide. It has no
+    OGC counterpart, and it is not a primitive - it is two standard operations and
+    one rule about what to do with the remainder:
+
+        intersection    the parts that fall inside an area, carrying its attributes
+        difference      the parts that fall in no area, carrying none
+        merge           put them back together
+
+    A method named `identity` on the port would have looked like one operation and
+    been a vendor composite. Expressed this way, a SQL or dataframe adapter has three
+    things it already implements, and the rule that combines them is visible in the
+    domain layer where someone can argue with it.
+
+    This recurs across the cartography toolbox - see the module docstring.
+    """
+    inside = scratch("inside")
+    outside = scratch("outside")
+    tb.geometry.intersection(input=roads, overlay=areas, output=inside)
+    tb.geometry.difference(input=roads, overlay=areas, output=outside)
+    tb.geometry.merge(inputs=(inside, outside), output=output)
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +369,7 @@ def select_source_roads(
     output: Out,
     geometry_errors: Out,
     config: SelectSourceRoadsConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Filter the N50 product down to the classes that survive at this scale.
@@ -238,15 +381,15 @@ def select_source_roads(
     """
     singlepart = scratch("singlepart")
     selected = scratch("selected")
-    _repair_geometry(
-        features=selected,
-        output=output,
-        errors=geometry_errors,
-        scratch=scratch.child("repair_geometry"),
+
+    tb.geometry.explode_multipart(input=source, output=singlepart)
+    tb.geometry.select(
+        input=singlepart,
+        where=Attr(f"{ROAD_CLASS} <= {config.minimum_class}"),
+        output=selected,
     )
-    raise NotImplementedError(
-        f"MultipartToSinglepart({source}) -> {singlepart}, "
-        f"Select(class <= {config.minimum_class}) -> {selected}"
+    _repair_geometry(
+        features=selected, output=output, errors=geometry_errors, tb=tb
     )
 
 
@@ -258,6 +401,7 @@ def join_admin_attributes(
     output: Out,
     match_report: Out,
     config: JoinAdminConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Merge municipality and county attributes into the road records.
@@ -268,29 +412,64 @@ def join_admin_attributes(
 
     `match_report` is a TABLE recording which roads got no admin match. It is read by
     the next operation, so an unmatched road is ranked conservatively rather than
-    silently.
+    silently. `config.search_radius_m` is the fallback reach for a road that falls
+    just outside every polygon - a real case along the coastline.
     """
-    normalized = scratch("normalized", TABLE)
-    located = scratch("located")
-    joined = scratch("joined")
+    normalized = scratch("normalized")
+    attributed = scratch("attributed")
+    unmatched = scratch("unmatched")
+    nearest = scratch("nearest", TABLE)
+
     _normalize_admin_codes(
-        areas=areas, output=normalized, scratch=scratch.child("normalize_codes")
+        areas=areas,
+        output=normalized,
+        tb=tb,
+        scratch=scratch.child("normalize_codes"),
     )
-    raise NotImplementedError(
-        f"Identity({roads}, {normalized}, {config.search_radius_m}) -> {located}, "
-        f"JoinField -> {joined}, then {output} and the unmatched summary "
-        f"{match_report}"
+    _attach_area_attributes(
+        roads=roads,
+        areas=normalized,
+        output=attributed,
+        tb=tb,
+        scratch=scratch.child("attach_areas"),
+    )
+    tb.geometry.select(
+        input=attributed, where=Attr(f"{MUNICIPALITY} IS NULL"), output=unmatched
+    )
+    tb.geometry.nearest_neighbors(
+        input=unmatched,
+        near=normalized,
+        output=nearest,
+        search_radius_m=config.search_radius_m,
+    )
+    tb.table.join_field(
+        input=attributed,
+        key=FEATURE_ID,
+        join=nearest,
+        join_key="input_fid",
+        fields=(MUNICIPALITY,),
+    )
+    tb.geometry.copy(input=attributed, output=output)
+    tb.table.write_table(
+        output=match_report,
+        fields=_MATCH_REPORT_FIELDS,
+        rows=tb.table.read_rows(input=unmatched, fields=(FEATURE_ID,)),
     )
 
 
-def _normalize_admin_codes(*, areas: In, output: Out, scratch: ScratchScope) -> None:
+def _normalize_admin_codes(
+    *, areas: In, output: Out, tb: Toolbox, scratch: ScratchScope
+) -> None:
     """Zero-pad municipality codes and drop superseded boundaries."""
-    padded = scratch("padded", TABLE)
-    current = scratch("current", TABLE)
-    raise NotImplementedError(
-        f"CalculateField pad -> {padded}, filter valid_to IS NULL -> {current}, "
-        f"then {output}"
+    padded = scratch("padded")
+
+    tb.geometry.copy(input=areas, output=padded)
+    tb.table.calculate_field(
+        input=padded,
+        field=MUNICIPALITY,
+        expression=f"lpad(cast({MUNICIPALITY} as varchar), 4, '0')",
     )
+    tb.geometry.select(input=padded, where=Attr("valid_to IS NULL"), output=output)
 
 
 @operation
@@ -302,6 +481,7 @@ def calculate_road_hierarchy(
     output: Out,
     rank_table: Out,
     config: HierarchyConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Derive the importance ranking that network thinning consumes downstream.
@@ -320,11 +500,52 @@ def calculate_road_hierarchy(
     """
     with_fields = scratch("with_fields")
     penalised = scratch("penalised")
-    raise NotImplementedError(
-        f"AddField/CalculateField on {roads} weighted by {config.weights} -> "
-        f"{with_fields}, downgrade rows named in {geometry_errors} and "
-        f"{match_report} by {config.repaired_geometry_penalty} -> {penalised}, "
-        f"then {output} and the standalone lookup {rank_table}"
+    weights = config.weights
+
+    tb.geometry.copy(input=roads, output=with_fields)
+    tb.table.add_field(
+        input=with_fields, field=Field(name=RANK, type=FieldType.DOUBLE)
+    )
+    tb.table.calculate_field(
+        input=with_fields,
+        field=RANK,
+        expression=(
+            f"case when {ROAD_CLASS} = 1 then {weights.arterial} "
+            f"when {ROAD_CLASS} = 2 then {weights.collector} "
+            f"else {weights.local} end"
+        ),
+    )
+    tb.table.join_field(
+        input=with_fields,
+        key=FEATURE_ID,
+        join=geometry_errors,
+        join_key=FEATURE_ID,
+        fields=("problem",),
+    )
+    tb.table.join_field(
+        input=with_fields,
+        key=FEATURE_ID,
+        join=match_report,
+        join_key=FEATURE_ID,
+        fields=("reason",),
+    )
+    tb.geometry.copy(input=with_fields, output=penalised)
+    tb.table.calculate_field(
+        input=penalised,
+        field=RANK,
+        expression=(
+            f"{RANK} - case when problem is not null or reason is not null "
+            f"then {config.repaired_geometry_penalty} else 0 end"
+        ),
+    )
+    tb.geometry.copy(input=penalised, output=output)
+    tb.table.write_table(
+        output=rank_table,
+        fields=(
+            Field(name=FEATURE_ID, type=FieldType.LONG),
+            Field(name=RANK, type=FieldType.DOUBLE),
+        ),
+        rows=tb.table.read_rows(input=penalised, fields=(FEATURE_ID, RANK)),
     )
 
 
@@ -340,6 +561,7 @@ def merge_divided_highways(
     output: Out,
     merge_report: Out,
     config: MergeDividedConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Collapse dual carriageways into a single centreline.
@@ -350,28 +572,43 @@ def merge_divided_highways(
     """
     candidates = scratch("candidates")
     paired = scratch("paired", TABLE)
+
+    tb.geometry.select(
+        input=roads, where=Attr("divided = 1"), output=candidates
+    )
     _pair_carriageways(
         roads=candidates,
         output=paired,
+        tb=tb,
         scratch=scratch.child("pair_carriageways"),
         separation_m=config.max_separation_m,
     )
-    raise NotImplementedError(
-        f"Select divided candidates -> {candidates}, MergeDividedRoads using "
-        f"{paired} -> {output}, provenance -> {merge_report}"
+    tb.cartographic.collapse_to_centerline(
+        input=candidates,
+        output=output,
+        max_separation_m=config.max_separation_m,
+        pairs=paired,
+    )
+    tb.table.write_table(
+        output=merge_report,
+        fields=(Field(name=FEATURE_ID, type=FieldType.LONG),),
+        rows=tb.table.read_rows(input=paired, fields=(FEATURE_ID,)),
     )
 
 
 def _pair_carriageways(
-    *, roads: In, output: Out, scratch: ScratchScope, separation_m: float
+    *,
+    roads: In,
+    output: Out,
+    tb: Toolbox,
+    scratch: ScratchScope,
+    separation_m: float,
 ) -> None:
     """Match opposing carriageways within a separation tolerance."""
     buffered = scratch("buffered")
-    overlaps = scratch("overlaps", TABLE)
-    raise NotImplementedError(
-        f"Buffer({roads}, {separation_m}) -> {buffered}, SpatialJoin -> {overlaps}, "
-        f"then the pair list {output}"
-    )
+
+    tb.geometry.buffer(input=roads, output=buffered, distance_m=separation_m)
+    tb.geometry.spatial_join(target=buffered, join=roads, output=output)
 
 
 @operation
@@ -383,6 +620,7 @@ def thin_road_network(
     output: Out,
     dropped: Out,
     config: ThinRoadConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Density-based network selection.
@@ -397,30 +635,47 @@ def thin_road_network(
     ScratchFileManager's manifest maps both rendered names back to their full trails.
 
     `dropped` is not a diagnostic dead end - resolve_ramps reads it to reinstate ramp
-    stubs that connectivity alone would discard.
+    stubs that connectivity alone would discard. `select_network` makes it a required
+    parameter for that reason.
     """
     dissolved = scratch("dissolved")
-    nodes = scratch("nodes")
+    nodes = scratch("nodes", TABLE)
     edges = scratch("edges")
-    reranked_nodes = scratch("reranked_nodes")
+    reranked_nodes = scratch("reranked_nodes", TABLE)
     reranked_edges = scratch("reranked_edges")
+    weighted = scratch("weighted")
 
+    tb.geometry.dissolve(
+        input=roads,
+        output=dissolved,
+        fields=(ROAD_CLASS,),
+        option=DissolveOption.SINGLE_PART,
+    )
     _build_topology(
         roads=dissolved,
         nodes=nodes,
         edges=edges,
+        tb=tb,
         scratch=scratch.child("build_topology"),
     )
+    tb.geometry.copy(input=edges, output=weighted)
+    tb.table.join_field(
+        input=weighted, key=FEATURE_ID, join=ranks, join_key=FEATURE_ID, fields=(RANK,)
+    )
     _build_topology(
-        roads=dissolved,
+        roads=weighted,
         nodes=reranked_nodes,
         edges=reranked_edges,
+        tb=tb,
         scratch=scratch.child("build_topology", "reranked"),
     )
-    raise NotImplementedError(
-        f"Dissolve({roads}) -> {dissolved}, ThinRoadNetwork over {edges} weighted by "
-        f"{ranks} and {config.weights}, exempting rows in {merge_report} and "
-        f"honouring {config.minimum_length_m}m -> {output} and {dropped}"
+    tb.cartographic.select_network(
+        input=reranked_edges,
+        output=output,
+        dropped=dropped,
+        minimum_length_m=config.minimum_length_m,
+        weight_field=RANK,
+        exempt=Attr(f"{FEATURE_ID} in (select {FEATURE_ID} from merge_report)"),
     )
 
 
@@ -432,6 +687,7 @@ def resolve_ramps(
     output_lines: Out,
     output_points: Out,
     config: RampConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Collapse interchange ramps, emitting simplified lines AND junction points.
@@ -444,29 +700,44 @@ def resolve_ramps(
     ramp_candidates = scratch("ramp_candidates")
     reinstated = scratch("reinstated")
     collapsed = scratch("collapsed")
+
+    tb.geometry.select(
+        input=roads, where=Attr("is_ramp = 1"), output=ramp_candidates
+    )
+    tb.geometry.merge(inputs=(ramp_candidates, dropped), output=reinstated)
+    tb.cartographic.collapse_to_centerline(
+        input=reinstated, output=collapsed, max_separation_m=config.cluster_radius_m
+    )
+    tb.geometry.copy(input=collapsed, output=output_lines)
     _representative_points(
         features=collapsed,
         output=output_points,
+        tb=tb,
         scratch=scratch.child("representative_points"),
         cluster_radius_m=config.cluster_radius_m,
-    )
-    raise NotImplementedError(
-        f"Select ramps from {roads} -> {ramp_candidates}, re-add stubs from "
-        f"{dropped} -> {reinstated}, CollapseDualLines -> {collapsed}, "
-        f"then {output_lines}"
     )
 
 
 def _representative_points(
-    *, features: In, output: Out, scratch: ScratchScope, cluster_radius_m: float
+    *,
+    features: In,
+    output: Out,
+    tb: Toolbox,
+    scratch: ScratchScope,
+    cluster_radius_m: float,
 ) -> None:
-    """One point per interchange, at the centroid of its ramp cluster."""
+    """One point per interchange, at a point guaranteed to lie on its ramp cluster.
+
+    `point_on_surface` RATHER THAN `centroid`, and the distinction is load-bearing
+    here: an interchange cluster is horseshoe-shaped often enough that its centroid
+    falls in the middle of the field it encircles.
+    """
     clusters = scratch("clusters")
-    midpoints = scratch("midpoints")
-    raise NotImplementedError(
-        f"FindPointClusters({features}, {cluster_radius_m}) -> {clusters}, "
-        f"FeatureToPoint -> {midpoints}, then {output}"
+
+    tb.geometry.cluster_points(
+        input=features, output=clusters, search_radius_m=cluster_radius_m
     )
+    tb.geometry.point_on_surface(input=clusters, output=output)
 
 
 @operation
@@ -477,6 +748,7 @@ def snap_to_source_geometry(
     output: Out,
     displacement: Out,
     config: SnapConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Pull generalized centrelines back onto authoritative source positions.
@@ -492,15 +764,21 @@ def snap_to_source_geometry(
     """
     before_snap = scratch("before_snap")
     snapped = scratch("snapped")
+
+    tb.geometry.copy(input=roads, output=before_snap)
+    tb.geometry.snap(
+        input=before_snap,
+        reference=reference,
+        output=snapped,
+        tolerance_m=config.tolerance_m,
+    )
+    tb.geometry.copy(input=snapped, output=output)
     _vertex_deltas(
         before=before_snap,
         after=snapped,
         output=displacement,
+        tb=tb,
         scratch=scratch.child("vertex_deltas"),
-    )
-    raise NotImplementedError(
-        f"CopyFeatures({roads}) -> {before_snap}, "
-        f"Snap to {reference} at {config.tolerance_m}m -> {snapped}, then {output}"
     )
 
 
@@ -517,6 +795,7 @@ def resolve_road_railway_conflicts(
     output: Out,
     conflicts: Out,
     config: RailwayClearanceConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Displace roads away from railway lines that would collide at this scale.
@@ -524,14 +803,26 @@ def resolve_road_railway_conflicts(
     `conflicts` records where a displacement was applied and by how much. It is read
     by finalize_road_attributes, which flags the affected features in the published
     schema rather than leaving the edit invisible.
+
+    THE SELECTION IS A PREDICATE VALUE, not a layer plus two mutating calls. The
+    pre-port version was `Buffer -> SelectLayerByLocation -> ResolveRoadConflicts`;
+    the buffer existed only to give the location selection something to test against,
+    and `DWithin` says the same thing without materializing it. That is 616 call
+    sites of the same shape in the current codebase. ADR-0001.
     """
-    clearance_zone = scratch("clearance_zone")
     intersecting = scratch("intersecting")
-    displaced = scratch("displaced")
-    raise NotImplementedError(
-        f"Buffer({railway}, {config.min_clearance_m}) -> {clearance_zone}, "
-        f"SelectLayerByLocation({roads}) -> {intersecting}, ResolveRoadConflicts -> "
-        f"{displaced}, then {output} and {conflicts}"
+
+    tb.geometry.select(
+        input=roads,
+        where=Intersects(railway) | Attr("bridge = 0"),
+        output=intersecting,
+    )
+    tb.cartographic.displace_features(
+        input=intersecting,
+        output=output,
+        barriers=railway,
+        minimum_clearance_m=config.min_clearance_m,
+        displacement=conflicts,
     )
 
 
@@ -542,20 +833,26 @@ def simplify_road_geometry(
     output: Out,
     collapsed_points: Out,
     config: SimplifyConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Vertex reduction.
 
-    TWO OUTPUTS BECAUSE THE GP TOOL HAS TWO. arcpy.cartography.SimplifyLine emits a
-    point feature class for features that collapse below the tolerance. Declaring it
-    rather than discarding it is what lets the finalize step account for every input
-    feature.
+    TWO OUTPUTS BECAUSE THE OPERATOR HAS TWO. Simplification emits a point per
+    feature that collapses below the tolerance. Declaring it rather than discarding
+    it is what lets the finalize step account for every input feature - which is why
+    `simplify` takes `collapsed_points` as a parameter rather than dropping them.
     """
     densified = scratch("densified")
-    simplified = scratch("simplified")
-    raise NotImplementedError(
-        f"Densify({roads}) -> {densified}, SimplifyLine at {config.tolerance_m}m -> "
-        f"{simplified} plus collapse points, then {output} and {collapsed_points}"
+
+    tb.geometry.densify(
+        input=roads, output=densified, max_deviation_m=config.tolerance_m / 10.0
+    )
+    tb.cartographic.simplify(
+        input=densified,
+        output=output,
+        tolerance_m=config.tolerance_m,
+        collapsed_points=collapsed_points,
     )
 
 
@@ -566,6 +863,7 @@ def smooth_road_geometry(
     barriers: In,
     output: Out,
     config: SmoothConfig,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Bend smoothing, held off the railway.
@@ -576,28 +874,31 @@ def smooth_road_geometry(
     """
     prepared = scratch("prepared")
     segments = scratch("segments")
+
+    tb.geometry.copy(input=roads, output=prepared)
     _split_at_barriers(
         roads=prepared,
         barriers=barriers,
         output=segments,
+        tb=tb,
         scratch=scratch.child("split_at_barriers"),
     )
-    raise NotImplementedError(
-        f"CopyFeatures({roads}) -> {prepared}, SmoothLine over {segments} at "
-        f"{config.tolerance_m}m -> {output}"
+    tb.cartographic.smooth(
+        input=segments,
+        output=output,
+        tolerance_m=config.tolerance_m,
+        barriers=barriers,
     )
 
 
 def _split_at_barriers(
-    *, roads: In, barriers: In, output: Out, scratch: ScratchScope
+    *, roads: In, barriers: In, output: Out, tb: Toolbox, scratch: ScratchScope
 ) -> None:
     """Break lines where a barrier crosses, so smoothing cannot pull across one."""
     crossings = scratch("crossings")
-    split = scratch("split")
-    raise NotImplementedError(
-        f"Intersect({roads}, {barriers}) -> {crossings}, SplitLineAtPoint -> "
-        f"{split}, then {output}"
-    )
+
+    tb.geometry.intersection(input=roads, overlay=barriers, output=crossings)
+    tb.geometry.split_at_points(input=roads, points=crossings, output=output)
 
 
 @operation
@@ -608,6 +909,7 @@ def finalize_road_attributes(
     conflicts: In,
     collapsed_points: In,
     output: Out,
+    tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
     """Drop working fields and set the published schema.
@@ -624,20 +926,45 @@ def finalize_road_attributes(
     """
     joined = scratch("joined")
     flagged = scratch("flagged")
+
+    tb.geometry.copy(input=roads, output=joined)
+    tb.table.join_field(
+        input=joined, key=FEATURE_ID, join=ranks, join_key=FEATURE_ID, fields=(RANK,)
+    )
+    tb.geometry.copy(input=joined, output=flagged)
+    tb.table.add_field(
+        input=flagged, field=Field(name="edited", type=FieldType.SHORT)
+    )
+    tb.table.calculate_field(
+        input=flagged,
+        field="edited",
+        expression=(
+            f"case when {FEATURE_ID} in (select {FEATURE_ID} from conflicts) "
+            f"or {FEATURE_ID} in (select {FEATURE_ID} from collapsed_points) "
+            "then 1 else 0 end"
+        ),
+    )
     _apply_product_schema(
-        features=flagged, output=output, scratch=scratch.child("apply_product_schema")
-    )
-    raise NotImplementedError(
-        f"JoinField({roads}, {ranks}) -> {joined}, flag rows named in {conflicts} "
-        f"and {collapsed_points} -> {flagged}"
+        features=flagged, output=output, tb=tb, scratch=scratch.child("product_schema")
     )
 
 
-def _apply_product_schema(*, features: In, output: Out, scratch: ScratchScope) -> None:
-    """Field mapping into the published schema. The last thing before upload."""
-    mapped = scratch("mapped")
-    typed = scratch("typed")
-    raise NotImplementedError(
-        f"FieldMapping over {features} -> {mapped}, type coercion -> {typed}, "
-        f"then {output}"
+def _apply_product_schema(
+    *, features: In, output: Out, tb: Toolbox, scratch: ScratchScope
+) -> None:
+    """Field mapping into the published schema. The last thing before upload.
+
+    `keep_unmapped=False` is the default on `map_fields` for this call site: the
+    point of the step is to DROP the working fields, and a default that kept them
+    would make forgetting silent.
+    """
+    tb.table.map_fields(
+        input=features,
+        output=output,
+        mapping={
+            FEATURE_ID: "objid",
+            ROAD_CLASS: "vegkategori",
+            RANK: "prioritet",
+            "edited": "redigert",
+        },
     )
