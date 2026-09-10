@@ -1,9 +1,12 @@
 # Libraries
 
 import json
+import time
 
 from pathlib import Path
 from collections import Counter
+
+from hexagonal.validationStatus import ValidationStatus
 
 ##########################
 # Classes
@@ -12,26 +15,21 @@ from collections import Counter
 
 class ValidatorOrchestrator:
 
-    #TODO: Legge til og fjerne permanente og midlertidige regler
+    def __init__(self, stats_provider):
+        self.stats_provider = stats_provider
 
-    ##########################
-    # Constants
-    ##########################
+        self.id: int = int(time.time())
+        self.step: int = 0
 
-    STATUS_SEVERITY = ("SUCCESS", "WARNING", "ERROR")
-    STATUS_THRESHOLDS = (
-        (0.3, "SUCCESS"),
-        (0.6, "WARNING"),
-    )
+        self.previous_path: Path = None
+
+        self.validator = ValidationStatus()
+
+        self.validator.add_permanent_rule(stats_provider.RULES)
 
     ##########################
     # Main functions
     ##########################
-
-    def __init__(self, scale: str):
-        self.scale: str = scale
-        self.step: int = 0
-        self.previous_path: Path = None
 
     def save_validation_results(
         self, results: dict, output_dir: str = "./validation_results"
@@ -41,19 +39,18 @@ class ValidatorOrchestrator:
 
         self.step += 1
 
-        current_path = Path.joinpath(output_dir, f"validation_{self.step}.json")
+        current_path = Path.joinpath(
+            output_dir, f"validation_{self.id}_{self.step}.json"
+        )
 
-        difference = {}
+        difference, status_counter, overall_status = {}, Counter(), "SUCCESS"
+
         if self.previous_path and self.previous_path.exists():
             with open(self.previous_path, "r", encoding="utf-8") as f:
                 previous_payload = json.load(f)
             previous_results = previous_payload.get("results", {})
             difference = self.calculate_diff(previous_results, results)
-            status_counter, overall_status = self.status_update(
-                previous_results, difference
-            )
-        else:
-            status_counter, overall_status = Counter(), "SUCCESS"
+            status_counter, overall_status = self.validator.status_update(difference)
 
         payload = {
             "run": self.step,
@@ -80,35 +77,46 @@ class ValidatorOrchestrator:
         for key in all_keys:
             old_value = previous.get(key)
             new_value = current.get(key)
-            if type(new_value) not in (int, float, dict):
-                continue
-            if type(old_value) == type(new_value):
-                if isinstance(old_value, (int, float)):
-                    diff[key] = new_value - old_value
+            if old_value is None and isinstance(new_value, (int, float)):
+                diff[key] = {
+                    "old": old_value,
+                    "new": new_value,
+                    "diff": new_value,
+                    "ratio": 0,
+                }
+            elif type(old_value) == type(new_value):
+                if isinstance(old_value, bool):
+                    diff[key] = {
+                        "old": old_value,
+                        "new": new_value,
+                        "diff": new_value != old_value,
+                    }
+                elif isinstance(old_value, (int, float)):
+                    diff[key] = {
+                        "old": old_value,
+                        "new": new_value,
+                        "diff": new_value - old_value,
+                        "ratio": (
+                            (new_value - old_value) / old_value
+                            if old_value != 0
+                            else None
+                        ),
+                    }
                 elif isinstance(old_value, dict):
                     diff[key] = self.calculate_diff(old_value, new_value)
-
+                else:
+                    diff[key] = {
+                        "old": old_value,
+                        "new": new_value,
+                        "changed_type": True,
+                    }
+            else:
+                diff[key] = {"old": old_value, "new": new_value, "changed_type": True}
         return diff
 
-    def status_update(self, previous: dict, difference: dict) -> tuple[Counter, str]:
-        all_keys = set(previous.keys()) | set(difference.keys())
-
-        status = Counter()
-
-        for key in all_keys:
-            old_value = previous.get(key)
-            new_value = difference.get(key)
-            if type(old_value) != type(new_value):
-                continue
-
-            if isinstance(old_value, (int, float)):
-                ratio = new_value / old_value if old_value != 0 else 0
-                status[self._classify_ratio(ratio)] += 1
-            elif isinstance(old_value, dict):
-                nested_status, _ = self.status_update(old_value, new_value)
-                status.update(nested_status)
-
-        return status, self._most_severe_status(status)
+    ##########################
+    # Helper functions
+    ##########################
 
     def class_branch(self, cls):
         path = [cls]
@@ -134,19 +142,3 @@ class ValidatorOrchestrator:
             current_level = next_level
 
         return result
-
-    ##########################
-    # Helper functions
-    ##########################
-
-    def _classify_ratio(self, ratio: float) -> str:
-        for threshold, label in self.STATUS_THRESHOLDS:
-            if ratio < threshold:
-                return label
-        return "ERROR"
-
-    def _most_severe_status(self, status: Counter) -> str:
-        for label in reversed(self.STATUS_SEVERITY):
-            if status[label] > 0:
-                return label
-        return "SUCCESS"

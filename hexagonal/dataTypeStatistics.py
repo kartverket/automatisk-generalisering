@@ -1,27 +1,47 @@
 # Libraries
 
-import arcpy  # TODO: Til slutt skal ikke denne ha arcpy
+import arcpy
 
-from hexagonal.validatorOrchestrator import ValidatorOrchestrator
+from hexagonal.validationStatus import Rule, Severity
 
 ##########################
 # Classes
 ##########################
 
 
-class VectorValidator(ValidatorOrchestrator):
+class VectorStatistics:
+
+    ##########################
+    # Rules
+    ##########################
+
+    RULES = [
+        Rule("exists", "eqn", True, Severity.ERROR),
+        Rule("has_data", "eqn", True, Severity.ERROR),
+        Rule(
+            "object_count",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "vertex_count",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule("null_count", "eqn", 0, Severity.ERROR),
+    ]
 
     ##########################
     # Main functions
     ##########################
 
-    def validate(self, fc: str) -> dict:
+    def get_stats(self, fc: str) -> dict:
         exists = self.data_exists(fc)
 
         object_count = self.get_num_obj(fc) if exists else 0
         vertex_count, null_count = self.get_geom_data(fc) if exists else (0, 0)
-
-        print("Vector stats collected")
 
         return {
             "exists": exists,

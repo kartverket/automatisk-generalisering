@@ -4,21 +4,44 @@ import arcpy
 
 from collections import defaultdict
 
-from hexagonal.dataTypeValidators import VectorValidator
+from hexagonal.dataTypeStatistics import VectorStatistics
+from hexagonal.validationStatus import Rule, Severity
 
 ##########################
 # Classes
 ##########################
 
 
-class PolygonValidator(VectorValidator):
+class PolygonStatistics(VectorStatistics):
+
+    RULES = [
+        Rule("total_area", "eqd", 0, Severity.ERROR),
+        Rule(
+            "min_area",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "max_area",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "avg_area",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+    ] + VectorStatistics.RULES
 
     ##########################
     # Main functions
     ##########################
 
-    def validate(self, fc: str) -> dict:
-        r1 = super().validate(fc=fc)
+    def get_stats(self, fc: str) -> dict:
+        r1 = super().get_stats(fc=fc)
         r2 = self.get_poly_stats(fc=fc)
         return {**r1, **r2}
 
@@ -39,8 +62,6 @@ class PolygonValidator(VectorValidator):
                 min_area = min(min_area, area)
                 max_area = max(max_area, area)
 
-        print("Polygon stats collected")
-
         if count == 0:
             return {"total_area": 0, "min_area": 0, "max_area": 0, "avg_area": 0}
 
@@ -52,14 +73,53 @@ class PolygonValidator(VectorValidator):
         }
 
 
-class LineValidator(VectorValidator):
+class LineStatistics(VectorStatistics):
+
+    RULES = [
+        Rule(
+            "total_length",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "min_length",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "max_length",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "avg_length",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "dangle_count_absolute",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+        Rule(
+            "dangle_count_relative",
+            "ratio",
+            [0.3, 0.6],
+            [Severity.SUCCESS, Severity.WARNING, Severity.ERROR],
+        ),
+    ] + VectorStatistics.RULES
 
     ##########################
     # Main functions
     ##########################
 
-    def validate(self, fc: str) -> dict:
-        r1 = super().validate(fc=fc)
+    def get_stats(self, fc: str) -> dict:
+        r1 = super().get_stats(fc=fc)
         r2 = self.get_line_stats(fc=fc)
         return {**r1, **r2}
 
@@ -90,8 +150,6 @@ class LineValidator(VectorValidator):
                         point_key = (p.X, p.Y)
                         points[point_key].append(oid)
 
-        print("Line stats collected")
-
         if count == 0:
             return {
                 "total_length": 0,
@@ -115,16 +173,15 @@ class LineValidator(VectorValidator):
         }
 
 
-class PointValidator(VectorValidator):
+class PointStatistics(VectorStatistics):
 
     ##########################
     # Main functions
     ##########################
 
-    def validate(self, fc: str) -> dict:
-        r1 = super().validate(fc=fc)
+    def get_stats(self, fc: str) -> dict:
+        r1 = super().get_stats(fc=fc)
         r2 = {}
-        print("Point stats collected")
         return {**r1, **r2}
 
     ##########################
