@@ -66,7 +66,8 @@ async def fan_in(stage_name: str, stage_spec: StageSpec) -> None:
 
 def _completion_log_path(stage_name: str) -> Path:
     """Return the completion-log path for a stage."""
-    completion_log_dir = Path(__file__).resolve().parent / "completion_log"
+    completion_log_dir = Path("/tmp/completion_log")
+    completion_log_dir.mkdir(parents=True, exist_ok=True)
     file_name = f"{stage_name}.json"
     file_name = file_name.replace(":", "_")
     return completion_log_dir / file_name

@@ -31,3 +31,6 @@ CMD ["python", "main_on_cloud.py"]
 
 FROM base AS run_partition
 CMD ["python", "temp_skip_folder/core/pipelines/run_partition.py"]
+
+FROM base AS workflow_executor
+CMD ["python", "temp_skip_folder/core/job_orchestrator/workflow_executor.py"]
