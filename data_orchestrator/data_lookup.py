@@ -37,6 +37,10 @@ PIPELINE_INPUT = {
         dn.object_bane: {
             dn.railway: [dn.Bane_FKB, dn.Bane_N50, dn.JernbaneStasjon_BaneNor]
         },
+        dn.object_ledning: {
+            dn.area: [dn.ArealdekkeFlate_N50],
+            dn.fkb: [dn.fkb_ledning, dn.fkb_mast],
+        },
     },
     dn.scale_n50: {
         dn.object_bygning: [],
