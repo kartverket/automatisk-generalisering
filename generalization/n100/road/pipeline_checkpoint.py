@@ -10,19 +10,19 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def _checkpoint_prefix() -> str:
+def _checkpoint_prefix(namespace: str) -> str:
     area = os.environ.get("AREA")
     if area:
-        return f"checkpoints/n100_road/{area}"
-    return "checkpoints/n100_road"
+        return f"checkpoints/{namespace}/{area}"
+    return f"checkpoints/{namespace}"
 
 
-def _log_object() -> str:
-    return f"{_checkpoint_prefix()}/log.txt"
+def _log_object(namespace: str) -> str:
+    return f"{_checkpoint_prefix(namespace)}/log.txt"
 
 
-def _state_object() -> str:
-    return f"{_checkpoint_prefix()}/state.gdb.zip"
+def _state_object(namespace: str) -> str:
+    return f"{_checkpoint_prefix(namespace)}/state.gdb.zip"
 
 
 def _zip_gdb(gdb_path: Path) -> Path:
@@ -66,9 +66,12 @@ class PipelineCheckpoint(ABC):
 
 
 class GCSPipelineCheckpoint(PipelineCheckpoint):
-    def __init__(self, bucket_name: str, gdb_path: Path) -> None:
+    def __init__(
+        self, bucket_name: str, gdb_path: Path, namespace: str = "n100_road"
+    ) -> None:
         self._bucket_name = bucket_name
         self._gdb_path = gdb_path
+        self._namespace = namespace
 
     def _bucket(self):
         from google.cloud import storage
@@ -79,8 +82,10 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
         bucket = self._bucket()
         zip_path = _zip_gdb(self._gdb_path)
         try:
-            bucket.blob(_state_object()).upload_from_filename(str(zip_path))
-            bucket.blob(_log_object()).upload_from_string(
+            bucket.blob(_state_object(self._namespace)).upload_from_filename(
+                str(zip_path)
+            )
+            bucket.blob(_log_object(self._namespace)).upload_from_string(
                 step_name, content_type="text/plain"
             )
             logger.info("Checkpoint saved after step: %s", step_name)
@@ -91,7 +96,7 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
         from google.cloud.exceptions import NotFound
 
         bucket = self._bucket()
-        log_blob = bucket.blob(_log_object())
+        log_blob = bucket.blob(_log_object(self._namespace))
         try:
             step_name = log_blob.download_as_text().strip()
         except NotFound:
@@ -100,7 +105,9 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
         logger.info("Checkpoint found — last completed step: %s", step_name)
         tmp_zip = Path(tempfile.mkdtemp()) / "state.gdb.zip"
         try:
-            bucket.blob(_state_object()).download_to_filename(str(tmp_zip))
+            bucket.blob(_state_object(self._namespace)).download_to_filename(
+                str(tmp_zip)
+            )
             _unzip_gdb(tmp_zip, self._gdb_path.parent)
             logger.info("GDB state restored from checkpoint")
         finally:
@@ -111,7 +118,10 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
         from google.cloud.exceptions import NotFound
 
         bucket = self._bucket()
-        for obj in (_log_object(), _state_object()):
+        for obj in (
+            _log_object(self._namespace),
+            _state_object(self._namespace),
+        ):
             try:
                 bucket.blob(obj).delete()
             except NotFound:
@@ -120,24 +130,31 @@ class GCSPipelineCheckpoint(PipelineCheckpoint):
 
 
 class ScalityPipelineCheckpoint(PipelineCheckpoint):
-    def __init__(self, client, bucket_name: str, gdb_path: Path) -> None:
+    def __init__(
+        self,
+        client,
+        bucket_name: str,
+        gdb_path: Path,
+        namespace: str = "n100_road",
+    ) -> None:
         self._client = client
         self._bucket_name = bucket_name
         self._gdb_path = gdb_path
+        self._namespace = namespace
 
     def save(self, step_name: str) -> None:
         zip_path = _zip_gdb(self._gdb_path)
         try:
             self._client.fput_object(
                 bucket_name=self._bucket_name,
-                object_name=_state_object(),
+                object_name=_state_object(self._namespace),
                 file_path=str(zip_path),
                 content_type="application/zip",
             )
             encoded = step_name.encode()
             self._client.put_object(
                 bucket_name=self._bucket_name,
-                object_name=_log_object(),
+                object_name=_log_object(self._namespace),
                 data=io.BytesIO(encoded),
                 length=len(encoded),
                 content_type="text/plain",
@@ -150,7 +167,9 @@ class ScalityPipelineCheckpoint(PipelineCheckpoint):
         from minio.error import S3Error
 
         try:
-            response = self._client.get_object(self._bucket_name, _log_object())
+            response = self._client.get_object(
+                self._bucket_name, _log_object(self._namespace)
+            )
             step_name = response.read().decode().strip()
             response.close()
             response.release_conn()
@@ -164,7 +183,7 @@ class ScalityPipelineCheckpoint(PipelineCheckpoint):
         try:
             self._client.fget_object(
                 bucket_name=self._bucket_name,
-                object_name=_state_object(),
+                object_name=_state_object(self._namespace),
                 file_path=str(tmp_zip),
             )
             _unzip_gdb(tmp_zip, self._gdb_path.parent)
@@ -176,7 +195,10 @@ class ScalityPipelineCheckpoint(PipelineCheckpoint):
     def delete(self) -> None:
         from minio.error import S3Error
 
-        for obj in (_log_object(), _state_object()):
+        for obj in (
+            _log_object(self._namespace),
+            _state_object(self._namespace),
+        ):
             try:
                 self._client.remove_object(self._bucket_name, obj)
             except S3Error as exc:
