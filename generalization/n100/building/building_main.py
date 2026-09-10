@@ -1,4 +1,7 @@
 # Importing modules
+from collections.abc import Callable
+from pathlib import Path
+
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
@@ -25,10 +28,12 @@ from generalization.n100.building import (
     simplify_polygons,
 )
 
+from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
+
 
 # Main function that runs all the building scripts
 @timing_decorator
-def main():
+def main(checkpoint: PipelineCheckpoint | None = None) -> None:
     """
     Building N100 Generalization version 1.0
 
@@ -90,26 +95,70 @@ def main():
         MORE DOCSTRING NEEDED: Because we need to processing building information so it is cartographic usable for N100 scale.
     """
     environment_setup.main()
-    data_orc: InputDataOrchestrator = data_preparation.main()
-    simplify_polygons.main()
-    calculate_polygon_values.main()
-    polygon_propogate_displacement.main()
-    polygon_resolve_building_conflicts.main(data_orc=data_orc)
-    polygon_to_point.main()
-    calculate_point_values.main()
-    point_propogate_displacement.main()
-    hospital_church_clusters.main()
-    point_displacement_with_buffer.main()
-    point_resolve_building_conflicts.main(data_orc=data_orc)
-    removing_points_and_erasing_polygons_in_water_features.main()
-    removing_overlapping_polygons_and_points.main(data_orc=data_orc)
-    finalizing_buildings.main()
-    data_clean_up.main()
-    with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
-        f.write(
-            f"Total amount of work files created: "
-            f"{WorkFileManager._build_file_counter}"
-        )
+
+    last_completed = checkpoint.load() if checkpoint else None
+    if last_completed is None:
+        data_orc = data_preparation.main()
+        if checkpoint:
+            checkpoint.save("data_preparation")
+    else:
+        data_orc = InputDataOrchestrator(map_scale="n100", pipeline="building")
+
+    steps: list[tuple[str, Callable[[], object]]] = [
+        ("simplify_polygons", simplify_polygons.main),
+        ("calculate_polygon_values", calculate_polygon_values.main),
+        ("polygon_propogate_displacement", polygon_propogate_displacement.main),
+        (
+            "polygon_resolve_building_conflicts",
+            lambda: polygon_resolve_building_conflicts.main(data_orc=data_orc),
+        ),
+        ("polygon_to_point", polygon_to_point.main),
+        ("calculate_point_values", calculate_point_values.main),
+        ("point_propogate_displacement", point_propogate_displacement.main),
+        ("hospital_church_clusters", hospital_church_clusters.main),
+        ("point_displacement_with_buffer", point_displacement_with_buffer.main),
+        (
+            "point_resolve_building_conflicts",
+            lambda: point_resolve_building_conflicts.main(data_orc=data_orc),
+        ),
+        (
+            "removing_points_and_erasing_polygons_in_water_features",
+            removing_points_and_erasing_polygons_in_water_features.main,
+        ),
+        (
+            "removing_overlapping_polygons_and_points",
+            lambda: removing_overlapping_polygons_and_points.main(
+                data_orc=data_orc
+            ),
+        ),
+        ("finalizing_buildings", finalizing_buildings.main),
+        ("data_clean_up", data_clean_up.main),
+        (
+            "write_workfile_count",
+            lambda: Path(
+                Building_N100.total_workfile_manager_files__n100.value
+            ).write_text(
+                "Total amount of work files created: "
+                f"{WorkFileManager._build_file_counter}",
+                encoding="utf-8",
+            ),
+        ),
+    ]
+    step_names = [name for name, _ in steps]
+    if last_completed and last_completed not in ["data_preparation", *step_names]:
+        raise ValueError(f"Unknown building pipeline checkpoint: {last_completed}")
+
+    start_index = 0
+    if last_completed and last_completed != "data_preparation":
+        start_index = step_names.index(last_completed) + 1
+
+    for name, step in steps[start_index:]:
+        step()
+        if checkpoint:
+            checkpoint.save(name)
+
+    if checkpoint:
+        checkpoint.delete()
 
 
 if __name__ == "__main__":

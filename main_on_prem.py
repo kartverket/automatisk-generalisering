@@ -164,9 +164,19 @@ def pipeline_n10_arealdekke(args: argparse.Namespace) -> None:
     # run_n10_arealdekke()
 
 
+def pipeline_n100_buildings(
+    args: argparse.Namespace, checkpoint: ScalityPipelineCheckpoint | None = None
+) -> None:
+    from generalization.n100.building.building_main import main as run_n100_buildings
+
+    logger.info("Starting pipeline for %s", args)
+    run_n100_buildings(checkpoint=checkpoint)
+
+
 DISPATCH: Dict[Tuple[str, str], Callable[[argparse.Namespace], None]] = {
     ("n100", "road"): pipeline_n100_road,
     ("n10", "arealdekke"): pipeline_n10_arealdekke,
+    ("n100", "building"): pipeline_n100_buildings,
 }
 
 
@@ -236,7 +246,8 @@ def main():
     checkpoint = ScalityPipelineCheckpoint(
         client=s3,
         bucket_name=bucket_name,
-        gdb_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb"),
+        gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),
+        namespace=f"{args.scale}_{args.obj}",
     )
     handler(args, checkpoint=checkpoint)
 
@@ -245,11 +256,11 @@ def main():
             f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/road.gdb.zip"
         )
     else:
-        object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"
+        object_name = f"outputs/{args.scale}_{args.obj}/output.gdb.zip"
     upload_results_to_scality(
         client=s3,
         bucket_name=bucket_name,
-        local_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb/"),
+        local_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb/"),
         object_name=object_name,
     )
 
