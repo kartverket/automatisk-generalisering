@@ -16,15 +16,47 @@ it, so no task needs conversation history to be actionable.
 context compaction or a three-month gap.
 
 **Migration protocol.** A task is not done when the code works. It is done when the code works
-**and** every A-item in its `doc migration` line has been moved to its `destination:` in
-DECISIONS.md — an ADR, a module or class docstring, `02-runtime.md`, `03-architecture.md`, or the
-validation vocabulary. Move the content, then strike the A-item in DECISIONS.md with a pointer to
-where it landed. Do not leave a copy in both places; two copies diverge.
+**and** every A-item in its `doc migration` line has:
 
-**Completion test.** `docs/refactor/temp/` is deletable when every task below is `done` and every
-A-item in DECISIONS.md has landed at its destination. The remaining B-items must by then be either
-resolved into A-items or promoted into a real document as stated open questions. If temp still has
-content and every task is done, something did not migrate.
+1. been moved to its `destination:` — an ADR, a module or class docstring, `02-runtime.md`,
+   `03-architecture.md`, or the validation vocabulary;
+2. been struck in DECISIONS.md with a pointer to where it landed — do not leave a copy in both
+   places, because two copies diverge; **and**
+3. had **every `01-terminology.md` entry citing it repointed to that destination.**
+
+Step 3 is not housekeeping. The glossary's authority column cites A-ids, and those A-ids live only
+here — so without it the citations decay silently as temp empties, and the completion test would
+otherwise pass at the exact moment every one of them becomes a dead reference to a deleted
+directory.
+
+**Grep after editing, not only before.** An edit can look applied and still fail: a phrase that
+wraps across a line break is no longer greppable, so a term you just added is not findable by the
+next person or by the checks below. This has already happened once, to the `mint generation`
+addition in A9.10.
+
+**Completion test.** `docs/refactor/temp/` is deletable when:
+
+1. every task below is `done`; **and**
+2. every A-item has landed at its `destination:`, whether it rode on a task or not; **and**
+3. every B-item is either resolved into an A-item or promoted into a real document as a stated
+   open question; **and**
+4. **no `01-terminology.md` entry cites an A-id any more** — every authority column points at a
+   real document. Without this clause the test passes precisely when the glossary's citations all
+   become dead references.
+
+**Run `python3 docs/refactor/temp/check_consistency.py`** rather than checking by eye. It covers
+clauses 1, 3 and 4 mechanically, plus dependency ordering and both directions of the
+terminology/DECISIONS cross-reference. It exits non-zero, so it can go into CI unchanged, and it
+dies with this directory. Every check in it was added because it found a real defect — the
+docstring says which.
+
+**Not every A-item rides on a task.** A1.1, A1.2 and A1.3 are guidance — code organisation,
+operation granularity, and `Toolbox` as an explicit parameter — with nothing to build. They
+migrate through **T7.1**, a documentation-only task, so that the test above stays mechanical
+rather than needing a judgment call about which decisions "count".
+
+If temp still has content and every task is `done`, something did not migrate. If a task is
+`done` and its A-items are still here, the task was closed early.
 
 ## Ordering
 
@@ -71,6 +103,7 @@ work but have different lifetimes and different modules.
 | # | id | task | status |
 |---|---|---|---|
 | 1 | T0.1 | **GATE** — 64-bit storage capability | not started |
+| 1b | T0.6 | **GATE** — disk-backed map cost, and copy-vs-map cost | not started |
 | 2 | T0.2 | Per-feature id in `PartitionIterator` | not started |
 | 3 | T1.1 | Shadow centroid selection and comparison | not started |
 | 4 | T1.3 | Synthetic transform suite | not started |
@@ -88,13 +121,15 @@ work but have different lifetimes and different modules.
 | 16 | T2.4 | Parents out-param and column constants | not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
-| 19 | T3.4 | Ingest step | not started |
+| 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
 | 20 | T3.5 | Per-job log artifact and counter checkpoint | not started |
+| 20b | T3.6 | Lineage retention alongside products | not started |
+| 20c | T3.7 | Foreign-id guard | not started |
 | 21 | T3.2 | Work-key API | not started |
 | 22 | T4.1 | `@row_shape` types and CI check | not started |
 | 23 | T4.2 | Declare shapes across the port surface | not started |
 | 24 | T4.3 | Generic lineage facade | not started |
-| 25 | T4.5 | Id-map cache | not started |
+| 25 | T4.5 | Disk-backed id map | not started |
 | 26 | T4.4 | Lineage-aware `read_rows` → `write_table` pipe | not started |
 | 27 | T4.6 | Mint, edges, and the per-operation sweep | not started |
 | 28 | T4.8 | Stage-exit sweep | not started |
@@ -108,7 +143,9 @@ work but have different lifetimes and different modules.
 | 36 | T5.3 | Origin-closure check and `DISPLACEMENT_FEATURE` fix | not started |
 | 37 | T5.4 | Ownership-assignment verification | not started |
 | 38 | T6.1 | Edge storage format | not started |
-| 39 | T6.2 | Lineage walk API | not started |
+| 39 | T6.2 | Lineage walk API, with boundary-crossing and named degradation | not started |
+| 40 | T7.1 | Documentation-only migration (A1.x) | not started |
+| 41 | T7.2 | `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]` | not started |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -150,6 +187,77 @@ is a text field (works everywhere, slower joins) or two LONG columns (int perfor
 predicates). **Either changes the declared field type at every call site that stores a
 `lineage_id`** — a domain-visible schema change, not an adapter swap. Affected: T3.4, T3.5, T4.1,
 T4.2, T4.3, T4.6, and every later task. This is why it is first despite being small.
+
+---
+
+## 1b. T0.6 — GATE: disk-backed map cost, and copy-versus-map cost
+
+**status:** not started
+
+**what done means**
+
+Two measurements on real data, one afternoon. Both are "measure before building on an
+assumption", and neither needs any of the new code to exist.
+
+**(a) The disk-backed id map.** No facade required — this measures the mechanism A15.3 specifies,
+not the dict it replaced. **The dict is not a candidate**, so do not benchmark it as one: it was
+rejected for having an unbounded worst case, not for being slow.
+
+Three numbers, and the task is not done without all three:
+
+1. **A rows-versus-build-time curve**, not a single pass/fail on one input. Several sizes spanning
+   the real range — a 70K handle, a national road network in the low millions, and the largest
+   input available. One point sets nothing, and "provisional" then becomes permanent by default.
+2. **Peak RSS** of the packed path, confirming it is flat across that range rather than a function
+   of rows. This is the property A15.3 asserts; unmeasured, it is only an assertion.
+3. **The block-cache size at which lookup starts thrashing** on the largest map, with the subject
+   read in map order as A15.3 requires. This decides whether the packed path is viable at all, and
+   nothing else in the plan would catch a cache sized too small.
+
+**Outputs:** the **resource ceiling** (where build time stops being acceptable, feeding A11.4a's
+second ceiling) and the **in-memory budget** (A15.3's declared constant, provisionally 64 MB).
+
+**(b) Copy versus map-only.** Bytes and wall-clock for copying a national N50 product, against
+bytes and wall-clock for producing its four-column ingest map over the same dataset.
+
+This is the number A24.1's second row rests on. The expected ratio is large — the map moves two
+integer columns where the copy moves geometry plus every attribute — but it has never been
+measured, and an N100 run takes that branch on **every execution**, so a wrong assumption here is
+paid continuously rather than once.
+
+**files touched** a throwaway script plus a written finding in `docs/refactor/temp/`.
+
+**depends on** nothing.
+
+**decision refs** A15.3, A15.1, A24.1, A11.4a.
+
+**doc migration** none — (a) confirms or replaces A15.3, which migrates at T4.5; (b) confirms
+A24.1's copy rule, which migrates at T3.4.
+
+**if this fails**
+
+*(a)* Three distinct failures, with different consequences:
+
+- **Build time grows unacceptably with rows** — the map itself is the wrong mechanism, not its
+  storage. T4.5 changes shape, T4.3 and T4.6 inherit whatever replaces it, and A15.1's "mint
+  always, scope only the diff" cost model needs rechecking.
+- **Peak RSS tracks row count** — the packed layout is not doing what A15.3 claims; find out why
+  before building on it, because the bounded-memory property is the entire justification for
+  accepting the time cost.
+- **The cache must be large to avoid thrashing** — either the sequential-access construction is
+  not holding (check the read loop honours map order, per A15.3) or the packed path is unviable
+  and `join_field` becomes mandatory rather than preferred, which makes T3.1's join-key contract
+  a blocker rather than a nicety.
+
+*(b)* If map-only is not materially cheaper than copying, A24.1's second row collapses into the
+first and every input is copied. That is a simpler design, not a broken one — but it makes ingest
+a full national copy on every run, which changes T3.4's cost profile and is worth knowing before
+building the join path in fan-out.
+
+**why it is a gate and why it is here** This was specified before the design was written and was
+missing from the first version of this plan. Left unmeasured, the number surfaces during T4.5
+implementation — after T4.3 and T4.4 have been built against an assumption that may not hold. It
+costs an afternoon now and a rewrite later.
 
 ---
 
@@ -407,7 +515,9 @@ so the `@row_shape` grammar cannot currently see it.
 
 **decision refs** A12.6, B4.
 
-**doc migration** resolves B4 into an A-item; that item then lands in `ports/table_ops.py`.
+**doc migration** A12.6 → `ports/row_shape.py` (the in-place-mutator problem) and
+`ports/table_ops.py` (the resulting `join_field` contract). Resolves B4 into an A-item, which
+lands in the same two places.
 
 ---
 
@@ -475,11 +585,28 @@ re-mints on every dissolve.
 
 **depends on** nothing.
 
-**decision refs** A5.4, A5.5, A5.6.
+- **Single-part is a debug-mode assertion, not a port invariant** (A18). arcpy `Describe` gives
+  `shapeType`, never part count — `isMultipart` and `partCount` are *geometry* properties, so an
+  unconditional invariant costs a per-row scan at every output boundary. Record this in the
+  `geometry_ops.py` docstring alongside the note that a multipart dissolve, if ever needed,
+  becomes a separate `dissolve_multipart` method rather than an argument, which is what keeps
+  `@row_shape` static.
 
-**doc migration** A5.4–A5.6 → `ports/geometry_ops.py`.
+- **Record the two parameters that must not be added** (A17.3): `select` has no `residual` and
+  `snap` has no `displacement`. Both appeared in a design sketch and neither is in the port;
+  `DROPPED` comes from the boundary diff, so `residual` is not needed for lineage and has no
+  caller. A one-line "deliberately absent" note in each docstring, in the same style as
+  `geometry_ops.py`'s existing note on arcpy's `Identity`.
+
+**decision refs** A5.4, A5.5, A5.6, A17.3, A18.
+
+**doc migration** A5.4–A5.6, A17.3 and A18 → `ports/geometry_ops.py`.
 
 **must land before T4.2** — the shape declarations are written against the split surface.
+
+**note** A18 rides here rather than on a task of its own: it is a docstring statement about the
+same method list this task is already editing, and it had no task at all before — under the
+three-clause completion test it would never have migrated.
 
 ---
 
@@ -561,6 +688,12 @@ this dataset is next written**. The docstring records that backends differ on st
 (GeoPackage rowid stable, Postgres `ctid` moves on update), so an adapter may have to materialise
 a surrogate.
 
+**And the contract states whether the index is addressable as a join key**, not only readable
+through an accessor. These are different guarantees: `OBJECTID` is a real column in a file gdb and
+can be a `join_field` key; a backend whose row index is not a column cannot. T4.5's preferred
+`join_field` path depends on this, and where it is absent that backend permanently gets the packed
+form instead. An adapter declares which it provides.
+
 **files touched** `template_code/ag/ports/table_ops.py`.
 
 **depends on** nothing.
@@ -599,28 +732,42 @@ finding is written up.
 
 **what done means**
 
-- A distinct run-scoped step, before any stage executes, copies each `ExternalSource` the run's
-  selected pipelines actually read, and allocates a dense positive `lineage_id` to every source
-  feature.
+A distinct run-scoped step, before any stage executes, that allocates a dense positive
+`lineage_id` to every feature of **every input the run reads from outside itself** — not only
+`ExternalSource`. Cross-run `Derived` and `ProductIdentity` inputs are re-allocated too (A24).
+
+- **The ingest map records three columns**, not two:
+  `(native_index, incoming_lineage_id, new_lineage_id)`, with `incoming_lineage_id` null where
+  there is none. This is what lets a resolver cross a run boundary; without it, A23's
+  trace-to-RAW question is unanswerable.
+- **Copying is a three-way rule** driven by whether a stable incoming id exists, not by the
+  declared type:
+  - `ExternalSource` → **copy**, rewriting ids.
+  - `Derived` / `ProductIdentity` **with** `lineage_id` → **map only**; fan-out applies it by
+    joining on `incoming_lineage_id`.
+  - `Derived` / `ProductIdentity` **without** `lineage_id` → **copy**, same as `ExternalSource`.
+- A **cold start** (A22) needs no code path of its own: the incoming id column is empty, so the
+  rule above routes it to the copy branch by itself. Verify this with a test that runs a stage
+  against an input carrying no `lineage_id` at all.
 - Raw ids do **not** use the minter/counter layout, so ingest consumes no `minter_id`. Ingest may
-  run one job per source for I/O parallelism; each draws a **disjoint range** from one run-scoped
-  counter.
-- The **ingest map** (`native_index → lineage_id`, per source) and the per-source range are written
-  as a run artifact.
-- Fan-out reads the copy, not the original, and still mints nothing.
-- `Derived` inputs are untouched — they already carry ids.
+  run one job per input for I/O parallelism; each draws a **disjoint range** from one run-scoped
+  counter, and the range is recorded in the artifact.
+- Fan-out applies the map and still allocates nothing (A6.6 as clarified by A24.1).
 
 **files touched** `template_code/ag/runtime/`, `template_code/ag/staging/`.
 
 **depends on** T0.1, T3.3.
 
-**decision refs** A10.6, A10.7, A6.6.
+**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6.
 
-**doc migration** A10.6, A10.7 → the ADR from T3.3 and `02-runtime.md` §6.
+**doc migration** A10.6, A10.7, A24, A24.1 → the ADR from T3.3 and `02-runtime.md` §6. A22 →
+`02-runtime.md` §6.1.
 
-**note** The copy is not for troubleshooting convenience. A map keyed on the source's native index
-can only be joined while those indices are still valid, i.e. inside fan-out's download path, which
-couples ingest to fan-out's implementation. The copy decouples it.
+**note on the copy** A10.6's coupling argument — that a map keyed on a *native index* can only be
+joined while those indices are still valid — applies to `ExternalSource` and **not** to a
+cross-run `Derived`, which carries `lineage_id` as an ordinary data column that survives download
+unchanged. That is why the second row above is map-only. Measure before assuming: an N100 run
+ingests a national N50 product on every execution, so this branch runs constantly.
 
 ---
 
@@ -642,6 +789,93 @@ never reads.
 **decision refs** A10.4, A10.5, A15.4.
 
 **doc migration** A10.4, A10.5 → the ADR from T3.3; ADR-0009 amendment for the checkpoint.
+
+---
+
+## 20b. T3.6 — Lineage retention alongside published products
+
+**status:** not started
+
+**what done means** A published product's **edge log and ingest map are archived with the
+product** and readable for as long as it is — they are part of the product, not run scratch.
+Retention is declared where the product's own retention is declared, not in run-scratch policy.
+
+A missing hop degrades **explicitly**: the resolver reports
+`traced to N50 feature 8814402, prior history unavailable (N50 run log not retained)` rather than
+terminating silently at an id that looks raw. Because a re-allocation boundary produces dense
+positive ids indistinguishable by inspection from raw ingest ids, the resolver must learn which
+kind of boundary it reached from the ingest map's own record — so the map must say so.
+
+**files touched** `template_code/ag/staging/`, `template_code/ag/products.py`,
+`docs/refactor/02-runtime.md` §4.1.
+
+**depends on** T3.4, T3.5.
+
+**decision refs** A21, A23.
+
+**doc migration** A21 → the ADR from T3.3 and `02-runtime.md` §4.1. A23 → the new ADR on lineage
+and, for the resolver contract, `ag/lineage/query.py`.
+
+**why this is not optional** A23 makes trace-to-source a requirement, and it is answerable only
+from every intermediate run's edges plus each boundary's map. Without retention the requirement
+fails on the second hop.
+
+---
+
+## 20c. T3.7 — Foreign-id guard
+
+**status:** not started
+
+**what done means** Two checks, because one of them does not catch the failure that matters.
+
+**(a) Map membership — the detector for a missed join.** For any input that came through a
+**map-only** boundary (A24.1's second row), the post-join dataset's `lineage_id` column equals
+that map's `new_lineage_id` column **as a multiset**.
+
+Multiset, not subset: a run X raw id and a run Y `new_lineage_id` are both dense positives, so a
+stranded `42` can coincide with another row's legitimately allocated `42` in the same map and pass
+a membership test. Multiset equality catches it on multiplicity — the correct new id is missing
+and `42` appears twice. Same technique as A7.2's shadow comparison.
+
+**(b) Range check — the general guard.** Every `lineage_id` in a lineage-bearing input falls
+within this run's allocated ranges:
+
+```
+id > 0   →  inside one of the ingest ranges recorded in this run's ingest artifact
+id < 0   →  minter_id(id) is present in this run's dispatch registry
+```
+
+This catches ids from nowhere at all — a hand-edited dataset, a field carried in from outside the
+system. It does **not** reliably catch a missed join: `minter_id` and raw ids are both dense from
+1 in every run, so a stranded prior-run id usually lands inside a legitimate range. That is why
+(a) exists and why (a) is the one to implement first.
+
+- Both run at **stage entry**, over each lineage-bearing `StageInput`, **folded into A13's
+  existing existence check** — the input is read once and asserted against three times. This is
+  the earliest point a foreign id is observable, and the failing pod names the input.
+- Runs again at **fan-in** as defence in depth, where the merged logs and the dispatch registry
+  are both already open.
+- Both are **grouped scans, not per-row loops**: (a) is one grouped count on each side, and the
+  map is already open because fan-out has just used it; (b) extracts `minter_id` arithmetically
+  from negative ids and compares the distinct set against the registry, and buckets positive ids
+  against the ingest ranges. For (b) a min/max hull check is **not** sufficient — ingest ranges are
+  disjoint intervals, so a foreign id can sit inside the hull while belonging to no range.
+
+**files touched** `template_code/ag/runtime/stage_entry.py`, `template_code/ag/lineage/`,
+`template_code/ag/core/validation.py`.
+
+**depends on** T3.3, T3.4.
+
+**decision refs** A25, A25.1, A13, A24, A24.1.
+
+**doc migration** A25 and A25.1 → `02-runtime.md` §8 and the lineage module docstring.
+
+**why this is not belt-and-braces any more** Under copy-everything ingest, the copy was already
+correct before any stage ran and a foreign id was not representable. Under A24.1's map-only
+branch, correctness is established by **fan-out applying the join** — so if fan-out misses it, the
+dataset carries the prior run's ids and B7 returns silently, in exactly the form A24 exists to
+prevent. **Check (a) is the only detector for that.** Check (b) does not substitute for it: a
+stranded prior-run id is, by construction, numerically ordinary.
 
 ---
 
@@ -681,8 +915,8 @@ A9.8, A9.9 → `04-migration.md`.
 
 **what done means**
 
-- `Rows(cardinality, identity, subject=… | refs=…)` exists, with `cardinality ∈ {ONE, MANY,
-  GROUP}` and `identity ∈ {CARRY, MINT, FOREIGN}`.
+- `Rows(cardinality, ids, subject=… | context=… | refs=…)` exists, with `cardinality ∈ {ONE, MANY,
+  GROUP}` and `ids ∈ {CARRY, MINT, FOREIGN}`.
 - `@row_shape(**outputs: Rows)` attaches declarations to a Protocol method without changing its
   signature, so structural typing still holds and adapters need no decoration.
 - CI check rejects, each with its specific reason in the message: an output parameter with no
@@ -746,30 +980,54 @@ conformance test asserting every Protocol method is reachable through the facade
 
 **decision refs** A11.11, A11.12, A15.1.
 
-**doc migration** A11.11 → the new ADR on lineage and `03-architecture.md` §4.
+**doc migration** A11.11 → the new ADR on lineage and `03-architecture.md` §4. A11.12 and A15.1 →
+the lineage module docstring — A15.1 is the cost model the facade is built around ("mint always,
+scope only the boundary diff") and belongs beside the code that implements it.
 
 ---
 
-## 25. T4.5 — Id-map cache
+## 25. T4.5 — Disk-backed id map
 
 **status:** not started
 
-**what done means** A `native_index → lineage_id` map is cached **pod-scoped**, keyed on
-`ScratchHandle` (frozen, hashable, `path` set `compare=False`, so a materialized copy equals its
-declaration). Invalidated on any call naming the handle as an output; in-place mutators do not
-invalidate. A **row-count** check per operation is the independent guard — metadata in a file gdb,
-one aggregate in SQL. A mismatch drops the cache, so a stale cache is a miss and never wrong data.
+**what done means** **Two paths, both built and both tested.** Which one runs is a backend
+property, so the packed form is not a contingency for the other — it is permanently what a backend
+without an addressable row index gets.
 
-**files touched** `template_code/ag/lineage/`.
+**Path A — `join_field` (preferred where available).** Materialize the map with `write_table`,
+then `join_field(input=subject, key=<native index>, join=<map>, join_key=…)`. No Python-side map
+at all, so RSS is the GP tool's and bounded by it. Requires T3.1's join-key contract.
 
-**depends on** T4.3.
+**Path B — packed arrays.** `int64` arrays on pod-local disk, fixed-size block cache, peak RSS a
+declared constant (A15.3, provisionally 64 MB from T0.6). Same code path at 70K rows and at 280M.
 
-**decision refs** A15.3.
+- **The map is sorted by lookup key and the subject is read in the same order.** This is what makes
+  a fixed small cache sufficient at any map size; random access would need a cache proportional to
+  the map and the bounded-RSS property would be false. **It constrains the read loop, not only the
+  layout** — a map sorted at build time is defeated by a consumer reading in a different order, so
+  say so in the docstring of both, and check it in review.
+- **Two ceilings, design checked first** (A11.4a): a design ceiling of 10M rows, invariant across
+  environments, and a resource ceiling from T0.6 that moves with the pod. A resource ceiling below
+  the design ceiling is legal and tripping it is not a code defect. Messages name which tripped.
 
-**doc migration** A15.3 → the lineage module docstring.
+**Both paths:** cache keyed on `ScratchHandle` (frozen, hashable, `path` set `compare=False`, so a
+materialized copy equals its declaration); invalidated on any call naming the handle as an output;
+in-place mutators do not invalidate. A **row-count** check per operation is the independent guard,
+and a mismatch drops the cache — so a stale cache is a miss, never wrong data.
 
-**note** Full id-set validation was rejected: it reads every id, which is the same scan as
-rebuilding, so it saves the dict construction and not the I/O.
+**files touched** `template_code/ag/lineage/`, `template_code/ag/adapters/arcpy/`.
+
+**depends on** T4.3, T0.6, T3.1.
+
+**decision refs** A15.3, A15.3a, A11.4a.
+
+**doc migration** A15.3 → the lineage module docstring; A15.3a → `02-runtime.md` §2.7; A11.4a's
+ceilings → the lineage module docstring, A11.4a's rule → `02-runtime.md` §2.4.
+
+**notes** Full id-set validation was rejected: it reads every id, which is the same scan as
+rebuilding, so it saves the construction and not the I/O. **The in-memory dict was rejected for
+having an unbounded worst case, not for being slow** — a benchmark showing it faster on a small
+handle is not an argument for reinstating it.
 
 ---
 
@@ -807,8 +1065,8 @@ direct pipe sites carry lineage with no call-site change:
 
 - `LineageEdge(operation, kind, from_ids, to_ids)` and `JobLineageLog(minter_id, stage, edges)`
   exist. No own/context flag on either — the writer cannot know it.
-- `EdgeKind` has four values, **all runtime-derived, none declared**: `TRANSFORMED` (every parent
-  absent from this operation's outputs), `DERIVED` (at least one parent survives), `DROPPED` (no
+- `EdgeKind` has four values, **all runtime-derived, none declared**: `PARENTS_CONSUMED` (every parent
+  absent from this operation's outputs), `PARENTS_KEPT` (at least one parent survives), `DROPPED` (no
   children), `CREATED` (`from_ids == ()`).
 - The facade mints on `MINT` shapes, recording a **provisional** edge into a pod-local buffer.
 - At operation exit the sweep reads each Out's id set and collapses the buffer to net effect.
@@ -837,7 +1095,7 @@ and A11.13 → `02-runtime.md` §2.4. A11.8, A11.9, A11.12, A13 → the lineage 
 
 **what done means** At stage exit within the pod, `DROPPED` is emitted for every id terminating in
 a handle that no `StageOutput` names. Without it, `simplify`'s `collapsed_points` case leaves an id
-in none of `O`, `T`, `D`: it is `TRANSFORMED` at the operation boundary because `collapsed_points`
+in none of `O`, `T`, `D`: it is `PARENTS_CONSUMED` at the operation boundary because `collapsed_points`
 is a real Out, but `ConflictResolution.collapsed_points` never becomes a `StageOutput`.
 
 **files touched** `template_code/ag/runtime/stage_entry.py`.
@@ -857,11 +1115,11 @@ is a real Out, but `ConflictResolution.collapsed_points` never becomes a `StageO
 **what done means** Two properties are computed from the stage declaration and the operation
 wiring, and they are distinct:
 
-- **in scope** — the handle reaches a `StageOutput`. Determines whether the boundary diff runs.
+- **`diff-tracked`** — the handle reaches a `StageOutput`. Determines whether the boundary diff runs.
 - **lineage-bearing** — the declaration chain terminates in `CARRY` or `MINT`. Determines whether a
   `lineage_id` column exists.
 
-A `FOREIGN`-terminal handle can be in scope without being lineage-bearing, and that is legal:
+A `FOREIGN`-terminal handle can be `diff-tracked` without being `lineage-bearing`, and that is legal:
 `SNAP_DISPLACEMENT` is exactly that. The boundary diff skips non-bearing handles, completeness
 ignores them, and A13's input verification applies to lineage-**bearing** inputs only.
 
@@ -945,7 +1203,7 @@ removed.
 selects a tier: native `out_lineage_table` (Pro 3.7+), work-key synthesis through
 `concatenation_separator` (Pro 3.0+, and what runs on the current 3.6 image), or declared
 unsupported. Spatial reconstruction is not implemented — an unavailable method is preferable to a
-silently wrong one. A plan-time check fails a stage that dissolves on a lineage-scoped handle with
+silently wrong one. A plan-time check fails a stage that dissolves on a lineage-bearing handle with
 an incapable adapter, before fan-out rather than in the pod.
 
 **files touched** `template_code/ag/adapters/arcpy/`, `template_code/ag/core/validation.py`.
@@ -957,8 +1215,8 @@ an incapable adapter, before fan-out rather than in the pod.
 **doc migration** A14 → `adapters/arcpy/` package docstring; the plan-time check → `02-runtime.md`
 §8.
 
-**open** See "found while writing this", item 3 — the plan-time check needs arcpy, and `validate()`
-is specified to run without it.
+**resolved** The probe runs at adapter construction, which has arcpy; `validate()` takes the
+resulting capability record as an argument — data, not a call. No exemption needed (A14).
 
 ---
 
@@ -987,7 +1245,7 @@ current image and tier 1 later on the same code.
 **what done means** Fan-in merges the K job logs and the dispatch registry. `DROPPED` is promoted
 only where the dropping job owns the id:
 `D = { d ∈ ⋃ D_job : owner(root(d)) == job(d) }`, with `root(d)` resolved through that job's own
-log and `owner` from the fan-out assignment. `TRANSFORMED` and `DERIVED` need no ownership check —
+log and `owner` from the fan-out assignment. `PARENTS_CONSUMED` and `PARENTS_KEPT` need no ownership check —
 presence in the job's declared output already witnesses it. Fan-in selection itself emits no
 `DROPPED` (A6.5).
 
@@ -1008,7 +1266,7 @@ presence in the job's declared output already witnesses it. Fan-in selection its
 **what done means** The three assertions run at fan-in over all objects in the stage:
 
 ```
-I  = lineage ids in the stage's StageInputs (own features)
+I  = lineage ids in the stage's PROCESSING StageInputs, own features only
 O  = lineage ids in the stage's StageOutputs
 T  = { f ∈ from_ids of any edge : f ∉ O }
 D  = ⋃ from_ids over promoted DROPPED edges
@@ -1099,17 +1357,26 @@ dissolves. Sized against A15.5's worst case: an aggregating collapse produces on
 
 **what done means** An API over the edges answering both directions: given a raw id, walk forward
 to its current identity or the operation where it was dropped; given a generated id, walk back to
-its raw ancestors. **Forward walks return a set, not a single value** — a feature consumed by a
-second pipeline gets a forward edge there and continues in its own, so branching is normal and the
-contract says so.
+its raw ancestors.
+
+- **Forward walks return a set, not a single value** — a feature consumed by a second pipeline
+  gets a forward edge there and continues in its own, so branching is normal and the contract says
+  so.
+- **Walks cross run boundaries** by alternating: N:M edges inside a run, then a 1:1 hop through
+  that boundary's ingest map on `incoming_lineage_id`, then the prior run's edges (A24.1). This is
+  what makes A23's trace-to-RAW question answerable across the scale ladder.
+- **A missing hop terminates with a named boundary**, never silently:
+  `traced to N50 feature 8814402, prior history unavailable (N50 run log not retained)`. A
+  re-allocation boundary produces dense positive ids that look exactly like raw ingest ids, so the
+  resolver must take the distinction from the ingest map's record rather than from the id's shape.
 
 **files touched** `template_code/ag/lineage/query.py`.
 
-**depends on** T6.1.
+**depends on** T6.1, T3.6.
 
-**decision refs** A20.
+**decision refs** A20, A21, A23, A24.1.
 
-**doc migration** A20 → `ag/lineage/query.py`.
+**doc migration** A20 and A23's resolver contract → `ag/lineage/query.py`.
 
 ---
 
@@ -1136,6 +1403,60 @@ no operation signature does.
 
 ---
 
+## 40. T7.1 — Documentation-only migration
+
+**status:** not started
+
+**what done means** A1.1, A1.2 and A1.3 have landed at their destinations and are struck from
+DECISIONS.md. Nothing is built; these are guidance with no corresponding work, and this task
+exists so the completion test stays mechanical.
+
+- A1.1 (operations are a package; `__init__.py` is a reading convenience) → `03-architecture.md`
+  §5 and the `operations/` package docstring.
+- A1.2 (granularity is set by what must be visible outside the function) → `02-runtime.md` §2.4.
+- A1.3 (`Toolbox` explicit, never a module singleton; constructor injection for large tools) →
+  ADR-0008, amended with the incremental-port argument.
+
+**files touched** `docs/refactor/03-architecture.md`, `docs/refactor/02-runtime.md`,
+`docs/refactor/decisions/0008-toolbox-passed-explicitly.md`,
+`template_code/ag/operations/__init__.py`.
+
+**depends on** nothing.
+
+**decision refs** A1.1, A1.2, A1.3.
+
+**doc migration** A1.1, A1.2, A1.3 — this task is the migration.
+
+---
+
+## 41. T7.2 — `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** `LineageRoot` is renamed `OriginRoot` and `lineage_roots()` becomes
+`origin_roots()`, aligning the object-level vocabulary with `Derived.origin`. After this, "lineage"
+unqualified means feature-level — the `lineage_id` and the edge log — and object-level provenance
+is consistently "origin".
+
+**files touched** `template_code/ag/core/data_objects.py:147` (the `TypeAlias`) and `:185`,
+`:196`; `template_code/ag/core/locations.py:47`, `:87`;
+`template_code/ag/core/policy.py:54`, `:98`, `:105`;
+`template_code/ag/core/validation.py:53`, `:443`; `docs/refactor/01-terminology.md`;
+`docs/refactor/02-runtime.md` §2.2.
+
+**depends on** nothing.
+
+**decision refs** B8.
+
+**doc migration** resolves B8; updates the `01-terminology.md` entry.
+
+**why it is independent** This touches existing, working code for a naming reason only. It has no
+lineage dependency and can be done by anyone at any point — but it should be done *before* the
+lineage vocabulary lands in the same documents, or both meanings of "lineage" appear in
+`02-runtime.md` §2.2 simultaneously.
+
+---
+
 # Found while writing this
 
 Open items noticed during transcription. **None of these are resolved.** They are listed rather
@@ -1148,27 +1469,47 @@ than decided, per the constraint on this pass.
    `01-terminology.md` as a driving adapter but does not exist, and there is no adapter conformance
    path. Someone has to choose.
 
-3. **A14's plan-time capability check may not fit `validate()`.** `02-runtime.md` §8 specifies
-   validation as running with "no cluster, no credentials, no data, no ArcPy" — but the capability
-   probe calls `arcpy.GetParameterInfo`. Either the check lives somewhere else, or `validate()`
-   takes a pre-probed capability record as an argument. Not resolved.
+3. **CLOSED — A14's capability check and the no-arcpy rule.** No exemption is needed. The probe
+   runs at **adapter construction**, which already has arcpy; `validate()` takes the resulting
+   capability record as an **argument** — data, not a call. `02-runtime.md` §8's "no cluster, no
+   credentials, no data, no ArcPy" stands unchanged. Recorded in A14 and T4.10.
 
-4. **A16's `I` is underspecified for CONTEXT inputs.** It reads "lineage ids in the stage's
-   StageInputs (own features)", but ownership is defined for partitioned processing inputs, not for
-   context. A15.2 deliberately dropped the PROCESSING clause from *scope*; whether `I` should keep
-   it is a separate question and was never asked.
+4. **CLOSED — A16's `I` is PROCESSING-only.** Completeness asks whether the stage lost something it
+   was *responsible for*, and a stage is not responsible for reference data.
+
+   Verified against the `DISPLACEMENT` stage rather than reasoned about: `buildings` (PROCESSING)
+   flows through `simplify_polygons` and `propagate_displacement`, both `ONE + CARRY`, so every
+   building id reaches `O` via `displaced` — assertion (1) holds. `displacement_feature` ids are
+   minted by `build_displacement_feature`'s dissolve, so they are in `to_ids` — assertion (2)
+   holds. The context road ids land in `T` via `from_ids` without ever entering `I`, and are not in
+   `D` because the boundary diff does not call a row dropped when it appears in an emitted edge's
+   `from_ids` — assertion (3) holds.
+
+   **That verification surfaced B7**, which is a genuine hole and is not closed: a `Derived`
+   `StageInput` can come from a previous run, carrying ids from that run's `minter_id` space.
 
 5. **"Registry" is now overloaded three ways.** `StageRegistry` (existing), the dispatch registry
-   (A10.3), and the work-key registry (A9.5). `01-terminology.md` §2 already has a collision entry
-   for the word.
+   (A10.3), and the work-key registry (A9.5). Ruled **keep, qualified** — `01-terminology.md` §2
+   carries the collision entry and every use names which registry it means.
 
 6. **T3.2's module has no home.** The work-key API is not a port, not an operation and not a
    helper in the current sense. `helpers/` or a new peer package — undecided.
 
-7. **A7's `PartitionIterator` changes have no doc destination.** They are transitional and retire
-   with the file, but if the shadow experiment produces a durable technique it should be written
-   down somewhere before `partition_iterator.py` is deleted.
+7. **CLOSED — A7 now has per-item destinations.** Section-level migration was the risk: half the
+   shadow-experiment technique written up and half not, with nothing recording which half. A7.1,
+   A7.4 and A7.7 retire with `partition_iterator.py`; the other seven land in `02-runtime.md` §7 or
+   §7.2. See the per-item table in DECISIONS.md under A7.
 
 8. **`extract_vertex` (ONE + FOREIGN) has exactly one known caller**, `mst_loop.py:153` with
    `point_location="MID"`. That is enough to justify the split under A5.6, but it is thin, and the
    `START` / `END` positions may have no caller at all.
+
+9. **B7 — cross-run `lineage_id` collision.** Found while verifying item 4. A `Derived` or
+   `ProductIdentity` `StageInput` can resolve to a previous run's archived version
+   (`pipelines/building/n100_stages.py:158`), whose ids were minted in that run's `minter_id`
+   space. A10.2's uniqueness holds only within a run. Registered in DECISIONS.md as **B7**, not
+   resolved.
+
+10. **B8 — `LineageRoot` → `OriginRoot` is a code rename.** The collision ruling is settled but the
+    work was not scoped; it touches `data_objects.py`, `locations.py`, `policy.py` and
+    `validation.py`. Now **T7.2**.
