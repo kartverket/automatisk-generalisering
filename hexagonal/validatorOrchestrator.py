@@ -43,19 +43,27 @@ class ValidatorOrchestrator:
             output_dir, f"validation_{self.id}_{self.step}.json"
         )
 
-        difference, status_counter, overall_status = {}, Counter(), "SUCCESS"
+        difference, status_counter, overall_status, messages = (
+            {},
+            Counter(),
+            "SUCCESS",
+            {},
+        )
 
         if self.previous_path and self.previous_path.exists():
             with open(self.previous_path, "r", encoding="utf-8") as f:
                 previous_payload = json.load(f)
             previous_results = previous_payload.get("results", {})
             difference = self.calculate_diff(previous_results, results)
-            status_counter, overall_status = self.validator.status_update(difference)
+            status_counter, overall_status, messages = self.validator.status_update(
+                difference
+            )
 
         payload = {
             "run": self.step,
             "status": overall_status,
             "status_counts": dict(status_counter),
+            "messages": messages,
             "results": results,
             "difference": difference,
         }

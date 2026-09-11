@@ -1,6 +1,6 @@
 # Libraries
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -82,23 +82,35 @@ class ValidationStatus:
 
     def status_update(self, stats: dict) -> tuple[Counter, str]:
         status = Counter()
+        messages = defaultdict(list)
 
         for rule in self.permanent_rules + self.temporary_rules:
             data = stats.get(rule.key)
 
             if data is None:
-                status[Severity.ERROR] += 1
+                severity = Severity.ERROR
+                status[severity] += 1
+                messages[severity].append(
+                    f"{severity}: Missing data for key '{rule.key}'"
+                )
                 continue
             elif data.get("changed_type"):
-                status[Severity.ERROR] += 1
+                severity = Severity.ERROR
+                status[severity] += 1
+                messages[severity].append(
+                    f"{severity}: Changed type for key '{rule.key}'"
+                )
                 continue
 
             for value in self._iter_rule_data(data):
-                status[self._evaluate_rule(rule, value)] += 1
+                severity = self._evaluate_rule(rule, value)
+                status[severity] += 1
+                if severity != Severity.SUCCESS:
+                    messages[severity].append(self._get_message(rule, severity))
 
         self.remove_temporary_rules()
 
-        return status, self._most_severe_status(status)
+        return status, self._most_severe_status(status), dict(messages)
 
     ##########################
     # Helper functions
@@ -125,6 +137,9 @@ class ValidationStatus:
             return Severity.SUCCESS
 
         return rule.severity
+
+    def _get_message(self, rule: Rule, severity: str) -> str:
+        return f"{severity}: Rule '{rule.key}' failed"
 
     def _most_severe_status(self, status: Counter) -> str:
         for label in reversed(self.STATUS_SEVERITY):
