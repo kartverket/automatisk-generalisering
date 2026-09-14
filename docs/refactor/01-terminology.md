@@ -90,20 +90,20 @@ docstring; the A-ids below are that file's section numbers.
 | **row shape** | A per-output declaration on a port Protocol method, `@row_shape(out=Rows(...))`, read by the lineage facade. Two axes, never a single enum. | A12.1 |
 | **cardinality** | Row-shape axis: `ONE` \| `MANY` \| `GROUP` output rows per subject row. | A12.1 |
 | **`ids`** (row-shape axis) | `CARRY` (keep the subject's id) \| `MINT` (new ids, edges recorded) \| `FOREIGN` (no `lineage_id`; declared columns hold subject ids). `CARRY` implies `ONE`. | A12.1 |
-| **subject** | The input parameter whose rows contribute identity to an output. Mirrors PROCESSING. | A12.2 |
+| **subject** | The input parameter whose rows contribute identity to an output. Subject versus `context` *is* PROCESSING versus CONTEXT at the port level, not a mirror of it — the same words on purpose. | A12.2 |
 | **`context`** (row-shape) | An input that influenced an output without contributing identity. The same word as `InputRole.CONTEXT`, deliberately. | A12.2 |
 | **ref column** | A column on a `FOREIGN` output holding a subject's `lineage_id` as a foreign key. A null is legitimate data. When it feeds a rebuild, the ref column *is* the lineage path. | A11.12, A11.13 |
 | **`diff-tracked`** | A handle reaches a `StageOutput`. Decides whether the boundary diff runs. | A15.2 |
-| **lineage-bearing** | A handle's declaration chain ends in `CARRY` or `MINT`, so it has a `lineage_id` column. A `FOREIGN`-terminal handle can be in scope without being lineage-bearing — `SNAP_DISPLACEMENT` is. | A15.6 |
+| **lineage-bearing** | A handle's declaration chain ends in `CARRY` or `MINT`, so it has a `lineage_id` column. A `FOREIGN`-terminal handle can be `diff-tracked` without being lineage-bearing — `SNAP_DISPLACEMENT` is. | A15.6 |
 | **domain key** | A field whose value the data determines (`kommunenummer`, `vegkategori`). The only legitimate join key across a cardinality change, because attribute propagation preserves it and `lineage_id` does not. | A9.10 |
 | **combining rule** | How a collapse reduces several parents' values to one, stated at the call site as `dissolve(statistics=…)`. Domain logic. The log records that the collapse happened, never which parent's value won. | A11.14 |
-| **ingest map** | Per-source `native_index → lineage_id`, written as a run artifact by the ingest step that copies each `ExternalSource` and allocates raw ids. | A10.6, A10.7 |
+| **ingest map** | Per-input `(native_index, incoming_lineage_id, new_lineage_id, boundary_kind)`, written as a run artifact by the ingest step, which copies or maps each input the run reads from outside itself per A24.1's three-way rule. | A10.6, A10.7, A24.1 |
 | **dispatch registry** | `minter_id → (stage, partition_index)`, written at dispatch and merged at fan-in. | A10.3 |
 | **re-allocation** | What ingest does to a cross-run input: allocate fresh `lineage_id`s and record what was known of the incoming ones. Applies to `ExternalSource` and cross-run `Derived` alike. | A24 |
 | **`boundary_kind`** | The ingest map's fourth column: `RAW` (a true external source — a walk ending here is **complete**) \| `CROSS_RUN` (continue into the prior run's log) \| `LOST_HISTORY` (no incoming id — a walk ending here is **truncated**). Not inferable from a null `incoming_lineage_id`, which covers both RAW and LOST_HISTORY. | A24.1 |
 | **cold start** | Running a job for one scale without re-running the prior scales in the same run. Mechanically just an ingest where the incoming id column is empty — no separate code path. | A22 |
 | **foreign-id guard** | The two checks that an input's ids belong to this run: map membership as a multiset (the detector for a missed fan-out join) and a range check (the general guard). | A25, A25.1 |
-| **disk-backed id map** | The `native_index → lineage_id` map as packed `int64` arrays on pod-local disk with a fixed **block cache**, so peak RSS is a declared constant rather than a function of rows. Sorted by lookup key, with the subject read in the same order — that ordering constrains the read loop, not only the layout. | A15.3 |
+| **disk-backed id map** | The `native_index → lineage_id` map as packed `int64` arrays on pod-local disk with a fixed **block cache**, and a peak memory figure — as the cgroup accounts it — declared as a constant rather than as a function of rows. Sorted by lookup key, with the subject read in the same order — that ordering constrains the read loop, not only the layout. | A15.3 |
 | **design ceiling** | The row count above which a `MINT` subject is presumed a design error — invariant across environments, checked **first**. Tripping it means fix the operation. | A11.4a |
 | **resource ceiling** | The row count above which this pod cannot build a map in acceptable time. Moves with the pod; may legally sit *below* the design ceiling. Tripping it is not a code defect. | A11.4a |
 
@@ -181,7 +181,7 @@ produce wrong code when guessed.
 | **`reference=`** (row-shape) | Retired. Collided with `snap(reference=…)`, a dataset being snapped to — close enough in meaning to blur. | **`context=`**, which makes the `InputRole.CONTEXT` correspondence literal instead of explained. |
 | **"in scope"** (lineage) | Retired as a bare phrase. Collided with `ScratchScope`, and left "scoped handle" ambiguous against `lineage-bearing`. | **`diff-tracked`** — the handle reaches a `StageOutput`, so the boundary diff tracks it. Distinct from **`lineage-bearing`**, which is having a `lineage_id` column at all. |
 | **correspondence** | Retired. Used throughout the design discussion for the input-row-to-output-row relation. | **parents** — the `parents:` out-param, `mint(parents=…)`, and `PARENT_ID`/`CHILD_ID`. `source_rows` was rejected because **source** already means `ExternalSource` here. |
-| **`PRESERVE` / `COLLAPSE` / `SPLIT` / `EXPAND` / `REFERENCE` / `NONE`** | Retired. Successive single-axis row-shape enums, replaced by two independent axes. | **cardinality** (`ONE`/`MANY`/`GROUP`) × **identity** (`CARRY`/`MINT`/`FOREIGN`). `REFERENCE` became `identity=FOREIGN`; `EXPAND` became `MANY + FOREIGN`. |
+| **`PRESERVE` / `COLLAPSE` / `SPLIT` / `EXPAND` / `REFERENCE` / `NONE`** | Retired. Successive single-axis row-shape enums, replaced by two independent axes. | **cardinality** (`ONE`/`MANY`/`GROUP`) × **`ids`** (`CARRY`/`MINT`/`FOREIGN`). `REFERENCE` became `ids=FOREIGN`; `EXPAND` became `MANY + FOREIGN`. |
 
 Reclaiming "container" for Kubernetes matters as much as naming the replacement.
 

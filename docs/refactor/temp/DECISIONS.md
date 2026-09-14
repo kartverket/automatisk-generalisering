@@ -1088,8 +1088,17 @@ declaration and the operation wiring, never declared.
 
 **A15.3 The id map is disk-backed by default, with a fixed in-memory budget.**
 
-Packed `int64` arrays on pod-local disk, a fixed-size block cache, and **peak RSS a constant we
-declare rather than a function of the handle**. The same code path at 70K rows and at 280M.
+Packed `int64` arrays on pod-local disk, a fixed-size block cache, and **a peak memory figure —
+as the cgroup accounts it — that we declare as a constant rather than as a function of the
+handle**. The same code path at 70K rows and at 280M.
+
+> *Superseded (the metric).* This entry and the paragraphs below originally named the bounded
+> property as the process's resident set size. That is the wrong accounting for the failure this
+> entry exists to prevent: Kubernetes evicts and OOM-kills against the pod's **cgroup** memory
+> limit, and the cgroup charges file page cache — which reading a disk-backed map generates —
+> that resident set size does not report. A map flat by resident set size could still be killed.
+> Changed when T0.6 fixed its measurement to the cgroup figure; the asserted property now names
+> the same thing T0.6 measures.
 
 > *Superseded.* This entry specified an in-memory dict, pod-scoped, with structural invalidation
 > and a row-count guard — a *cached-then-spilled-under-pressure* design. The mechanism below keeps
@@ -1112,14 +1121,15 @@ a 70K handle is not an argument against this entry.
 
 **The budget is a declared constant: provisionally 64 MB, owned by T0.6.** Without a number the
 bounded-memory property is asserted rather than established, and the first implementer picks one
-with no basis. T0.6 produces it alongside the build-time curve, and must measure **peak RSS** and
-**the block-cache size at which lookup starts thrashing on a large map** — the second is what
+with no basis. T0.6 produces it alongside the build-time curve, and must measure
+**peak memory as the cgroup accounts it** and **the block-cache size at which lookup starts
+thrashing on a large map** — the second is what
 decides whether the packed path is viable at all, and nothing else in the plan would catch it.
 
 **A small budget is achievable by construction, not by luck.** Sort the map by the lookup key and
 read the subject in the same order, and lookups are sequential, so a handful of blocks suffices at
-any map size. A random access pattern would need a cache proportional to the map, and "peak RSS is
-a constant" would quietly become false. The ordering is part of the mechanism, not an optimisation
+any map size. A random access pattern would need a cache proportional to the map, and "peak memory
+is a constant" would quietly become false. The ordering is part of the mechanism, not an optimisation
 of it.
 
 **That ordering constrains the facade's read loop, not only the map's layout.** A map sorted at
@@ -1129,8 +1139,8 @@ written by the same person at the same time — so this is a code-review point, 
 the docstring of both.
 
 **On ArcPy the preferred form has no Python-side map at all.** The translation can be a
-`join_field` against a temp table rather than a Python lookup, in which case RSS is the GP tool's
-and bounded by it — better than managing a budget. Prefer it where the adapter can express it.
+`join_field` against a temp table rather than a Python lookup, in which case the memory is the GP
+tool's and bounded by it — better than managing a budget. Prefer it where the adapter can express it.
 
 > **Capability check.** The facade can build this today in principle — materialize the map with
 > `write_table`, then `join_field(input=subject, key=<native index>, join=<map>, join_key=…)`, and
@@ -1765,6 +1775,9 @@ B9 is narrower and answerable first: it asks what is physically present on which
 what identity consumers should be given. B10 is the neighbouring *mechanical* question: nothing
 currently notices when `lineage_id` goes missing, wherever it goes missing.
 
+**A proposed resolution awaits sign-off** in `PROPOSALS-2026-09-14.md` §1 — not settled, and not
+to be treated as settled until it is written here as an A-item.
+
 **B10. Nothing asserts that `lineage_id` survives an operation.**
 
 B9(d) exposes this rather than depending on it: `map_fields` is one way to lose the column, and
@@ -2010,3 +2023,59 @@ So the two questions resolve in sequence, not independently:
 Its only consumer is `propagate_displacement`, which reads it as **context** — so the blast radius
 is small either way, which is why this is a B-item rather than a blocker.
 `destination:` `ports/cartographic_ops.py` with A12.11, once resolved.
+
+**B12. T4.1's check cannot identify an output parameter.** Found by the 2026-09-14 review (F6),
+verified. A12.5 and T4.1 reject "an output parameter with no declaration", but every handle
+parameter on the port Protocols is typed `ScratchHandle`; the `In`/`Out` aliases
+(`core/operations.py:231-235`) are used only by operations. The only thing that marks a port
+parameter as an output is the declaration being checked, so the rule cannot fire — the
+green-by-coincidence failure, in the check the grammar rests on. A proposal (annotate port
+parameters with `In`/`Out`, in T4.1's scope, as A12.5a) awaits sign-off in
+`PROPOSALS-2026-09-14.md` §2.
+
+**B13. `write_rows` and `write_table` have no row shape, and A12.7 contradicts A15.6.** Found by
+the review (F5), verified against the template. Both writes have an `output` parameter
+(`ports/table_ops.py:209-225`) and no row in A12.11 or A12.11a. Two of A12.7's four "no call-site
+change" sites read a `FOREIGN` handle: `_vertex_deltas` pipes `paired`, a `nearest_neighbors`
+output over `extract_vertices` outputs, into `displacement`, which is
+`StageOutput(SNAP_DISPLACEMENT)` (`operations/road/__init__.py:322-329`,
+`pipelines/road/n100.py:300`); `merge_divided_highways` pipes `paired`, a `spatial_join` output,
+into `merge_report` (`:592-596`, `:611`). A12.7's rule — untracked rows written to a scoped output
+with no explicit mint are an error — fires on the first, which A15.6 calls legal. On the second it
+fires only if `merge_report` counts as diff-tracked, which A15.2's "reaches a `StageOutput`" does
+not settle for an input that feeds only a predicate. Also unsettled: what a ref column holds when
+the handle it refers to is itself `FOREIGN`. A proposal (a required call-site ids declaration on
+writes, as A12.7a) awaits sign-off in `PROPOSALS-2026-09-14.md` §3.
+
+**B14. `lineage-bearing` has no stated plan-time derivation.** Found while verifying B13.
+A15.2, A15.6 and T4.9 say the property is computed from "the stage declaration and the operation
+wiring", and A12.9's check runs at plan time. But `@row_shape` sits on **port** methods, and plan
+time sees only `@operation` In/Out handles: nothing in the planner observes which port calls an
+operation body makes (`02-runtime.md` §9, "declarations need no data or ArcPy"). The one component
+that executes bodies without data is the recording spy (`adapters/fakes/recording_toolbox.py`,
+driven by `tools/run_example.py`); a trace of its recorded calls is the obvious candidate, not a
+decision — bodies that branch on read data would trace partially. The gap is general, not specific
+to writes.
+
+A related consequence, also not decided: A12.9 rejects a `FOREIGN`-terminal handle as the subject
+of a downstream `CARRY`, and A12.11 declares `select`, `copy` and `map_fields` `ONE + CARRY`. So
+filtering or copying a near table — `GenerateNearTable` then select by distance, common in the
+real codebase — would be rejected, though no template instance does it today.
+
+**B15. `merge_report`'s exemption matches ids from before two mints.** Found while verifying B13.
+`merge_report` holds ids of the carriageway *candidates* (`operations/road/__init__.py:592-596`).
+`thin_road_network` uses it as `exempt=Attr(FEATURE_ID in (select … from merge_report))` on
+`reranked_edges` (`:678`), which descends from `collapse_to_centerline` (`GROUP + MINT`) and then
+`dissolve` (`GROUP + MINT`). Under A9.10 the exemption can match nothing. A17.4 records the
+predicate as uncompilable; this is a separate defect in what it compares. T4.12 checks `join_field`
+only, so a lookup done as read-then-`Attr.in_` is outside its reach.
+
+**B16. The vendor documentation contradicts `simplify.collapsed_points` as `ONE + CARRY`.** Found
+while writing T0.1's script. A12.11 assumes the point output copies the input's attributes. The
+`SimplifyLine` and `SimplifyPolygon` tool pages, checked 2026-09-14, both say *"The output line
+[polygon] feature class contains all the fields from the input feature class.*
+*The output point feature class will not contain these fields."* Neither page documents a
+reference column on the points. `SimplifyLine` also stores *"the endpoints"* of a collapsed line, which may be two rows per
+input — `MANY`, not `ONE`. T0.1's type-survival case checks the behaviour. If it confirms the
+documentation, the "neither present" branch of T0.1's "if this fails" applies: the set-difference
+derivation, conditional on the port contract T4.2 writes. Not decided here, and T0.1 has not run.

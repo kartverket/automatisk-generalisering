@@ -158,9 +158,11 @@ work but have different lifetimes and different modules.
 
 **what done means**
 
-Eleven cases run against a file geodatabase **created the way the pipeline creates them**, results
+Twelve cases run against a file geodatabase **created the way the pipeline creates them**, results
 recorded in a short written finding. Cases 2–4, 6–9 and 11 exist because the original five could
-all pass while the field is broken:
+all pass while the field is broken. The concatenation group-size case is there for a different
+reason: A14's tier 2 is what runs on the current image, and this environment is already being stood
+up.
 
 1. Write a value just under 2⁵³ — passes, reads back unchanged.
 2. Write **2⁵³ + 1**, not 2⁵³ — **recorded whether it errors or silently coerces.** This
@@ -234,6 +236,16 @@ all pass while the field is broken:
    that output should be `FOREIGN`**, with the adapter translating the reference — a finding
    against A12.11, not merely a tool quirk, and it belongs in the written finding as such.
 
+   **The tool pages already predict the `collapsed_points` answer, checked 2026-09-14.** Both
+   `SimplifyLine` and `SimplifyPolygon` say
+   *"The output point feature class will not contain these fields"*, meaning the input's fields, so `lineage_id` is expected to be absent. Neither
+   page names a reference column on the points; `InLine_FID` and `InPoly_FID` are documented on
+   the main output only. `SimplifyLine` stores *"the endpoints of lines that are smaller than the
+   spatial tolerance"*, which may mean two points per collapsed line. And `SimplifyPolygon` emits
+   points for *"any polygons that are removed because they are smaller than the minimum area"*,
+   which answers T4.2's pre-check from the documentation. The case still runs, because
+   documentation is not behaviour. See B16.
+
    `PairwiseDissolve` is **not** in scope — `GROUP + MINT`, so nothing is carried through it.
 
    **Record per tool: preserved; or downcast to what; and whether an adapter-level fix restores it**
@@ -260,6 +272,20 @@ all pass while the field is broken:
     is run, record its build too and name any divergence between the two. Test the **archive
     creation path** as well as scratch — B9 may put `lineage_id` on the archived product, and an
     archive written by a different code path is a different test.
+12. **The concatenation group-size case.** A14's tier 2 — stamp a work key, dissolve with the
+    `CONCATENATE` statistic, parse the ids back — is **what runs on the current image**:
+    `out_lineage_table` is new at Pro 3.7 and the image is `arcpy-linux:12.0`. A15.5's own worst
+    case, every road in a partition dissolved into one blob, puts 10⁵ to 10⁶ ids into **one text
+    cell**. The `PairwiseDissolve` tool page lists `CONCATENATE` and describes
+    `concatenation_separator`, and says nothing about the output field's length or about
+    truncation — checked 2026-09-14.
+
+    Run `PairwiseDissolve` with `CONCATENATE` on an integer key over **one group of 10⁵ and one of
+    10⁶** input features, and record per size: whether it **truncates silently, errors, or grows**;
+    the output field's type and declared length; the returned string's length; the number of
+    parsed tokens against the group size; whether the parsed set equals the input set; the error
+    text if any; elapsed time. Use features that dissolve to one part under `SINGLE_PART` — the
+    lineage table's own constraint (A14) — so the case measures the configuration tier 2 would run.
 
 **Where it runs.** T0.1 is a one-off gate, not a CI step, and it runs **in the Linux production
 image**. That is the environment whose results count: production is Linux, and field-type
@@ -274,11 +300,12 @@ That is the documented behaviour; cases 2, 3, 6 and 7 check what this build actu
 
 The finding states whether `FieldType.BIGINT` is viable, and if not, which fallback is chosen.
 
-**files touched** a throwaway script plus a written finding in `docs/refactor/temp/`.
+**files touched** a throwaway script, `docs/refactor/temp/t0_1_bigint_gate.py` (written, not yet
+run), plus a written finding in `docs/refactor/temp/`.
 
 **depends on** nothing.
 
-**decision refs** A10.1, A12.11, A12.11a, A15.3, B1, B9, B10, B11.
+**decision refs** A10.1, A12.11, A12.11a, A14, A15.3, A15.5, B1, B9, B10, B11, B16.
 
 **doc migration** none — this resolves B1 into an A-item, which is then written into the new ADR
 on lineage id allocation by T3.3.
@@ -342,6 +369,15 @@ semantics only choose between declarations the data can support:
 possibility that its mapping shape has no legal cell at all. **See B11**, which this case feeds
 rather than answers.
 
+**If the concatenation group-size case truncates or errors**, A14's tier 2 is unsafe above the
+largest group that survived, and nothing in the design currently bounds group size — a dissolve's
+groups are set by the data. **Silent truncation is the severe outcome**: parents go missing from the
+edge with no error at the dissolve, and the first thing to notice is A16's assertion (1) at fan-in,
+which reports those features as vanished — a stage later, without naming the truncation. One way to make it
+detectable is a `COUNT` statistic alongside `CONCATENATE`, so the adapter compares parsed tokens with
+the group's count per row. That is an option for T4.10, not a decision here. An error, by contrast,
+is loud and reproducible, and only makes tier 2 unavailable above a size.
+
 **If `collapsed_points` were ever redeclared `FOREIGN`, the cost is larger than one table row.**
 `FOREIGN` is terminal for lineage (A12.9), so the id would not continue through it — and
 `collapsed_points` is the **worked case in A16.2** and the entire premise of **T4.8**'s stage-exit
@@ -362,15 +398,18 @@ needs any of the new code to exist.
 **Not an afternoon any more.** That estimate predates the validity conditions below. (a) now means
 staging the national inputs onto a Linux volume, running at the production pod limit rather than a
 comfortable one, sweeping cache sizes on the largest map, and getting the production cluster's
-kernel and cgroup version from someone with cluster access. Budget **a few days for (a)**, an
-estimate dominated by data staging and the cache sweep rather than by the runs themselves. (b)
+kernel and cgroup version from someone with cluster access, and running `JoinField` at the same
+three sizes. Budget **a few days for (a)**, an estimate dominated by data staging and the cache
+sweep rather than by the runs themselves. `JoinField`'s runtime at national scale is unknown;
+revise the estimate once the smallest size has been timed. (b)
 waits on B9 and is not in that budget.
 
 **(a) The disk-backed id map.** No facade required — this measures the mechanism A15.3 specifies,
 not the dict it replaced. **The dict is not a candidate**, so do not benchmark it as one: it was
 rejected for having an unbounded worst case, not for being slow.
 
-Three numbers, and the task is not done without all three:
+Three numbers for the packed path, plus the `JoinField` path below, and the task is not done
+without all of them:
 
 1. **A rows-versus-build-time curve**, not a single pass/fail on one input. Several sizes spanning
    the real range — a 70K handle, a national road network in the low millions, and the largest
@@ -381,6 +420,28 @@ Three numbers, and the task is not done without all three:
 3. **The block-cache size at which lookup starts thrashing** on the largest map, with the subject
    read in map order as A15.3 requires. This decides whether the packed path is viable at all, and
    nothing else in the plan would catch a cache sized too small.
+
+**And the `JoinField` path, at the same three sizes.** A15.3 names it the preferred ArcPy form:
+no Python-side map at all, the translation done by a `join_field` against a temp table. Measuring
+only the packed path would give a fallback three numbers and leave the path production runs
+unmeasured. Materialise the map as a file-geodatabase table, join it onto the subject keyed on the
+subject's **OBJECTID**, and record:
+
+- **build time** against rows, as for measurement 1 — map-table write plus the join, reported
+  separately so the join's own scaling is visible;
+- **peak memory as the cgroup accounts it**, as for measurement 2. "Bounded by the GP tool" is an
+  assertion in A15.3 too, and this is where it gets a number;
+- **that the joined `lineage_id` arrives as BigInteger** — type survival through the one tool this
+  path depends on.
+
+Measurement 3 is packed-only: `JoinField` has no block cache to size. **The finding reports both
+paths side by side.**
+
+**If `JoinField` holds** — build time acceptable across the curve and memory flat — then on the
+arcpy backend the packed path's numbers **stop being a gate input**: nothing production runs
+depends on them. A15.3 still keeps both paths permanent, and the review's F24 proposes deferring
+the packed path until a backend needs it; a holding `JoinField` is what makes that proposal live.
+It is **not** decided here — F24 is a separate design conversation.
 
 **Outputs**, split by what the finding is authoritative for:
 
@@ -449,9 +510,13 @@ A24.1's copy rule, which migrates at T3.4.
 - **Build time grows unacceptably with rows** — the map itself is the wrong mechanism, not its
   storage. T4.5 changes shape, T4.3 and T4.6 inherit whatever replaces it, and A15.1's "mint
   always, scope only the diff" cost model needs rechecking.
-- **Peak RSS tracks row count** — the packed layout is not doing what A15.3 claims; find out why
-  before building on it, because the bounded-memory property is the entire justification for
+- **Peak memory, as the cgroup accounts it, tracks row count** — the packed layout is not doing
+  what A15.3 claims; find out why before building on it, because the bounded-memory property is the entire justification for
   accepting the time cost.
+- **`JoinField` does not hold** — build time grows badly with rows, or its memory tracks row count.
+  Then the packed path is not a fallback but the production path on arcpy, and measurements 2 and
+  3 carry the whole gate. Record the failure shape; `AddJoin` followed by `CalculateField` is the
+  usual alternative join form, and is worth one run before concluding that arcpy has no join path.
 - **The cache must be large to avoid thrashing** — either the sequential-access construction is
   not holding (check the read loop honours map order, per A15.3) or the packed path is unviable
   and `join_field` becomes mandatory rather than preferred, which makes T3.1's join-key contract
@@ -1029,10 +1094,13 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 `lineage_id` to every feature of **every input the run reads from outside itself** — not only
 `ExternalSource`. Cross-run `Derived` and `ProductIdentity` inputs are re-allocated too (A24).
 
-- **The ingest map records three columns**, not two:
-  `(native_index, incoming_lineage_id, new_lineage_id)`, with `incoming_lineage_id` null where
-  there is none. This is what lets a resolver cross a run boundary; without it, A23's
-  trace-to-RAW question is unanswerable.
+- **The ingest map records four columns**, not two:
+  `(native_index, incoming_lineage_id, new_lineage_id, boundary_kind)`, with
+  `incoming_lineage_id` null where there is none and
+  `boundary_kind ∈ {RAW, CROSS_RUN, LOST_HISTORY}`. The incoming id is what lets a resolver cross a run boundary; without it, A23's
+  trace-to-RAW question is unanswerable. `boundary_kind` is not redundant with a null incoming id,
+  which covers both `RAW` and `LOST_HISTORY` — a walk must report the first as complete and the
+  second as truncated (A24.1, A21).
 - **Copying is a three-way rule** driven by whether a stable incoming id exists, not by the
   declared type:
   - `ExternalSource` → **copy**, rewriting ids.
@@ -1229,9 +1297,14 @@ A9.8, A9.9 → `04-migration.md`.
 **files touched** new `template_code/ag/ports/row_shape.py`,
 `template_code/tests/unit/test_row_shape.py`.
 
+**open, affects acceptance: B12.** As written, the "output parameter with no declaration" rule
+cannot fire — port parameters carry no direction. A proposal (annotate them `In`/`Out` in this
+task, which would add T2.8 to the dependencies) awaits sign-off; do not implement the check before
+B12 resolves.
+
 **depends on** T2.4.
 
-**decision refs** A12.1–A12.6.
+**decision refs** A12.1–A12.6, B12.
 
 **doc migration** A12.1–A12.4 → `ports/row_shape.py`; A12.5 → `02-runtime.md` §8.
 
@@ -1324,14 +1397,15 @@ without an addressable row index gets.
 
 **Path A — `join_field` (preferred where available).** Materialize the map with `write_table`,
 then `join_field(input=subject, key=<native index>, join=<map>, join_key=…)`. No Python-side map
-at all, so RSS is the GP tool's and bounded by it. Requires T3.1's join-key contract.
+at all, so the memory is the GP tool's and bounded by it. Requires T3.1's join-key contract.
 
-**Path B — packed arrays.** `int64` arrays on pod-local disk, fixed-size block cache, peak RSS a
-declared constant (A15.3, provisionally 64 MB from T0.6). Same code path at 70K rows and at 280M.
+**Path B — packed arrays.** `int64` arrays on pod-local disk, fixed-size block cache, and a peak
+memory figure — as the cgroup accounts it — declared as a constant (A15.3, provisionally 64 MB
+from T0.6). Same code path at 70K rows and at 280M.
 
 - **The map is sorted by lookup key and the subject is read in the same order.** This is what makes
   a fixed small cache sufficient at any map size; random access would need a cache proportional to
-  the map and the bounded-RSS property would be false. **It constrains the read loop, not only the
+  the map and the bounded-memory property would be false. **It constrains the read loop, not only the
   layout** — a map sorted at build time is defeated by a consumer reading in a different order, so
   say so in the docstring of both, and check it in review.
 - **Two ceilings, design checked first** (A11.4a): a design ceiling of 10M rows, invariant across
@@ -1373,9 +1447,14 @@ direct pipe sites carry lineage with no call-site change:
 
 **files touched** `template_code/ag/lineage/`, `template_code/ag/ports/table_ops.py`.
 
+**open, affects acceptance: B13.** Two of the four "no call-site change" sites (`:323`, `:593`)
+read a `FOREIGN` handle, and the error rule above fires on `SNAP_DISPLACEMENT`, which A15.6 calls
+legal. A proposal (a required call-site ids declaration on writes) awaits sign-off and would
+replace this acceptance text.
+
 **depends on** T4.3.
 
-**decision refs** A12.7.
+**decision refs** A12.7, B13.
 
 **doc migration** A12.7 → `ports/table_ops.py` and the lineage module docstring.
 
@@ -1458,7 +1537,11 @@ A plan-time check rejects a `FOREIGN`-terminal handle named as the `subject` of 
 
 **depends on** T4.6.
 
-**decision refs** A12.9, A15.2, A15.6.
+**open: B14.** The task says lineage-bearing is computed from the stage declaration and operation
+wiring, but plan time does not see the port calls inside operation bodies, where `@row_shape`
+applies. The derivation mechanism is unstated.
+
+**decision refs** A12.9, A15.2, A15.6, B14.
 
 **doc migration** A15.2, A15.6 → the lineage module docstring and `01-terminology.md`; A12.9 →
 `02-runtime.md` §8.
@@ -1483,7 +1566,7 @@ sides are different mint generations.
 
 **depends on** T4.2.
 
-**decision refs** A9.10, A17.5.
+**decision refs** A9.10, A17.5, B15.
 
 **doc migration** none beyond A9.10, which migrates at T2.10.
 
@@ -1491,6 +1574,9 @@ sides are different mint generations.
 `operations/road/__init__.py:315` joins `paired.near_fid` (a vertex-row reference) against
 `vertices_after.FEATURE_ID` (feature-level), which fans out under any id model. Not caught here,
 and not blocking.
+
+**second known limit, B15** Only `join_field` is checked. A lookup written as `read_rows` then
+`Attr.in_` crosses a mint just as silently — `thin_road_network`'s `merge_report` exemption does.
 
 ---
 
@@ -1535,6 +1621,10 @@ silently wrong one. A plan-time check fails a stage that dissolves on a lineage-
 an incapable adapter, before fan-out rather than in the pod.
 
 **files touched** `template_code/ag/adapters/arcpy/`, `template_code/ag/core/validation.py`.
+
+**Tier 2 has an untested size limit.** Read T0.1's concatenation group-size finding before
+building tier 2: if `CONCATENATE` truncates or errors at A15.5's group sizes, the tier needs a
+detection or a bound, and a silent truncation cannot ship.
 
 **depends on** T4.2.
 
