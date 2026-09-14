@@ -16,6 +16,23 @@ Each check below was written because it found a real defect, not speculatively:
   term-headword  found the same thing from the other direction, and later caught an
                  edit that *looked* applied but had wrapped across a line break, so
                  the phrase was not greppable. Grep after editing, not only before.
+
+The two checks here cover only A-id citations, which die with this directory. The
+permanent half lives in `docs/refactor/check_terminology.py` and covers the 43
+`file.md#anchor` citations that predate the lineage work. Run both; neither subsumes
+the other.
+
+A GREEN RUN CAN MEAN NOTHING. Twice now a check passed because the case it would catch
+happened to be absent, not because the rule worked:
+
+  * the A-orphan exemption matched `**A12.8**`, but a superseded entry is written
+    `**A12.8 — SUPERSEDED.**`, so the rule never fired. Earlier passes were green by
+    coincidence — masked by an ad-hoc by-name exclusion in the throwaway version.
+  * an edit that added a term was not greppable, because the phrase wrapped a line.
+
+Both surfaced only when ad-hoc checking got formalised. When adding a check, break it
+on purpose once and confirm it fails. A rule that never fires is worse than no rule,
+because a green run from it is trusted.
 """
 
 from __future__ import annotations
