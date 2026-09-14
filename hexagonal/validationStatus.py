@@ -25,9 +25,9 @@ class Rule:
     def __post_init__(self):
         if isinstance(self.value, list):
             if not isinstance(self.severity, list):
-                raise ValueError("List value requires list severity")
+                raise ValueError(f"List value requires list severity\n{self.key} - {self.operator}")
             if len(self.severity) != len(self.value) + 1:
-                raise ValueError("Need one more severity than thresholds")
+                raise ValueError(f"Need one more severity than thresholds\n{self.key} - {self.operator}")
 
 
 OPERATORS = {
@@ -87,6 +87,11 @@ class ValidationStatus:
         for rule in self.permanent_rules + self.temporary_rules:
             data = stats.get(rule.key)
 
+            try:
+                is_dict = True if isinstance(data[list(data.keys())[0]], dict) else False
+            except Exception:
+                is_dict = False
+
             if data is None:
                 severity = Severity.ERROR
                 status[severity] += 1
@@ -103,10 +108,11 @@ class ValidationStatus:
                 continue
 
             for value in self._iter_rule_data(data):
+                category = self._get_key(data, value) if is_dict else None
                 severity = self._evaluate_rule(rule, value)
                 status[severity] += 1
                 if severity != Severity.SUCCESS:
-                    messages[severity].append(self._get_message(rule, severity))
+                    messages[severity].append(self._get_message(rule, severity, category))
 
         self.remove_temporary_rules()
 
@@ -116,11 +122,17 @@ class ValidationStatus:
     # Helper functions
     ##########################
 
-    def _iter_rule_data(self, data):
+    def _iter_rule_data(self, data: dict) -> iter:
         if any(isinstance(v, dict) for v in data.values()):
             yield from data.values()
         else:
             yield data
+
+    def _get_key(self, data: dict, value: dict) -> str | None:
+        for k, v in data.items():
+            if v == value:
+                return k
+        return None
 
     def _evaluate_rule(self, rule: Rule, data: dict) -> Severity:
         if rule.operator == "ratio":
@@ -138,8 +150,15 @@ class ValidationStatus:
 
         return rule.severity
 
-    def _get_message(self, rule: Rule, severity: str) -> str:
-        return f"{severity}: Rule '{rule.key}' failed"
+    def _get_message(self, rule: Rule, severity: str, category: str | None = None) -> str:
+        warning_message = (
+            "triggered a warning"
+            if severity == Severity.WARNING
+            else "failed validation"
+        )
+        if category:
+            return f"{severity}: '{rule.key}' {warning_message} for category '{category}'"
+        return f"{severity}: '{rule.key}' {warning_message}"
 
     def _most_severe_status(self, status: Counter) -> str:
         for label in reversed(self.STATUS_SEVERITY):

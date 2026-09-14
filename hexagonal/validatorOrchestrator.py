@@ -80,9 +80,7 @@ class ValidatorOrchestrator:
     ) -> dict:
         diff = {}
 
-        all_keys = set(previous.keys()) | set(current.keys())
-
-        for key in all_keys:
+        for key in previous.keys():
             old_value = previous.get(key)
             new_value = current.get(key)
             if old_value is None and isinstance(new_value, (int, float)):
