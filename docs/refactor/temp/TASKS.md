@@ -104,6 +104,7 @@ work but have different lifetimes and different modules.
 |---|---|---|---|
 | 1 | T0.1 | **GATE** — 64-bit storage capability | not started |
 | 1b | T0.6 | **GATE** — disk-backed map cost, and copy-vs-map cost | not started |
+| 1c | T7.4 | Layering and private-access checks, both platforms `[INDEPENDENT]` | not started |
 | 2 | T0.2 | Per-feature id in `PartitionIterator` | not started |
 | 3 | T1.1 | Shadow centroid selection and comparison | not started |
 | 4 | T1.3 | Synthetic transform suite | not started |
@@ -112,10 +113,10 @@ work but have different lifetimes and different modules.
 | 7 | T2.7 | `Row` slots and value-type docstrings `[INDEPENDENT]` | not started |
 | 8 | T2.5 | Linear referencing on `Geometry` `[INDEPENDENT]` | not started |
 | 9 | T2.6 | Raster `sample_at` `[INDEPENDENT]` | not started |
-| 10 | T2.2 | `update_rows` `[INDEPENDENT]` | not started |
+| 10 | T2.2 | `update_rows` | not started |
 | 11 | T2.8 | `join_field` unique-key contract | not started |
 | 12 | T0.3 | Fix `resolve_ramps` inversion | not started |
-| 13 | T0.4 | Rename the published `objid` mapping | not started |
+| 13 | T0.4 | Rename the published `objid` mapping | **blocked** — B9 |
 | 14 | T2.9 | Port surface surgery — splits, `DANGLE`, delete `union` | not started |
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
@@ -146,6 +147,7 @@ work but have different lifetimes and different modules.
 | 39 | T6.2 | Lineage walk API, with boundary-crossing and named degradation | not started |
 | 40 | T7.1 | Documentation-only migration (A1.x) | not started |
 | 41 | T7.2 | `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]` | not started |
+| 42 | T7.3 | Consistency checks `[INDEPENDENT]` | **done** |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -156,18 +158,119 @@ work but have different lifetimes and different modules.
 
 **what done means**
 
-Five cases run against a file geodatabase **created the way the pipeline creates them**, results
-recorded in a short written finding:
+Eleven cases run against a file geodatabase **created the way the pipeline creates them**, results
+recorded in a short written finding. Cases 2–4, 6–9 and 11 exist because the original five could
+all pass while the field is broken:
 
 1. Write a value just under 2⁵³ — passes, reads back unchanged.
-2. Write a value just over 2⁵³ — **recorded whether it errors or silently coerces.** This
-   determines whether a runtime guard suffices or a static one is required.
-3. Round-trip through `write_rows` → `read_rows` — batching puts the coercion boundary further
-   from the domain code that produced the value, so a write-then-read test is not sufficient.
-4. Predicate-filter on the field.
-5. File-geodatabase version: community reports say a target fgdb at version 10.0 or below rejects
-   the Pro 3.2 field types, while the docs say the fgdb version has not changed since 10.0.
-   Ambiguous enough to test rather than reason about.
+2. Write **2⁵³ + 1**, not 2⁵³ — **recorded whether it errors or silently coerces.** This
+   determines whether a runtime guard suffices or a static one is required. The value matters:
+   **2⁵³ is exactly representable as a float**, so a float-coercing path returns it unchanged and
+   the case passes while proving nothing. Note what this case is *for*: 2⁵³ + 1 is outside anything
+   A10.1's layout produces (maximum magnitude 2⁵² − 1), so it tests the **storage guard sitting
+   behind the allocator's own bound checks**, not the range real ids occupy.
+3. Round-trip through `write_rows` → `read_rows`, asserting **`type(value) is int`** and not only
+   equality. `4503599627370495.0 == 4503599627370495` is `True`, so an equality-only assertion
+   passes on a value that has already been through a float. The type assertion is not about value
+   loss — it catches **a float path reaching integer decode arithmetic**, which is where
+   T3.7(b)'s `minter_id` extraction breaks. Batching also puts the coercion boundary further from
+   the domain code that produced the value, so a write-then-read test is not sufficient either.
+4. **Typical generated ids, not only extremes.** `minter_id ≥ 1` means every generated id has
+   magnitude **≥ 2³²** (A10.1's layout), so any 32-bit path corrupts *all* of them while small raw
+   ingest ids pass unharmed. Extremes alone do not cover this: it is the ordinary case that
+   breaks. Covers a LONG output schema, an `int32` dtype, and a where-clause literal parsed as
+   int32.
+5. Predicate-filter on the field.
+6. **The type-survival case.** A `CARRY` shape means the field rides through an operation
+   untouched, so every `ONE + CARRY` row in A12.11 is a tool that must preserve the field's
+   **type**, not only its value. **No Esri documentation settles any of this**, which is why it is
+   a test.
+
+   The list is derived from that table, with the arcpy tool the adapter is expected to compile to.
+   **The arcpy adapter implements none of these yet** — `adapters/arcpy/` holds only
+   `predicates.py` — so these are intended mappings, and any method the adapter later compiles
+   differently has to be re-tested. T4.11 is where that stops being a manual obligation.
+
+   | port method | expected arcpy tool | what to record |
+   |---|---|---|
+   | `map_fields` | `ExportFeatures` **with `FieldMappings`** | type |
+   | `merge` | `Merge` **with `FieldMappings`** | type |
+   | `copy` | `CopyFeatures` | type |
+   | `select` | `Select` | type |
+   | `buffer` | `PairwiseBuffer` | type |
+   | `simplify` | `SimplifyLine` / `SimplifyPolygon` | type |
+   | `smooth` | `SmoothLine` / `SmoothPolygon` | type |
+   | `centroid` | `FeatureToPoint(point_location="CENTROID")` | type |
+   | `point_on_surface` | `FeatureToPoint(point_location="INSIDE")` | type |
+   | `collapse_to_point` | `FeatureToPoint` | type |
+   | `convex_hull` | `MinimumBoundingGeometry(geometry_type="CONVEX_HULL")` | type |
+   | `select_network` | no single tool — an adapter-composed selection | covered by the rows for the tools it composes |
+   | `densify` | `Densify` — in place | n/a by construction |
+   | `snap` | `Snap` — in place | n/a by construction |
+   | `make_valid` | `RepairGeometry` — in place | n/a by construction |
+   | `propagate_displacement` | `PropagateDisplacement` — in place | n/a by construction |
+   | `displace_features` | `ResolveRoadConflicts` / `ResolveBuildingConflicts` — in place | n/a by construction |
+   | `simplify.collapsed_points` | the tool's derived point output | **presence; if absent, a native-index reference column**; then type |
+   | `displace_features.displacement` | the tool's displacement output | **columns, mapping shape**, then presence and type — see B11 |
+   | `select_network.dropped` | the complement selection | covered by the rows for the tools it composes |
+
+   **`map_fields` runs first.** It is `ONE + CARRY` under A12.11a, it goes through field mappings
+   where a type change is most likely, and it is the exact call B9(d) is about. Note the tool:
+   **Feature Class To Feature Class is deprecated in favour of Export Features** — confirmed on the
+   tool page, which states the replacement without naming the version — so test `ExportFeatures`,
+   the one the adapter will use.
+
+   **The in-place editors are "n/a by construction"**: they modify geometry on an existing table
+   and create no new schema, so there is nothing for a field to be re-typed into. Confirm cheaply;
+   do not spend the afternoon there. The three cartography tools state it in the same words —
+   *"This tool does not produce output layers... it alters the geometry of the source feature
+   classes of the input layers"* — which is also why `displace_features`' only new artifact is its
+   displacement output.
+
+   **For the three derived outputs, record whether `lineage_id` is present at all, before its
+   type.** A12.11 declares them `ONE + CARRY`, which assumes the tool copies the input's attributes
+   onto the secondary output. Some arcpy secondary outputs carry only a native-id reference back
+   to the input instead. If any of these do, **the `CARRY` declaration contradicts the data and
+   that output should be `FOREIGN`**, with the adapter translating the reference — a finding
+   against A12.11, not merely a tool quirk, and it belongs in the written finding as such.
+
+   `PairwiseDissolve` is **not** in scope — `GROUP + MINT`, so nothing is carried through it.
+
+   **Record per tool: preserved; or downcast to what; and whether an adapter-level fix restores it**
+   — an explicit field mapping declaring BigInteger output, for instance. Severity depends on which
+   type it became; see **if this fails**.
+7. **The overlay-duplicate case**, in two tools. `Intersect` with `lineage_id` present on **both**
+   inputs, and **`JoinField` with a lineage-bearing join table**. Separate from case 6 because the
+   question is not type survival but **whether a duplicate appears and under what name**. ArcPy is
+   likely to suffix rather than error.
+
+   Two tools rather than one because B10's duplicate rule is **adapter-declared**, and a rule
+   generalised from a single tool is not a rule. `JoinField` is also the in-place route T2.8
+   flagged, so it is the case a domain call is most likely to hit. **The finding states whether
+   the two agree.** If they do not, the adapter needs a naming rule **per tool** rather than one
+   per backend, and B10 has to say so.
+8. **`JoinField` with a BIGINT key.** T2.2, fan-out in T3.4 and T4.5's Path A all join on it.
+   Distinct from case 7: this one is about the key's type, that one about the carried field's name.
+9. **The `TableToNumPyArray` dtype for a BIGINT field**, recorded verbatim. That is T4.5's Path B
+   build route, and A15.3's packed layout assumes `int64`.
+10. File-geodatabase version: community reports say a target fgdb at version 10.0 or below rejects
+    the Pro 3.2 field types, while the docs say the fgdb version has not changed since 10.0.
+    Ambiguous enough to test rather than reason about.
+11. **The exact ArcPy build and image reference**, recorded. If the Windows Pro cross-check below
+    is run, record its build too and name any divergence between the two. Test the **archive
+    creation path** as well as scratch — B9 may put `lineage_id` on the archived product, and an
+    archive written by a different code path is a different test.
+
+**Where it runs.** T0.1 is a one-off gate, not a CI step, and it runs **in the Linux production
+image**. That is the environment whose results count: production is Linux, and field-type
+behaviour is exactly the kind of thing that can differ between builds. **Windows Pro is an
+optional cross-check**, useful as a divergence detector since the team develops there, but a pass
+on Windows Pro does not substitute for a pass in the image.
+
+Esri documents the 53-bit limit, and says values outside it error in Pro while in other clients
+they may be rounded and break functionality:
+<https://pro.arcgis.com/en/pro-app/latest/help/data/geodatabases/overview/arcgis-field-data-types.htm>.
+That is the documented behaviour; cases 2, 3, 6 and 7 check what this build actually does.
 
 The finding states whether `FieldType.BIGINT` is viable, and if not, which fallback is chosen.
 
@@ -175,7 +278,7 @@ The finding states whether `FieldType.BIGINT` is viable, and if not, which fallb
 
 **depends on** nothing.
 
-**decision refs** A10.1, B1.
+**decision refs** A10.1, A12.11, A12.11a, A15.3, B1, B9, B10, B11.
 
 **doc migration** none — this resolves B1 into an A-item, which is then written into the new ADR
 on lineage id allocation by T3.3.
@@ -188,6 +291,63 @@ predicates). **Either changes the declared field type at every call site that st
 `lineage_id`** — a domain-visible schema change, not an adapter swap. Affected: T3.4, T3.5, T4.1,
 T4.2, T4.3, T4.6, and every later task. This is why it is first despite being small.
 
+**If a carrying tool changes the type (case 6), severity depends on which type it became.** The two
+outcomes are not the same failure and must not be recorded as one:
+
+- **LONG, or any 32-bit type — a blocker.** Every generated id has magnitude ≥ 2³², so this
+  corrupts *all* of them while leaving small raw ingest ids intact, which is the shape that makes
+  it survive a casual test. **It escalates to the TEXT / paired-LONG decision only if the adapter
+  cannot fix it** — an explicit field mapping declaring BigInteger output is an adapter change, not
+  a schema change, and should be tried first. If it does escalate, **the fallbacks have to pass
+  the same carrying tools before they are compared**: TEXT can be truncated by a field mapping's
+  length, and paired LONG only works if both halves are carried together by every tool in the
+  table. A fallback assumed to pass is the same mistake one level down.
+- **DOUBLE — an adapter-level fix, not a fallback trigger.** It is **lossless for every id
+  A10.1's layout can produce**; that is exactly what the 53-bit budget buys, so there is no value
+  corruption to find. What it breaks is **integer arithmetic**: `>>` and `&` raise `TypeError` on a
+  float, and numpy bit operations reject `float64`. That is T3.7(b)'s `minter_id` extraction, and
+  it fails at the guard rather than in the data.
+
+**If a derived output has no `lineage_id` (case 6), what follows depends on whether a native-index
+reference is there instead.** The ids axis is semantic — A12.10's test is *ids change when the
+feature stops standing for the same real-world object, not when its geometry kind changes* — but
+semantics only choose between declarations the data can support:
+
+- **`lineage_id` absent, reference column present.** `CARRY` is still achievable: the port reports
+  the native correspondence and the facade stamps from it (A11.11). The obligation falls on the
+  adapter or port, and T4.11 is where it gets tested.
+- **Neither present, on `simplify.collapsed_points`.** This can be an adapter implementation
+  choice rather than a finding against A12.11, because the output has a second source. Collapsed
+  features are the input rows missing from `simplify`'s main output, which is `ONE + CARRY` and
+  carries `lineage_id`: the adapter derives them by set difference on `lineage_id` between input
+  and main output, then converts those rows to points. They keep their attributes, so `CARRY`
+  holds by construction — no spatial synthesis and no `NONE`. It is the boundary diff's own
+  mechanism, reused, and it depends on the main output carrying `lineage_id`, which `simplify`'s
+  own row in case 6 already tests.
+
+  **It is only an adapter choice if the port contract defines `collapsed_points` precisely**, and
+  the two routes do not agree by default. The derivation equals the tool's output only if **every**
+  row missing from the main output is a collapse — check whether `SimplifyPolygon`'s minimum-area
+  removal emits points, because if it drops rows for other reasons the derivation labels those
+  collapsed too. The routes also place the point differently: the tool at the collapse location,
+  the derivation at a centroid or inside point. So the contract must say *every input row absent
+  from the main output, at a stated point rule*; the derivation then **is** the contract and the
+  tool route has to match it. **That definition belongs in `simplify`'s docstring, written at
+  T4.2.**
+- **Neither present, with no alternative source.** *Then* it is a finding against A12.11: `CARRY`
+  has nothing to stamp from and `FOREIGN` needs refs, so neither is declarable. Today the only
+  output in this position is `displace_features.displacement`.
+
+**`displace_features.displacement` is not decided here.** Both its axes are open, including the
+possibility that its mapping shape has no legal cell at all. **See B11**, which this case feeds
+rather than answers.
+
+**If `collapsed_points` were ever redeclared `FOREIGN`, the cost is larger than one table row.**
+`FOREIGN` is terminal for lineage (A12.9), so the id would not continue through it — and
+`collapsed_points` is the **worked case in A16.2** and the entire premise of **T4.8**'s stage-exit
+sweep. Both would have to be rewritten around a different example, or the sweep would be solving a
+problem that no longer exists. Name that cost before taking the option.
+
 ---
 
 ## 1b. T0.6 — GATE: disk-backed map cost, and copy-versus-map cost
@@ -196,8 +356,15 @@ T4.2, T4.3, T4.6, and every later task. This is why it is first despite being sm
 
 **what done means**
 
-Two measurements on real data, one afternoon. Both are "measure before building on an
-assumption", and neither needs any of the new code to exist.
+Two measurements on real data. Both are "measure before building on an assumption", and neither
+needs any of the new code to exist.
+
+**Not an afternoon any more.** That estimate predates the validity conditions below. (a) now means
+staging the national inputs onto a Linux volume, running at the production pod limit rather than a
+comfortable one, sweeping cache sizes on the largest map, and getting the production cluster's
+kernel and cgroup version from someone with cluster access. Budget **a few days for (a)**, an
+estimate dominated by data staging and the cache sweep rather than by the runs themselves. (b)
+waits on B9 and is not in that budget.
 
 **(a) The disk-backed id map.** No facade required — this measures the mechanism A15.3 specifies,
 not the dict it replaced. **The dict is not a candidate**, so do not benchmark it as one: it was
@@ -208,28 +375,69 @@ Three numbers, and the task is not done without all three:
 1. **A rows-versus-build-time curve**, not a single pass/fail on one input. Several sizes spanning
    the real range — a 70K handle, a national road network in the low millions, and the largest
    input available. One point sets nothing, and "provisional" then becomes permanent by default.
-2. **Peak RSS** of the packed path, confirming it is flat across that range rather than a function
-   of rows. This is the property A15.3 asserts; unmeasured, it is only an assertion.
+2. **Peak memory as the cgroup accounts it** for the packed path, confirming it is flat across that
+   range rather than a function of rows. This is the property A15.3 asserts; unmeasured, it is only
+   an assertion. Not RSS: see the metric paragraph below.
 3. **The block-cache size at which lookup starts thrashing** on the largest map, with the subject
    read in map order as A15.3 requires. This decides whether the packed path is viable at all, and
    nothing else in the plan would catch a cache sized too small.
 
-**Outputs:** the **resource ceiling** (where build time stops being acceptable, feeding A11.4a's
-second ceiling) and the **in-memory budget** (A15.3's declared constant, provisionally 64 MB).
+**Outputs**, split by what the finding is authoritative for:
 
-**(b) Copy versus map-only.** Bytes and wall-clock for copying a national N50 product, against
-bytes and wall-clock for producing its four-column ingest map over the same dataset.
+- **The in-memory budget**, a direct output: A15.3's declared constant, provisionally 64 MB.
+  Memory behaviour is what this environment measures authoritatively, so the number is used as is.
+- **The resource ceiling, as a shape and a method, not a value.** The curve's shape, plus the
+  procedure for turning a build-time tolerance into a row count. The value itself is **calibrated
+  on the pod at construction** per A11.4a, because absolute build time is only indicative here.
+
+**Where it runs, and which metric it reports.** Production is the **Linux image**; the team
+develops on Windows. T0.6 is a one-off gate, not a CI step.
+
+The metric has to be the one the platform kills on: a **cgroup** limit, which is what Kubernetes
+evicts and OOMKills against — not a Windows working set, which is a different accounting of a
+different thing. Within the cgroup, **mmap-ed pages may be charged differently from an explicit
+fixed-size read buffer**; measure that difference rather than assuming the two are
+interchangeable, since A15.3's entire claim is about a bounded buffer.
+
+All three measurements run in the image, which has ArcPy, under `docker run --memory=…` — one
+environment, no split. The conditions that make the result valid:
+
+- **Test data on the Linux filesystem** (a named volume or WSL ext4), not a bind-mounted Windows
+  path. The file-sharing layer would distort both build time and thrash.
+- **`--memory` set to the production pod limit**, not a comfortable number. The kernel page cache
+  is charged to the cgroup, and a generous limit lets it hide an undersized block cache — the
+  failure measurement 3 exists to catch. The WSL2 VM's own memory cap must be above this limit.
+- **Record the image reference, and the kernel and cgroup version** in both the test environment
+  and the production cluster. Name any mismatch; v1 and v2 account for page cache differently.
+- **Report the curve's shape and whether peak memory stays flat**, not absolute times. Dev
+  hardware is not the pod's.
+
+"Authoritative" is scoped accordingly: **authoritative for memory behaviour and scaling,
+indicative for absolute build time.** A11.4a calibrates the resource ceiling at pod construction,
+so no absolute number from here is used directly.
+
+**(b) Copy versus map-only.** **Waiting on B9** — if the archived product does not carry
+`lineage_id`, the map-only branch is unreachable, every cross-run input is copied, and this
+measurement has no subject. Do not run it before B9 answers; (a) does not depend on B9 and
+proceeds.
+
+Bytes and wall-clock for copying a national N50 product, against bytes and wall-clock for
+producing its four-column ingest map over the same dataset.
 
 This is the number A24.1's second row rests on. The expected ratio is large — the map moves two
 integer columns where the copy moves geometry plus every attribute — but it has never been
 measured, and an N100 run takes that branch on **every execution**, so a wrong assumption here is
 paid continuously rather than once.
 
+**Before (b) runs, revise the comparison.** As written above it compares copy against map
+production only. The map-only branch also pays fan-out's join over the same dataset, and
+T3.7(a)'s check, on every run. Not redesigned now; that waits for B9.
+
 **files touched** a throwaway script plus a written finding in `docs/refactor/temp/`.
 
-**depends on** nothing.
+**depends on** (a) nothing; (b) B9.
 
-**decision refs** A15.3, A15.1, A24.1, A11.4a.
+**decision refs** A15.3, A15.1, A24.1, A11.4a, B9.
 
 **doc migration** none — (a) confirms or replaces A15.3, which migrates at T4.5; (b) confirms
 A24.1's copy rule, which migrates at T3.4.
@@ -258,6 +466,61 @@ building the join path in fan-out.
 missing from the first version of this plan. Left unmeasured, the number surfaces during T4.5
 implementation — after T4.3 and T4.4 have been built against an assumption that may not hold. It
 costs an afternoon now and a rewrite later.
+
+---
+
+## 1c. T7.4 — Layering and private-access checks, run on both platforms `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** Three checks that **fix existing configuration**. They were found while
+writing B10 but do not resolve it and do not depend on it; B10's facade-side pieces stay with
+T4.3. Placed early because none of this needs lineage, the gap is live today, and `SLF001` is
+clean now, which is the cheapest moment it will ever be to turn on.
+
+- **`ag.helpers` added to the `layers` contract** in `template_code/.importlinter`, between
+  `ag.operations` and `ag.staging`. B10 break-tested this: a `helpers` module importing
+  `ag.runtime` passes the current config and breaks the amended one. `helpers → adapters` and
+  `helpers → staging` are already caught by the two `protected` contracts, so only the upward
+  direction is missing.
+- **A package-coverage meta-check** in the permanent unit tests: every top-level package under
+  `ag/` appears in the `layers` stack or in an explicit exempt list, read from `.importlinter` and
+  the directory listing. `helpers/` would have failed it from the start, and `lineage/` will exist
+  before anyone remembers its row. **Break it on purpose once** by removing `ag.helpers` from the
+  stack, and confirm it fails.
+- **ruff `SLF001`** (private-member-access) enabled on `operations/`, `helpers/` and `pipelines/`.
+  It catches reach-through such as `tb.geometry._port`, which no import rule can see. B10 verified
+  it is clean on all three packages today and that it exempts the namedtuple API.
+
+**Prerequisite, found while writing this task: nothing runs these contracts in CI.** The only
+workflow is `.github/workflows/black_linter.yml`. There is no pre-commit config, the root
+`pyproject.toml` selects only ruff `F401` and `I`, and `import-linter` is not installed in any
+environment. `03-architecture.md` lists "`.importlinter` exists and passes in CI" as a graduation
+condition. So this task **adds the `lint-imports` step as well as the new row**. Otherwise the
+row is one more passing convention.
+
+**Where it runs.** Every check this task adds runs in **pre-commit and in CI on both
+`windows-latest` and `ubuntu-latest`**: the team develops on Windows and production is Linux. The
+same matrix covers the existing pure-Python checks, `temp/check_consistency.py` and
+`check_terminology.py`. **Test CRLF line endings and path handling specifically**, since those
+scripts parse Markdown with line-anchored regexes and build paths from `__file__`.
+
+**CI has no arcpy installed, on purpose, and that is load-bearing.** It makes an `import arcpy`
+anywhere outside the adapter a CI failure, which enforces the no-arcpy-in-core rule for free.
+Adapter tests carry a pytest **`arcpy` marker** and CI runs **`-m "not arcpy"`**. An *unmarked*
+arcpy test then fails on `ImportError` instead of being skipped silently, which is the property
+the marker exists for.
+
+**files touched** `template_code/.importlinter`, `pyproject.toml` (ruff `SLF001` per-path scope,
+pytest marker registration), `template_code/tests/unit/` (the meta-check), a new CI workflow under
+`.github/workflows/`, a new `.pre-commit-config.yaml`.
+
+**depends on** nothing.
+
+**decision refs** B10 (where the three gaps were found; this task does not resolve it).
+
+**doc migration** none. `03-architecture.md` §4.1's table gains the tightened `helpers/` row when
+the contract lands.
 
 ---
 
@@ -479,9 +742,11 @@ product.
 
 ---
 
-## 10. T2.2 — `update_rows` `[INDEPENDENT]`
+## 10. T2.2 — `update_rows`
 
 **status:** not started
+
+*(no longer `[INDEPENDENT]`: it depends on T0.1 and carries a lineage-motivated contract.)*
 
 **what done means** `TableOps.update_rows(input, key, fields, rows)` exists: bulk, keyed, no
 iteration protocol exposed. Writes only changed rows and only the named fields. Accepts
@@ -489,12 +754,21 @@ iteration protocol exposed. Writes only changed rows and only the named fields. 
 to a keyed cursor pass; the docstring names `UPDATE … FROM` and pandas merge-and-assign as the
 equivalents that keep it portable.
 
+- **The key field may not appear in `fields`; the call is rejected if it does.** The reason is this
+  signature, not a general rule about re-keying: `rows` carries one value per field per row, so
+  with `key ∈ fields` a row is matched on `row[key]` and then written back that same value — a
+  guaranteed no-op. The rule rejects a caller error. It needs no lineage knowledge, and it lives in
+  the port contract and docstring.
+- **It does not guard `lineage_id` in general.** Keyed on `lineage_id`, `update_rows` cannot
+  rewrite it at all; the real exposure is `lineage_id` written under a different key, or by
+  `calculate_field`. That is A12.11a's option for T2.8, not this task's check.
+
 **files touched** `template_code/ag/ports/table_ops.py`,
 `template_code/ag/adapters/arcpy/` (implementation).
 
 **depends on** T0.1 — the key is a `lineage_id`, so the field type must be settled.
 
-**decision refs** A4.1, A4.2, A4.3.
+**decision refs** A4.1, A4.2, A4.3, A12.11a.
 
 **doc migration** A4.1–A4.3 → ADR-0004 amendment and `ports/table_ops.py`.
 
@@ -509,11 +783,27 @@ must be unique — with a check — or the grammar gains a way for an in-place m
 cardinality change. A non-unique join key changes row count with no output parameter to declare,
 so the `@row_shape` grammar cannot currently see it.
 
+**the other half of A12.6's definition.** A12.11a records an option for the same definition to
+settle: have it declare **which parameter names the fields a mutator writes or drops** — `fields`
+for `update_rows` and `delete_fields`, the target field for `calculate_field` — so the facade can
+reject `lineage_id` there generically, without per-method argument parsing. It is an option, not a
+decision. Two things to weigh if it is taken:
+
+- **`join_field` belongs in that list.** Its `fields` parameter can name `lineage_id`, and joining
+  a lineage-bearing table produces exactly B10's duplicate case: the target ends up carrying the
+  *join* table's ids alongside its own.
+- **The lineage layer legitimately writes `lineage_id` through the ports** — T4.5 Path A's map
+  join and T3.4's fan-out join both do. So the rejection applies to **domain calls through the
+  facade** only, with the lineage layer calling the **unwrapped port** — the `Protocol`
+  implementation beneath the facade, not a named adapter, since T4.5's Path B exists precisely for
+  backends other than arcpy. B10 carries the closed list of sanctioned bypasses and the layering
+  check over it; do not restate the list here.
+
 **files touched** `template_code/ag/ports/table_ops.py`.
 
 **depends on** nothing.
 
-**decision refs** A12.6, B4.
+**decision refs** A12.6, A12.11a, B4.
 
 **doc migration** A12.6 → `ports/row_shape.py` (the in-place-mutator problem) and
 `ports/table_ops.py` (the resulting `join_field` contract). Resolves B4 into an A-item, which
@@ -546,7 +836,7 @@ operation.
 
 ## 13. T0.4 — Rename the published `objid` mapping
 
-**status:** not started
+**status:** blocked — B9, whether the delivered copy needs a key back to the archive
 
 **what done means** `_apply_product_schema` no longer maps a field to a bare `objid`. Either the
 column is dropped from the published schema, or it is named so that it does not read as a stable
@@ -555,9 +845,12 @@ re-mints on every dissolve.
 
 **files touched** `template_code/ag/operations/road/__init__.py`.
 
-**depends on** nothing.
+**depends on** **B9.** The two options are not equivalent until B9 answers whether the delivered
+copy needs a key back to the archive. If it does, "drop the column" is off the table and the
+remaining question is what the renamed column holds — B9(b)1's one-join candidate, or a third id
+with its own map.
 
-**decision refs** A19, B3.
+**decision refs** A19, B3, B9.
 
 **doc migration** none — A19 stays open until B3 resolves.
 
@@ -926,6 +1219,12 @@ A9.8, A9.9 → `04-migration.md`.
 - The `MANY + CARRY` message states the primary reason: **this is the inheritance model A11.2
   rejects** — five split pieces all keeping id 1 leaves the log unable to express a partial drop.
   The grammar rule and A11.2 are the same rule stated twice.
+- **A method with no output handle is outside the grammar, and the check says so explicitly.**
+  `count`, `exists`, `data_type_of` and `describe_fields` return values, not rows. The exclusion is
+  written into the check and `row_shape.py`'s docstring rather than implied by the absence of an
+  output parameter, so a later reader cannot mistake an undeclared query for a missed declaration.
+  In-place mutators (A12.6) are **not** covered by this exclusion: they have no output parameter
+  but do change a handle, and T2.8 settles how they declare.
 
 **files touched** new `template_code/ag/ports/row_shape.py`,
 `template_code/tests/unit/test_row_shape.py`.
@@ -943,19 +1242,36 @@ A9.8, A9.9 → `04-migration.md`.
 **status:** not started
 
 **what done means** Every output parameter of every `GeometryOps`, `CartographicOps` and
-`TableOps` method carries a `@row_shape` declaration matching A12.11's table. The CI check from
-T4.1 passes. `collapse_to_point` is declared `ONE + CARRY`, with the precedent stated in its
-docstring: identity changes when the feature's correspondence to a real-world object changes, not
-when its geometry kind changes.
+`TableOps` method carries a `@row_shape` declaration matching A12.11's table, including A12.11a's
+`map_fields` row. The CI check from T4.1 passes. `collapse_to_point` is declared `ONE + CARRY`,
+with the precedent stated in its docstring in A12.10's reworded form: *ids change when the feature
+stops standing for the same real-world object, not when its geometry kind changes.*
+
+- **A12.11's rows and the Protocol's methods match in both directions.** Every row names a method
+  that exists, and every row-producing method has a row. One direction is not enough: a
+  declaration naming a method that does not exist passes every check that iterates over methods.
+  Today the drift is `nearest_neighbor` / `all_neighbors` against the Protocol's single
+  `nearest_neighbors`, and `buffer_dissolve`, `extract_vertex`, `spatial_join_all` declared but not
+  yet split out by T2.9. **This check can be one-shot**, run while declaring, since A12.11's table
+  migrates away when this task closes; T4.1's CI check is what persists.
+- **`displace_features.displacement` is not declared from A12.11 until B11 resolves.** Both its
+  axes are open, and one branch has no legal cell.
+- **`simplify`'s docstring defines `collapsed_points`** as *every input row absent from the main
+  output, at a stated point rule*. **Before writing that definition, check whether
+  `SimplifyPolygon`'s minimum-area removal emits points**: if the tool drops rows for reasons other
+  than collapse, the derivation and the tool's own output disagree, and the definition has to pick
+  one. This is what lets the adapter derive `collapsed_points` by set difference when the tool's
+  output lacks both `lineage_id` and a reference (T0.1's type-survival case).
 
 **files touched** `template_code/ag/ports/geometry_ops.py`,
 `template_code/ag/ports/cartographic_ops.py`, `template_code/ag/ports/table_ops.py`.
 
-**depends on** T4.1, T2.9.
+**depends on** T4.1, T2.9, T2.2 — the two-way check must see `update_rows`.
 
-**decision refs** A12.10, A12.11, A12.12.
+**decision refs** A12.10, A12.11, A12.11a, A12.12, B11.
 
-**doc migration** A12.10–A12.12 → the port module docstrings.
+**doc migration** A12.10–A12.12 and **A12.11a** → the port module docstrings. A12.11a is named
+explicitly because the range does not cover a suffixed id.
 
 **note** A12.12 records why vertex extraction is `FOREIGN` and not `MINT`, including the rejected
 split into `vertices_to_points`. Keep that rationale in the docstring — it is the case people will
@@ -973,12 +1289,24 @@ decoration and cannot drift. Composed in `runtime/`, with one `cast` at the comp
 conformance test asserting every Protocol method is reachable through the facade. Operations see
 `tb.geometry` typed as `GeometryOps` and receive no injected `lineage`.
 
+Owns B10's facade-side pieces, if B10 is adopted:
+
+- **the post-call assertion**: after every port call that produces or mutates a lineage-bearing
+  handle, `lineage_id` exists with the declared type, and no adapter-declared duplicate of it
+  exists. One `describe_fields`, no row scan. Pure Python, so it runs identically in every
+  environment, local Windows runs included;
+- **no accessor to the inner port** on the facade;
+- **the `lineage/` protected contract** in `.importlinter`, with `allowed_importers` set from where
+  ingest, fan-out and fan-in actually live, not from B10's minimal probe;
+- **the mint surface choice**: a public `ag.lineage.api` module the domain may import, or `mint`
+  reached through the `Toolbox`. B10 records that both cost one contract.
+
 **files touched** new `template_code/ag/lineage/` package,
-`template_code/ag/runtime/stage_entry.py`.
+`template_code/ag/runtime/stage_entry.py`, `template_code/.importlinter`.
 
 **depends on** T4.2.
 
-**decision refs** A11.11, A11.12, A15.1.
+**decision refs** A11.11, A11.12, A15.1, B10.
 
 **doc migration** A11.11 → the new ADR on lineage and `03-architecture.md` §4. A11.12 and A15.1 →
 the lineage module docstring — A15.1 is the cost model the facade is built around ("mint always,
@@ -1224,15 +1552,41 @@ resulting capability record as an argument — data, not a call. No exemption ne
 
 **status:** not started
 
-**what done means** One case per `MINT` method: run it over a known input set and assert the
+**what done means** Three halves.
+
+**(1) `MINT` parents.** One case per `MINT` method: run it over a known input set and assert the
 reported parents match. The suite passes under **both** capability tiers, since tier 2 runs on the
 current image and tier 1 later on the same code.
 
-**files touched** `template_code/tests/` — adapter conformance path TBD.
+**(2) `CARRY` presence and type.** One case per `CARRY` method in A12.11 and A12.11a: assert
+`lineage_id` **exists with the declared type on each output**. This makes T0.1's type-survival
+case permanent. T0.1 only tests the *intended* arcpy mappings, because no adapter method exists
+yet; here "re-test when the adapter changes" stops being a manual obligation and becomes a gate.
+Where a tool's output lacks the field and the adapter stamps from a native-index reference or
+derives the output by set difference (`simplify.collapsed_points`), the case tests that route.
+
+**(3) In-place cartography tools leave their input unchanged.** `ResolveRoadConflicts`,
+`ResolveBuildingConflicts` and `PropagateDisplacement` all alter the source feature class of their
+input. Behind `displace_features` and `propagate_displacement`, a case asserts **the input handle's
+geometry is unchanged after the call**. The adapter must compile them copy-then-edit; otherwise it
+mutates a handle another operation, or a retry of the same one, may read.
+
+**Where it runs — not a CI step.** Conformance needs ArcPy and CI has none. It **gates image
+promotion**: run in the freshly built Linux image, triggered by image rebuilds and by changes under
+`adapters/arcpy/`. It is also runnable **locally against Windows Pro**, as a convenience and a
+divergence detector, and in the image under Docker. It is not a pre-commit hook, for the same
+reason it is not CI.
+
+**Open: licence activation.** Whether running the image needs a Pro licence activated, and where
+that happens, decides whether the promotion gate can run automatically or needs a licensed runner.
+Record the answer here when known.
+
+**files touched** `template_code/tests/` — adapter conformance path TBD. Tests carry the `arcpy`
+pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A14.
+**decision refs** A14, A12.11, A12.11a.
 
 **doc migration** none.
 
@@ -1454,6 +1808,49 @@ is consistently "origin".
 lineage dependency and can be done by anyone at any point — but it should be done *before* the
 lineage vocabulary lands in the same documents, or both meanings of "lineage" appear in
 `02-runtime.md` §2.2 simultaneously.
+
+---
+
+## 42. T7.3 — Consistency checks `[INDEPENDENT]`
+
+**status:** done
+
+**what done means** Two scripts, split by lifetime, each exiting non-zero so either can go
+into CI unchanged.
+
+- `docs/refactor/temp/check_consistency.py` — **temp-lifetime.** A-orphan, dangling-ref,
+  ordering, B-referenced, and the two terminology checks that cover *A-id* citations.
+  Deleted with this directory.
+- `docs/refactor/check_terminology.py` — **permanent.** Every `file.md#anchor` an entry
+  cites resolves, and every headword appears in the document it cites. These outlive the
+  migration: after it, the authority column stops citing A-ids and starts citing ADRs and
+  docstrings, and the same two questions still need answering. There are already 43 anchor
+  citations predating the lineage work that nothing verified.
+
+Each check's docstring records the defect that prompted it, and both carry the
+green-by-coincidence note: a rule that never fires is worse than no rule.
+
+**files touched** `docs/refactor/temp/check_consistency.py`,
+`docs/refactor/check_terminology.py`.
+
+**depends on** nothing.
+
+**decision refs** none — this is tooling for the migration protocol, not a design decision.
+Listed because new code with no owner is the exact orphan shape these scripts detect.
+
+**doc migration** none. When temp/ is deleted, `check_terminology.py` stays and the
+completion test's clause 4 becomes its permanent job.
+
+**known failures on first run, not yet fixed** `check_terminology.py` reports two
+pre-existing defects outside the lineage scope, left for a decision rather than silenced:
+
+- `driven port` — `03-architecture.md:531` says "ports are **driven** (secondary)", never
+  the noun phrase. Note `driving adapter` *does* appear, so the pair is inconsistent.
+- `scale constant` — `02-runtime.md:343` describes the concept fully and never uses the
+  words.
+
+Both are one-line fixes in the authority document, the same fix `mint generation` got in
+A9.10. Adding them to `HEADWORD_VARIANCE` instead would hide a real defect.
 
 ---
 

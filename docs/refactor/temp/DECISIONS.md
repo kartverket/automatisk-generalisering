@@ -630,7 +630,7 @@ subject's row count *before* it builds the map, so both are cheap.
 | | **design ceiling** | **resource ceiling** |
 |---|---|---|
 | what it asserts | what a legitimate subject looks like | what this pod can build in acceptable time |
-| value | 10M rows, provisional | from T0.6's curve |
+| value | 10M rows, provisional | method from T0.6's curve, calibrated on the pod |
 | varies by environment | **no** | yes |
 | lives | a constant in the lineage module, challengeable in review like a `context_radius_m` | the composition root, resolved at pod construction |
 | tripping it means | **fix the operation** | resize the pod, or accept the build time |
@@ -942,6 +942,58 @@ its likely first inhabitant: the centerline corresponds to a different object th
 | `union` | — | — | deleted (A5.4) |
 
 `destination:` `ports/geometry_ops.py`, `ports/cartographic_ops.py`, `ports/table_ops.py`.
+
+**A12.11a `map_fields` is `ONE + CARRY`.** One row, added to the table above:
+
+| method | cardinality | ids | subject / context / refs |
+|---|---|---|---|
+| `map_fields` | ONE | CARRY | `input` |
+
+Found by sweeping the port Protocols against A12.11 and A12.6 while writing B9: `map_fields` was
+in neither. It **has an output parameter** (`ports/table_ops.py:156-163`), so A12.6's in-place
+category does not cover it and A12.11 is its home. `ONE + CARRY` because it renames and drops
+fields and does not touch row identity — the row count and the subject's ids are unchanged.
+
+**This row is what makes `map_fields`' output lineage-bearing, which is what puts it inside B10's
+scope.** The two together turn B9(d)'s silent drop into an error naming `map_fields`: the
+declaration says the output carries the subject's ids, and the post-call assertion checks that it
+does. Neither alone is enough — an undeclared method is outside the assertion's scope, and a
+declaration with nothing checking it is a comment.
+
+T4.1's CI check would have caught the omission independently, since it rejects an output parameter
+with no declaration; recording it here means T4.2 does not discover it as a surprise.
+
+**"The only method in neither" is a claim about today's Protocol, not a closed one.** T2.2 adds
+`update_rows`, an **in-place mutator keyed on `lineage_id`** — A12.6's category, not this one.
+Two separate things came out of looking at it.
+
+**A port contract worth stating on its own terms: the key field may not appear in `fields`.**
+`update_rows(input, key, fields, rows)` carries one value per field per row, so with `key ∈
+fields` a row is matched on `row[key]` and then written back that same value — a guaranteed no-op.
+The rule rejects a caller error, and it is about this signature rather than about re-keying in
+general: `UPDATE … SET key = … FROM …` is well-defined, and a port method shaped to express it
+would be a different method. No lineage knowledge is involved.
+
+**It does not, however, cover the lineage exposure.** Keyed on `lineage_id`, `update_rows` cannot
+rewrite `lineage_id` at all. The real exposure is `lineage_id` written **under a different key**,
+or written by `calculate_field`, which has no key and no `fields`.
+
+**An option for T2.8 to weigh when it settles A12.6's in-place-mutator definition — an option, not
+a decision.** Have that definition declare **which parameter names the fields a mutator writes or
+drops**: `fields` for `update_rows` and `delete_fields`, the target field for `calculate_field`.
+The facade then rejects `lineage_id` appearing in that parameter, generically. This is a
+per-method *declaration* read by generic logic — the same pattern as `subject=` and `refs=` — so
+it does not hit B10's objection, which is to argument-parsing logic written per method inside the
+facade. It complements B10 rather than replacing it: the post-call assertion remains the only
+thing that sees tool-behaviour renames and type downcasts, neither of which any declaration can
+predict.
+
+Two smaller findings from the same sweep are task acceptance criteria rather than decisions, and
+are recorded at **T4.1** (queries are outside the grammar, stated rather than implied) and **T4.2**
+(A12.11's rows and the Protocol's methods must match in **both** directions — `nearest_neighbor`,
+`all_neighbors`, `buffer_dissolve`, `extract_vertex` and `spatial_join_all` are declared here and
+absent from the Protocol, being T2.9's splits).
+`destination:` `ports/table_ops.py`, with A12.11.
 
 **A12.12 Vertex extraction is `FOREIGN`, not `MINT`.**
 
@@ -1596,3 +1648,365 @@ the work is not scoped. `LineageRoot` is a `TypeAlias` at `core/data_objects.py:
 `locations.py`, `policy.py` and `validation.py`, plus a `lineage_roots()` function that presumably
 becomes `origin_roots()`. Aligning it with `Derived.origin` removes the object-level/feature-level
 "lineage" ambiguity, but it touches existing code rather than only the new design. Needs a task.
+
+**B9. Which artifacts carry `lineage_id` across a run boundary?**
+
+**Two hops, answerable separately.** Naming them first, because conflating them is what makes this
+look binary when it is not:
+
+| hop | from → to | what a missing key costs |
+|---|---|---|
+| **1. cross-run ingest** | archived product → the next run that reads it | `LOST_HISTORY` (A24.1). Applies **only** if the *archive* lacks ids. |
+| **2. consumer diagnosis** | delivered copy → archived product | the route back is a spatial match. Lineage itself is untouched. |
+
+Hop 2 having no key does **not** create a `LOST_HISTORY` boundary. If the archive keeps
+`lineage_id`, the chain is intact and complete; what degrades is how fast a human gets from a
+consumer's complaint to the edge log. Separately answerable is not independent, though: the
+one-join candidate in (b)1 is only available if hop 1 is answered "the archive carries it".
+
+**The document assumes an answer and never states it, reading both ways.**
+
+Publish strips it:
+
+- A13's last bullet treats publish-time removal as a given, with the same gap as the work-key
+  sweep (A9.6). `_apply_product_schema` runs `map_fields` with `keep_unmapped=False`, so a column
+  not in the mapping is gone.
+- A19 says an unstable identity must not be shipped to consumers, and `lineage_id` re-mints on
+  every dissolve.
+- T0.4 permits dropping the published id column outright.
+
+It survives:
+
+- A24.1's second row (`Derived` / `ProductIdentity` **with** `lineage_id` → **map only**) exists
+  only if a cross-run input arrives carrying one.
+- T3.7(a)'s stage-entry half, T0.6(b)'s copy-versus-map measurement and A23's trace-to-RAW all
+  assume the same.
+
+If the *archive* does not carry it, **every cross-run input is `LOST_HISTORY`**: the map-only
+branch is unreachable, ingest copies on every run, and the edge log archived by T3.6 is keyed on
+ids no readable product carries — retained, and unjoinable to anything.
+
+**(a) Are the two artifacts the same today?** In the template, yes. `finalize_road_attributes`
+calls `_apply_product_schema` as its last step (`operations/road/__init__.py:947`), so the
+consumer schema is applied *inside the stage operation*, before the handle ever becomes a
+`StageOutput`. `Publish` (`pipelines/road/n100.py:454`) then moves that already-mapped object to
+its `ProductIdentity`'s archive location. There is one artifact, and it is the consumer schema.
+
+**(b) Hop 2: how do you get from a consumer-reported feature back to its archived feature?** This
+is the diagnosis-speed case the B-item exists for — a consumer says "this road is wrong", and the
+question is how many steps separate that report from the edge log. Two questions, and the second
+is the one that is easy to miss:
+
+1. **Is there a hop at all?** With no key whatsoever in the delivered copy, the only route back is
+   a spatial match. State whether a **run-scoped key under a non-identity name** — T0.4's
+   `run_object_id` — is that hop. T0.4 currently offers "drop it" and "rename it" as equivalent
+   options; if the key is the hop, they are not equivalent and T0.4 must choose.
+
+   **State what value that key would hold.** The candidate is the **`lineage_id` value itself
+   under a non-identity name** — then the hop is one join against the archive and nothing new is
+   allocated. Any other value is a **third id**, needing its own allocation site and its own
+   published-key → `lineage_id` map maintained at publish time: a new artifact with its own
+   retention question. Recorded explicitly so a third id is not minted by default, as the path of
+   least resistance from "don't ship `lineage_id`".
+
+   The cost of the candidate is that the bits are shipped even though the name says not to rely on
+   them: A19's protection becomes naming and documentation rather than absence, and a consumer who
+   keys on it anyway gets an identity that re-mints. Whether that is acceptable is part of this
+   question, not separate from it.
+
+2. **Does the hop survive past the run that produced it?** A consumer reporting a problem in last
+   quarter's N100 is holding a key from a run whose archive may be gone. A run-scoped key is only
+   as good as the archive it keys into, so state:
+
+   - whether **every delivered product version is guaranteed a retained archived counterpart**,
+     given T3.6's retention rule — and specifically whether a re-run *replaces* the archived
+     version, which would strand every key held by consumers of the delivered copy it replaced;
+   - whether the **delivered product records which run produced it**. Without that, a run-scoped
+     key is ambiguous across runs: the same `run_object_id` names a different feature in each run,
+     and the consumer's report does not say which one they hold.
+
+**(c) What depends on B9:** T0.4 (whether the key is dropped or named, and whether that is a
+choice at all), T0.6(b) (the copy-versus-map measurement only has a subject if map-only is
+reachable), the map-only branch in T3.4, T3.7(a)'s stage-entry guard, T3.6's retention rule, and
+T6.2's boundary-crossing walk.
+
+**(d) FINDING — the in-run stage output already loses `lineage_id`.** Verified against the
+template. Recorded as a finding rather than a resolution: it constrains the answer without
+supplying it.
+
+- `_apply_product_schema` maps `{FEATURE_ID, ROAD_CLASS, RANK, "edited"}` with
+  `keep_unmapped=False` (`ports/table_ops.py:162` is where that default lives). `lineage_id` is
+  not in the mapping and there is no reason it would be — the mapping is the *consumer* schema.
+- `ConflictResolution.final` is `ROAD`, published as `N100_ROAD` (A17.1), and `N100_ROAD` is a
+  CONTEXT `StageInput` to the building pipeline's `DISPLACEMENT` in the **same run**
+  (`pipelines/building/n100_stages.py:128-132`).
+- A16's `DISPLACEMENT` verification rests on exactly that column: *"Context road ids land in `T`
+  via `from_ids` without ever entering `I`"*. Those ids come from the column the mapping drops.
+
+**What this forces and what it does not.** It forces the **in-run stage output to carry
+`lineage_id`**. Moving mapping to a publish step is the natural way to get there, not the only
+one — mapping inside the operation with `lineage_id` included in the mapping satisfies it too.
+Either way the archive's own schema is untouched by this argument, because within a run
+`DISPLACEMENT` reads the stage output and not the archive.
+
+**A separate argument does bear on the archive, and it is not a resolution either.**
+`n100_stages.py:158` makes one `StageInput` resolve two ways: *"Within a run it pins to that
+stage's output; outside one, to the archived version at the location declared in `products.py`."*
+If the two schemas differ, the same `StageInput` yields complete lineage in-run and a
+`LOST_HISTORY` boundary on a cold start. **Completeness would then depend on run selection rather
+than on the data** — the same feature traces differently depending on which pipelines happened to
+be in the run. That contradicts A22's "a cold start is just an ingest where the incoming id column
+is empty. No separate code path, no mode flag", and it is not reproducible across run selections,
+which is the environment-dependent failure class this design keeps removing. That argues for
+archive = working schema. Left open.
+
+Related: B3 and A19 answer the neighbouring question — what the *stable* published identity is.
+B9 is narrower and answerable first: it asks what is physically present on which artifact, not
+what identity consumers should be given. B10 is the neighbouring *mechanical* question: nothing
+currently notices when `lineage_id` goes missing, wherever it goes missing.
+
+**B10. Nothing asserts that `lineage_id` survives an operation.**
+
+B9(d) exposes this rather than depending on it: `map_fields` is one way to lose the column, and
+the design has no check that would name it.
+
+**The existing checks do not cover it.** A11.12 fails a `CARRY` output whose `lineage_id` is
+**null**. In B9(d) the column is **absent**, which is a different failure. T4.6's sweep reading a
+missing field gets whatever the adapter raises — on ArcPy, a field-not-found error when the cursor
+is constructed. That is loud and in the right run, but it is not a lineage message and it **does
+not name the call that dropped the field**: the reader sees a cursor failing on a field they did
+not know was expected, one operation after the `map_fields` that removed it. A13 asserts existence
+on **inputs**; nothing asserts it on outputs.
+
+And `map_fields` is not the only way:
+
+| call | how it loses `lineage_id` |
+|---|---|
+| `map_fields(keep_unmapped=False)` | the field is simply not in the mapping |
+| `delete_fields` | a working-field cleanup that sweeps it up |
+| tool behaviour, no argument at all | an overlay where both inputs carry `lineage_id` and the backend renames one, most likely by suffixing — the field is present under a name nothing reads |
+
+**Proposal, not a decision: a post-call assertion, not a pre-call rejection.**
+
+Rejecting a call *before* it runs means the facade parses each method's field-dropping arguments —
+`map_fields`'s `mapping`, `delete_fields`'s field list, `merge`'s field map. That is per-method
+logic in the generic facade, which is exactly what A11.11 rejected when it chose one generic facade
+over roughly 40 delegating wrappers. The third row of the table also has no argument to parse.
+
+Instead: **after every port call that produces or mutates a lineage-bearing handle, assert that
+`lineage_id` exists on that handle with the declared type.**
+
+**Scope has to be "produces or mutates", not "produces".** A12.6's in-place mutators have no
+output parameter, and `delete_fields` is one of them — the second row of the table above. An
+output-only rule would never run after the call most likely to drop the field. For an in-place
+mutator the handle checked is the **input**, since that is the thing being changed. Cost is
+identical either way: one `describe_fields` per call, no row scan, no per-method knowledge — the
+facade already knows which handles are lineage-bearing, because `@row_shape` told it. It runs
+immediately after the call, so the error names the call.
+
+It catches three things with one assertion:
+
+1. **the absent column** — B9(d)'s case, named at the `map_fields` that caused it;
+2. **a rename from tool behaviour** — the duplicate case, which no argument-parsing check could
+   see;
+3. **a type downcast** — T0.1's type-survival case enforced at runtime on every call rather than once in a
+   throwaway script.
+
+**The duplicate-field rule belongs to the adapter, not the facade.** That the backend suffixes a
+duplicate is **what T0.1's overlay-duplicate case will confirm, not something established here** — and the obvious
+pattern does not generalise. `lineage_id` is **exactly 10 characters**, so a backend with a
+10-character field-name limit (shapefile) cannot produce `lineage_id_1` at all, and whatever it
+produces instead will not match a `lineage_id*` glob. So the **adapter declares its
+duplicate-naming rule and the facade consumes it** — the same shape as A14's capability record:
+data supplied by the adapter, not knowledge embedded in the facade.
+
+Given that rule, **fail on any field it identifies as a duplicate of `lineage_id`.** A stray
+duplicate is not inert: it carries the *context* input's ids forward through later operations,
+where a join or a sweep may pick it up as if it were the subject's. This is the same move as
+A9.5's fail-on-any-unregistered-field, and for the same reason — a naming convention is only a
+detector if something fails on it.
+
+**The exemptions are a closed list, and one principle covers the four production ones.**
+**Stage-level data movement is not an operation, and the facade wraps operations.** Ingest,
+fan-out, fan-in and publish move features between stages without transforming them, so the
+facade's per-call obligations do not apply and must not be made to:
+
+| site | why it cannot go through the facade | task |
+|---|---|---|
+| ingest | stamps `lineage_id` onto copied inputs and builds the map — it *creates* the ids the facade would be asserting. Lives in `runtime/` and `staging/` | T3.4 |
+| fan-out | partition selection, which mints nothing (A6.6); through the facade it would read as a transform | T3.4 |
+| fan-in | **A6.5**: discarding the non-owning copies is deduplication of one identity, not a drop. Through the facade the boundary diff would record **every discarded context copy as `DROPPED`**. Also `runtime/` | T5.1 |
+| the publish step | produces the delivered copy | — (pending B9) |
+
+**The conformance suite is a fifth site with a different reason**, not an instance of the
+principle: T4.11 drives the `Protocol` directly because the `Protocol` is what it conforms. It is
+test code and excludable by path; the four rows above are production code.
+
+Everything else writing `lineage_id` is a bug, including the A12.11a/T2.8 case of a domain call
+naming it in a mutator's field list.
+
+**Check the domain side, not the allowlist.** The obvious enforcement — *only the composition
+root, `lineage/` and the publish step may obtain an unwrapped port* — is the wrong shape. That
+allowlist grew by three sites in a single pass, two of them in `runtime/` rather than `lineage/`,
+and it will grow again with every runtime step added. An allowlist edited whenever the runtime
+grows is one that gets widened to `runtime/` for convenience, which is most of the system.
+
+Invert it. The property being protected is that **domain code never writes `lineage_id` outside
+the facade**, so check the domain side, where the list is closed and small: **`operations/`,
+`helpers/` and `pipelines/` may not obtain an unwrapped port.** They already only have the
+`Toolbox` passed in (A1.3). Everything outside the domain packages is unconstrained by this check,
+and the sanctioned sites above stay written down as documentation of why they differ, not as the
+enforcement.
+
+**What the check inspects, and what it already gets for free.** "May not obtain an unwrapped port"
+is mechanically checkable only as an **import rule**: the domain packages may not import
+`adapters/`, nor any `runtime/` or `lineage/` module that hands out a raw port. Most of that is
+already written down — `03-architecture.md` §4.1's table and `template_code/.importlinter` between
+them forbid `operations/`, `helpers/` and `pipelines/` from importing `adapters/` and `staging/`.
+**Run by hand against the template as it stands, all seven contracts pass.** They are **not run in
+CI**: the repository's only workflow is `black --check`, and `03-architecture.md` lists "`.importlinter`
+exists and passes in CI" as a graduation condition, not a present fact. Until T7.4 adds that step,
+every contract here is a convention that happens to pass.
+
+Three deltas, the first measured rather than assumed:
+
+**1. `helpers/` is missing from the layers contract, and `operations/` is not.** Adding `ag.helpers`
+to the stack between `ag.operations` and `ag.staging` keeps all seven contracts. Break-tested in
+both directions rather than reasoned about: a `helpers` module importing `ag.runtime` **breaks the
+amended contract and passes the current one**, while the same probe under `operations` is already
+caught by the existing stack. So `operations/` and `pipelines/` need nothing; `helpers/` is a real
+hole, currently invisible because `ag/helpers/` holds only `__init__.py`.
+
+**The hole is only the upward direction.** Probing the two obvious companions, `helpers →
+adapters` and `helpers → staging` are **both already caught** — not by the layers stack but by the
+two `protected` contracts, which are allow-lists and therefore deny a package that is not named in
+them. That is exactly the property the config's own comment claims for choosing `protected` over
+`forbidden`, confirmed here by a package that nobody remembered to add. The layers stack has the
+opposite default, which is why the upward imports slip through.
+
+**2. `lineage/` does not exist yet and needs a row — but not a blanket one.** Forbidding the domain
+packages from importing `lineage/` outright would flag correct code: operations call
+`mint(parents=…)` explicitly (A11.12, A11.13, and A12.7's `_build_topology` nodes site). The row
+must forbid only the modules that hand out raw ports. Two ways to arrange that, for T4.3 to choose:
+
+- a **public lineage API module** the domain may import, with the rest of the package forbidden; or
+- **`mint` reached through the `Toolbox`/facade**, so the domain never imports `lineage/` at all.
+  This fits A11.12's "operations do not receive an injected `lineage`" more closely.
+
+**Whichever is chosen, the row should be `protected` rather than `forbidden`** — on the evidence
+above, where the two `protected` contracts covered a package nobody had remembered while the layers
+contract did not, because **a layers contract permits any package it does not list**. The config
+already argues this for `adapters/` and `staging/`; `lineage/` is the same kind of package and the
+argument transfers unchanged.
+
+**Both options cost one contract, so this does not tilt the choice.** Probed rather than assumed:
+a `protected` contract on `ag.lineage` with `allowed_importers = ag.runtime`, plus one
+`ignore_imports` line `ag.operations.** -> ag.lineage.api`, **admits the public module and still
+denies every other `ag.lineage.*` module** to the same package. One wrinkle worth knowing before
+T4.3 picks: an `ignore_imports` entry that matches nothing is a **hard error**, not a no-op, so
+there is one line per domain package that actually imports the API — the list cannot rot silently,
+but it is added to as packages start using it.
+
+**`allowed_importers = ag.runtime` in that probe was the minimum needed to run the test, not the
+proposal.** The table above already puts ingest partly in `staging/`, and fan-out and fan-in
+elsewhere in `runtime/`. The real list is T4.3's to set from where those three actually land.
+
+**A meta-check, because the `helpers/` hole was found by accident.** Nothing notices a package that
+is in no contract. The check is small and needs no new tool: **assert that every top-level package
+under `ag/` appears in the layers stack or in an explicit exempt list**, read from `.importlinter`
+and the directory listing. `helpers/` would have failed it from the day the file was written, and
+`lineage/` will exist before anyone thinks to add its row.
+
+**3. The facade exposes no accessor to the port it wraps** — the part that is code rather than
+configuration.
+
+**Private-attribute reach-through is also checkable, and cheaper than expected.** An operation
+legitimately holds the facade-wrapped `Toolbox`; `tb.geometry._port` needs no import and passes
+every layering contract. **ruff `SLF001`** (private-member-access), scoped to `operations/`,
+`helpers/` and `pipelines/`, catches exactly that. Verified rather than assumed:
+
+- run over the three domain packages today: **clean, no hits**;
+- the guessed false positive does not occur — `SLF001` exempts the namedtuple API (`_replace`,
+  `_asdict`, `_fields`) and `self`/`cls` access, and a probe confirmed it flags `tb._port` while
+  passing all three of those in the same file.
+
+So the proposal is: one new layers row, one `lineage/` row whose shape T4.3 decides, one API
+omission, and `SLF001` on three packages — no bespoke check written.
+
+**One case examined and found not to need an exemption.** A field-mapped `merge` where one input
+omits `lineage_id` produces **nulls**, not an absent column — so A11.12's sweep already fails on
+it and this assertion is not the mechanism. In-run, an input lacking ids can only be a `FOREIGN`
+handle, and A12.9's plan-time check already rejects a `FOREIGN` handle as a `CARRY` subject. No
+second exemption found.
+
+`destination:` if adopted, the lineage module docstring beside A13, `02-runtime.md` §8, and
+`03-architecture.md` §4.1 for the import rules. The `.importlinter` row and the `SLF001` scoping
+are code changes owned by T4.3, not documentation. At the `02-runtime.md` §8 destination, note that
+the post-call assertion is **pure Python**: it runs in every environment, local Windows runs
+included, and it is the runtime backstop for anything the image-only conformance suite (T4.11)
+missed.
+
+**B11. How is `displace_features.displacement` declared?**
+
+A12.11 declares it `ONE + CARRY`. **Both axes are in question, and one branch has no legal cell.**
+
+**The ids axis.** The competing reading is that the output is an **observation about a feature
+rather than the feature** — amount and direction of displacement, the distinction A11.4a and
+A12.12 already draw — and A12.10's test turns on exactly that: *ids change when the feature stops
+standing for the same real-world object.* A displacement polygon does not stand for the road.
+
+`SNAP_DISPLACEMENT` is worth citing as an **analogy, not a precedent**: it is `FOREIGN` for a
+*structural* reason — it derives from vertex extraction through `_vertex_deltas` (A17.3, A12.12) —
+rather than from the semantic argument above. The analogy still bites, because **two displacement
+artifacts declared differently would read as inconsistent**, and the inconsistency would be
+invisible: each reads defensibly on its own.
+
+**The cardinality axis.** `ONE` asserts one output row per input road. **The tool page does not
+state this**: it describes the output only as polygons containing "the degree and direction of road
+displacement that took place", with no per-feature cardinality and no field list. Three shapes are
+possible and they are not equally survivable:
+
+| mapping | declaration | status |
+|---|---|---|
+| 1:1 | `ONE` + whichever ids axis wins | fine |
+| 1:N — several polygons per road, with a reference column | **`MANY + FOREIGN`** | legal, no problem |
+| **N:1** — one polygon spanning several roads | **`GROUP`** | **no legal cell** |
+
+N:1 is the branch with nowhere to go. `GROUP + FOREIGN` and `GROUP + CARRY` are both illegal cells,
+and `GROUP + MINT` is legal but wrong: it would make displacement polygons **features**, with
+minted ids and edges, which is precisely what they are not.
+
+**The escape hatch is more expensive than it was.** Re-adding `NONE` is **not** the one-line change
+A12.3 recorded — that remark was written against the old single `SHAPE` enum. Under the two-axis
+grammar an output with no subject has **no value on either axis**, since cardinality is defined as
+rows per subject row. It is a third kind of declaration outside the grid, and it costs: T4.1's
+missing-axis check needs an explicit exemption rather than a new member, and the facade needs a
+rule for an output that is neither lineage-bearing nor ref-bearing — a state it currently has no
+branch for. The alternative, **having the adapter synthesise refs spatially**, is A14's third tier
+of four, "expensive and wrong at coincident boundaries" — and displacement polygons at a junction
+are close to the worst case for it.
+
+**Partly measurable, and T0.1 carries the measurement.** Semantics decide `CARRY` versus `FOREIGN`;
+what is *declarable* depends on what the tool emits. T0.1 records, for this output, **its columns —
+any per-feature reference in particular — and the mapping shape**.
+
+**Row count cannot establish `ONE`.** Equal counts are consistent with a shuffled mapping or a
+partial one. The mapping shape is read from a reference column if one exists, and recorded as
+**undeterminable** if none does.
+
+So the two questions resolve in sequence, not independently:
+
+- **with a native-index reference**, the ids axis is decided on semantics, and either `CARRY` or
+  `FOREIGN` is achievable — the port reports the correspondence and the facade stamps from it
+  (A11.11). Note what a *scalar* reference can express: **1:1 or 1:N**, since N:1 has several
+  inputs to point at. A delimited reference is not excluded by that — A14's tier 2 parses one
+  inside the adapter as sanctioned transport — but parsing it yields an **N:1 relation**, which
+  lands back on `GROUP`, where `FOREIGN` and `CARRY` are illegal and `MINT` makes displacement
+  polygons features. The shape is what has no cell, not the encoding;
+- **with no reference**, neither is declarable. The port can only report correspondence the tool
+  provides, so `CARRY` has nothing to stamp from and is as undeclarable as `FOREIGN`. The choice is
+  then `NONE` or spatial synthesis, and the semantic argument above does not enter it.
+
+Its only consumer is `propagate_displacement`, which reads it as **context** — so the blast radius
+is small either way, which is why this is a B-item rather than a blocker.
+`destination:` `ports/cartographic_ops.py` with A12.11, once resolved.
