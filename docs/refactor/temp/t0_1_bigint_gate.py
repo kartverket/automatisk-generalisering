@@ -803,31 +803,107 @@ WORK_KEY = "work_key"
 """A LONG ordinal per input row: the scoped integer work key A14's tier 2 stamps."""
 
 
-def _segments(gdb: str, ids: Sequence[int]) -> str:
-    """Collinear, end-to-end segments in one group: the id as BigInteger and TEXT, plus a work key."""
+def _segments(
+    gdb: str, ids: Sequence[int], work_keys: Sequence[int] | None = None, name: str = "segments"
+) -> str:
+    """Collinear, end-to-end segments in one group: the id as BigInteger and TEXT, plus a work key.
+
+    The work key is the row ordinal from 1 unless `work_keys` gives the values.
+    """
     fc = create_fc(
-        gdb, "segments", "POLYLINE",
+        gdb, name, "POLYLINE",
         fields=(
             (LINEAGE, "BIGINTEGER"), (LINEAGE_TEXT, "TEXT"), (WORK_KEY, "LONG"), ("grp", "LONG"),
         ),
     )
+    keys = work_keys if work_keys is not None else range(1, len(ids) + 1)
     x0, y0 = 300_000.0, 6_600_000.0
     insert(
         fc,
         ["SHAPE@", LINEAGE, LINEAGE_TEXT, WORK_KEY, "grp"],
         (
-            (polyline([(x0 + i, y0), (x0 + i + 1, y0)]), lid, str(lid), i + 1, 1)
-            for i, lid in enumerate(ids)
+            (polyline([(x0 + i, y0), (x0 + i + 1, y0)]), lid, str(lid), key, 1)
+            for i, (lid, key) in enumerate(zip(ids, keys))
         ),
     )
     return fc
+
+
+def _parse_tokens(text: str, separator: str) -> tuple[list[str], set[int], list[str], list[str]]:
+    """Split a concatenated cell and parse each token back to an integer.
+
+    Returns (tokens, parsed values, tokens not written as plain integers, tokens that do not
+    denote an integer at all). A token alone cannot show lost digits: '1.23457e+06' parses
+    to the integer 1234570, which is wrong only against the value written. Loss shows as a
+    parsed set that differs from the input set.
+
+    The exponent form follows the process locale: a Norwegian Windows run wrote '1,2e+06'.
+    A decimal comma is read as a decimal mark unless the separator is itself a comma.
+    """
+    tokens = [t for t in text.split(separator) if t != ""]
+    parsed: set[int] = set()
+    not_plain: list[str] = []
+    not_integer: list[str] = []
+    for token in tokens:
+        try:
+            parsed.add(int(token))
+            continue
+        except ValueError:
+            not_plain.append(token)
+        try:
+            as_float = float(token if separator == "," else token.replace(",", "."))
+        except ValueError:
+            not_integer.append(token)
+            continue
+        if as_float.is_integer():
+            parsed.add(int(as_float))
+        else:
+            not_integer.append(token)
+    return tokens, parsed, not_plain, not_integer
+
+
+def _long_key_formatting(gdb: str, separator: str) -> bool:
+    """How CONCATENATE writes LONG values: plain digits, exponent form, or rounded.
+
+    At 10^5 the ordinal 100000 came back as '1e+05'. Chosen values straddle each digit count
+    up to the LONG range, so a small group answers whether values above 10^6 lose digits.
+    Returns True when every value parses back exactly.
+    """
+    values = [
+        1, 9_999, 10_000, 12_345, 99_999, 100_000, 123_456, 999_999, 1_000_000,
+        1_234_567, 12_345_678, 123_456_789, 2_147_483_647, -1, -123_456, -2_147_483_647,
+        # Trailing zeros behind more than one significant digit: exponent form would need a
+        # decimal mantissa ('1.2e+06'), which is where a formatter could round.
+        20_000, 120_000, 1_200_000, 123_400_000, 2_000_000_000, 2_147_480_000, -10_000, -1_200_000,
+    ]
+    print(f"  -- how CONCATENATE formats LONG values (group of {len(values)})")
+    fc = _segments(
+        gdb, [generated_id(2, i + 1) for i in range(len(values))], values, name="formatting"
+    )
+    out = os.path.join(gdb, "formatting_dissolved")
+    arcpy.analysis.PairwiseDissolve(fc, out, "grp", [[WORK_KEY, "CONCATENATE"]], "SINGLE_PART", separator)
+    (text,) = read(out, ["CONCATENATE_" + WORK_KEY])[0]
+    record("values written, in OBJECTID order", values)
+    record("concatenated cell, verbatim", text)
+    tokens, parsed, not_plain, not_integer = _parse_tokens(text or "", separator)
+    exact = parsed == set(values) and len(tokens) == len(values) and not not_integer
+    record("tokens not written as plain integers", not_plain)
+    record("tokens that are not integers", not_integer)
+    record("values missing after parse", sorted(set(values) - parsed))
+    record(
+        "decimal marks in exponent tokens",
+        sorted({mark for t in not_plain for mark in ",." if mark in t}) or "none",
+    )
+    record("every LONG value parses back exactly", exact)
+    return exact
 
 
 def _statistics_accepted(ws: Workspace, separator: str) -> str:
     """Which statistics PairwiseDissolve accepts, on a small group.
 
     Returns the field the group-size runs concatenate, in preference order: the LONG work
-    key (T0.1 asks for an integer key), then lineage_id, then the TEXT copy.
+    key (T0.1 asks for an integer key) if its values parse back exactly, then lineage_id,
+    then the TEXT copy.
     """
     print("  -- statistics accepted per field type (group of 10)")
     gdb = ws.gdb("concat_probe")
@@ -849,7 +925,13 @@ def _statistics_accepted(ws: Workspace, separator: str) -> str:
         except Exception as exc:
             accepted[label] = False
             record(label, f"raised {type(exc).__name__}: {exc}")
+    long_exact = False
     if accepted["CONCATENATE on the LONG work key"]:
+        try:
+            long_exact = _long_key_formatting(gdb, separator)
+        except Exception as exc:
+            record("LONG formatting check raised", f"{type(exc).__name__}: {exc}")
+    if long_exact:
         field = WORK_KEY
     elif accepted["CONCATENATE on lineage_id"]:
         field = LINEAGE
@@ -859,12 +941,36 @@ def _statistics_accepted(ws: Workspace, separator: str) -> str:
     return field
 
 
+def _timed_dissolve(
+    label: str, fc: str, out: str, statistics: list[list[str]] | None, separator: str
+) -> float | None:
+    """One PairwiseDissolve on the group, timed. Returns seconds, or None if it raised."""
+    started = time.perf_counter()
+    try:
+        if statistics is None:
+            arcpy.analysis.PairwiseDissolve(fc, out, "grp", multi_part="SINGLE_PART")
+        else:
+            arcpy.analysis.PairwiseDissolve(fc, out, "grp", statistics, "SINGLE_PART", separator)
+    except Exception as exc:
+        record(f"{label} elapsed s", round(time.perf_counter() - started, 1))
+        record(f"{label} raised", f"{type(exc).__name__}: {exc}")
+        print(traceback.format_exc())
+        return None
+    elapsed = time.perf_counter() - started
+    record(f"{label} elapsed s", round(elapsed, 1))
+    return elapsed
+
+
 def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
     """PairwiseDissolve CONCATENATE over one large group: truncate, error, or grow?
 
     Collinear, end-to-end segments, so SINGLE_PART dissolves each size to one feature,
     which is A14's lineage-table constraint and the configuration tier 2 would run.
     A COUNT statistic rides alongside, so the output itself shows the group size.
+
+    Timing is reported as time added over the same dissolve without statistics, run in the
+    same process on the same input: plain, COUNT only, CONCATENATE, then plain again. The
+    two plain runs bracket the others, so their spread shows how noisy the machine is.
     """
     separator = ";"
     field = _statistics_accepted(ws, separator)
@@ -878,18 +984,29 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
         record("input write s", round(time.perf_counter() - started, 1))
 
         out = os.path.join(gdb, "dissolved")
-        started = time.perf_counter()
-        try:
-            arcpy.analysis.PairwiseDissolve(
-                fc, out, "grp", [[field, "CONCATENATE"], [LINEAGE_TEXT, "COUNT"]],
-                "SINGLE_PART", separator,
-            )
-        except Exception as exc:
-            record("dissolve elapsed s", round(time.perf_counter() - started, 1))
-            record("dissolve raised", f"{type(exc).__name__}: {exc}")
-            print(traceback.format_exc())
+        plain_before = _timed_dissolve(
+            "plain dissolve (before)", fc, os.path.join(gdb, "plain_before"), None, separator
+        )
+        count_only = _timed_dissolve(
+            "COUNT only", fc, os.path.join(gdb, "count_only"), [[WORK_KEY, "COUNT"]], separator
+        )
+        concatenate = _timed_dissolve(
+            "CONCATENATE + COUNT", fc, out, [[field, "CONCATENATE"], [LINEAGE_TEXT, "COUNT"]], separator
+        )
+        plain_after = _timed_dissolve(
+            "plain dissolve (after)", fc, os.path.join(gdb, "plain_after"), None, separator
+        )
+        plains = [t for t in (plain_before, plain_after) if t is not None]
+        if plains:
+            plain = sum(plains) / len(plains)
+            record("plain dissolve mean s", round(plain, 1))
+            record("plain dissolve spread s", round(max(plains) - min(plains), 1))
+            if count_only is not None:
+                record("COUNT only, added over plain s", round(count_only - plain, 1))
+            if concatenate is not None:
+                record("CONCATENATE + COUNT, added over plain s", round(concatenate - plain, 1))
+        if concatenate is None:
             continue
-        record("dissolve elapsed s", round(time.perf_counter() - started, 1))
         record("output row count", int(arcpy.management.GetCount(out)[0]))
         record("output fields", fields_of(out))
 
@@ -900,22 +1017,26 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
             continue
         for value, counted in read(out, [concat, count] if count else [concat, concat]):
             text = value or ""
-            tokens = [t for t in text.split(separator) if t != ""]
+            tokens, parsed, not_plain, not_integer = _parse_tokens(text, separator)
             record("concatenated string length", len(text))
             record("COUNT statistic", counted if count else "no COUNT field")
-            record("tokens parsed", len(tokens))
+            record("tokens", len(tokens))
             record("tokens equal group size", len(tokens) == size)
-            try:
-                parsed = {int(t) for t in tokens}
-                record("parsed set equals input set", parsed == expected)
-                record("input values missing from parse", len(expected - parsed))
-            except ValueError as exc:
-                record("token did not parse as int", str(exc))
-                record("last 40 characters", text[-40:])
-            record(
-                "verdict to record",
-                "GROWS (complete)" if len(tokens) == size else "TRUNCATED SILENTLY",
-            )
+            record("tokens not written as plain integers", f"{len(not_plain)}, first 5: {not_plain[:5]}")
+            record("tokens that are not integers", f"{len(not_integer)}, first 5: {not_integer[:5]}")
+            record("distinct values after parse", len(parsed))
+            record("parsed set equals input set", parsed == expected)
+            record("input values missing from parse", len(expected - parsed))
+            record("last 40 characters", text[-40:])
+            if len(tokens) < size:
+                verdict = "TRUNCATED SILENTLY"
+            elif parsed != expected:
+                verdict = "COMPLETE COUNT, VALUES LOST OR ALTERED"
+            elif not_plain:
+                verdict = "COMPLETE, but some values written in exponent form"
+            else:
+                verdict = "COMPLETE, every value a plain integer"
+            record("verdict to record", verdict)
 
 
 # ---------------------------------------------------------------------------
