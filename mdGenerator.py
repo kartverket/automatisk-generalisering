@@ -1,7 +1,9 @@
-"""Generate a Mermaid class diagram for the Python files in this package.
+"""
+Generate a Mermaid class hierarchy document from Python source files.
 
-The module inspects direct, named class bases with :mod:`ast` and writes the
-result to ``klassediagram.md`` in the configured project directory.
+The module parses Python files with :mod:`ast`, extracts class inheritance and
+member information, and writes the resulting Mermaid diagram to
+``classHierarchy.md`` in the configured source folder.
 """
 
 import ast
@@ -13,6 +15,12 @@ from pathlib import Path
 
 
 def main() -> None:
+    """
+    Generate and write the class hierarchy document.
+
+    The source folder is configured in this entry point. The files are then
+    inspected and the extracted information is rendered as Mermaid markup.
+    """
     path: str = r"..."
     root: Path = Path(path)
     relations, classes = read_files(root)
@@ -30,7 +38,16 @@ def read_files(
     root: Path,
 ) -> tuple[list[tuple[str, str]], dict[str, dict[str, list[str]]]]:
     """
-    Read all Python files in the package and extract class relationships and members.
+    Extract class relationships and members from Python files below ``root``.
+
+    Files whose names start with an underscore are skipped. Only direct bases
+    represented by simple names are included in the inheritance relations.
+
+    Args:
+        root: Folder to search recursively for Python files.
+
+    Returns:
+        A tuple containing inheritance relations and class member information.
     """
     relations: list[tuple[str, str]] = []
     classes: dict[str, dict[str, list[str]]] = {}
@@ -62,6 +79,19 @@ def build_mermaid(
     relations: list[tuple[str, str]],
     classes: dict[str, dict[str, list[str]]],
 ) -> str:
+    """
+    Render extracted class information as a Mermaid class diagram.
+
+    Relations, classes, attributes, and methods are sorted to make the
+    generated document deterministic. Duplicate members are emitted once.
+
+    Args:
+        relations: Parent-child class relationships as ``(parent, child)``.
+        classes: Class names mapped to their attributes and method signatures.
+
+    Returns:
+        A Markdown document containing a Mermaid ``classDiagram`` block.
+    """
     md = ["# Class Hierarchy", "", "```mermaid", "classDiagram"]
 
     # Inheritance
@@ -96,6 +126,7 @@ def build_mermaid(
 def _find_inheritance(
     node: ast.ClassDef, class_name: str, relations: list[tuple[str, str]]
 ) -> None:
+    """Append the class's direct, simple-name bases to ``relations``."""
     for base in node.bases:
         if isinstance(base, ast.Name):
             relations.append((base.id, class_name))
@@ -104,6 +135,14 @@ def _find_inheritance(
 def _find_class_info(
     node: ast.ClassDef, class_name: str, classes: dict[str, dict[str, list[str]]]
 ) -> None:
+    """
+    Collect class attributes, method signatures, and ``self`` assignments.
+
+    Class-level assignments and annotated assignments become attributes. Each
+    method is represented by its name, parameters, and optional return type;
+    assignments to ``self`` inside ``__init__`` are also included as instance
+    attributes.
+    """
     for member in node.body:
         # Class attributes
         if isinstance(member, ast.Assign):

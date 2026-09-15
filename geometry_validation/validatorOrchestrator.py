@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from collections import Counter
 
-from hexagonal.validationStatus import ValidationStatus
+from geometry_validation.validationStatus import ValidationStatus
 
 ##########################
 # Classes

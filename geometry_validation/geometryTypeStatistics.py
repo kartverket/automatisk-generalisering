@@ -4,8 +4,8 @@ import arcpy
 
 from collections import defaultdict
 
-from hexagonal.dataTypeStatistics import VectorStatistics
-from hexagonal.validationStatus import Rule, Severity
+from geometry_validation.dataTypeStatistics import VectorStatistics
+from geometry_validation.validationStatus import Rule, Severity
 
 ##########################
 # Classes

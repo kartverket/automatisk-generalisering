@@ -5,8 +5,8 @@ import arcpy
 from collections import Counter
 
 from generalization.n10.arealdekke.parameters.parameter_worker import get_min_area
-from hexagonal.geometryTypeStatistics import LineStatistics, PolygonStatistics
-from hexagonal.validationStatus import Rule, Severity
+from geometry_validation.geometryTypeStatistics import LineStatistics, PolygonStatistics
+from geometry_validation.validationStatus import Rule, Severity
 
 ##########################
 # Classes

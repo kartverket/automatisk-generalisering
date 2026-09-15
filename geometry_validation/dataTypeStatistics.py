@@ -2,7 +2,7 @@
 
 import arcpy
 
-from hexagonal.validationStatus import Rule, Severity
+from geometry_validation.validationStatus import Rule, Severity
 
 ##########################
 # Classes
