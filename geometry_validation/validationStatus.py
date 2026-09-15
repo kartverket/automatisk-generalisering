@@ -10,9 +10,9 @@ from enum import StrEnum
 
 
 class Severity(StrEnum):
-    SUCCESS = "SUCCESS"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
+    SUCCESS: str = "SUCCESS"
+    WARNING: str = "WARNING"
+    ERROR: str = "ERROR"
 
 
 @dataclass
@@ -25,9 +25,13 @@ class Rule:
     def __post_init__(self):
         if isinstance(self.value, list):
             if not isinstance(self.severity, list):
-                raise ValueError(f"List value requires list severity\n{self.key} - {self.operator}")
+                raise ValueError(
+                    f"List value requires list severity\n{self.key} - {self.operator}"
+                )
             if len(self.severity) != len(self.value) + 1:
-                raise ValueError(f"Need one more severity than thresholds\n{self.key} - {self.operator}")
+                raise ValueError(
+                    f"Need one more severity than thresholds\n{self.key} - {self.operator}"
+                )
 
 
 OPERATORS = {
@@ -88,7 +92,9 @@ class ValidationStatus:
             data = stats.get(rule.key)
 
             try:
-                is_dict = True if isinstance(data[list(data.keys())[0]], dict) else False
+                is_dict = (
+                    True if isinstance(data[list(data.keys())[0]], dict) else False
+                )
             except Exception:
                 is_dict = False
 
@@ -112,7 +118,9 @@ class ValidationStatus:
                 severity = self._evaluate_rule(rule, value)
                 status[severity] += 1
                 if severity != Severity.SUCCESS:
-                    messages[severity].append(self._get_message(rule, severity, category))
+                    messages[severity].append(
+                        self._get_message(rule, severity, category)
+                    )
 
         self.remove_temporary_rules()
 
@@ -150,14 +158,18 @@ class ValidationStatus:
 
         return rule.severity
 
-    def _get_message(self, rule: Rule, severity: str, category: str | None = None) -> str:
+    def _get_message(
+        self, rule: Rule, severity: str, category: str | None = None
+    ) -> str:
         warning_message = (
             "triggered a warning"
             if severity == Severity.WARNING
             else "failed validation"
         )
         if category:
-            return f"{severity}: '{rule.key}' {warning_message} for category '{category}'"
+            return (
+                f"{severity}: '{rule.key}' {warning_message} for category '{category}'"
+            )
         return f"{severity}: '{rule.key}' {warning_message}"
 
     def _most_severe_status(self, status: Counter) -> str:

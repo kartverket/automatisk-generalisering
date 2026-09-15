@@ -15,7 +15,7 @@ from hexagonal.validationStatus import Rule, Severity
 
 class RoadStatistics(LineStatistics):
 
-    RULES = [
+    RULES: list[Rule] = [
         Rule(
             "road_categories",
             "ratio",
@@ -70,7 +70,7 @@ class RiverStatistics(LineStatistics):
 
 class LanduseStatistics(PolygonStatistics):
 
-    RULES = [
+    RULES: list[Rule] = [
         Rule(
             "landuse_categories",
             "ratio",
@@ -112,3 +112,23 @@ class LanduseStatistics(PolygonStatistics):
             print(f"Error collecting landuse stats: {e}")
 
         return {"landuse_categories": dict(field_count), "minimum_count": min_count}
+
+
+##########################
+
+
+if __name__ == "__main__":
+    from hexagonal.validatorOrchestrator import ValidatorOrchestrator
+
+    SCALE = "N10"
+
+    path_1 = r"C:\GIS_Files\ag_inputs\raw_data\area.gdb\Arealdekke_Test"
+    path_2 = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke_input"
+    path_3 = r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\AG_test.gdb\Arealdekke"
+
+    validator = ValidatorOrchestrator(stats_provider=LanduseStatistics(scale=SCALE))
+
+    for p in [path_1, path_2, path_3]:
+        validator.save_validation_results(
+            results=validator.stats_provider.get_stats(fc=p)
+        )

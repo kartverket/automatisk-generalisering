@@ -15,7 +15,7 @@ class VectorStatistics:
     # Rules
     ##########################
 
-    RULES = [
+    RULES: list[Rule] = [
         Rule("exists", "eqn", True, Severity.ERROR),
         Rule("has_data", "eqn", True, Severity.ERROR),
         Rule(

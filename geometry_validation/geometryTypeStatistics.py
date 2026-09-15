@@ -14,7 +14,7 @@ from hexagonal.validationStatus import Rule, Severity
 
 class PolygonStatistics(VectorStatistics):
 
-    RULES = [
+    RULES: list[Rule] = [
         Rule("total_area", "eqd", 0, Severity.ERROR),
         Rule(
             "min_area",
@@ -75,7 +75,7 @@ class PolygonStatistics(VectorStatistics):
 
 class LineStatistics(VectorStatistics):
 
-    RULES = [
+    RULES: list[Rule] = [
         Rule(
             "total_length",
             "ratio",
