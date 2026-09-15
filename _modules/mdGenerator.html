@@ -1,0 +1,321 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mdGenerator &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mdGenerator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mdGenerator</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Generate a Mermaid class hierarchy document from Python source files.</span>
+
+<span class="sd">The module parses Python files with :mod:`ast`, extracts class inheritance and</span>
+<span class="sd">member information, and writes the resulting Mermaid diagram to</span>
+<span class="sd">``classHierarchy.md`` in the configured source folder.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1">###############################</span>
+<span class="c1"># Program</span>
+<span class="c1">###############################</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../generated_docs/mdGenerator.html#mdGenerator.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generate and write the class hierarchy document.</span>
+
+<span class="sd">    The source folder is configured in this entry point. The files are then</span>
+<span class="sd">    inspected and the extracted information is rendered as Mermaid markup.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"..."</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">relations</span><span class="p">,</span> <span class="n">classes</span> <span class="o">=</span> <span class="n">read_files</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">markdown</span> <span class="o">=</span> <span class="n">build_mermaid</span><span class="p">(</span><span class="n">relations</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
+
+    <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"classHierarchy.md"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">markdown</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span></div>
+
+
+
+<span class="c1">###############################</span>
+<span class="c1"># Main functions</span>
+<span class="c1">###############################</span>
+
+
+<div class="viewcode-block" id="read_files">
+<a class="viewcode-back" href="../generated_docs/mdGenerator.html#mdGenerator.read_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_files</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Extract class relationships and members from Python files below ``root``.</span>
+
+<span class="sd">    Files whose names start with an underscore are skipped. Only direct bases</span>
+<span class="sd">    represented by simple names are included in the inheritance relations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root: Folder to search recursively for Python files.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing inheritance relations and class member information.</span>
+<span class="sd">    """</span>
+    <span class="n">relations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">classes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">py_file</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*.py"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">py_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">py_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">class_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="n">classes</span><span class="p">[</span><span class="n">class_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"attributes"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"methods"</span><span class="p">:</span> <span class="p">[]}</span>
+
+            <span class="c1"># Inheritance</span>
+            <span class="n">_find_inheritance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">relations</span><span class="p">)</span>
+
+            <span class="c1"># Class attributes and methods</span>
+            <span class="n">_find_class_info</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">relations</span><span class="p">,</span> <span class="n">classes</span></div>
+
+
+
+<div class="viewcode-block" id="build_mermaid">
+<a class="viewcode-back" href="../generated_docs/mdGenerator.html#mdGenerator.build_mermaid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_mermaid</span><span class="p">(</span>
+    <span class="n">relations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">classes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Render extracted class information as a Mermaid class diagram.</span>
+
+<span class="sd">    Relations, classes, attributes, and methods are sorted to make the</span>
+<span class="sd">    generated document deterministic. Duplicate members are emitted once.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        relations: Parent-child class relationships as ``(parent, child)``.</span>
+<span class="sd">        classes: Class names mapped to their attributes and method signatures.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Markdown document containing a Mermaid ``classDiagram`` block.</span>
+<span class="sd">    """</span>
+    <span class="n">md</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"# Class Hierarchy"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"```mermaid"</span><span class="p">,</span> <span class="s2">"classDiagram"</span><span class="p">]</span>
+
+    <span class="c1"># Inheritance</span>
+    <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">relations</span><span class="p">):</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">parent</span><span class="si">}</span><span class="s2"> &lt;|-- </span><span class="si">{</span><span class="n">child</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+
+    <span class="c1"># Class diagram</span>
+    <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    class </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">])):</span>
+            <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"        </span><span class="si">{</span><span class="n">attribute</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">"methods"</span><span class="p">])):</span>
+            <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"        </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"    }"</span><span class="p">)</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+
+    <span class="n">md</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"```"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">md</span><span class="p">)</span></div>
+
+
+
+<span class="c1">###############################</span>
+<span class="c1"># Helper functions</span>
+<span class="c1">###############################</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_inheritance</span><span class="p">(</span>
+    <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">relations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Append the class's direct, simple-name bases to ``relations``."""</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+            <span class="n">relations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">base</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">class_name</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_class_info</span><span class="p">(</span>
+    <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Collect class attributes, method signatures, and ``self`` assignments.</span>
+
+<span class="sd">    Class-level assignments and annotated assignments become attributes. Each</span>
+<span class="sd">    method is represented by its name, parameters, and optional return type;</span>
+<span class="sd">    assignments to ``self`` inside ``__init__`` are also included as instance</span>
+<span class="sd">    attributes.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+        <span class="c1"># Class attributes</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">member</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+                    <span class="n">classes</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s2">"attributes"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"+</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># Typehint attributes</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AnnAssign</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">member</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span>
+
+                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">annotation</span><span class="p">:</span>
+                    <span class="n">type_name</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">type_name</span> <span class="o">=</span> <span class="s2">"Any"</span>
+
+                <span class="n">classes</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s2">"attributes"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"+</span><span class="si">{</span><span class="n">type_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># Methods</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">member</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">arg</span> <span class="o">==</span> <span class="s2">"self"</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">:</span>
+                    <span class="n">arg_type</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">arg_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="p">)</span>
+
+            <span class="n">return_type</span> <span class="o">=</span> <span class="s2">""</span>
+
+            <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">returns</span><span class="p">:</span>
+                <span class="n">return_type</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">returns</span><span class="p">)</span>
+
+            <span class="n">signature</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"+</span><span class="si">{</span><span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">if</span> <span class="n">return_type</span><span class="p">:</span>
+                <span class="n">signature</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">return_type</span><span class="si">}</span><span class="s2">"</span>
+
+            <span class="n">classes</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s2">"methods"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"__init__"</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">member</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="n">stmt</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"self"</span>
+                    <span class="p">):</span>
+                        <span class="n">classes</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s2">"attributes"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"+</span><span class="si">{</span><span class="n">stmt</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+
+
+<span class="c1">###############################</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

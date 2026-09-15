@@ -15,6 +15,7 @@ automatisk-generalisering
    generate_pyvis_docu
    main_on_cloud
    main_on_prem
+   mdGenerator
    paths
    temp_skip_folder
    tests

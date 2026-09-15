@@ -1,0 +1,7 @@
+mdGenerator module
+==================
+
+.. automodule:: mdGenerator
+   :members:
+   :show-inheritance:
+   :undoc-members:
