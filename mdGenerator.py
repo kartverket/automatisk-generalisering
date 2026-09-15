@@ -54,7 +54,7 @@ def read_files(
 
             # Class attributes and methods
             _find_class_info(node, class_name, classes)
-    
+
     return relations, classes
 
 
@@ -119,12 +119,12 @@ def _find_class_info(
                     type_name = ast.unparse(member.annotation)
                 else:
                     type_name = "Any"
-                
+
                 classes[class_name]["attributes"].append(f"+{type_name} {name}")
         # Methods
         elif isinstance(member, ast.FunctionDef):
             args = []
-            
+
             for arg in member.args.args:
                 if arg.arg == "self":
                     continue
@@ -155,7 +155,9 @@ def _find_class_info(
                         and isinstance(stmt.targets[0].value, ast.Name)
                         and stmt.targets[0].value.id == "self"
                     ):
-                        classes[class_name]["attributes"].append(f"+{stmt.targets[0].attr}")
+                        classes[class_name]["attributes"].append(
+                            f"+{stmt.targets[0].attr}"
+                        )
 
 
 ###############################
