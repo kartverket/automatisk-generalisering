@@ -9,11 +9,11 @@ class DataNames(StrEnum):
     #########################
     area = "AREA"
     building = "BUILDING"
+    fkb = "FKB"
     matrikkel = "MATRIKKEL"
     railway = "RAILWAY"
     road = "ROAD"
     symbology = "SYMBOLOGY"
-    fkb_water = "FKB_WATER"
     river_basin = "RIVER_BASIN"
 
     #########################
@@ -39,6 +39,7 @@ class DataNames(StrEnum):
     object_bygg_og_anlegg = "facility"
     object_bane = "railway"
     object_hoyde = "landforms"
+    object_ledning = "ledning"
     lyrx_directory_name = "lyrx_outputs"
 
     #########################
@@ -74,10 +75,12 @@ class DataNames(StrEnum):
     vegsperring = "vegsperring"
     VegSti_N50 = "VegSti_N50"
 
-    # FKB Water
+    # FKB
     fkb_vann_grense = "fkb_vann_grense"
     fkb_vann_omrade = "fkb_vann_omrade"
     fkb_vann_posisjon = "fkb_vann_posisjon"
+    fkb_ledning = "FKB_Ledning"
+    fkb_mast = "FKB_Mast"
 
     # River Basin
     Nedborfelt_Vassdragsomr = "Nedborfelt_Vassdragsomr"
