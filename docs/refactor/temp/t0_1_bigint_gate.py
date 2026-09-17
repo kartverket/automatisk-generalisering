@@ -152,7 +152,9 @@ def lineage_like(path: str) -> list[tuple[str, str, int]]:
 
 
 def point_rows(ids: Sequence[int]) -> list[tuple[tuple[float, float], int]]:
-    return [((500_000.0 + i * 100.0, 6_600_000.0), value) for i, value in enumerate(ids)]
+    return [
+        ((500_000.0 + i * 100.0, 6_600_000.0), value) for i, value in enumerate(ids)
+    ]
 
 
 def square(x: float, y: float, side: float) -> arcpy.Polygon:
@@ -338,10 +340,14 @@ def _input_polygons(gdb: str) -> tuple[str, list[int]]:
     """Ordinary squares plus two tiny squares SimplifyPolygon's minimum area removes."""
     fc = create_fc(gdb, "polys", "POLYGON")
     ids = TYPICAL_GENERATED + TYPICAL_RAW
-    rows = [(square(500_000.0 + i * 1_000.0, 6_600_000.0, 400.0), v) for i, v in enumerate(ids)]
+    rows = [
+        (square(500_000.0 + i * 1_000.0, 6_600_000.0, 400.0), v)
+        for i, v in enumerate(ids)
+    ]
     tiny_ids = [generated_id(3, 1), generated_id(3, 2)]
     rows += [
-        (square(520_000.0 + i * 1_000.0, 6_600_000.0, 3.0), v) for i, v in enumerate(tiny_ids)
+        (square(520_000.0 + i * 1_000.0, 6_600_000.0, 3.0), v)
+        for i, v in enumerate(tiny_ids)
     ]
     insert(fc, ["SHAPE@", LINEAGE], rows)
     return fc, ids + tiny_ids
@@ -359,13 +365,21 @@ def _input_lines(gdb: str) -> tuple[str, list[int]]:
     loop_ids = [generated_id(4, 1), generated_id(4, 2)]
     for i, v in enumerate(loop_ids):
         x0, y0 = 540_000.0 + i * 1_000.0, 6_600_000.0
-        coords = [(x0, y0), (x0 + 4.0, y0), (x0 + 4.0, y0 + 4.0), (x0, y0 + 4.0), (x0, y0)]
+        coords = [
+            (x0, y0),
+            (x0 + 4.0, y0),
+            (x0 + 4.0, y0 + 4.0),
+            (x0, y0 + 4.0),
+            (x0, y0),
+        ]
         rows.append((polyline(coords), v))
     insert(fc, ["SHAPE@", LINEAGE], rows)
     return fc, ids + loop_ids
 
 
-def _field_mappings_for(inputs: Sequence[str], force_big_integer: bool) -> arcpy.FieldMappings:
+def _field_mappings_for(
+    inputs: Sequence[str], force_big_integer: bool
+) -> arcpy.FieldMappings:
     mappings = arcpy.FieldMappings()
     for path in inputs:
         mappings.addTable(path)
@@ -407,16 +421,27 @@ def _derived_points(label: str, main_out: str, input_count: int) -> None:
     record("input row count", input_count)
     record(
         "main output reference fields",
-        [f for f in fields_of(main_out) if f[0].lower() in ("inline_fid", "inpoly_fid")],
+        [
+            f
+            for f in fields_of(main_out)
+            if f[0].lower() in ("inline_fid", "inpoly_fid")
+        ],
     )
     reference = next(
-        (f[0] for f in fields_of(points) if f[0].lower() in ("inline_fid", "inpoly_fid")), None
+        (
+            f[0]
+            for f in fields_of(points)
+            if f[0].lower() in ("inline_fid", "inpoly_fid")
+        ),
+        None,
     )
     if reference is not None:
         per_input: dict[object, int] = {}
         for (fid,) in read(points, [reference]):
             per_input[fid] = per_input.get(fid, 0) + 1
-        record(f"points per {reference} value", dict(sorted(per_input.items(), key=str)))
+        record(
+            f"points per {reference} value", dict(sorted(per_input.items(), key=str))
+        )
     print(
         "  NOTE: the tool pages say the point output 'will not contain' the input's "
         "fields. Record whether ANY column on the points references an input feature "
@@ -431,16 +456,27 @@ def _simplify_line_collapse_probe(gdb: str) -> None:
     The zig-zag input keeps its 4 m loops under POINT_REMOVE, so its point output is
     empty and says nothing about how many points a collapsed line produces.
     """
-    print("  -- SimplifyLine collapse probe: small shapes, 30 m tolerance, each algorithm")
+    print(
+        "  -- SimplifyLine collapse probe: small shapes, 30 m tolerance, each algorithm"
+    )
     fc = create_fc(gdb, "collapse_candidates", "POLYLINE")
     x0, y0 = 560_000.0, 6_600_000.0
     shapes = {
-        "closed 4 m loop": [(x0, y0), (x0 + 4.0, y0), (x0 + 4.0, y0 + 4.0), (x0, y0 + 4.0), (x0, y0)],
+        "closed 4 m loop": [
+            (x0, y0),
+            (x0 + 4.0, y0),
+            (x0 + 4.0, y0 + 4.0),
+            (x0, y0 + 4.0),
+            (x0, y0),
+        ],
         "4 m hairpin": [(x0 + 100.0, y0), (x0 + 104.0, y0), (x0 + 100.0, y0 + 0.5)],
         "2 m straight segment": [(x0 + 200.0, y0), (x0 + 202.0, y0)],
         # The tool page: collapsed points are for lines "smaller than the spatial tolerance
         # of the data", which is the XY tolerance (0.001 m by default), not the 30 m here.
-        "0.5 mm segment, under the XY tolerance": [(x0 + 300.0, y0), (x0 + 300.0005, y0)],
+        "0.5 mm segment, under the XY tolerance": [
+            (x0 + 300.0, y0),
+            (x0 + 300.0005, y0),
+        ],
     }
     ids: list[int] = []
     for i, (name, coords) in enumerate(shapes.items()):
@@ -453,19 +489,33 @@ def _simplify_line_collapse_probe(gdb: str) -> None:
     names = dict(zip((generated_id(5, i + 1) for i in range(len(shapes))), shapes))
     record(
         "candidates (OBJECTID, shape, lineage_id, length m)",
-        [(oid, names[v], v, length) for oid, v, length in read(fc, ["OID@", LINEAGE, "SHAPE@LENGTH"])],
+        [
+            (oid, names[v], v, length)
+            for oid, v, length in read(fc, ["OID@", LINEAGE, "SHAPE@LENGTH"])
+        ],
     )
-    for algorithm in ("POINT_REMOVE", "BEND_SIMPLIFY", "WEIGHTED_AREA", "EFFECTIVE_AREA"):
+    for algorithm in (
+        "POINT_REMOVE",
+        "BEND_SIMPLIFY",
+        "WEIGHTED_AREA",
+        "EFFECTIVE_AREA",
+    ):
         result = os.path.join(gdb, f"collapse_{algorithm.lower()}")
         try:
             arcpy.cartography.SimplifyLine(
-                fc, result, algorithm, "30 Meters",
+                fc,
+                result,
+                algorithm,
+                "30 Meters",
                 collapsed_point_option="KEEP_COLLAPSED_POINTS",
             )
         except Exception as exc:
             record(f"{algorithm} raised", f"{type(exc).__name__}: {exc}")
             continue
-        record(f"{algorithm} lineage_id kept on main output", sorted(r[0] for r in read(result, [LINEAGE])))
+        record(
+            f"{algorithm} lineage_id kept on main output",
+            sorted(r[0] for r in read(result, [LINEAGE])),
+        )
         _derived_points(f"SimplifyLine {algorithm}", result, len(ids))
 
 
@@ -491,14 +541,19 @@ def case_type_survival(ws: Workspace) -> None:
             )
             return out(f"export{suffix}")
 
-        _run_tool(f"map_fields -> ExportFeatures with FieldMappings{suffix}", export, poly_ids)
+        _run_tool(
+            f"map_fields -> ExportFeatures with FieldMappings{suffix}", export, poly_ids
+        )
 
     second = create_fc(gdb, "polys_b", "POLYGON")
     second_ids = [generated_id(9, 1), generated_id(9, 2)]
     insert(
         second,
         ["SHAPE@", LINEAGE],
-        [(square(600_000.0 + i * 1_000.0, 6_600_000.0, 400.0), v) for i, v in enumerate(second_ids)],
+        [
+            (square(600_000.0 + i * 1_000.0, 6_600_000.0, 400.0), v)
+            for i, v in enumerate(second_ids)
+        ],
     )
     for force in (False, True):
         suffix = "_forced" if force else ""
@@ -508,7 +563,9 @@ def case_type_survival(ws: Workspace) -> None:
             arcpy.management.Merge([polys, second], out(f"merge{suffix}"), mappings)
             return out(f"merge{suffix}")
 
-        _run_tool(f"merge -> Merge with FieldMappings{suffix}", merge, poly_ids + second_ids)
+        _run_tool(
+            f"merge -> Merge with FieldMappings{suffix}", merge, poly_ids + second_ids
+        )
 
     def copy() -> str:
         arcpy.management.CopyFeatures(polys, out("copy"))
@@ -525,14 +582,20 @@ def case_type_survival(ws: Workspace) -> None:
 
     def simplify_line() -> str:
         arcpy.cartography.SimplifyLine(
-            lines, out("simplify_line"), "POINT_REMOVE", "30 Meters",
+            lines,
+            out("simplify_line"),
+            "POINT_REMOVE",
+            "30 Meters",
             collapsed_point_option="KEEP_COLLAPSED_POINTS",
         )
         return out("simplify_line")
 
     def simplify_polygon() -> str:
         arcpy.cartography.SimplifyPolygon(
-            polys, out("simplify_polygon"), "POINT_REMOVE", "5 Meters",
+            polys,
+            out("simplify_polygon"),
+            "POINT_REMOVE",
+            "5 Meters",
             minimum_area="100 SquareMeters",
             collapsed_point_option="KEEP_COLLAPSED_POINTS",
         )
@@ -543,7 +606,9 @@ def case_type_survival(ws: Workspace) -> None:
         return out("smooth_line")
 
     def smooth_polygon() -> str:
-        arcpy.cartography.SmoothPolygon(polys, out("smooth_polygon"), "PAEK", "100 Meters")
+        arcpy.cartography.SmoothPolygon(
+            polys, out("smooth_polygon"), "PAEK", "100 Meters"
+        )
         return out("smooth_polygon")
 
     def centroid() -> str:
@@ -555,7 +620,9 @@ def case_type_survival(ws: Workspace) -> None:
         return out("inside")
 
     def convex_hull() -> str:
-        arcpy.management.MinimumBoundingGeometry(polys, out("hull"), "CONVEX_HULL", "NONE")
+        arcpy.management.MinimumBoundingGeometry(
+            polys, out("hull"), "CONVEX_HULL", "NONE"
+        )
         return out("hull")
 
     _run_tool("copy -> CopyFeatures", copy, poly_ids)
@@ -570,13 +637,27 @@ def case_type_survival(ws: Workspace) -> None:
     _run_tool("smooth -> SmoothPolygon", smooth_polygon, poly_ids)
     _run_tool("centroid -> FeatureToPoint CENTROID", centroid, poly_ids)
     _run_tool("point_on_surface -> FeatureToPoint INSIDE", point_on_surface, poly_ids)
-    _run_tool("collapse_to_point -> FeatureToPoint (same tool as centroid)", centroid, poly_ids)
-    _run_tool("convex_hull -> MinimumBoundingGeometry CONVEX_HULL", convex_hull, poly_ids)
+    _run_tool(
+        "collapse_to_point -> FeatureToPoint (same tool as centroid)",
+        centroid,
+        poly_ids,
+    )
+    _run_tool(
+        "convex_hull -> MinimumBoundingGeometry CONVEX_HULL", convex_hull, poly_ids
+    )
 
-    print("  -- in-place editors: n/a by construction; confirming the type is unchanged")
+    print(
+        "  -- in-place editors: n/a by construction; confirming the type is unchanged"
+    )
     for label, run in (
-        ("densify -> Densify", lambda p: arcpy.edit.Densify(p, "DISTANCE", "10 Meters")),
-        ("snap -> Snap", lambda p: arcpy.edit.Snap(p, [[second, "VERTEX", "5 Meters"]])),
+        (
+            "densify -> Densify",
+            lambda p: arcpy.edit.Densify(p, "DISTANCE", "10 Meters"),
+        ),
+        (
+            "snap -> Snap",
+            lambda p: arcpy.edit.Snap(p, [[second, "VERTEX", "5 Meters"]]),
+        ),
         ("make_valid -> RepairGeometry", lambda p: arcpy.management.RepairGeometry(p)),
     ):
         target = out(f"inplace_{label.split(' ')[0]}")
@@ -591,7 +672,9 @@ def case_type_survival(ws: Workspace) -> None:
     _cartography_in_place(gdb, lines, line_ids, polys)
 
 
-def _cartography_in_place(gdb: str, lines: str, line_ids: list[int], polys: str) -> None:
+def _cartography_in_place(
+    gdb: str, lines: str, line_ids: list[int], polys: str
+) -> None:
     """ResolveRoadConflicts and PropagateDisplacement need an Advanced licence.
 
     Also records what B11 needs about the displacement output: its columns, and the
@@ -612,10 +695,16 @@ def _cartography_in_place(gdb: str, lines: str, line_ids: list[int], polys: str)
     try:
         arcpy.cartography.ResolveRoadConflicts([layer], "hierarchy", displacement)
         record("displace_features -> ResolveRoadConflicts", "ran")
-        record("input lineage_id before / after", f"{before} / {field_named(roads, LINEAGE)}")
+        record(
+            "input lineage_id before / after",
+            f"{before} / {field_named(roads, LINEAGE)}",
+        )
         if arcpy.Exists(displacement):
             record("displacement output fields", fields_of(displacement))
-            record("displacement row count", int(arcpy.management.GetCount(displacement)[0]))
+            record(
+                "displacement row count",
+                int(arcpy.management.GetCount(displacement)[0]),
+            )
             record("input row count", len(line_ids))
             print(
                 "  NOTE for B11: if any displacement column references input features, "
@@ -646,7 +735,9 @@ def _cartography_in_place(gdb: str, lines: str, line_ids: list[int], polys: str)
                 f"before {before}, after {field_named(points, LINEAGE)}",
             )
         else:
-            record("PropagateDisplacement", "NOT RUN: no displacement output to propagate")
+            record(
+                "PropagateDisplacement", "NOT RUN: no displacement output to propagate"
+            )
     except Exception as exc:
         record("PropagateDisplacement raised", f"{type(exc).__name__}: {exc}")
 
@@ -665,8 +756,16 @@ def case_overlay_duplicate(ws: Workspace) -> None:
     gdb = ws.gdb("overlay_duplicate")
     a = create_fc(gdb, "a", "POLYGON")
     b = create_fc(gdb, "b", "POLYGON")
-    insert(a, ["SHAPE@", LINEAGE], [(square(500_000.0, 6_600_000.0, 400.0), generated_id(1, 1))])
-    insert(b, ["SHAPE@", LINEAGE], [(square(500_200.0, 6_600_200.0, 400.0), generated_id(2, 1))])
+    insert(
+        a,
+        ["SHAPE@", LINEAGE],
+        [(square(500_000.0, 6_600_000.0, 400.0), generated_id(1, 1))],
+    )
+    insert(
+        b,
+        ["SHAPE@", LINEAGE],
+        [(square(500_200.0, 6_600_200.0, 400.0), generated_id(2, 1))],
+    )
 
     print("  -- Intersect, join_attributes ALL")
     out = os.path.join(gdb, "intersect")
@@ -679,7 +778,9 @@ def case_overlay_duplicate(ws: Workspace) -> None:
         record("raised", f"{type(exc).__name__}: {exc}")
 
     print("  -- JoinField with a lineage-bearing join table")
-    target = create_fc(gdb, "target", "POINT", fields=((LINEAGE, "BIGINTEGER"), ("key", "LONG")))
+    target = create_fc(
+        gdb, "target", "POINT", fields=((LINEAGE, "BIGINTEGER"), ("key", "LONG"))
+    )
     insert(
         target,
         ["SHAPE@XY", LINEAGE, "key"],
@@ -706,7 +807,9 @@ def case_joinfield_bigint_key(ws: Workspace) -> None:
     target = create_fc(gdb, "target", "POINT")
     values = TYPICAL_GENERATED + TYPICAL_RAW
     insert(target, ["SHAPE@XY", LINEAGE], point_rows(values))
-    join = create_table(gdb, "join", fields=(("join_key", "BIGINTEGER"), ("payload", "LONG")))
+    join = create_table(
+        gdb, "join", fields=(("join_key", "BIGINTEGER"), ("payload", "LONG"))
+    )
     insert(join, ["join_key", "payload"], [(v, i + 1) for i, v in enumerate(values)])
     try:
         arcpy.management.JoinField(target, LINEAGE, join, "join_key", ["payload"])
@@ -756,15 +859,23 @@ def case_fgdb_version(ws: Workspace) -> None:
     for version in ("CURRENT", "10.0"):
         try:
             gdb = ws.gdb(f"version_{version.replace('.', '_')}", version)
-            record(f"{version} workspace release", getattr(arcpy.Describe(gdb), "release", "n/a"))
+            record(
+                f"{version} workspace release",
+                getattr(arcpy.Describe(gdb), "release", "n/a"),
+            )
             fc = create_fc(gdb, "pts", "POINT")
             insert(fc, ["SHAPE@XY", LINEAGE], point_rows([TYPICAL_GENERATED[-1]]))
-            record(f"{version} BIGINTEGER", f"ok, {field_named(fc, LINEAGE)}, {read(fc, [LINEAGE])}")
+            record(
+                f"{version} BIGINTEGER",
+                f"ok, {field_named(fc, LINEAGE)}, {read(fc, [LINEAGE])}",
+            )
         except Exception as exc:
             record(f"{version} raised", f"{type(exc).__name__}: {exc}")
 
 
-def case_build_and_archive_path(ws: Workspace, archive_gdb: str | None, image_ref: str) -> None:
+def case_build_and_archive_path(
+    ws: Workspace, archive_gdb: str | None, image_ref: str
+) -> None:
     """Exact ArcPy build, image reference, and the archive creation path."""
     for key, value in sorted(arcpy.GetInstallInfo().items()):
         record(f"install {key}", value)
@@ -804,16 +915,24 @@ WORK_KEY = "work_key"
 
 
 def _segments(
-    gdb: str, ids: Sequence[int], work_keys: Sequence[int] | None = None, name: str = "segments"
+    gdb: str,
+    ids: Sequence[int],
+    work_keys: Sequence[int] | None = None,
+    name: str = "segments",
 ) -> str:
     """Collinear, end-to-end segments in one group: the id as BigInteger and TEXT, plus a work key.
 
     The work key is the row ordinal from 1 unless `work_keys` gives the values.
     """
     fc = create_fc(
-        gdb, name, "POLYLINE",
+        gdb,
+        name,
+        "POLYLINE",
         fields=(
-            (LINEAGE, "BIGINTEGER"), (LINEAGE_TEXT, "TEXT"), (WORK_KEY, "LONG"), ("grp", "LONG"),
+            (LINEAGE, "BIGINTEGER"),
+            (LINEAGE_TEXT, "TEXT"),
+            (WORK_KEY, "LONG"),
+            ("grp", "LONG"),
         ),
     )
     keys = work_keys if work_keys is not None else range(1, len(ids) + 1)
@@ -829,7 +948,9 @@ def _segments(
     return fc
 
 
-def _parse_tokens(text: str, separator: str) -> tuple[list[str], set[int], list[str], list[str]]:
+def _parse_tokens(
+    text: str, separator: str
+) -> tuple[list[str], set[int], list[str], list[str]]:
     """Split a concatenated cell and parse each token back to an integer.
 
     Returns (tokens, parsed values, tokens not written as plain integers, tokens that do not
@@ -870,18 +991,44 @@ def _long_key_formatting(gdb: str, separator: str) -> bool:
     Returns True when every value parses back exactly.
     """
     values = [
-        1, 9_999, 10_000, 12_345, 99_999, 100_000, 123_456, 999_999, 1_000_000,
-        1_234_567, 12_345_678, 123_456_789, 2_147_483_647, -1, -123_456, -2_147_483_647,
+        1,
+        9_999,
+        10_000,
+        12_345,
+        99_999,
+        100_000,
+        123_456,
+        999_999,
+        1_000_000,
+        1_234_567,
+        12_345_678,
+        123_456_789,
+        2_147_483_647,
+        -1,
+        -123_456,
+        -2_147_483_647,
         # Trailing zeros behind more than one significant digit: exponent form would need a
         # decimal mantissa ('1.2e+06'), which is where a formatter could round.
-        20_000, 120_000, 1_200_000, 123_400_000, 2_000_000_000, 2_147_480_000, -10_000, -1_200_000,
+        20_000,
+        120_000,
+        1_200_000,
+        123_400_000,
+        2_000_000_000,
+        2_147_480_000,
+        -10_000,
+        -1_200_000,
     ]
     print(f"  -- how CONCATENATE formats LONG values (group of {len(values)})")
     fc = _segments(
-        gdb, [generated_id(2, i + 1) for i in range(len(values))], values, name="formatting"
+        gdb,
+        [generated_id(2, i + 1) for i in range(len(values))],
+        values,
+        name="formatting",
     )
     out = os.path.join(gdb, "formatting_dissolved")
-    arcpy.analysis.PairwiseDissolve(fc, out, "grp", [[WORK_KEY, "CONCATENATE"]], "SINGLE_PART", separator)
+    arcpy.analysis.PairwiseDissolve(
+        fc, out, "grp", [[WORK_KEY, "CONCATENATE"]], "SINGLE_PART", separator
+    )
     (text,) = read(out, ["CONCATENATE_" + WORK_KEY])[0]
     record("values written, in OBJECTID order", values)
     record("concatenated cell, verbatim", text)
@@ -919,7 +1066,9 @@ def _statistics_accepted(ws: Workspace, separator: str) -> str:
     ):
         out = os.path.join(gdb, f"probe_{len(accepted)}")
         try:
-            arcpy.analysis.PairwiseDissolve(fc, out, "grp", statistics, "SINGLE_PART", separator)
+            arcpy.analysis.PairwiseDissolve(
+                fc, out, "grp", statistics, "SINGLE_PART", separator
+            )
             accepted[label] = True
             record(label, f"accepted, output fields {fields_of(out)}")
         except Exception as exc:
@@ -950,7 +1099,9 @@ def _timed_dissolve(
         if statistics is None:
             arcpy.analysis.PairwiseDissolve(fc, out, "grp", multi_part="SINGLE_PART")
         else:
-            arcpy.analysis.PairwiseDissolve(fc, out, "grp", statistics, "SINGLE_PART", separator)
+            arcpy.analysis.PairwiseDissolve(
+                fc, out, "grp", statistics, "SINGLE_PART", separator
+            )
     except Exception as exc:
         record(f"{label} elapsed s", round(time.perf_counter() - started, 1))
         record(f"{label} raised", f"{type(exc).__name__}: {exc}")
@@ -985,16 +1136,32 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
 
         out = os.path.join(gdb, "dissolved")
         plain_before = _timed_dissolve(
-            "plain dissolve (before)", fc, os.path.join(gdb, "plain_before"), None, separator
+            "plain dissolve (before)",
+            fc,
+            os.path.join(gdb, "plain_before"),
+            None,
+            separator,
         )
         count_only = _timed_dissolve(
-            "COUNT only", fc, os.path.join(gdb, "count_only"), [[WORK_KEY, "COUNT"]], separator
+            "COUNT only",
+            fc,
+            os.path.join(gdb, "count_only"),
+            [[WORK_KEY, "COUNT"]],
+            separator,
         )
         concatenate = _timed_dissolve(
-            "CONCATENATE + COUNT", fc, out, [[field, "CONCATENATE"], [LINEAGE_TEXT, "COUNT"]], separator
+            "CONCATENATE + COUNT",
+            fc,
+            out,
+            [[field, "CONCATENATE"], [LINEAGE_TEXT, "COUNT"]],
+            separator,
         )
         plain_after = _timed_dissolve(
-            "plain dissolve (after)", fc, os.path.join(gdb, "plain_after"), None, separator
+            "plain dissolve (after)",
+            fc,
+            os.path.join(gdb, "plain_after"),
+            None,
+            separator,
         )
         plains = [t for t in (plain_before, plain_after) if t is not None]
         if plains:
@@ -1004,14 +1171,31 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
             if count_only is not None:
                 record("COUNT only, added over plain s", round(count_only - plain, 1))
             if concatenate is not None:
-                record("CONCATENATE + COUNT, added over plain s", round(concatenate - plain, 1))
+                record(
+                    "CONCATENATE + COUNT, added over plain s",
+                    round(concatenate - plain, 1),
+                )
         if concatenate is None:
             continue
         record("output row count", int(arcpy.management.GetCount(out)[0]))
         record("output fields", fields_of(out))
 
-        concat = next((f.name for f in arcpy.ListFields(out) if f.name.upper().startswith("CONCATENATE")), None)
-        count = next((f.name for f in arcpy.ListFields(out) if f.name.upper().startswith("COUNT")), None)
+        concat = next(
+            (
+                f.name
+                for f in arcpy.ListFields(out)
+                if f.name.upper().startswith("CONCATENATE")
+            ),
+            None,
+        )
+        count = next(
+            (
+                f.name
+                for f in arcpy.ListFields(out)
+                if f.name.upper().startswith("COUNT")
+            ),
+            None,
+        )
         if concat is None:
             record("CONCATENATE field", "ABSENT from output")
             continue
@@ -1022,8 +1206,14 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
             record("COUNT statistic", counted if count else "no COUNT field")
             record("tokens", len(tokens))
             record("tokens equal group size", len(tokens) == size)
-            record("tokens not written as plain integers", f"{len(not_plain)}, first 5: {not_plain[:5]}")
-            record("tokens that are not integers", f"{len(not_integer)}, first 5: {not_integer[:5]}")
+            record(
+                "tokens not written as plain integers",
+                f"{len(not_plain)}, first 5: {not_plain[:5]}",
+            )
+            record(
+                "tokens that are not integers",
+                f"{len(not_integer)}, first 5: {not_integer[:5]}",
+            )
             record("distinct values after parse", len(parsed))
             record("parsed set equals input set", parsed == expected)
             record("input values missing from parse", len(expected - parsed))
@@ -1045,12 +1235,22 @@ def case_concatenate_group_size(ws: Workspace, sizes: Sequence[int]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="T0.1 gate: 64-bit storage capability.")
-    parser.add_argument("--workdir", required=True, help="local directory for scratch geodatabases")
-    parser.add_argument("--archive-gdb", help="a geodatabase created by the pipeline's archive path")
+    parser = argparse.ArgumentParser(
+        description="T0.1 gate: 64-bit storage capability."
+    )
+    parser.add_argument(
+        "--workdir", required=True, help="local directory for scratch geodatabases"
+    )
+    parser.add_argument(
+        "--archive-gdb", help="a geodatabase created by the pipeline's archive path"
+    )
     parser.add_argument("--image-ref", default=os.environ.get("IMAGE_REF", ""))
-    parser.add_argument("--only", action="append", help="run only this case; repeatable")
-    parser.add_argument("--skip-large", action="store_true", help="skip the 10^6 concatenation group")
+    parser.add_argument(
+        "--only", action="append", help="run only this case; repeatable"
+    )
+    parser.add_argument(
+        "--skip-large", action="store_true", help="skip the 10^6 concatenation group"
+    )
     args = parser.parse_args()
 
     arcpy.env.overwriteOutput = True
@@ -1071,7 +1271,9 @@ def main() -> int:
         "case_build_and_archive_path": lambda: case_build_and_archive_path(
             ws, args.archive_gdb, args.image_ref
         ),
-        "case_concatenate_group_size": lambda: case_concatenate_group_size(ws, concat_sizes),
+        "case_concatenate_group_size": lambda: case_concatenate_group_size(
+            ws, concat_sizes
+        ),
     }
     selected = args.only or list(cases)
     unknown = [name for name in selected if name not in cases]
@@ -1092,7 +1294,9 @@ def main() -> int:
     header("summary")
     record("cases run", len(selected))
     record("cases that raised outside their own handling", raised or "none")
-    print("  Every block above is an observation for the written finding, not a pass/fail.")
+    print(
+        "  Every block above is an observation for the written finding, not a pass/fail."
+    )
     return 1 if raised else 0
 
 
