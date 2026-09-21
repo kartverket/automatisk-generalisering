@@ -412,3 +412,150 @@ def apply_symbology(
             apply_symbology_layer=symbology_layer,
             created_lrx_file_name=output_name,
         )
+
+
+
+def join_field(in_feature_class: str, join_feature_class: str, in_field: str, join_field: str, fields: list[str] = None):
+    """
+    Replaces arcpy.management.JoinField with a custom implementation because JoinField crashes in arcpy image
+
+    args:
+        in_feature_class: The feature class to which the join table will be joined.
+        join_feature_class: The feature class that will be joined to the input table.
+        in_field: The field in the input table on which the join will be based.
+        join_field: The field in the join table that contains the values on which the join will be based
+        fields: The fields from the join table that will be transferred to the input table based on a join between the input table and the join table.
+            if None all fields except required fields and fields already in in_feature_class will be joined.
+    """
+    output_field_names = {
+        field.name for field in arcpy.ListFields(in_feature_class)
+    }
+    fields_to_join = [
+        field
+        for field in arcpy.ListFields(join_feature_class)
+        if not field.required and field.name not in output_field_names
+    ]
+    if fields is not None:
+        fields_to_join = [field for field in fields_to_join if field.name in fields]
+
+    for field in fields_to_join:
+        arcpy.management.AddField(
+            in_feature_class,
+            field.name,
+            field.type,
+            field.precision,
+            field.scale,
+            field.length,
+        )
+
+    joined_field_names = [field.name for field in fields_to_join]
+    source_fields = [in_field] + joined_field_names
+    source_values = {
+        row[0]: row[1:]
+        for row in arcpy.da.SearchCursor(
+            join_feature_class, source_fields
+        )
+    }
+
+    with arcpy.da.UpdateCursor(
+        in_feature_class,
+        [join_field] + joined_field_names,
+    ) as cursor:
+        for row in cursor:
+            row[1:] = source_values[row[0]]
+            cursor.updateRow(row)
+
+
+
+def find_point_clusters(input_points: str, output_feature_class: str, search_distance: str):
+    """
+    arcpy.gapro.FindPointClusters does not exist on arcgis server,
+    this function replaces it with a custom implementation using available ArcGIS Server tools.
+
+    This custom implementation doesnt use a dbscan clustering method like FindPointClusters does.
+    Looking at the input data / results for pipeline building n100 
+    we only need to group hospitals and churches that are closer than 250 meters 
+    to get the same results as the original FindPointClusters tool.
+    If in the future we wish to do something similar on a different dataset or with different distance thresholds, 
+    the implementation may need to be adjusted accordingly.
+
+    There is a second implementation of this in remove_overlapping overlapping polygons and points,
+    this second implementation i have only seen on Data in Oslo, in oslo it this function is enough to replace the original FindPointClusters tool.
+    However i dont know if thats the case for the whole of norway.
+    Therefore, we test run for whole of norway and have to check if this implementation is sufficient for all regions.
+
+    adds same fields as the original FindPointClusters tool would have added to avoid having to change downstream processes.
+    """
+    #creating output fc
+    if not arcpy.Exists(output_feature_class):
+        path_split = output_feature_class.split(".gdb/")
+        out_path = path_split[0] + ".gdb"
+        out_name = path_split[1]
+        arcpy.management.CreateFeatureclass(
+            out_path=out_path,
+            out_name=out_name,
+            geometry_type="POINT",
+            spatial_reference=arcpy.Describe(input_points).spatialReference,
+        )
+    arcpy.management.CopyFeatures(
+        in_features=input_points,
+        out_feature_class=output_feature_class,
+    )
+    
+    arcpy.management.AddField(
+        in_table=output_feature_class,
+        field_name="CLUSTER_ID",
+        field_type="LONG",
+    )
+    arcpy.management.AddField(
+        in_table=output_feature_class,
+        field_name="COLOR_ID",
+        field_type="LONG",
+    )
+
+    arcpy.analysis.GenerateNearTable(
+        in_features=output_feature_class,
+        near_features=output_feature_class,
+        out_table=f"{output_feature_class}_near_table",
+        search_radius=search_distance,
+        closest="ALL",
+    )
+
+    clusters = []
+    with arcpy.da.SearchCursor(
+        f"{output_feature_class}_near_table",
+        ["IN_FID", "NEAR_FID"],
+    ) as cursor:
+        for in_fid, near_fid in cursor:
+            matching_clusters = [
+                cluster
+                for cluster in clusters
+                if in_fid in cluster or near_fid in cluster
+            ]
+
+            if not matching_clusters:
+                clusters.append({in_fid, near_fid})
+            else:
+                # Combine all matching clusters.
+                combined_cluster = {in_fid, near_fid}
+
+                for cluster in matching_clusters:
+                    combined_cluster.update(cluster)
+                    clusters.remove(cluster)
+
+                clusters.append(combined_cluster)
+
+    # adding cluster IDs to the output feature class
+    cluster_ids = {
+        feature_id: cluster_id
+        for cluster_id, cluster in enumerate(clusters, start=1)
+        for feature_id in cluster
+    }
+
+    with arcpy.da.UpdateCursor(
+        output_feature_class,
+        ["OBJECTID", "CLUSTER_ID", "COLOR_ID"],
+    ) as cursor:
+        for object_id, _, _ in cursor:
+            cluster_id = cluster_ids.get(object_id, -1)
+            cursor.updateRow([object_id, cluster_id, cluster_id])
