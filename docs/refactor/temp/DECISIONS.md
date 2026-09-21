@@ -14,6 +14,11 @@ what stops the same ground being re-argued in six months.
 
 **A-numbering is stable.** Other documents and task entries reference A-ids. Never renumber.
 
+**Pending patch** *(decided 2026-09-21)*. `findings/PATCH-2026-09-17.patch` (A9.11, A9.12, A11.15,
+A12.5a, A14.1, A15.7, the A18 amendment, B17–B20) is approved and is applied as the first act of
+slice 0 of `findings/implementation_plan.md`. Until then the items it carries are cited as
+decided, and any edit to this file is placed so that the patch still applies.
+
 ---
 
 # A. Settled
@@ -53,6 +58,9 @@ identifiers correctly (`AddFieldDelimiters` differs by workspace type), and it a
 expressions no adapter can compile. The template already contains two — `Attr("... in (select
 ... from merge_report)")` at `operations/road/__init__.py:678` and `:942` are subqueries against
 a `ScratchHandle`.
+**`Attr.cmp`'s operator set** *(decided 2026-09-21)*: `=`, `<>`, `<`, `<=`, `>`, `>=` and `LIKE`;
+`value` is an `AttributeValue` other than `None`, and a null test goes through `Attr.is_null`,
+because `= NULL` is never true in SQL and no adapter should have to special-case it.
 `destination:` new ADR; amends ADR-0001.
 
 **A2.2** Three independent needs converged on `Attr.in_`: the predicate design itself, the 39
@@ -173,6 +181,25 @@ fans out on *data* rather than an argument and so cannot be split (see B4).
 
 **Discriminators needed: zero.** Splitting covers every case in the surface.
 `destination:` `ports/geometry_ops.py`.
+
+**A5.7 Workspace creation is a `TableOps` method.** *Decided 2026-09-21; resolves B21.*
+`TableOps.create_workspace(*, path: str, fmt: WorkspaceFormat) -> None` creates one empty
+workspace. It sits in the catalog conversation where `exists` and `data_type_of` already live.
+`ScratchFileManager.create_workspaces` calls it through the toolbox that `runtime/` hands it, so
+`staging/` still imports no engine (`03-architecture.md` §4.1) and the manager still owns every
+path in the pod scratch root (`02-runtime.md` §4.2): the port creates what the manager names
+and chooses nothing. `WorkspaceFormat` moves from `staging/workspace.py` to `ports/`, because a
+port signature now names it; `staging/workspace.py` keeps the join rule, name legality and the
+name budget. Every adapter implements the method, the in-memory one by recording the workspace,
+and the conformance suite covers it on every adapter.
+
+> *Considered and rejected:* a creation callable injected into the manager by `runtime/` and
+> taken from the adapter, which opens a second channel from adapter to staging that bypasses
+> the `Toolbox`; and lazy creation by the adapter on the first write into a missing workspace,
+> which hides a failure inside an unrelated call and makes the scratch dump's layout depend on
+> call order.
+
+`destination:` `ports/table_ops.py`; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
 
 ## A6. Partitioning — ownership
 
@@ -879,7 +906,44 @@ results) takes the explicit path.
 > change `Row.__eq__`, and give domain code a field to branch on — the mid-run log read arriving
 > by a different door.
 
+> *Superseded in part, 2026-09-21 (A12.7a).* "Four of the five template sites carry lineage with
+> no call-site change" and the error rule above are replaced by A12.7a. The tracked iterable
+> stands, as the verification of a `CARRY` declaration rather than its source.
+
 `destination:` `ports/table_ops.py`; lineage module docstring.
+
+**A12.7a Writes declare their ids axis at the call site.** *Signed 2026-09-21 as proposed in
+`PROPOSALS-2026-09-14.md` §3; resolves B13.* `write_rows` and `write_table` take a required
+keyword, with no default, declaring the output's ids axis, in handles rather than parameter
+names:
+
+- **`CARRY` from a source handle.** The rows carry that handle's `lineage_id`, verified by
+  whatever T4.4's pipe mechanism turns out to be.
+- **`FOREIGN` with refs as a column → handle mapping.** No `lineage_id`; the named columns hold
+  the handles' ids.
+- **`MINT`.** Each row's id comes from `mint(parents=…)`, as A11.12 already permits for rows built
+  in Python.
+
+Required, so pyright reports an omission at the call site: A12.5's "forgetting is impossible"
+extended to the one row-producing method it could not reach. The spelling, a `Rows`-like value
+or three small constructors, is T4.4's to settle. The declaration is write-only for domain
+code, the same class of statement as `mint(parents=…)`, so it reopens neither A11.12 nor the
+rejection of `Row.parents`.
+
+A12.7's error rule becomes three checks: for `CARRY`, the rows carry the source handle's ids; for
+`MINT`, every row carries a mint; for `FOREIGN`, no `lineage_id` is written and the ref columns
+exist. `SNAP_DISPLACEMENT` declares `FOREIGN`, and the contradiction with A15.6 is gone. The
+axis is decoupled from the pipe mechanism, so the review's F25 stays open and unaffected.
+
+Consequence for A12.5's check, recorded with the signature because the check is written before
+the write methods land: an `Out` parameter whose row is declared at the call site is a category
+of the grammar. The check requires the keyword on those two methods instead of a `@row_shape`
+entry, and it is not an exemption: omitting the keyword fails.
+
+Still open, carried from the proposal: what a ref column holds when the ref names a handle that
+is itself `FOREIGN`. T4.4 states it.
+`destination:` `ports/table_ops.py` (`write_rows` and `write_table` docstrings); the lineage
+module docstring (the three checks).
 
 **A12.8 — SUPERSEDED.** It argued that `validate_geometry`'s error rows are `PRESERVE` because
 "the distinction is row correspondence, not feature-ness." That correction was right against the
@@ -1587,6 +1651,18 @@ while belonging to no range.
 
 `destination:` `02-runtime.md` §8; the lineage module docstring for the stage-entry half.
 
+## A26. Python target
+
+*Decided 2026-09-21.* The target is **Python 3.13**. There is no fixed lower constraint: the
+project follows its runtimes upward, and the target is the lowest Python minor version across
+the supported runtimes (the ArcGIS Pro interpreter the team develops with, and the Linux image).
+Nothing is in production yet, so no older build constrains it. Three settings in
+`pyproject.toml` state it and always change together: `requires-python`, pyright's
+`pythonVersion` and Black's `target-version`. CI runs the pure-core suite on that version. The
+floor is raised only when every supported runtime has moved, in one pull request that changes
+the three settings and runs pyright and the core suite.
+`destination:` `docs/contributing/python-version.md`; `pyproject.toml`.
+
 ---
 
 # B. Open
@@ -2024,6 +2100,10 @@ Its only consumer is `propagate_displacement`, which reads it as **context** —
 is small either way, which is why this is a B-item rather than a blocker.
 `destination:` `ports/cartographic_ops.py` with A12.11, once resolved.
 
+> *See the open note above B16 (2026-09-21):* leaving this output undeclared and declaring
+> `simplify.collapsed_points` while the adapter refuses it are two answers to one question; the
+> pattern is settled when B11 or B16 is decided.
+
 **B12. T4.1's check cannot identify an output parameter.** Found by the 2026-09-14 review (F6),
 verified. A12.5 and T4.1 reject "an output parameter with no declaration", but every handle
 parameter on the port Protocols is typed `ScratchHandle`; the `In`/`Out` aliases
@@ -2047,6 +2127,9 @@ not settle for an input that feeds only a predicate. Also unsettled: what a ref 
 the handle it refers to is itself `FOREIGN`. A proposal (a required call-site ids declaration on
 writes, as A12.7a) awaits sign-off in `PROPOSALS-2026-09-14.md` §3.
 
+> *Resolved 2026-09-21 into A12.7a*, signed as proposed. The sub-question about a ref column
+> whose ref names a `FOREIGN` handle stays with T4.4.
+
 **B14. `lineage-bearing` has no stated plan-time derivation.** Found while verifying B13.
 A15.2, A15.6 and T4.9 say the property is computed from "the stage declaration and the operation
 wiring", and A12.9's check runs at plan time. But `@row_shape` sits on **port** methods, and plan
@@ -2069,6 +2152,28 @@ real codebase — would be rejected, though no template instance does it today.
 `dissolve` (`GROUP + MINT`). Under A9.10 the exemption can match nothing. A17.4 records the
 predicate as uncompilable; this is a separate defect in what it compares. T4.12 checks `join_field`
 only, so a lookup done as read-then-`Attr.in_` is outside its reach.
+
+**B21 — RESOLVED 2026-09-21, option (a), into A5.7.** *Placed here, out of numerical order, so
+that `findings/PATCH-2026-09-17.patch`, which appends B17–B20 after the last line of B16, still
+applies; move it below B20 when the patch is applied.* The question, kept for the record: who
+creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
+and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port
+method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
+(b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.
+
+> **Open note on B16 and B11, 2026-09-21: a declared-but-unavailable optional output has no
+> settled pattern.** *It stands above B16 rather than under it because the unapplied patch's
+> last hunk must match at the end of this file; move it below B16 when the patch is applied.*
+> The two items are handled differently today. For `simplify.collapsed_points`, slice 3 of
+> `findings/implementation_plan.md` declares the output on the Protocol per A12.11, implements
+> it in the in-memory adapter, and has the ArcPy adapter raise `CapabilityError` when it is
+> requested, until B16 is answered. For `displace_features.displacement`, B11 leaves the
+> output undeclared altogether. Both are optional outputs an adapter cannot yet honour, and one
+> pattern should cover them. It is settled when B16 or B11 is decided, whichever comes first,
+> and it includes which error a caller sees: the plan places `CapabilityError` under
+> `AdapterDefectError`, which means the adapter is wrong, and a known, declared limitation is
+> not a defect. The precedent for the other reading is `ParentsUnavailableError`, a `PortError`
+> (A14.1). No change is made now.
 
 **B16. The vendor documentation contradicts `simplify.collapsed_points` as `ONE + CARRY`.** Found
 while writing T0.1's script. A12.11 assumes the point output copies the input's attributes. The

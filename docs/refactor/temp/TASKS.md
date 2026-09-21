@@ -120,6 +120,7 @@ work but have different lifetimes and different modules.
 | 14 | T2.9 | Port surface surgery — splits, `DANGLE`, delete `union` | not started |
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
+| 16b | T2.12 | `TableOps.create_workspace` | not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
 | 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
@@ -582,7 +583,8 @@ pytest marker registration), `template_code/tests/unit/` (the meta-check), a new
 
 **depends on** nothing.
 
-**decision refs** B10 (where the three gaps were found; this task does not resolve it).
+**decision refs** B10 (where the three gaps were found; this task does not resolve it); A26 (the
+Python target, 3.13, which the CI matrix and the three `pyproject.toml` settings state).
 
 **doc migration** none. `03-architecture.md` §4.1's table gains the tightened `helpers/` row when
 the contract lands.
@@ -1036,6 +1038,33 @@ because `source` already means `ExternalSource` in this repository.
 
 ---
 
+## 16b. T2.12 — `TableOps.create_workspace`
+
+**status:** not started
+
+**what done means** `TableOps.create_workspace(*, path: str, fmt: WorkspaceFormat) -> None`
+exists and creates one empty workspace. `WorkspaceFormat` lives in `ports/`, since a port
+signature names it; `staging/workspace.py` keeps the join rule, name legality and the name
+budget. `ScratchFileManager.create_workspaces` calls the method through the toolbox `runtime/`
+hands it, once for the stage workspace and once per operation workspace, and creates the
+sidecar directories itself. Both adapters implement it, the in-memory one by recording the
+workspace, and the conformance suite has its cases: the workspace exists afterwards; creating
+one that already exists is a `PortContractError`; a path whose parent is missing is an
+`EngineError` naming the tool.
+
+**files touched** `ports/table_ops.py`, `ports/` (the new home of `WorkspaceFormat`),
+`staging/workspace.py`, `staging/scratch.py`, both adapters, `tests/conformance/`. Lands in
+slice 1c of `findings/implementation_plan.md`.
+
+**depends on** nothing.
+
+**decision refs** A5.7, B21.
+
+**doc migration** A5.7 → `ports/table_ops.py`, the `staging/scratch.py` docstring and
+`02-runtime.md` §4.2.
+
+---
+
 ## 17. T3.1 — Native index behind the port
 
 **status:** not started
@@ -1447,14 +1476,25 @@ direct pipe sites carry lineage with no call-site change:
 
 **files touched** `template_code/ag/lineage/`, `template_code/ag/ports/table_ops.py`.
 
-**open, affects acceptance: B13.** Two of the four "no call-site change" sites (`:323`, `:593`)
+**B13 resolved by A12.7a, signed 2026-09-21.** `write_rows` and `write_table` take a required
+call-site keyword declaring the ids axis (`CARRY` from a handle, `FOREIGN` with refs, or `MINT`),
+and A12.7's error rule becomes three checks. Acceptance additions, from
+`PROPOSALS-2026-09-14.md` §3: the five template write sites each carry their declaration
+(`:243` `nodes` MINT; `:322` `displacement` FOREIGN with refs to the road features through the
+carried `VERTEX_SOURCE`; `:453` `match_report` CARRY from `unmatched`; `:542` `rank_table` CARRY
+from `penalised`; `:592` `merge_report` FOREIGN with refs to `candidates`); omitting the keyword
+is a pyright error; a `CARRY` write whose rows were rebuilt without ids fails with a message
+naming the write; `SNAP_DISPLACEMENT` passes. This task also states what a ref column holds when
+the ref names a handle that is itself `FOREIGN`. The text below is the question as it stood.
+
+*As it stood:* two of the four "no call-site change" sites (`:323`, `:593`)
 read a `FOREIGN` handle, and the error rule above fires on `SNAP_DISPLACEMENT`, which A15.6 calls
 legal. A proposal (a required call-site ids declaration on writes) awaits sign-off and would
 replace this acceptance text.
 
 **depends on** T4.3.
 
-**decision refs** A12.7, B13.
+**decision refs** A12.7, A12.7a, B13.
 
 **doc migration** A12.7 → `ports/table_ops.py` and the lineage module docstring.
 
