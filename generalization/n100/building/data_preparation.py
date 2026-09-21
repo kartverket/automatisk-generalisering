@@ -1,5 +1,6 @@
 # Importing packages
 import arcpy
+import os
 
 # Importing custom input files modules
 from data_orchestrator.datasets import DatasetNamespace
@@ -30,6 +31,19 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
 
 from data_orchestrator.data_names import DataNames as dn
+
+
+
+
+import logging
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
+
 
 
 @timing_decorator
@@ -64,8 +78,11 @@ def main() -> InputDataOrchestrator:
     Why:
         Prepares the input data and files used in future processing steps.
     """
+    if os.environ.get("AREA"):
+        AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
+    else:
+        AREA_SELECTOR = "navn IN ('Bergen')"
 
-    AREA_SELECTOR = "navn IN ('Asker')"
     SCALE = "n100"
     PIPELINE = "building"
 
@@ -126,11 +143,15 @@ def data_selection(
         building.AnleggsLinje_N50: Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
+    if require("SELECT_STUDY_AREA") == "False":
+        SELECT_STUDY_AREA = False
+    else:
+        SELECT_STUDY_AREA = True
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selector,
-        select_local=require("SELECT_STUDY_AREA"),
+        select_local=SELECT_STUDY_AREA,
     )
 
     selector.run()

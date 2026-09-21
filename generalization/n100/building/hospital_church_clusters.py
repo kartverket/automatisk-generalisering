@@ -15,7 +15,15 @@ from env_setup import environment_setup
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
+import os
+import logging
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
 
+
+logger = logging.getLogger(__name__)
 # Main function
 @timing_decorator
 def main():
@@ -75,6 +83,10 @@ def hospital_church_selections():
     )
 
 
+    
+
+
+
 # Finding and removing hospital and church clusters
 @timing_decorator
 def find_clusters():
@@ -98,42 +110,36 @@ def find_clusters():
 
     print("Finding hospital and church clusters...")
 
-    # Finding hospital clusters
-    arcpy.gapro.FindPointClusters(
+    custom_arcpy.find_point_clusters(
         input_points=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
-        out_feature_class=Building_N100.hospital_church_clusters___all_hospital_clusters___n100_building.value,
-        clustering_method="DBSCAN",
-        minimum_points="2",
+        output_feature_class=Building_N100.hospital_church_clusters___all_hospital_clusters___n100_building.value,
         search_distance="250 Meters",
     )
 
-    # Finding church clusters
-    arcpy.gapro.FindPointClusters(
+    custom_arcpy.find_point_clusters(
         input_points=Building_N100.hospital_church_clusters___church_points___n100_building.value,
-        out_feature_class=Building_N100.hospital_church_clusters___all_church_clusters___n100_building.value,
-        clustering_method="DBSCAN",
-        minimum_points="2",
+        output_feature_class=Building_N100.hospital_church_clusters___all_church_clusters___n100_building.value,
         search_distance="250 Meters",
     )
 
     print("Joining fields...")
 
     # Join CLUSTER_ID to church points OBJECTID
-    arcpy.management.JoinField(
-        in_data=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
+    custom_arcpy.join_field(
+        in_feature_class=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
+        join_feature_class=Building_N100.hospital_church_clusters___all_hospital_clusters___n100_building.value,
         in_field="OBJECTID",
-        join_table=Building_N100.hospital_church_clusters___all_hospital_clusters___n100_building.value,
         join_field="OBJECTID",
-        fields="CLUSTER_ID",
+        fields=["CLUSTER_ID"],
     )
 
     # Join CLUSTER_ID to church points OBJECTID
-    arcpy.management.JoinField(
-        in_data=Building_N100.hospital_church_clusters___church_points___n100_building.value,
+    custom_arcpy.join_field(
+        in_feature_class=Building_N100.hospital_church_clusters___church_points___n100_building.value,
+        join_feature_class=Building_N100.hospital_church_clusters___all_church_clusters___n100_building.value,
         in_field="OBJECTID",
-        join_table=Building_N100.hospital_church_clusters___all_church_clusters___n100_building.value,
         join_field="OBJECTID",
-        fields="CLUSTER_ID",
+        fields=["CLUSTER_ID"],
     )
 
     expression_cluster = "CLUSTER_ID > 0"

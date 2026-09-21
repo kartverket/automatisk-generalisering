@@ -10,7 +10,17 @@ from constants.n100_constants import N100_Symbology
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
+from custom_tools.general_tools.custom_arcpy import join_field
 
+
+import logging
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
 
 class PolygonProcessor:
     """
@@ -160,7 +170,6 @@ class PolygonProcessor:
             raise ValueError(
                 f"Out of bounds value found for symbol_val in Polygon Processor: {symbol_val}"
             )
-
         polygon_width, polygon_height = self.building_symbol_dimensions[symbol_val]
         half_width = polygon_width / 2
         half_height = polygon_height / 2
@@ -289,18 +298,13 @@ class PolygonProcessor:
             The method uses either multiprocessing (for large datasets) or sequential processing (for smaller
             datasets) to convert the building points into polygons based on their symbol dimensions.
         """
-        total_data_points = len(data_to_be_processed)
-        if total_data_points >= 10000:
-            number_of_cores = int(cpu_count() * self.PERCENTAGE_OF_CPU_CORES)
-            with Pool(processes=number_of_cores) as processing_pool:
-                well_known_text_data = processing_pool.map(
-                    self.calculate_well_known_text_polygon, data_to_be_processed
-                )
-        else:
-            well_known_text_data = [
-                self.calculate_well_known_text_polygon(args)
-                for args in data_to_be_processed
-            ]
+        # Getting segmentation fault error when running on skip with multiprocessing, so testing sequential processing instead
+        # possible reason for segmentation fault: passing the self context to multiprocessing functions
+        # if extremely slow we can try multiprocessing but without passing the self context to avoid segmentation faults maybe.
+        well_known_text_data = [
+            self.calculate_well_known_text_polygon(args)
+            for args in data_to_be_processed
+        ]
         return well_known_text_data
 
     # Field Management and Cleanup
@@ -309,17 +313,21 @@ class PolygonProcessor:
         Joins fields from the input building points to the generated polygon feature class using the unique ID field.
         """
         # Add index to the join field in the output feature class
+
+  
         arcpy.management.AddIndex(
             self.output_polygon_feature_class,
             self.origin_id_field,
             f"{self.origin_id_field}_index",
         )
-        arcpy.management.JoinField(
-            self.output_polygon_feature_class,
-            self.origin_id_field,
-            self.input_building_points,
-            self.index_field_name,
+
+        join_field(
+            in_feature_class=self.output_polygon_feature_class,
+            join_feature_class=self.input_building_points,
+            in_field=self.index_field_name,
+            join_field=self.origin_id_field,
         )
+        
 
     def delete_origin_id_field(self):
         """
@@ -348,9 +356,7 @@ class PolygonProcessor:
             The method orchestrates all the other methods in the correct order, handling data preparation,
             batch processing, and cleanup to generate the final polygon feature class.
         """
-
         self.setup_spatial_reference_and_origin_id()
-
         self.create_output_feature_class_if_not_exists()
 
         # Processing data in batches
@@ -362,12 +368,12 @@ class PolygonProcessor:
             f"{self.IN_MEMORY_WORKSPACE}/{self.TEMPORARY_FEATURE_CLASS_NAME}"
         )
 
-        print("starting adding fields with join")
-
         # Adding fields with join
+        logger.info("Starting to add fields with join")
         self.add_fields_with_join()
 
         # Delete the origin_id_field
+        logger.info("Starting to delete the origin_id_field")
         self.delete_origin_id_field()
 
         print(f"Output feature class: {self.output_polygon_feature_class} completed.")

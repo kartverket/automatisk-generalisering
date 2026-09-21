@@ -363,12 +363,15 @@ def finding_clusters_amongst_the_points():
     to prevent graphic overlap to be in different clusters, however small enough to not merge close graphic cluster patterns
     in a single super cluster.
     """
-    # Finding church clusters
-    arcpy.gapro.FindPointClusters(
+    #The is a second implementation of this in remove_overlapping overlapping polygons and points,
+    #this second implementation i have only seen on Data in Oslo, in oslo it this function is enough to replace the original FindPointClusters tool.
+    #However i dont know if thats the case for the whole of norway.
+    #Therefore, we test run for whole of norway and have to check if this implementation is sufficient for all regions.
+    # We have to check that this Building_N100.removing_overlapping_polygons_and_points___point_clusters___n100_building.value, doesnt have any big clusters
+    # if it does we have to reconsider the find_point_cluster function
+    custom_arcpy.find_point_clusters(
         input_points=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
-        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___point_clusters___n100_building.value,
-        clustering_method="DBSCAN",
-        minimum_points="2",
+        output_feature_class=Building_N100.removing_overlapping_polygons_and_points___point_clusters___n100_building.value,
         search_distance="105 Meters",
     )
 
