@@ -90,10 +90,13 @@ class RiverElevator:
         ]
         out_fields = in_fields + ["SHAPE@"]
 
-        with arcpy.da.SearchCursor(
-            self.input_lines_fc,
-            in_fields + ["SHAPE@"],
-        ) as cur, arcpy.da.InsertCursor(self.output_fc, out_fields) as icur:
+        with (
+            arcpy.da.SearchCursor(
+                self.input_lines_fc,
+                in_fields + ["SHAPE@"],
+            ) as cur,
+            arcpy.da.InsertCursor(self.output_fc, out_fields) as icur,
+        ):
 
             for row in cur:
                 attrs = row[:-1]

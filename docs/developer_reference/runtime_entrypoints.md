@@ -1,5 +1,7 @@
 # Runtime Entrypoints
 
+**Status:** CURRENT. Describes the legacy packages as implemented.
+
 This section describes how runnable scripts in the project should be structured.
 
 ### 1. Running `environment_setup`

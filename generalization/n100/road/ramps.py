@@ -363,21 +363,24 @@ def add_ramps_to_relevant_roads(files: dict):
         out_layer=ramps_layer,
         where_clause="objtype = 'VegSenterlinje' and typeveg = 'rampe'",
     )
-    with arcpy.da.SearchCursor(
-        ramps_layer,
-        [
-            "OID@",
-            "SHAPE@",
-            "objtype",
-            "medium",
-            "motorvegtype",
-            "vegkategori",
-            "typeveg",
-        ],
-    ) as s_cur, arcpy.da.InsertCursor(
-        files["relevant_roads_dissolved"],
-        ["SHAPE@", "objtype", "medium", "motorvegtype", "vegkategori", "typeveg"],
-    ) as i_cur:
+    with (
+        arcpy.da.SearchCursor(
+            ramps_layer,
+            [
+                "OID@",
+                "SHAPE@",
+                "objtype",
+                "medium",
+                "motorvegtype",
+                "vegkategori",
+                "typeveg",
+            ],
+        ) as s_cur,
+        arcpy.da.InsertCursor(
+            files["relevant_roads_dissolved"],
+            ["SHAPE@", "objtype", "medium", "motorvegtype", "vegkategori", "typeveg"],
+        ) as i_cur,
+    ):
         for row in s_cur:
             geom = row[1]
             objtype = row[2]
@@ -467,9 +470,10 @@ def remove_endpoints(files: dict, lines_fc: str, points_fc: str):
         spatial_reference=arcpy.Describe(lines_fc).spatialReference,
     )
 
-    with arcpy.da.SearchCursor(
-        lines_fc, ["OID@", "SHAPE@"]
-    ) as road_cur, arcpy.da.InsertCursor(files["endpoints"], ["SHAPE@"]) as ins_cur:
+    with (
+        arcpy.da.SearchCursor(lines_fc, ["OID@", "SHAPE@"]) as road_cur,
+        arcpy.da.InsertCursor(files["endpoints"], ["SHAPE@"]) as ins_cur,
+    ):
         for oid, geom in road_cur:
             # if oid in intersecting_oids:
             start_pg, end_pg = get_line_endpoints(geom)
@@ -3353,9 +3357,10 @@ def explode_roads(files: dict):
     insert_fields = ["SHAPE@"] + attr_fields
     ramp_idx = search_fields.index(ramp_id)
 
-    with arcpy.da.SearchCursor(
-        files["copy_of_roads"], search_fields
-    ) as s_cur, arcpy.da.InsertCursor(files["exploded_roads"], insert_fields) as i_cur:
+    with (
+        arcpy.da.SearchCursor(files["copy_of_roads"], search_fields) as s_cur,
+        arcpy.da.InsertCursor(files["exploded_roads"], insert_fields) as i_cur,
+    ):
 
         ramp_field = search_fields[ramp_idx]
 
@@ -3544,9 +3549,10 @@ def find_surviving_potential_points(files: dict, input_points: str):
     attr_fields.remove("ramp_id")
     fields = ["ramp_id"] + attr_fields + ["SHAPE@"]
 
-    with arcpy.da.SearchCursor(input_points, fields) as s_cur, arcpy.da.InsertCursor(
-        out_fc, fields
-    ) as ins:
+    with (
+        arcpy.da.SearchCursor(input_points, fields) as s_cur,
+        arcpy.da.InsertCursor(out_fc, fields) as ins,
+    ):
         for srow in s_cur:
             oid = srow[0]
             rid_key = str(oid)
@@ -3640,11 +3646,14 @@ def remove_endpoints_part_2(files: dict, lines_fc: str, points_fc: str):
         where_clause="ramp_id IS NOT NULL",
     )
 
-    with arcpy.da.SearchCursor(
-        files["exploded_roads_dissolved"], ["OID@", "SHAPE@", "ramp_id"]
-    ) as road_cur, arcpy.da.InsertCursor(
-        files["endpoints_with_ramp_id"], ["SHAPE@", endpoint_ramp_field]
-    ) as ins_cur:
+    with (
+        arcpy.da.SearchCursor(
+            files["exploded_roads_dissolved"], ["OID@", "SHAPE@", "ramp_id"]
+        ) as road_cur,
+        arcpy.da.InsertCursor(
+            files["endpoints_with_ramp_id"], ["SHAPE@", endpoint_ramp_field]
+        ) as ins_cur,
+    ):
         for oid, geom, ramp_id in road_cur:
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, ramp_id])
@@ -3657,11 +3666,12 @@ def remove_endpoints_part_2(files: dict, lines_fc: str, points_fc: str):
         spatial_reference=arcpy.Describe(lines_fc).spatialReference,
     )
 
-    with arcpy.da.SearchCursor(
-        lines_fc, ["OID@", "SHAPE@"]
-    ) as road_cur, arcpy.da.InsertCursor(
-        files["endpoints_without_ramp_id"], ["SHAPE@"]
-    ) as ins_cur:
+    with (
+        arcpy.da.SearchCursor(lines_fc, ["OID@", "SHAPE@"]) as road_cur,
+        arcpy.da.InsertCursor(
+            files["endpoints_without_ramp_id"], ["SHAPE@"]
+        ) as ins_cur,
+    ):
         for oid, geom in road_cur:
             # if oid in intersecting_oids:
             start_pg, end_pg = get_line_endpoints(geom)

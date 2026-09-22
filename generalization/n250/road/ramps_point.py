@@ -268,9 +268,10 @@ def remove_endpoints_points(endpoints_layer, fc):
         "in_memory", "collected_endpoints", "POINT", spatial_reference=sr
     )
 
-    with arcpy.da.SearchCursor(
-        endpoints_layer, ["OID@", "SHAPE@"]
-    ) as road_cur, arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@"]) as ins_cur:
+    with (
+        arcpy.da.SearchCursor(endpoints_layer, ["OID@", "SHAPE@"]) as road_cur,
+        arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@"]) as ins_cur,
+    ):
         for oid, geom in road_cur:
             # if oid in intersecting_oids:
             start_pg, end_pg = get_line_endpoints(geom)
@@ -605,11 +606,12 @@ def connect_roads_to_points():
     arcpy.management.AddField(endpoints_fc, "from_road", "LONG")
     arcpy.management.AddField(endpoints_fc, "start_end", "LONG")
 
-    with arcpy.da.SearchCursor(
-        "roads_lyr", ["OID@", "SHAPE@"]
-    ) as road_cur, arcpy.da.InsertCursor(
-        endpoints_fc, ["SHAPE@", "from_road", "start_end"]
-    ) as ins_cur:
+    with (
+        arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cur,
+        arcpy.da.InsertCursor(
+            endpoints_fc, ["SHAPE@", "from_road", "start_end"]
+        ) as ins_cur,
+    ):
         for oid, geom in road_cur:
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, oid, 1])
@@ -1087,9 +1089,10 @@ class MovePointsToCrossings:
         arcpy.management.AddField(self.output_point_feature, "priority", "DOUBLE")
         arcpy.management.AddField(self.output_point_feature, "roadID", "DOUBLE")
 
-        with arcpy.da.SearchCursor(
-            self.input_point_feature, in_fields
-        ) as scur, arcpy.da.InsertCursor(self.output_point_feature, out_fields) as icur:
+        with (
+            arcpy.da.SearchCursor(self.input_point_feature, in_fields) as scur,
+            arcpy.da.InsertCursor(self.output_point_feature, out_fields) as icur,
+        ):
             for row in scur:
                 oid = int(row[0])
                 orig_geom = row[1]
@@ -1321,9 +1324,10 @@ class MovePointsToCrossings:
             spatial_reference=sr,
         )
 
-        with arcpy.da.SearchCursor(
-            roads_lyr, ["OID@", "SHAPE@"]
-        ) as road_cur, arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@"]) as ins_cur:
+        with (
+            arcpy.da.SearchCursor(roads_lyr, ["OID@", "SHAPE@"]) as road_cur,
+            arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@"]) as ins_cur,
+        ):
             for oid, geom in road_cur:
                 # if oid in intersecting_oids:
                 start_pg, end_pg = get_line_endpoints(geom)

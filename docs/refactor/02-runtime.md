@@ -90,7 +90,7 @@ partition id, and the Job reaching `completions` **is** the fan-in barrier.
 
 | | declared by | has | used for |
 |---|---|---|---|
-| **DataObject** | a stage | identity, lineage, legality, remote location | the dependency graph, classification, pinning |
+| **DataObject** | a stage | identity, origin, legality, remote location | the dependency graph, classification, pinning |
 | **ScratchHandle** | the stage module, as a class attribute | a name, a namespace, a data type, and at runtime a path | wiring operations to each other |
 
 `DataObject` is `ExternalSource | ProductIdentity | Derived`. An operation *receives* a
@@ -157,8 +157,9 @@ omission. ADR-0012.
 reference the same symbol, so the producer and its consumers are linked by go-to-definition
 rather than by a string match.
 
-**`origin` names lineage roots only, and it means lineage — not influence.** It answers "what
-dataset is this, fundamentally." Most objects have one origin and keep it for life. More than
+**`origin` names origin roots only (`OriginRoot`: an `ExternalSource` or a `ProductIdentity`),
+and it means object-level lineage — not influence.** It answers "what dataset is this,
+fundamentally." Most objects have one origin and keep it for life. More than
 one only when data is genuinely combined, such as a join or a merge. `DISPLACED` keeps
 `N50_BUILDING_POLYGONS` alone: road geometry moved it, but no road data is in it.
 
@@ -167,7 +168,7 @@ already stated by the operation wiring.
 
 **Either an object crosses a stage boundary and is a `Derived`, or it does not and is a
 `ScratchHandle`.** There is no third state. A `Derived` that no `StageOutput` names is not
-uploaded, is invisible to `warn_unused_handles`, and documents a lineage the runtime does not
+uploaded, is invisible to `warn_unused_handles`, and documents an origin the runtime does not
 use.
 
 **Identifiers are symbols; values stay literals.**
@@ -316,7 +317,7 @@ per identity for the whole project.
 
 Its `external_inputs` is a derived property over its stages, not a declaration — a hand-written
 list would go stale, and since placement is its only consumer, a stale list means a pipeline
-silently scheduled in the wrong environment. It covers both kinds of lineage root, because
+silently scheduled in the wrong environment. It covers both kinds of origin root, because
 placement is a reachability question: reading an `s3://` published product pins a pipeline
 on-prem for exactly the same reason as reading an `s3://` external source.
 
@@ -339,8 +340,9 @@ operation with nothing tunable declares nothing.
 
 Config *fields* are declared beside the operation, because they change when it changes. Config
 *values* live in tuning modules, because they change per scale: an object base module stating
-every field, one `replace` delta per scale, over per-scale cartographic constants named for the
-concept (`MINIMUM_VISIBLE_LENGTH_M`) rather than the consuming parameter. **No resolution
+every field, one `replace` delta per scale, over per-scale cartographic constants
+(*scale constants*) named for the concept (`MINIMUM_VISIBLE_LENGTH_M`) rather than the consuming
+parameter. **No resolution
 mechanism** — sharing happens because a line of code references a constant, so "what is N100's
 road thinning length" stays a value you read rather than one you compute. ADR-0013.
 
@@ -566,7 +568,7 @@ The expense is that the data cannot follow.
 Classification rules live in **one dedicated file**, separate from pipeline code, so a security
 reviewer can read the whole policy without reading any pipeline.
 
-- a rule supplies the classification for any lineage root it matches
+- a rule supplies the classification for any origin root it matches
 - the declared `ExternalSource.classification` may be **more** restrictive, freely
 - **less** restrictive is not expressible on an `ExternalSource` at all
 - nothing matches: fail closed
@@ -828,7 +830,7 @@ express rather than as accumulated habit.
     manual, so `op1(A) → op2(B) → op3(A)` is a fine operation sequence and a deadlocked stage
     graph. This is the main way a bad grouping fails.*
 12. Every `origin` root is reachable through the wiring. *Deliberately not the converse — a
-    stage may read roots that are not in its output's lineage.*
+    stage may read roots that are not in its output's origin.*
 13. No input ranks coarser than the consuming stage's scale. *N25 reading N100 is an error.*
 14. No pipeline reads an identity it publishes. *The ladder-input-at-own-scale mistake, which 9
     does not catch because there is still one producer. Now a symbol comparison, so it also

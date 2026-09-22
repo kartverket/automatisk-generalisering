@@ -528,9 +528,10 @@ def insert_line_endpoints(
     fields_in = ["OID@", "SHAPE@"] if include_oid else ["SHAPE@"]
     fields_out = ["SHAPE@", "Line_ID"] if include_oid else ["SHAPE@"]
 
-    with arcpy.da.SearchCursor(line_fc, fields_in) as search, arcpy.da.InsertCursor(
-        point_fc, fields_out
-    ) as insert:
+    with (
+        arcpy.da.SearchCursor(line_fc, fields_in) as search,
+        arcpy.da.InsertCursor(point_fc, fields_out) as insert,
+    ):
         for row in search:
             geom = row[-1]
             oid = row[0] if include_oid else None

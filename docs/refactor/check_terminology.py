@@ -34,13 +34,14 @@ is worse than no check, because it is trusted.
 
 from __future__ import annotations
 
+import io
 import re
 import sys
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parent
 TERMS_PATH = DOCS / "01-terminology.md"
-TERMS = TERMS_PATH.read_text()
+TERMS = TERMS_PATH.read_text(encoding="utf-8")
 
 # Headwords whose wording legitimately differs from the prose they cite.
 # Keep short and justified; a growing list is a smell, not a solution.
@@ -51,6 +52,11 @@ HEADWORD_VARIANCE = {
     "parents": "appears as `parents=` and `PARENT_ID`",
     "halo": "the entry is 'halo / context radius'; prose uses either",
 }
+
+# The documents are UTF-8 and the messages below carry non-ASCII; on Windows the default
+# console encoding is the locale code page, so the output stream is set explicitly.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 failures: list[str] = []
 
@@ -77,7 +83,7 @@ def anchors_of(path: Path) -> set[str]:
         return set()
     return {
         github_anchor(m.group(1))
-        for m in re.finditer(r"^#{1,6}\s+(.+?)\s*$", path.read_text(), re.M)
+        for m in re.finditer(r"^#{1,6}\s+(.+?)\s*$", path.read_text(encoding="utf-8"), re.M)
     }
 
 
@@ -112,7 +118,7 @@ for name, _, _, authority in rows:
     for target in targets:
         if target not in doc_cache:
             p = DOCS / target
-            doc_cache[target] = p.read_text() if p.exists() else ""
+            doc_cache[target] = p.read_text(encoding="utf-8") if p.exists() else ""
         hay += doc_cache[target]
     squashed_hay = re.sub(r"[\s_\-]", "", hay).lower()
     squashed_key = re.sub(r"[\s_\-]", "", key).lower()

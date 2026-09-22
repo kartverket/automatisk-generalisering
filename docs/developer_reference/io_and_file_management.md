@@ -1,5 +1,7 @@
 # IO (Input/Output) and File Management
 
+**Status:** CURRENT. Describes the legacy packages as implemented.
+
 This section explains how input and output file handling is organized in the project.
 The goal is to ensure consistent, refactor-friendly IO across all modules.
 

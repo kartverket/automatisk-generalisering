@@ -1,0 +1,81 @@
+# The one list of checks. Pre-commit, CI and a manual run all execute this file, so a
+# pull request runs exactly what a commit runs.
+#
+# Every hook is local and runs the tool from the project environment (`language: system`):
+# the versions are pinned once, in pyproject.toml's `dev` extra, and no hook pins its own
+# with `rev:`. Install with `pip install -e ".[dev]"` and `pre-commit install`; hooks
+# need that environment active. See docs/contributing/testing.md.
+#
+# ArcPy-marked tests are excluded by marker, not by the auto-skip in tests/conftest.py, so
+# the pytest hook selects the same tests on every machine, including one where ArcPy is
+# importable. Those tests run only under an ArcGIS Pro Python environment and, later, in
+# the image.
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format --check (src, tests, tools)
+        entry: ruff format --check src tests tools
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: ruff-check
+        name: ruff check (src, tests, tools)
+        entry: ruff check src tests tools
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: black-legacy
+        # The legacy packages and tests_legacy/ keep their current formatting until they
+        # are migrated; Black checks them at the version pinned in the dev extra. This
+        # hook is removed when the last legacy package is migrated.
+        name: black --check (legacy packages)
+        entry: black --check --extend-exclude '^/(src|tests|tools|docs)/' .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: pyright
+        name: pyright strict
+        entry: pyright
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: lint-imports
+        name: import contracts (.importlinter)
+        entry: lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: scan-sources
+        name: source scans (environment reads, imports by string)
+        entry: python tools/scan_sources.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: pytest
+        name: pytest -m "not arcpy"
+        entry: pytest -m "not arcpy"
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: check-consistency
+        name: design record consistency (DECISIONS, TASKS, terminology)
+        entry: python docs/refactor/temp/check_consistency.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: check-terminology
+        name: terminology anchors and headwords
+        entry: python docs/refactor/check_terminology.py
+        language: system
+        pass_filenames: false
+        always_run: true

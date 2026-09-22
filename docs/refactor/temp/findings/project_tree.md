@@ -162,7 +162,7 @@ tests/
 └── fixtures/
     └── example_pipelines/    the template's worked examples, fixed per A17
 
-tools/                run_example.py, dump_tuning.py, run_arcpy.bat; never shipped
+tools/                run_example.py, dump_tuning.py, scan_sources.py; never shipped
 docs/                 as in implementation_plan.md §4
 ```
 

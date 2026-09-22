@@ -881,9 +881,10 @@ def edit_geom_pre():
         f.name for f in arcpy.ListFields(temp_fc) if f.type not in ("OID", "Geometry")
     ]
 
-    with arcpy.da.SearchCursor(temp_fc, fields) as search, arcpy.da.InsertCursor(
-        roadlines_moved, fields[1:]
-    ) as insert:
+    with (
+        arcpy.da.SearchCursor(temp_fc, fields) as search,
+        arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert,
+    ):
 
         for row in search:
             oid = row[0]
