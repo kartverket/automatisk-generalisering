@@ -195,11 +195,14 @@ def extract_closed_lines(input_feature_class, output_feature_class):
         )
 
     # Process each line in the input feature class
-    with arcpy.da.SearchCursor(
-        input_feature_class, ["OID@", "SHAPE@"] + fields_to_copy
-    ) as search_cursor, arcpy.da.InsertCursor(
-        output_feature_class, ["SHAPE@"] + fields_to_copy
-    ) as insert_cursor:
+    with (
+        arcpy.da.SearchCursor(
+            input_feature_class, ["OID@", "SHAPE@"] + fields_to_copy
+        ) as search_cursor,
+        arcpy.da.InsertCursor(
+            output_feature_class, ["SHAPE@"] + fields_to_copy
+        ) as insert_cursor,
+    ):
         for row in search_cursor:
             polyline = row[1]  # Geometry of the feature
             if polyline.firstPoint.equals(

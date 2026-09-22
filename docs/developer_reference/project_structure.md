@@ -1,5 +1,7 @@
 # Project Structure and Extending the Codebase
 
+**Status:** CURRENT. Describes the legacy packages as implemented.
+
 This document provides an overview of the current project layout and guidance on where to find existing functionality or place new code.
 
 *Note:* The project will be reorganized toward a more standard `src/` layout in the future, but this section describes the structure as it exists today.

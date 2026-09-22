@@ -102,9 +102,9 @@ work but have different lifetimes and different modules.
 
 | # | id | task | status |
 |---|---|---|---|
-| 1 | T0.1 | **GATE** — 64-bit storage capability | not started |
-| 1b | T0.6 | **GATE** — disk-backed map cost, and copy-vs-map cost | not started |
-| 1c | T7.4 | Layering and private-access checks, both platforms `[INDEPENDENT]` | not started |
+| 1 | T0.1 | **GATE** — 64-bit storage capability | scheduled (slice 0) |
+| 1b | T0.6 | **GATE** — disk-backed map cost, and copy-vs-map cost | (a) scheduled (slice 0); (b) blocked — B9 |
+| 1c | T7.4 | Layering and private-access checks, both platforms `[INDEPENDENT]` | **done** (slice 0) |
 | 2 | T0.2 | Per-feature id in `PartitionIterator` | not started |
 | 3 | T1.1 | Shadow centroid selection and comparison | not started |
 | 4 | T1.3 | Synthetic transform suite | not started |
@@ -140,6 +140,7 @@ work but have different lifetimes and different modules.
 | 31 | T4.13 | Lost-ref detectors | not started |
 | 32 | T4.10 | Adapter parents capability | not started |
 | 33 | T4.11 | Adapter conformance suite | not started |
+| 33b | T4.14 | Dissolve parents track (B17) `[PARALLEL]` | not started |
 | 34 | T5.1 | Fan-in log merge and `DROPPED` promotion | not started |
 | 35 | T5.2 | Completeness assertions | not started |
 | 36 | T5.3 | Origin-closure check and `DISPLACEMENT_FEATURE` fix | not started |
@@ -147,15 +148,44 @@ work but have different lifetimes and different modules.
 | 38 | T6.1 | Edge storage format | not started |
 | 39 | T6.2 | Lineage walk API, with boundary-crossing and named degradation | not started |
 | 40 | T7.1 | Documentation-only migration (A1.x) | not started |
-| 41 | T7.2 | `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]` | not started |
+| 41 | T7.2 | `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]` | **done** (slice 0) |
 | 42 | T7.3 | Consistency checks `[INDEPENDENT]` | **done** |
+| 43 | T7.5 | `run_partition_optimization` default bug `[INDEPENDENT]` | not started |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
 
 ## 1. T0.1 — GATE: 64-bit storage capability
 
-**status:** not started
+**status:** scheduled — slice 0, 2026-09-22. Not run. **Owner and date: <NAME, DATE>.**
+
+**Run sheet** (prepared in slice 0; the script and the cases are as written below).
+
+- *Image:* `ghcr.io/kartverket/arcpy-linux:12.0`, the `base` stage of `Dockerfile`. Record the
+  digest the run used (`docker inspect --format '{{index .RepoDigests 0}}' <image>`) in the
+  finding, per case 11.
+- *Data:* a directory on the Linux filesystem (a named volume or WSL ext4), not a bind-mounted
+  Windows path; `--workdir` points into it. Case 11 also needs `--archive-gdb`, a geodatabase
+  created by the pipeline's archive path.
+- *Commands*, from the repository root, the script copied into the container by `COPY . /app`:
+
+  ```
+  docker build --target base -t ag-gate .
+  docker run --rm -v ag_gates:/data ag-gate \
+      python docs/refactor/temp/t0_1_bigint_gate.py --workdir /data/t0_1 \
+      --image-ref ghcr.io/kartverket/arcpy-linux:12.0 \
+      --archive-gdb /data/t0_1/archive_probe.gdb \
+      2>&1 | tee docs/refactor/temp/logs/<YYYYMMDD_HHMMSS>_t0_1_bigint_gate.txt
+  ```
+
+  A first pass with `--skip-large` gives every case but the 10^6 concatenation group in
+  minutes; the full run then adds that one case. `--only <case>` reruns a single case.
+- *Where the finding goes:* the raw log under `docs/refactor/temp/logs/`, and the written
+  finding as `docs/refactor/temp/findings/t0_1_bigint_gate.md`, stating whether
+  `FieldType.BIGINT` is viable, the per-tool type-survival table, and the answers to the "if
+  this fails" branches. It resolves B1 into an A-item and is consumed by slice 2a.
+- *Windows Pro cross-check* (optional): the same command under an ArcGIS Pro Python
+  environment, with its own log; name any divergence in the finding.
 
 **what done means**
 
@@ -273,20 +303,18 @@ up.
     is run, record its build too and name any divergence between the two. Test the **archive
     creation path** as well as scratch — B9 may put `lineage_id` on the archived product, and an
     archive written by a different code path is a different test.
-12. **The concatenation group-size case.** A14's tier 2 — stamp a work key, dissolve with the
-    `CONCATENATE` statistic, parse the ids back — is **what runs on the current image**:
-    `out_lineage_table` is new at Pro 3.7 and the image is `arcpy-linux:12.0`. A15.5's own worst
-    case, every road in a partition dissolved into one blob, puts 10⁵ to 10⁶ ids into **one text
-    cell**. The `PairwiseDissolve` tool page lists `CONCATENATE` and describes
-    `concatenation_separator`, and says nothing about the output field's length or about
-    truncation — checked 2026-09-14.
+12. **The concatenation group-size case.** Measures the cost and completeness of a `CONCATENATE`
+    statistic over one large group — 10⁵ and 10⁶ collinear segments dissolving to one part — so
+    that any proposal to carry parents through a concatenated text cell is judged on numbers.
+    Record per size: whether it truncates silently, errors, or grows; the output field's type and
+    declared length; the string length; parsed tokens against the group size; whether the parsed
+    set equals the input set; elapsed time added over the same dissolve without statistics.
 
-    Run `PairwiseDissolve` with `CONCATENATE` on an integer key over **one group of 10⁵ and one of
-    10⁶** input features, and record per size: whether it **truncates silently, errors, or grows**;
-    the output field's type and declared length; the returned string's length; the number of
-    parsed tokens against the group size; whether the parsed set equals the input set; the error
-    text if any; elapsed time. Use features that dissolve to one part under `SINGLE_PART` — the
-    lineage table's own constraint (A14) — so the case measures the configuration tier 2 would run.
+    **Measured on Pro 3.7.2, 2026-09-15:** complete at both sizes, 46 s added at 10⁵ and 7,841 s at
+    10⁶, and under single-part output the statistic is computed per key, not per output part
+    (`temp/findings/n1_correspondence.md` §3.8, §3.9). CONCATENATE is retired (A14.1); the case
+    stays so the number is reproducible. The TEXT-key variant is **not** re-measured: the 15,930 s
+    figure from the dry run is dropped rather than confirmed, since nothing depends on it.
 
 **Where it runs.** T0.1 is a one-off gate, not a CI step, and it runs **in the Linux production
 image**. That is the environment whose results count: production is Linux, and field-type
@@ -370,14 +398,9 @@ semantics only choose between declarations the data can support:
 possibility that its mapping shape has no legal cell at all. **See B11**, which this case feeds
 rather than answers.
 
-**If the concatenation group-size case truncates or errors**, A14's tier 2 is unsafe above the
-largest group that survived, and nothing in the design currently bounds group size — a dissolve's
-groups are set by the data. **Silent truncation is the severe outcome**: parents go missing from the
-edge with no error at the dissolve, and the first thing to notice is A16's assertion (1) at fan-in,
-which reports those features as vanished — a stage later, without naming the truncation. One way to make it
-detectable is a `COUNT` statistic alongside `CONCATENATE`, so the adapter compares parsed tokens with
-the group's count per row. That is an option for T4.10, not a decision here. An error, by contrast,
-is loud and reproducible, and only makes tier 2 unavailable above a size.
+**The concatenation case is answered.** It neither truncated nor errored; it was over budget by
+two orders of magnitude and per-key rather than per-part, which retired the mechanism (A14.1, B17).
+The `COUNT`-beside-`CONCATENATE` detector this paragraph once proposed for T4.10 is moot.
 
 **If `collapsed_points` were ever redeclared `FOREIGN`, the cost is larger than one table row.**
 `FOREIGN` is terminal for lineage (A12.9), so the id would not continue through it — and
@@ -389,7 +412,37 @@ problem that no longer exists. Name that cost before taking the option.
 
 ## 1b. T0.6 — GATE: disk-backed map cost, and copy-versus-map cost
 
-**status:** not started
+**status:** (a) scheduled — slice 0, 2026-09-22, not run; (b) blocked — B9.
+**Owner and date for (a): <NAME, DATE>.**
+
+**Run sheet for (a)** (prepared in slice 0; the measurement script is still to be written, as
+a throwaway under `docs/refactor/temp/`, against the packed layout A15.3 specifies and the
+`JoinField` path).
+
+- *Image:* `ghcr.io/kartverket/arcpy-linux:12.0`, the `base` stage of `Dockerfile`; record the
+  digest, and the kernel and cgroup version of the host (`uname -r`,
+  `stat -fc %T /sys/fs/cgroup`) and of the production cluster, and name any mismatch.
+- *Data:* the three sizes (a 70K handle, the national road network, the largest input
+  available) staged onto a Linux volume, never a bind-mounted Windows path.
+- *Memory:* `--memory` set to the production pod limit, `<POD_LIMIT — obtain from the
+  platform team; not recorded in the design record>`, with the WSL2 VM cap above it. Report
+  peak memory as the cgroup accounts it (`memory.peak` under cgroup v2), not RSS.
+- *Command shape*, one run per size and per path:
+
+  ```
+  docker run --rm --memory=<POD_LIMIT> --memory-swap=<POD_LIMIT> -v ag_gates:/data ag-gate \
+      python docs/refactor/temp/t0_6_id_map_cost.py --workdir /data/t0_6 \
+      --subject <path in /data> --path packed|joinfield [--cache-bytes N] \
+      2>&1 | tee docs/refactor/temp/logs/<YYYYMMDD_HHMMSS>_t0_6_<size>_<path>.txt
+  ```
+
+  For the packed path, sweep `--cache-bytes` on the largest map until lookup thrashes
+  (measurement 3).
+- *Where the finding goes:* the raw logs under `docs/refactor/temp/logs/`, and the written
+  finding as `docs/refactor/temp/findings/t0_6_id_map_cost.md`: the rows-versus-build-time
+  curve for both paths, whether peak memory is flat, the cache size at which lookup thrashes,
+  that the joined `lineage_id` arrives as BigInteger, and the in-memory budget A15.3 declares.
+  It is consumed at T4.5 and, for the resource-ceiling method, at 2a.
 
 **what done means**
 
@@ -537,7 +590,15 @@ costs an afternoon now and a rewrite later.
 
 ## 1c. T7.4 — Layering and private-access checks, run on both platforms `[INDEPENDENT]`
 
-**status:** not started
+**status:** done — slice 0, 2026-09-22. Landed as `.importlinter` at the repository root (rebuilt
+against `findings/project_tree.md` §6, twenty-four contracts over eighteen rows, each broken once
+with a probe module), `[tool.ruff]` `SLF001` scoped to `src/ag/generalization/`, the `arcpy`
+marker with `tests/conftest.py`, `.pre-commit-config.yaml` as the one list of checks, and
+`.github/workflows/checks.yml` running it on both runners. The package-coverage meta-check is
+row 1's `exhaustive = true`, which import-linter 2.15 supports, so no hand-written check exists.
+The `ag.helpers` row of the template's contract became row 2 of the new file
+(`helpers` below `operations` inside `ag.generalization`). Text below is as written before the
+task ran.
 
 **what done means** Three checks that **fix existing configuration**. They were found while
 writing B10 but do not resolve it and do not depend on it; B10's facade-side pieces stay with
@@ -939,11 +1000,20 @@ with its own map.
 - Docstrings record that three of the four splits close a **pre-existing expressibility gap**:
   `spatial_join` cannot express 18 of 30 real call sites and `nearest_neighbors` cannot express 25
   of 28, because the port fixed the minority behaviour.
+- **`DissolveOption` removed** (B18, A18 amended): `dissolve` is single-part by contract, and its
+  docstring says that on lines a group splits at every junction. `dissolve_multipart` and an
+  unsplit method are not added; the real call sites that will need them are listed under A18 for
+  `04-migration.md`.
+- **Every port handle parameter is annotated `In`, `Out`, T2.8's mutator marker or `ParentsOut`**
+  (A12.5a), written with the signatures rather than after them. No check yet; T4.1 adds it.
+- **Whether `FeatureToLine` (planarise at intersections) becomes a port method** is decided
+  here, since `run_dissolve_with_intersections` needs it twice on the national road set (B20).
 
-**files touched** `template_code/ag/ports/geometry_ops.py`, and every call site in
+**files touched** `template_code/ag/ports/geometry_ops.py`, `template_code/ag/ports/cartographic_ops.py`,
+`template_code/ag/ports/table_ops.py` (annotations), and every call site in
 `template_code/ag/operations/`.
 
-**depends on** nothing.
+**depends on** T2.8, for the in-place mutator marker only.
 
 - **Single-part is a debug-mode assertion, not a port invariant** (A18). arcpy `Describe` gives
   `shapeType`, never part count — `isMultipart` and `partCount` are *geometry* properties, so an
@@ -958,7 +1028,7 @@ with its own map.
   caller. A one-line "deliberately absent" note in each docstring, in the same style as
   `geometry_ops.py`'s existing note on arcpy's `Identity`.
 
-**decision refs** A5.4, A5.5, A5.6, A17.3, A18.
+**decision refs** A5.4, A5.5, A5.6, A12.5a, A17.3, A18, B18, B20.
 
 **doc migration** A5.4–A5.6, A17.3 and A18 → `ports/geometry_ops.py`.
 
@@ -977,8 +1047,16 @@ three-clause completion test it would never have migrated.
 
 **what done means**
 
-- `dissolve` takes a `statistics` parameter so a collapse can state its combining rule
-  (`statistics=((RANK, MAX),)`), making A9.10's requirement expressible.
+- `dissolve` takes `statistics: tuple[StatisticSpec, ...] = ()` with `Statistic` limited to
+  `MIN`, `MAX`, `SUM`, `MEAN`, `COUNT` (A9.12), so a collapse can state its combining rule
+  (`statistics=(StatisticSpec(RANK, Statistic.MAX, RANK),)`), making A9.10's requirement
+  expressible. The docstring states null handling and output types and forbids `lineage_id` as a
+  source, as A9.12 lists them.
+- **Every statistic is evaluated over the parents of each output row** (A9.11), and the docstring
+  says so. The engine's own statistics option is measured per key under single-part output and is
+  not used; the adapter computes the rule from the parents pairs joined to the input attributes
+  (B17's recommendation, adapter-internal). Consequence: `statistics=` is not free, and it depends
+  on the parents path of T2.4 even on a handle with no lineage.
 - Both `join_field(... join=ranks ...)` calls are deleted — `operations/road/__init__.py:663` and
   `:932`.
 - `Network.ranks` and `ConflictResolution.ranks` handles and their `StageInput`s are deleted.
@@ -989,9 +1067,9 @@ three-clause completion test it would never have migrated.
 **files touched** `template_code/ag/ports/geometry_ops.py`,
 `template_code/ag/operations/road/__init__.py`, `template_code/ag/pipelines/road/n100.py`.
 
-**depends on** nothing.
+**depends on** T2.4.
 
-**decision refs** A9.10, A17.5, A17.6.
+**decision refs** A9.10, A9.11, A9.12, A17.5, A17.6, B19.
 
 **doc migration** A9.10 → new ADR on identity and `02-runtime.md` §2.4. A17.5 and A17.6 retire with
 the fix, except A17.6's closing paragraph, which becomes a note in `02-runtime.md` §2.4 recording
@@ -1016,18 +1094,27 @@ legitimate pattern is preserved in the building pipeline at
   `NEAR_INPUT_ID`, `NEAR_TARGET_ID`, `JOIN_TARGET_ID`, `JOIN_SOURCE_ID`, `VERTEX_SOURCE`,
   `FEATURE_REF`, `PARENT_ID`, `CHILD_ID`. `operations/road/__init__.py` currently writes
   `key="near_fid"` and `join_key="input_fid"` as literals.
-- `dissolve` takes an optional `parents: ScratchHandle | None` receiving a TABLE of
-  `(PARENT_ID, CHILD_ID)` rows, one per contributing input row.
-- Only `dissolve` gets the parameter. `aggregate`, `collapse_to_point`, `cluster_points` and
-  `collapse_to_centerline` have no caller wanting the parent set; the signature shape is fixed so
-  adding it later is uniform (B6).
+- **Every port method with an output declared `ids=MINT`** takes an optional
+  `parents: ScratchHandle | None` receiving a TABLE of `(PARENT_ID, CHILD_ID)` rows, one per
+  (input row, output row) pair, in native indices (A11.15). `PARENT_ID` references the `subject=`
+  input only; the parameter is `parents`, or `<output>_parents` on a method with several `MINT`
+  outputs (none today). The parameter carries the `ParentsOut` marker (A12.5a).
+- **`ports/errors.py` exists** with the three engine-neutral errors a caller can see from a
+  lineage-bearing port call: `ParentsUnavailableError` (parents requested and the adapter cannot
+  produce them for this method, A14.1); `UnmatchedInputError` (an input the method could not have
+  discarded is in no pair, B17's guard); `EmptyGeometryError` (a null or empty shape in a subject,
+  raised before the tool runs). Adapters raise these from the parents path, never engine
+  exceptions. The facade's own errors — A11.4a's ceilings, A11.15(d) — live in `lineage/`, not
+  here. Placed in this task because two of the three are parents errors and this task already
+  owns the port-side parents constants; written in the same pass as the ports.
 
 **files touched** `template_code/ag/ports/geometry_ops.py`,
-`template_code/ag/ports/cartographic_ops.py`, `template_code/ag/operations/road/__init__.py`.
+`template_code/ag/ports/cartographic_ops.py`, new `template_code/ag/ports/errors.py`,
+`template_code/ag/operations/road/__init__.py`.
 
 **depends on** T2.9.
 
-**decision refs** A11.1, A12.2, B6.
+**decision refs** A11.1, A11.15, A12.2, A12.5a, A14.1, B6.
 
 **doc migration** the constants rationale → `ports/geometry_ops.py`. A11.1's parents-versus-log
 distinction → the new ADR on lineage, at T4.6.
@@ -1326,14 +1413,16 @@ A9.8, A9.9 → `04-migration.md`.
 **files touched** new `template_code/ag/ports/row_shape.py`,
 `template_code/tests/unit/test_row_shape.py`.
 
-**open, affects acceptance: B12.** As written, the "output parameter with no declaration" rule
-cannot fire — port parameters carry no direction. A proposal (annotate them `In`/`Out` in this
-task, which would add T2.8 to the dependencies) awaits sign-off; do not implement the check before
-B12 resolves.
+**B12 resolved by A12.5a.** The annotations (`In`, `Out`, T2.8's mutator marker, `ParentsOut`)
+land with the ports in T2.9; this task adds the check: an `Out` parameter with no `@row_shape`
+entry; a `@row_shape` key naming a parameter that is not `Out`; a `subject`, `context` or `refs`
+value naming a parameter that is not `In`; `ParentsOut` exempt from the first rule. **Break it on
+purpose once**: remove one `@row_shape` entry and one `Out` annotation, and confirm each fails
+with its own message.
 
-**depends on** T2.4.
+**depends on** T2.4, T2.9.
 
-**decision refs** A12.1–A12.6, B12.
+**decision refs** A12.1–A12.6, A12.5a.
 
 **doc migration** A12.1–A12.4 → `ports/row_shape.py`; A12.5 → `02-runtime.md` §8.
 
@@ -1403,12 +1492,24 @@ Owns B10's facade-side pieces, if B10 is adopted:
 - **the mint surface choice**: a public `ag.lineage.api` module the domain may import, or `mint`
   reached through the `Toolbox`. B10 records that both cost one contract.
 
+And the parents channel's facade side (A11.15):
+
+- the facade passes **its own** scratch handle as `parents=` on every `MINT` call whose subject is
+  lineage-bearing, reads the native pairs, maps them to `lineage_id` and mints (A12.4);
+- when the domain passed `parents=` too, the facade writes the `lineage_id` relation to the
+  domain's handle; the port never sees the domain's handle;
+- a domain `parents=` on a subject without `lineage_id` raises in the facade, before the port call.
+
+**note** A15.1's "ask on every `MINT` call" versus "only when diff-tracked" is a live cost decision
+on lines (parents resolution is not free there); T4.14 records the numbers and the revisit is
+listed under it. Nothing in this task's interface changes either way.
+
 **files touched** new `template_code/ag/lineage/` package,
 `template_code/ag/runtime/stage_entry.py`, `template_code/.importlinter`.
 
 **depends on** T4.2.
 
-**decision refs** A11.11, A11.12, A15.1, B10.
+**decision refs** A11.11, A11.12, A11.15, A15.1, B10.
 
 **doc migration** A11.11 → the new ADR on lineage and `03-architecture.md` §4. A11.12 and A15.1 →
 the lineage module docstring — A15.1 is the cost model the facade is built around ("mint always,
@@ -1652,23 +1753,30 @@ removed.
 
 **status:** not started
 
-**what done means** The arcpy adapter probes capability at construction with
-`arcpy.GetParameterInfo("analysis.PairwiseDissolve")` rather than reading a version table, and
-selects a tier: native `out_lineage_table` (Pro 3.7+), work-key synthesis through
-`concatenation_separator` (Pro 3.0+, and what runs on the current 3.6 image), or declared
-unsupported. Spatial reconstruction is not implemented — an unavailable method is preferable to a
-silently wrong one. A plan-time check fails a stage that dissolves on a lineage-bearing handle with
-an incapable adapter, before fan-out rather than in the pod.
+**what done means** The arcpy adapter honours `parents=` (A11.15) on every method it names in its
+capability record, and publishes that record at construction as a set of method names declared
+`ids=MINT` — no tier and no vendor parameter in it (A14.1). Sources, adapter-internal: for
+`aggregate` and `collapse_to_centerline` the tools' own `OUTPUT_FID`/`INPUT_FID` tables; for
+`dissolve` and `buffer_dissolve` the keyed resolver of B17 for polygons and points, and for lines
+whichever locator T4.14 names; for `clip` and `difference` a work key stamped on a copy of the
+input; for the other `MANY + MINT` methods the engine's native reference field. A method the
+adapter cannot honour raises `ParentsUnavailableError` (T2.4). Unkeyed spatial reconstruction is
+not implemented. A plan-time check fails a stage that uses a lineage-bearing handle with a `MINT`
+method outside the record, before fan-out rather than in the pod.
 
 **files touched** `template_code/ag/adapters/arcpy/`, `template_code/ag/core/validation.py`.
 
-**Tier 2 has an untested size limit.** Read T0.1's concatenation group-size finding before
-building tier 2: if `CONCATENATE` truncates or errors at A15.5's group sizes, the tier needs a
-detection or a bound, and a silent truncation cannot ship.
+**The concatenation path is retired** (T0.1 case 12, A14.1): over budget by two orders of
+magnitude and per-key under single-part output. Nothing here builds on it.
+
+**follow-up (B14): the plan-time derivation.** Acceptance: `validate()` obtains the set of port
+methods an operation calls — from the recording spy's trace or from a declaration, B14's choice —
+and the capability check fires on a fixture stage whose operation calls a `MINT` method outside
+the record.
 
 **depends on** T4.2.
 
-**decision refs** A14.
+**decision refs** A11.15, A14.1, B14, B17.
 
 **doc migration** A14 → `adapters/arcpy/` package docstring; the plan-time check → `02-runtime.md`
 §8.
@@ -1684,9 +1792,20 @@ resulting capability record as an argument — data, not a call. No exemption ne
 
 **what done means** Three halves.
 
-**(1) `MINT` parents.** One case per `MINT` method: run it over a known input set and assert the
-reported parents match. The suite passes under **both** capability tiers, since tier 2 runs on the
-current image and tier 1 later on the same code.
+**(1) `MINT` parents.** One case per `MINT` method: run it over a known input set, obtain the
+pairs through the Protocol's `parents=` out-param (A11.15), and assert they match the oracle. The
+oracle for `dissolve` is the engine's own lineage table on builds that have one (Pro 3.7) and the
+recorded goldens (`temp/goldens/`) elsewhere; for `aggregate` and `collapse_to_centerline` the
+tools' tables are the source, so the case checks the pair table against a hand-built fixture. The
+suite passes on the 3.6 image and on 3.7 with the same code.
+
+**(1a) Native-index stability.** One case asserts that a `MINT` method leaves its `input` handle's
+native indices unchanged across the call (A9.2), on every adapter: read the index set before and
+after, assert equality. Acceptance: fails when a method is compiled to write its input in place.
+
+**(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
+`memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
+the goldens replay on the image with the same pairs as on Windows.
 
 **(2) `CARRY` presence and type.** One case per `CARRY` method in A12.11 and A12.11a: assert
 `lineage_id` **exists with the declared type on each output**. This makes T0.1's type-survival
@@ -1716,9 +1835,99 @@ pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A14, A12.11, A12.11a.
+**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a.
 
 **doc migration** none.
+
+---
+
+## 33b. T4.14 — Dissolve parents track (B17) `[PARALLEL]`
+
+**status:** not started
+
+**Does not block the port track.** Everything above the port is settled by A11.15 and A14.1; this
+task produces the evidence B17 needs to name one locator per geometry type, using the staging code
+in `docs/refactor/temp/` (`dissolve_parents.py`, `arcpy_part_locator.py`, `n1_fixtures.py`,
+`n1_parents_gate.py`, `goldens/`). Each item has one line of acceptance.
+
+**harness**
+
+- **Logging.** `n1_parents_gate.py` tees stdout to `<workdir>\logs\<timestamp>_<cases>.txt`
+  regardless of runner; child runs append to the same file. Acceptance: a run started from the
+  editor runner leaves a complete log without a shell redirect.
+- **Baselines in the capped child.** The plain dissolve of a timing point runs in the child
+  interpreter under the same timeout. Acceptance: a baseline timeout is recorded as "tool alone
+  over budget on this shape" and the locators for that point are skipped, not attempted.
+- **Dissolve-output cache.** Dissolve outputs and native tables are cached per (fixture, tool,
+  parameters), each with a `.done` marker written last. Acceptance: a second run of the correctness
+  ladder performs no dissolve.
+- **Pathological fixture gate.** `lattice_long_vertexed` is excluded from `--confirm-large` unless
+  `--include-pathological` is passed; its 10^6 plain-dissolve baseline is recorded as 5,088 s.
+  Acceptance: `--confirm-large` alone never dissolves that fixture at 10^6.
+
+**evidence for lines**
+
+- **Real-data probe on the largest partition selection.** "Worst" is the partition whose
+  selection (processing rows plus halo, as `PartitionIterator` selects them) is largest, taken
+  from the ramps stage's input `data_preparation___road_single_part_2___n100_road` with the
+  iterator's own code, optimisation off, 35,000 elements and a 500 m radius
+  (`data_preparation_2.py:403-407`); exported by `temp/n1_real_partition.py`. The probe reports
+  the largest key size against processing + halo rows, the parts that key produces, p50/p95/max
+  vertices per input and output parts per input, on the whole selection and on the ramps subset
+  the live dissolve sees; and, count only, the largest group of the 12-field key over the whole
+  stage input, which is the unpartitioned national dissolve's key (B20). Acceptance: the numbers
+  are in `temp/findings/n1_correspondence.md` §3 with the partition id named and
+  `largest key <= processing + halo rows` printed true. **Measured 2026-09-17** (findings §3.11,
+  logs `20260917_143734_real_partition.txt`, `20260917_150715_…`, `20260917_150945_…`): partition
+  18, 36,407 rows, largest key 15,392, 15,392 <= 34,780 + 1,627 true. Still to run: the plain
+  bracket, both locators against the table, the absent-input classification, and the national
+  count on the chain's input rather than its output.
+- **Both locators against the native table on the real partition** (pair for pair, partition,
+  first ten mismatches, time added over plain), on the five-field key, on the ramps subset and
+  on the whole selection as one group; this is the primary evidence for the line locator.
+  Acceptance: one locator is named for lines in B17, with the numbers beside A15.7.
+- **Correctness and timing ladders re-run with logging**, secondary to the real partition; the
+  point and segment locators compared on the lattices at 10^4 and timed at 10^4 and 10^5.
+  Acceptance: the numbers are beside the real-partition ones in B17.
+- **STRESS margin**, no stage uses these values: an export at 250,000 elements and a 5,000 m
+  radius, probed with the five-field key and as one group; optionally the same on the national
+  chain's input if the locators stay under A15.7's minute. Acceptance: recorded in the findings
+  as margin, never quoted as a partition's load.
+- **`SplitLine` candidate** on `lattice_long_vertexed` at 10^5: `SplitLine` (`ORIG_FID`) →
+  dissolve → join the two pair tables. Acceptance: time, output geometry equality with the plain
+  dissolve, and whether the joined parents equal the native table at 10^4 are recorded.
+- **Locator stage profile.** Acceptance: the dominant stage (points, write, join, read and filter)
+  is named from measurements before any optimisation, and the optimisation is measured against it.
+- **10^6 confirmation — dropped, 2026-09-17**: the largest key in the largest ramps partition is
+  15,392 of 36,407 rows, and the national chain's largest input key is 121,341 of 2,320,817
+  (findings §3.13), so no dissolve the pipeline runs has a 10^6-row group. What the national
+  chain has is a 2.3·10^6-row unpartitioned call whose plain dissolve alone exceeds 270 s; that
+  is B20's decision 3, not a locator size question. Acceptance: B20 carries the numbers.
+
+**follow-ups, each a decision to record**
+
+- **A15.1 revisit**: "ask for parents on every `MINT` call" versus "only when diff-tracked", once
+  the line numbers and A15.7 exist. Acceptance: A15.1 gains a superseding note or a confirmation.
+- **Owner of the empty-geometry guard**: the adapter's pre-call check, `validate_geometry`, or
+  both. Acceptance: one sentence in `GeometryOps`'s class docstring or `02-runtime.md` §2.4.
+- **`buffer_dissolve` positive-only**: check the 6 `ALL` call sites (A5.6) for a zero or negative
+  distance; decide port rule or adapter limit. Acceptance: the sentence lands in the docstring or
+  in A14.1's error list.
+- **Record `case_aggregate_pass_through`'s result** (does `AggregatePolygons`' table list a
+  pass-through input) and the `cluster_points` tool mapping, which `03-architecture.md` §2.2 never
+  names. Acceptance: both in the findings file §1 and the port docstrings.
+- **B20, the unpartitioned national dissolve chain**: the probe's national count is its first
+  number. Acceptance: B20's three decisions have an owner and the count is beside them.
+
+**files touched** `docs/refactor/temp/n1_parents_gate.py`, `docs/refactor/temp/n1_fixtures.py`,
+`docs/refactor/temp/arcpy_part_locator.py`, `docs/refactor/temp/findings/n1_correspondence.md`.
+
+**depends on** nothing.
+
+**decision refs** A9.11, A15.1, A15.7, B17, B20.
+
+**doc migration** B17 → `adapters/arcpy/` package docstring when resolved; A15.7 →
+`02-runtime.md` §8.
 
 ---
 
@@ -1915,7 +2124,9 @@ exists so the completion test stays mechanical.
 
 ## 41. T7.2 — `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]`
 
-**status:** not started
+**status:** done — slice 0, 2026-09-22, inside `template_code/` and in `01-terminology.md` and
+`02-runtime.md` §2.2. `tools/run_example.py` prints the same derivation as before the rename.
+B8 resolved.
 
 **what done means** `LineageRoot` is renamed `OriginRoot` and `lineage_roots()` becomes
 `origin_roots()`, aligning the object-level vocabulary with `Derived.origin`. After this, "lineage"
@@ -2040,3 +2251,35 @@ than decided, per the constraint on this pass.
 10. **B8 — `LineageRoot` → `OriginRoot` is a code rename.** The collision ruling is settled but the
     work was not scoped; it touches `data_objects.py`, `locations.py`, `policy.py` and
     `validation.py`. Now **T7.2**.
+
+## 43. T7.5 — `run_partition_optimization` default bug `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** `PartitionRunConfig.run_partition_optimization` no longer defaults to
+`require("SELECT_STUDY_AREA")` (`composition_configs/core_config.py:232`) — a raw environment
+string, truthy even when it reads `"False"`, tied to an unrelated setting, and evaluated at import
+time. Found by the N:1 real-data probe (2026-09-17), which had to pass `False` explicitly. The
+same variable is parsed three different ways today (`generalization/n100/river/data_preparation.py:25`,
+`generalization/n100/road/data_preparation_2.py:67-70`,
+`generalization/n100/building/data_preparation.py:133`).
+
+- one boolean parser in `paths.py` (`require_bool(name)`: `true`/`false`, case-insensitive,
+  anything else raises);
+- a dedicated `RUN_PARTITION_OPTIMIZATION` setting read through it, with the dataclass default a
+  plain `False` and the caller passing the parsed value;
+- `SELECT_STUDY_AREA` read through the same parser at its three sites.
+
+Acceptance: `SELECT_STUDY_AREA=False` no longer enables optimisation; a unit test covers the parser
+on `true`, `False`, `""` and an unset variable.
+
+**files touched** `composition_configs/core_config.py`, `paths.py`, the three data-preparation
+modules, `tests/`.
+
+**depends on** nothing.
+
+**decision refs** none — a defect in the current code, not a design item.
+
+**doc migration** none.
+
+---

@@ -27,9 +27,9 @@ from dataclasses import replace
 
 import pytest
 
-import ag.pipelines.road.n100 as pipeline
+import example_pipelines.pipelines.road.n100 as pipeline
 from ag.core.types import DataType
-from ag.operations.road import ThinRoadConfig, thin_road_network
+from example_pipelines.operations.road import ThinRoadConfig, thin_road_network
 from ag.core.operations import ScratchHandle, ScratchScope
 
 # ---------------------------------------------------------------------------

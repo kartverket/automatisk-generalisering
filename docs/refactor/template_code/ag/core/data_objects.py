@@ -144,7 +144,7 @@ class ProductIdentity:
         return f"ProductIdentity({self.scale}/{self.dataset})"
 
 
-LineageRoot: TypeAlias = ExternalSource | ProductIdentity
+OriginRoot: TypeAlias = ExternalSource | ProductIdentity
 """What an object can fundamentally BE. The two things that carry a location."""
 
 
@@ -182,7 +182,7 @@ class Derived:
     """
 
     name: str
-    origin: tuple[LineageRoot, ...]
+    origin: tuple[OriginRoot, ...]
     data_type: DataType = DataType.FEATURE_CLASS
 
     def __repr__(self) -> str:
@@ -193,7 +193,7 @@ DataObject: TypeAlias = ExternalSource | ProductIdentity | Derived
 """Anything a StageInput may name. A StageOutput may only name a Derived."""
 
 
-def lineage_roots(obj: DataObject) -> tuple[LineageRoot, ...]:
+def origin_roots(obj: DataObject) -> tuple[OriginRoot, ...]:
     """The roots an object belongs to. No recursion needed - origin is already
     roots only, which is the point of narrowing it."""
     return obj.origin if isinstance(obj, Derived) else (obj,)

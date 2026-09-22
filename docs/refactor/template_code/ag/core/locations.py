@@ -44,7 +44,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ag.core.types import Environment, Location, RunId
-from ag.core.data_objects import Derived, LineageRoot, ProductIdentity
+from ag.core.data_objects import Derived, OriginRoot, ProductIdentity
 from ag.core.pipeline import Stage
 
 
@@ -84,7 +84,7 @@ def archive_location(identity: ProductIdentity) -> Location:
     return identity.location
 
 
-def source_location(root: LineageRoot) -> Location:
+def source_location(root: OriginRoot) -> Location:
     """Where an external input is read from. Also declared, also trivial, also here
     so nobody goes looking for it anywhere else."""
     return root.location

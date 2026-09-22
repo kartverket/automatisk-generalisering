@@ -1,4 +1,7 @@
 # Design and Conventions
+
+**Status:** CURRENT. Describes the legacy packages as implemented.
+
 The design docs will be updated in the future.
 
 ### Design towards modularity

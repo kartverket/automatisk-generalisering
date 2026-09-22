@@ -1,14 +1,63 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+# The Python target (DECISIONS A26, docs/contributing/python-version.md) is stated by
+# four settings that always change together: `requires-python` here,
+# `[tool.pyright] pythonVersion`, `[tool.ruff] target-version` and the `setup-python`
+# version in .github/workflows/checks.yml.
+[project]
+name = "ag"
+version = "0.0.0"
+description = "Cartographic generalization behind a port and adapter boundary."
+requires-python = ">=3.13"
+dependencies = []
+
+# The one place tool versions are stated. Pre-commit, CI and manual runs all use these:
+# every hook in .pre-commit-config.yaml is a local hook that runs the tool from this
+# environment, and none pins a version of its own. Install with
+# `pip install -e ".[dev]"`. An extra rather than a `[dependency-groups]` table, because
+# `pip install --group` needs pip 25.1 and the WSL system pip is 24.0.
+[project.optional-dependencies]
+dev = [
+    "ruff==0.16.8",
+    "pyright==1.1.399",
+    "import-linter==2.15",
+    "pytest==9.1.1",
+    "pre-commit==4.6.2",
+    "black==26.5.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff formats and lints src, tests and tools only (the paths are given on the command
+# line in .pre-commit-config.yaml). The legacy packages keep their current formatting,
+# checked by Black through its own hook, until they are migrated. The example pipelines are inert until slice 1c.
 [tool.ruff]
 target-version = "py313"
+extend-exclude = ["tests/fixtures/example_pipelines"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
-    "F401",  # unused imports
-    "I",     # isort (import order and grouping)
+    "F401",    # unused imports
+    "I",       # isort (import order and grouping)
+    "SLF001",  # private member access; scoped to ag/generalization below
 ]
+
+# SLF001 catches reach-through such as `tb.geometry._port`, which no import contract can
+# see (DECISIONS B10, project_tree.md section 6.1). It applies to the domain code only.
+[tool.ruff.lint.per-file-ignores]
+"!src/ag/generalization/**" = ["SLF001"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
+    "ag",
     "composition_configs",
     "constants",
     "custom_tools",
@@ -17,4 +66,35 @@ known-first-party = [
     "generalization",
     "input_data",
     "tests",
+]
+
+# Strict over the new code only. The legacy packages and tests_legacy/ are outside the
+# include list on purpose; the example pipelines are inert until slice 1c.
+# `extraPaths` lets the static tests import the scripts under tools/ the way pytest does.
+[tool.pyright]
+include = ["src", "tests", "tools"]
+exclude = [
+    "**/__pycache__",
+    "tests/fixtures/example_pipelines",
+]
+extraPaths = ["tools"]
+typeCheckingMode = "strict"
+pythonVersion = "3.13"
+
+# The marker and the collection roots, and nothing else: no default `addopts`.
+# `testpaths` keeps a bare `pytest` away from the legacy tests, the template and the
+# staging scripts under docs/, which import ArcPy or are not part of this suite.
+# tests/conftest.py gives the marker the same behaviour everywhere: without ArcPy a bare
+# run skips marked tests, and `-m arcpy` fails the session instead of reporting green.
+[tool.pytest.ini_options]
+markers = [
+    "arcpy: needs ArcPy; runs under an ArcGIS Pro Python environment. Skipped when ArcPy is absent; with `-m arcpy` and no ArcPy the session fails.",
+]
+testpaths = [
+    "tests/unit",
+    "tests/static",
+    "tests/conformance",
+    "tests/goldens",
+    "tests/invariance",
+    "tests/smoke",
 ]

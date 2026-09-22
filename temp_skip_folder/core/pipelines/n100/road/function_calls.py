@@ -27,7 +27,7 @@ def ramps(
     *,
     input: logic_config.DataRef,
     output_line: logic_config.DataRef,
-    output_point: logic_config.DataRef
+    output_point: logic_config.DataRef,
 ) -> None:
     cfg = logic_config.RoadRampsConfig(
         input_roads=input.path,

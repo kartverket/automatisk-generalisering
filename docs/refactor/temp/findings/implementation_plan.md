@@ -254,14 +254,18 @@ legacy code and start now (§3).
   `src/ag` in this slice.
 - `pyproject.toml`: a `[project]` table with the `src` layout and an editable install;
   **`requires-python = ">=3.13"`, `[tool.pyright] pythonVersion = "3.13"` and
-  `[tool.black] target-version = ["py313"]`, set together** (§4.7; ruff's `target-version` is
-  already `py313` and moves with them). `[tool.pyright]` is `strict` over `src`, `tests`, `tools`
+  `[tool.ruff] target-version = "py313"`, set together** (§4.7; ruff format replaces Black
+  for the new code, and Black keeps the legacy packages until they are migrated). `[tool.pyright]` is `strict` over `src`, `tests`, `tools`
   and replaces the template's `pyrightconfig.json`. The legacy packages are outside its include
   list.
-- CI on `ubuntu-latest` and `windows-latest`, **Python 3.13**: `black --check`, `ruff check`,
-  `pyright`, `lint-imports`, `pytest -m "not arcpy"` (the pure-core suite), the two document
-  checkers. The existing black workflow moves from 3.11 to 3.13. A pre-commit config runs the
-  same pure-Python checks.
+- One toolchain (revised in slice 0): tool versions pinned once, in `pyproject.toml`'s `dev`
+  extra; `.pre-commit-config.yaml` is the one list of checks, every hook local and running the
+  tool from that environment: `ruff format --check`, `ruff check`, Black over the legacy
+  packages only (removed when the last one is migrated), `pyright`, `lint-imports`, the source
+  scans, `pytest -m "not arcpy"`, the two document checkers. CI on `ubuntu-latest` and
+  `windows-latest`, **Python 3.13**, installs the dev extra and runs `pre-commit run
+  --all-files` and nothing else for these checks; the old black workflow is deleted. The
+  legacy tests move to `tests_legacy/`, run by hand under a Pro environment.
 - `.importlinter` at the repository root, **rebuilt against `project_tree.md` §6** (rows 1 to
   18), not lifted from the template. Contracts over empty packages pass trivially, so each one
   is broken on purpose once with a throwaway probe module, as B10 did for the `helpers/` row,
@@ -391,8 +395,8 @@ are seeded by test support, not through a port.
   Engine-neutral fixture builders in `tests/support/`; the ArcPy side of the builder sits under
   the `arcpy` marker and writes small `.gdb` inputs with the engine directly, because no write
   method exists on the port yet.
-- The Windows run of the conformance suite through the existing runner (`run_arcpy.bat`,
-  `:RunArc`), with its log kept.
+- The run of the conformance suite under an ArcGIS Pro Python environment (`pytest -m arcpy`,
+  `docs/contributing/testing.md`), with its log kept.
 - **The `read_rows` timing run**, `tools/time_read_rows.py`, on
   `data_preparation___road_single_part___n100_road` (2,320,817 rows), two passes: attributes only
   (three fields), then with geometry.
@@ -915,7 +919,7 @@ needs it.
 | document | covers | created / updated in |
 |---|---|---|
 | `docs/refactor/` as a whole: `01-terminology.md`, `02-runtime.md`, `03-architecture.md`, `decisions/`, `temp/DECISIONS.md`, `temp/TASKS.md` | **the working design record for this change**; stays where it is and is updated in place, in the same pull requests as the code (§2.2) | every slice; moves once, at the end of slice 5 (§4.8) |
-| `docs/README.md` | index: `setup/`, `contributing/`, `developer_reference/` (CURRENT), `refactor/` (the design record, being implemented), `archive/`; gains `architecture/` and `decisions/` at the move | 0, 5 |
+| `docs/README.md` | index: `setup/`, `contributing/`, `developer_reference/`, each with its status; gains `architecture/`, `decisions/` and `terminology.md` at the move. It never indexes `refactor/`: nothing outside `docs/refactor/` references the design record unless tooling needs the path to run | 0, 5 |
 | `docs/architecture/errors.md` | the taxonomy of §6, the raise/warn/log rules, what every error carries | 1a (with the error modules), completed 1c |
 | `docs/architecture/lineage.md` | short: the seam in one page (parents at the port, ids above it, edges at the boundary), pointing at the ADRs and the `lineage/` docstrings | 3 |
 | `docs/contributing/adding-a-port-method.md` | the guide (§4.5) | 1c |
@@ -1018,20 +1022,22 @@ its first use and the review of Task C is the review of the guide.
 
 ### 4.7 The Python target, and raising the floor
 
-Decided 2026-09-21; this is the content of `docs/contributing/python-version.md`, created in
-slice 0.
+Decided 2026-09-21; landed in slice 0 as `docs/contributing/python-version.md`, which is now
+the authority. Revised the same slice: Black was replaced by ruff format for the new code, and
+the CI workflow states the version too, so four settings move together, not three.
 
 - **The target is Python 3.13.** There is no fixed lower constraint. The project follows its
   runtimes upward: the target is the lowest Python minor version across the supported runtimes
   (the ArcGIS Pro interpreter the team develops with, and the Linux image). Nothing is in
   production yet, so no older build constrains it.
-- **Three settings state it, in `pyproject.toml`, and they always change together:**
-  `requires-python`, pyright's `pythonVersion`, and Black's `target-version`. Ruff's
-  `target-version` is the same value and moves with them.
+- **Four settings state it, and they always change together:** `requires-python`, pyright's
+  `pythonVersion` and ruff's `target-version` in `pyproject.toml`, and the `setup-python`
+  version in `.github/workflows/checks.yml`. Black, which formats only the legacy packages
+  until they are migrated, infers its target from `requires-python`.
 - **CI runs the pure-core suite on that version**, on both runners.
 - **Raising the floor.** Raise it only when every supported runtime has moved. Change the
-  three settings in one pull request; run pyright and the pure-core suite; say in the pull
-  request which runtime had been holding the floor. Do not raise it for a language feature.
+  four settings in one pull request; run the full check set; say in the pull request which
+  runtime had been holding the floor. Do not raise it for a language feature.
 - **One thing a raise must not do:** convert `In` and `Out` to PEP 695 `type` statements. The
   review confirmed that `@operation` then classifies no parameter, because the `Annotated`
   metadata is hidden behind a `TypeAliasType`. A unit test pins it.
@@ -1075,7 +1081,26 @@ disposable by their own terms.
   package docstrings under `src/ag`, in the contributor guides, in the CI workflow and
   pre-commit steps that run the two checkers, and in `.claude/settings.local.json`'s allowlist.
   **A-ids, B-ids, T-ids and ADR numbers do not change**, which is why they were made stable.
-- The markdown link checker in CI is the proof the move is complete.
+- **Acceptance for the move:** the markdown link checker in CI passes, **and**
+  `git grep "docs/refactor"` outside `docs/refactor/` returns nothing but the paths of
+  `TASKS.md` and `04-migration.md`, which stay. The link checker sees only markdown; the grep
+  also sees `.importlinter`, `pyproject.toml`, `.pre-commit-config.yaml`, the CI workflow,
+  `tools/` and the docstrings under `src/ag`, which is where a stale path survives a link check.
+
+**The final step: `docs/refactor/` is deleted in full.** After the move it holds only
+`TASKS.md`, `04-migration.md` and whatever `temp/` still carries. Its trigger is stated once:
+**`TASKS.md`'s completion test passes and `04-migration.md`'s per-stage table shows every stage
+migrated**, at which point both documents have done what they exist for. One pull request then:
+
+- deletes `docs/refactor/` with everything under it, including `temp/`;
+- removes the `TASKS.md` checks from `check_consistency.py` (A-orphan, dangling-ref, ordering,
+  B-referenced) in the same pull request, so the hook keeps passing with only the permanent
+  documents (`lineage-decision-record.md` and `terminology.md`); the two terminology checks stay;
+- retargets or removes every hook, workflow step and allowlist entry that named the deleted
+  paths.
+
+**Acceptance for the deletion:** `git grep "docs/refactor"` over the whole repository returns
+nothing, and the pre-commit run is green.
 
 ---
 
@@ -1097,12 +1122,15 @@ tests/
 ```
 
 Buckets, per the platform decision already recorded: pure-Python checks in pre-commit and CI on
-both runners; `arcpy`-marked tests on Windows through the existing runner (`run_arcpy.bat`,
-`:RunArc`) and in the image under Docker; conformance also gates image promotion; the two gates
-are one-off in the image. `pytest -m "not arcpy"` in CI; an unmarked test that imports ArcPy
-fails on `ImportError`, which is the property the marker exists for. `pyproject.toml` registers
-the marker and nothing else; no default `addopts`, so a Windows developer runs `pytest -m arcpy`
-explicitly.
+both runners; `arcpy`-marked tests under an ArcGIS Pro Python environment and in the image under
+Docker; conformance also gates image promotion; the two gates are one-off in the image.
+`pytest -m "not arcpy"` in pre-commit and CI, excluding by marker; an unmarked test that imports
+ArcPy fails on `ImportError`, which is the property the marker exists for. `tests/conftest.py`
+makes the marker behave the same everywhere: without ArcPy a bare run skips marked tests with a
+reason, and `-m arcpy` fails the session instead of reporting green. `pyproject.toml` registers
+the marker and the `testpaths`, and no default `addopts`, so a developer runs `pytest -m arcpy`
+explicitly. The legacy tests live in `tests_legacy/`, outside `testpaths`, run by hand under the
+Pro environment, and are deleted with the code they test.
 
 ### 5.2 The conformance suite
 
@@ -1167,8 +1195,8 @@ diff already compares against itself.
 
 Marked `arcpy`; conformance and everything above that needs an engine, T0.1's cases kept as a
 permanent module once the gate has run, the image checks (locale decimal mark in anything the
-adapter parses, `memory\` paths, the goldens replayed in the image). On Windows: `pytest -m
-arcpy` under the ArcGIS interpreter, through the existing runner. In the image: the same command
+adapter parses, `memory\` paths, the goldens replayed in the image). On a developer machine:
+`pytest -m arcpy` under an ArcGIS Pro Python environment. In the image: the same command
 under Docker, triggered by image rebuilds and by changes under `adapters/arcpy/`. The licence
 question for the image is open and decides whether that gate is automatic.
 

@@ -14,11 +14,6 @@ what stops the same ground being re-argued in six months.
 
 **A-numbering is stable.** Other documents and task entries reference A-ids. Never renumber.
 
-**Pending patch** *(decided 2026-09-21)*. `findings/PATCH-2026-09-17.patch` (A9.11, A9.12, A11.15,
-A12.5a, A14.1, A15.7, the A18 amendment, B17–B20) is approved and is applied as the first act of
-slice 0 of `findings/implementation_plan.md`. Until then the items it carries are cited as
-decided, and any edit to this file is placed so that the patch still applies.
-
 ---
 
 # A. Settled
@@ -174,6 +169,10 @@ Varying arguments that do **not** move the cell, so no split: `dissolve.option` 
 `GROUP+MINT`; `SINGLE_PART` only produces finer groups), `simplify.collapsed_points` and
 `collapse_to_centerline.pairs` (an optional output or grouping source, cell fixed),
 `explode_multipart` on single-part input (data-dependent; `MANY` covers it degenerately).
+
+> *Superseded in part, 2026-09-17 (B18).* `dissolve.option` is no longer an argument: `dissolve` is
+> single-part by contract and `DissolveOption` leaves the port (A18, amended). The other three
+> entries stand.
 
 Two need a contract rather than a split: `cluster_points.minimum_count` (what happens to points
 below the threshold is undocumented — state it), and `join_field` with a non-unique key, which
@@ -443,6 +442,28 @@ domain key's value is preserved by attribute propagation through COLLAPSE and SP
 **mint generations** and will not join. A `lineage_id`-keyed join is valid only across a span with
 no cardinality change, which is not locally checkable, so it is not a pattern to reach for.
 `destination:` new ADR on identity; `02-runtime.md` §2.4.
+
+**A9.11 A combining rule is evaluated over the parents of each output row.** The combining rule
+"reduces several parents' values to one" (`01-terminology.md`, *combining rule*); parents are "which
+input rows produced an output row". So the value written on an output row of a `GROUP` method is
+the rule over that row's parents and nothing wider. Under single-part output a dissolve key that
+splits into several parts has several output rows, each with its own parent set and its own
+value. An engine whose own statistics option computes over the whole key does not implement this
+contract, and the adapter must not use that option to satisfy it; the measurement that found one
+doing so is in `temp/findings/n1_correspondence.md` §3.9. How the adapter meets the contract is B17's.
+`destination:` `ports/geometry_ops.py`, `dissolve` docstring; A11.14 gains a pointer.
+
+**A9.12 The `statistics` value type.** `dissolve` takes
+`statistics: tuple[StatisticSpec, ...] = ()`, where `StatisticSpec(source, statistic, output)` is
+a frozen dataclass — the source field, the statistic, the output field name — and `Statistic` is a
+project enum with exactly `MIN`, `MAX`, `SUM`, `MEAN`, `COUNT`. No `FIRST`, no `LAST`, no
+`CONCATENATE`: the first two depend on row order, which is not a contract (A15.4); the third was
+measured at 7,841 s over one 10^6 group and was the transport of a retired mechanism (A14.1). The
+docstring states **null handling** — a null source value is skipped, `COUNT` counts non-null
+values, an output row whose parents are all null gets null — and **output types** — `MIN`, `MAX`
+and `SUM` keep the source field's type, `MEAN` is DOUBLE, `COUNT` is LONG — and **forbids
+`lineage_id` as a source** (A9.10: ids never combine). Per-output-row evaluation is A9.11.
+`destination:` `ports/geometry_ops.py`, beside the enums.
 
 ## A10. `lineage_id` layout and allocation
 
@@ -800,6 +821,50 @@ chosen by the domain — a value the data determines, on the feature, propagatin
 collapses like any other attribute. Never an id, for A9.10's reason.
 `destination:` same ADR as A11.1.
 
+> *See A9.11 (2026-09-17):* the combining rule is evaluated over the parents of each output row,
+> never over the whole key.
+
+**A11.15 Parents are an out-param on every `MINT` method, in native indices at the port.**
+
+Every port method with an output declared `ids=MINT` carries
+`parents: ScratchHandle | None = None`. When it is not `None` the adapter writes a TABLE of
+`(PARENT_ID, CHILD_ID)` rows to it, one row per (input row, output row) pair, both columns in the
+port's own vocabulary: the input's native index and the output's native index (A11.11). When it is
+`None` the adapter produces no parents and pays nothing for them.
+
+Four rules, in addition:
+
+(a) **`PARENT_ID` references the `subject=` input only.** A method with a `context=` input
+(`clip`, `intersection`, `difference`) never reports context rows as parents; the context
+influenced the geometry without contributing identity (A12.2).
+
+(b) **Naming.** The parameter is `parents` when the method has one `MINT` output and
+`<output>_parents` when it has several. No method on the surface today needs the second form:
+every `MINT` method in A12.11 has a single `MINT` output, and the secondary outputs
+(`simplify.collapsed_points`, `displace_features.displacement`, `select_network.dropped`) are
+`CARRY` or open under B11. The second form is reserved so that a future method does not invent a
+third.
+
+(c) **The facade always passes its own scratch handle to the port**, reads the native pairs, maps
+them to `lineage_id` and mints (A11.11, A12.4). When the domain also passed `parents=`, the facade
+writes the **`lineage_id` relation** to the domain's handle — the same `(PARENT_ID, CHILD_ID)`
+columns, holding `lineage_id` values — so the domain never sees a native index (A9.2). The port
+never receives the domain's handle.
+
+(d) **A domain `parents=` request on a subject without `lineage_id` raises**, in the facade, before
+the port is called. There is nothing to translate the pairs to, and a silently native-indexed
+table would be exactly the join A9.10 forbids.
+
+The lineage facade is a caller in its own right. It passes its handle on every `MINT` call whose
+subject is lineage-bearing (A15.6). This is why the channel is on the Protocol and not private to
+the facade: the conformance suite drives the Protocol directly (T4.11, B10) and asserts the
+reported pairs.
+
+Supersedes T2.4's "only `dissolve` gets the parameter" and narrows B6 to the domain-facing
+question: which methods have a domain caller wanting the set. B6 is otherwise unchanged.
+`destination:` `ports/geometry_ops.py` and `ports/cartographic_ops.py` (the parameter, once per
+method); the lineage module docstring (the facade's use, (c) and (d)).
+
 ## A12. The `@row_shape` grammar
 
 **A12.1** `Rows(cardinality=..., ids=..., subject=... | refs=...)`. Two independent axes rather
@@ -877,6 +942,20 @@ needed for them. This is runtime behaviour *inside* a cell and is not an argumen
 subject and reference names a real input parameter. This replaces the type-checker guarantee the
 wrapper approach would have given, and it is what makes forgetting impossible.
 `destination:` `tests/unit/test_row_shape.py`; `02-runtime.md` §8.
+
+**A12.5a Port handle parameters carry a direction.** Port Protocol handle parameters are annotated
+`In` / `Out` from `core.operations`, plus a third marker for in-place mutators (T2.8) and a distinct
+**`ParentsOut`** marker for the parents out-param of A11.15. T4.1's check then rejects: an `Out`
+parameter with no `@row_shape` entry; a `@row_shape` key naming a parameter that is not `Out`; a
+`subject`, `context` or `refs` value naming a parameter that is not `In`. **`ParentsOut` is exempt
+from the first rule**: the parents table is a relation the facade consumes, not a row-shaped
+output, and it never gets a `Rows` declaration. Rejected: a parameter-name convention, and the
+"named by some declaration" rule, both for the reasons in `PROPOSALS-2026-09-14.md` §2.
+
+**Timing: the annotations are written with the ports, in T2.9, not in T4.1.** The ports are about
+to be written; annotating them afterwards means writing every signature twice. T4.1 adds the check
+against annotations that already exist, and breaks it on purpose once. Resolves B12.
+`destination:` `ports/row_shape.py` docstring; `02-runtime.md` §8 with A12.5.
 
 **A12.6** In-place mutators (`add_field`, `calculate_field`, `join_field`, `delete_fields`) have
 no output parameter and need a definition of "output parameter" that covers them. Most are
@@ -1097,6 +1176,10 @@ absent from the Protocol, being T2.9's splits).
 
 ## A14. Adapter parents capability
 
+> *Superseded 2026-09-17 by A14.1 below.* The tier list is kept as rationale. Two of its tool facts
+> were wrong, and its runtime path was measured over budget and wrong on every split group
+> (`temp/findings/n1_correspondence.md` §1, §3.8, §3.9, §7).
+
 The fallback belongs in the adapter; the layer above asks for parents and does not care how they
 are produced. Tiers in preference order:
 
@@ -1126,6 +1209,35 @@ on the same code.
 Esri's lineage table is slow on large inputs and requires single-part output, so an adapter may
 prefer synthesis on size — an adapter-internal decision.
 `destination:` `adapters/arcpy/` package docstring; `02-runtime.md` §8 (the plan-time check).
+
+**A14.1 Adapter parents capability, restated.** *The layer above asks for parents and does not
+care how they are produced.* That sentence of A14 stands; the rest is restated without the tier
+vocabulary.
+
+- **The capability record names methods, not mechanisms.** The adapter publishes, at construction,
+  the set of methods declared `ids=MINT` for which it can honour `parents=` (A11.15). How it does
+  so is adapter-internal and not in the record. `validate()` receives the record as data (A14's
+  no-exemption argument stands) and fails a stage that uses a lineage-bearing handle with a `MINT`
+  method the record does not name — subject to B14, which records that plan time cannot yet see
+  which port methods an operation calls.
+- **The native references engines provide, corrected.** `ORIG_FID` from `MultipartToSinglepart`
+  and `SplitLineAtPoint`; `FID_<input>` from `Intersect`, not `ORIG_FID`; nothing from
+  `PairwiseClip` and `PairwiseErase`, so `clip` and `difference` stamp a work key on a copy of the
+  input; `OUTPUT_FID`/`INPUT_FID` tables from `AggregatePolygons`, `AggregatePoints` and
+  `MergeDividedRoads` on the current image; `LeftLn_FID`/`RightLn_FID` from
+  `CollapseDualLinesToCenterline`; `PairwiseDissolve`'s lineage table from Pro 3.7, single-part
+  output only.
+- **CONCATENATE is retired**, as a runtime path and as an oracle: 7,841 s added over one 10^6
+  group, and the statistic is computed per dissolve key rather than per output part, so it names
+  the wrong parents on every key that splits.
+- **Unkeyed spatial reconstruction stays rejected.** Prefer an unavailable method to a silently
+  wrong one. B17's keyed resolver is not that: it is handed only its own key's parts and the
+  resolver rejects a cross-key pair.
+- **An adapter that cannot honour `parents=` for a method raises** `ParentsUnavailableError` from
+  `ports/errors.py` (T2.4); it never returns an empty table.
+
+`destination:` `adapters/arcpy/` package docstring; `02-runtime.md` §8 (the plan-time check, with
+B14's caveat).
 
 ## A15. Scope, cost, session lifetime
 
@@ -1286,6 +1398,20 @@ Recorded separately because one word doing two jobs is what produced the `DISPLA
 bug that killed the PROCESSING clause (A15.2).
 `destination:` lineage module docstring; `01-terminology.md`.
 
+**A15.7 Time budgets for lineage overhead.** Measured as **time added over the bare tool** on the
+same input in the same process, never as total tool time:
+
+| where | budget |
+|---|---|
+| a commonly used GP tool (dissolve, buffer, intersect, …) | **under 1 minute** added |
+| fan-out, fan-in | **under 5 minutes**, never over 15 |
+
+Judged at A15.5's worst-case sizes. Guidelines, not assertions, and they rank below diagnosis
+speed, data quality and durability (A15.3); a mechanism that is correct but takes an hour does not
+pass. Stated by the user on 2026-09-15; until this entry they existed only in conversation, and
+every judgment in `temp/findings/n1_correspondence.md` cites them.
+`destination:` `02-runtime.md` §8, beside the validation vocabulary; the lineage module docstring.
+
 ## A16. Completeness assertions
 
 Per stage, at fan-in, across **all objects in that stage** — edges cross objects, as when a lake
@@ -1427,6 +1553,23 @@ invariant costs a per-row scan at every output boundary.
 If a multipart dissolve is ever needed it becomes a separate `dissolve_multipart` method, which
 keeps `@row_shape` static.
 `destination:` `ports/geometry_ops.py`.
+
+> *Amended 2026-09-17 (B18, option b).* `dissolve` is **single-part by contract** and
+> `DissolveOption` leaves the port; A5.6's "does not move the cell" clause is superseded. One output
+> row per connected single part of each key — on lines that is a split at every junction
+> (`temp/findings/n1_correspondence.md` §3.9), so a group is not a connected component. A multipart dissolve
+> becomes `dissolve_multipart` when a caller appears. Real call sites that pass `MULTI_PART` or
+> `UNSPLIT_LINES` today, for T2.9 and `04-migration.md`: `MULTI_PART` at
+> `generalization/n100/river/mst_loop.py:500`, `generalization/n100/land_use/rullebane.py:400`,
+> `generalization/n10/landForms/hoydetall.py:793`, `custom_tools/general_tools/geometry_tools.py:48`,
+> and `generalization/n100/road/testing_file.py:463` (a test file); `UNSPLIT_LINES` at
+> `generalization/n100/river/preparing_river_network.py:48`,
+> `generalization/n10/facilities/railways_generalization.py:406`,
+> `generalization/n100/land_use/rullebane.py:128`; plus four `UnsplitLine` tool calls
+> (`extend_river_line.py:207`, `:224`, `unconnected_river_geometry.py:80`,
+> `clean_elveg_and_sti.py:625`). Unsplit is not a dissolve option: it is a merge at pseudonodes,
+> `GROUP + MINT`, and `PairwiseDissolve` has no such option, so it becomes its own method when a
+> caller is migrated.
 
 ## A19. Published identity
 
@@ -1663,6 +1806,13 @@ floor is raised only when every supported runtime has moved, in one pull request
 the three settings and runs pyright and the core suite.
 `destination:` `docs/contributing/python-version.md`; `pyproject.toml`.
 
+> *Landed 2026-09-22 (slice 0)* in `docs/contributing/python-version.md` and `pyproject.toml`,
+> with one amendment: the target is stated in **four** places, not three, because
+> `.github/workflows/checks.yml` names it for `setup-python`; and the formatter setting is
+> ruff's `target-version` (ruff format replaced Black for the new code in slice 0), with Black
+> inferring its target from `requires-python` for the legacy packages. The text above stays as
+> decided; the page is now the authority.
+
 ---
 
 # B. Open
@@ -1695,6 +1845,9 @@ the documented widening point.
 **B6. Parents out-param beyond `dissolve`.** `aggregate`, `collapse_to_point`, `cluster_points`
 and `collapse_to_centerline` have no caller wanting the parent set. Fix the signature shape now,
 add the parameter when a caller appears.
+
+> *Narrowed 2026-09-17 by A11.15.* Every `MINT` method carries the parameter; B6 now asks only
+> which methods have a **domain** caller wanting the set.
 
 **B7 — RESOLVED into A24, A24.1, A21, A22 and A23.** Kept here for the record because the framing
 below was wrong in a way worth remembering: it treated cross-run inputs as an edge case. They are
@@ -1729,8 +1882,10 @@ ingest-style re-allocation; put the run id in the log rather than the id bits, p
 cross-run ids are never minted against; or make `minter_id` globally unique rather than
 run-scoped. Each has a different cost and none is chosen here.
 
-**B8. `LineageRoot` → `OriginRoot` is a code rename, not a doc change.** The ruling is settled;
-the work is not scoped. `LineageRoot` is a `TypeAlias` at `core/data_objects.py:147` with uses in
+**B8 — RESOLVED 2026-09-22 by T7.2 (slice 0).** Renamed in `template_code/` and in
+`01-terminology.md` and `02-runtime.md` §2.2; every lift now carries `OriginRoot` and
+`origin_roots()`. The item as written: `LineageRoot` → `OriginRoot` is a code rename, not a doc
+change. The ruling is settled; the work is not scoped. `LineageRoot` is a `TypeAlias` at `core/data_objects.py:147` with uses in
 `locations.py`, `policy.py` and `validation.py`, plus a `lineage_roots()` function that presumably
 becomes `origin_roots()`. Aligning it with `Derived.origin` removes the object-level/feature-level
 "lineage" ambiguity, but it touches existing code rather than only the new design. Needs a task.
@@ -2100,7 +2255,7 @@ Its only consumer is `propagate_displacement`, which reads it as **context** —
 is small either way, which is why this is a B-item rather than a blocker.
 `destination:` `ports/cartographic_ops.py` with A12.11, once resolved.
 
-> *See the open note above B16 (2026-09-21):* leaving this output undeclared and declaring
+> *See the open note below B16 (2026-09-21):* leaving this output undeclared and declaring
 > `simplify.collapsed_points` while the adapter refuses it are two answers to one question; the
 > pattern is settled when B11 or B16 is decided.
 
@@ -2112,6 +2267,9 @@ parameter as an output is the declaration being checked, so the rule cannot fire
 green-by-coincidence failure, in the check the grammar rests on. A proposal (annotate port
 parameters with `In`/`Out`, in T4.1's scope, as A12.5a) awaits sign-off in
 `PROPOSALS-2026-09-14.md` §2.
+
+> *Resolved 2026-09-17 into A12.5a*, with the annotations pulled forward to T2.9 and a
+> `ParentsOut` marker exempt from the output-declaration rule.
 
 **B13. `write_rows` and `write_table` have no row shape, and A12.7 contradicts A15.6.** Found by
 the review (F5), verified against the template. Both writes have an `output` parameter
@@ -2153,17 +2311,18 @@ real codebase — would be rejected, though no template instance does it today.
 predicate as uncompilable; this is a separate defect in what it compares. T4.12 checks `join_field`
 only, so a lookup done as read-then-`Attr.in_` is outside its reach.
 
-**B21 — RESOLVED 2026-09-21, option (a), into A5.7.** *Placed here, out of numerical order, so
-that `findings/PATCH-2026-09-17.patch`, which appends B17–B20 after the last line of B16, still
-applies; move it below B20 when the patch is applied.* The question, kept for the record: who
-creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
-and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port
-method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
-(b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.
+**B16. The vendor documentation contradicts `simplify.collapsed_points` as `ONE + CARRY`.** Found
+while writing T0.1's script. A12.11 assumes the point output copies the input's attributes. The
+`SimplifyLine` and `SimplifyPolygon` tool pages, checked 2026-09-14, both say *"The output line
+[polygon] feature class contains all the fields from the input feature class.*
+*The output point feature class will not contain these fields."* Neither page documents a
+reference column on the points. `SimplifyLine` also stores *"the endpoints"* of a collapsed line, which may be two rows per
+input — `MANY`, not `ONE`. T0.1's type-survival case checks the behaviour. If it confirms the
+documentation, the "neither present" branch of T0.1's "if this fails" applies: the set-difference
+derivation, conditional on the port contract T4.2 writes. Not decided here, and T0.1 has not run.
 
 > **Open note on B16 and B11, 2026-09-21: a declared-but-unavailable optional output has no
-> settled pattern.** *It stands above B16 rather than under it because the unapplied patch's
-> last hunk must match at the end of this file; move it below B16 when the patch is applied.*
+> settled pattern.**
 > The two items are handled differently today. For `simplify.collapsed_points`, slice 3 of
 > `findings/implementation_plan.md` declares the output on the Protocol per A12.11, implements
 > it in the in-memory adapter, and has the ArcPy adapter raise `CapabilityError` when it is
@@ -2175,12 +2334,120 @@ method covered it (`findings/template_review.md` §4, §7). Options were (a) a `
 > not a defect. The precedent for the other reading is `ParentsUnavailableError`, a `PortError`
 > (A14.1). No change is made now.
 
-**B16. The vendor documentation contradicts `simplify.collapsed_points` as `ONE + CARRY`.** Found
-while writing T0.1's script. A12.11 assumes the point output copies the input's attributes. The
-`SimplifyLine` and `SimplifyPolygon` tool pages, checked 2026-09-14, both say *"The output line
-[polygon] feature class contains all the fields from the input feature class.*
-*The output point feature class will not contain these fields."* Neither page documents a
-reference column on the points. `SimplifyLine` also stores *"the endpoints"* of a collapsed line, which may be two rows per
-input — `MANY`, not `ONE`. T0.1's type-survival case checks the behaviour. If it confirms the
-documentation, the "neither present" branch of T0.1's "if this fails" applies: the set-difference
-derivation, conditional on the port contract T4.2 writes. Not decided here, and T0.1 has not run.
+**B17. Which mechanism produces `dissolve` parents.** Open. Everything above the port is settled
+(A11.15, A14.1); this is the adapter's choice, judged against A15.7. Evidence in `temp/findings/n1_correspondence.md`, measured on Pro 3.7.2 on 2026-09-15:
+
+- **CONCATENATE is dropped**, as the runtime path and as an oracle (A14.1).
+- **The native lineage table** is the production source for `aggregate` and
+  `collapse_to_centerline`, whose tools emit it on the current image and whose geometry moves, so
+  nothing else can be right. For `dissolve` it is the **conformance oracle only**: new at Pro 3.7,
+  absent from the image, 110 s added at 10^5 against a 1-minute budget, single-part output only,
+  and its part order differs from the plain run.
+- **The keyed resolver** (`temp/dissolve_parents.py`: attribute join for single-part keys, a
+  key-filtered spatial lookup for multi-part keys, one bulk join per call) is **adopted for
+  polygons and points**: 0.4 s at 10^5 on the join path, equal to the native table on every
+  fixture, the eight goldens replaying without ArcPy. **Lines are conditional** on T4.14: single-part
+  output splits at every junction, so the locator path is the production path for every line key; a
+  point finds one part of a split input and can land on a junction node; the segment locator
+  (shared-segment join) that closes both gaps has its lattice numbers and the real-data key sizes
+  still pending. The resolver's precondition — an input's representative point lies within the
+  engine's tolerance of the part it became — holds for a dissolve by construction and for
+  `buffer_dissolve` at positive distances only.
+- **Two adapter guards** either way: before the tool, an empty shape in the subject raises
+  `EmptyGeometryError` with the row indices (an empty polyline emptied a whole PairwiseDissolve
+  output silently); after it, an unmatched input raises `UnmatchedInputError` unless it is
+  degenerate — empty, or length or area at or below the engine's XY tolerance. The adapter never
+  turns an unmatched input into `DROPPED` (A11.7 stands).
+- **Combining rules** (A9.11) are recommended to be computed by the adapter as a group-by over the
+  parents pairs joined to the input attributes — per output row by construction, one pass over a
+  table it already has — never through the engine's own statistics option.
+- **Real data, 2026-09-17** (findings §3.11): the ramps stage's input partitioned by
+  `PartitionIterator` itself at the stage's 35,000 / 500 m gives, as its largest selection,
+  36,407 rows (34,780 + 1,627 halo) in 44 keys, the largest key 15,392 rows becoming 13,310
+  parts; output parts per input 1 at p95, 2 at most, because that input is already planarised.
+  The native lineage table cost **0.8 s added over a 3.3 s plain dissolve** there, against
+  110 s added at 10^5 on the one-part fixture: its cost is shape-dependent (a hypothesis with
+  one bracket), B stays unavailable in the image, and portability keeps the keyed resolver as
+  the production path. The lineage run also produced one more part than the plain run (25,367
+  against 25,366), so locators are always judged against the lineage run's own output. Five
+  non-degenerate inputs were absent from the table; a per-input diagnostic decides whether the
+  tool dropped them, a same-key duplicate absorbed them, or the table omitted parents it merged
+  — the last case makes B unfit as a fast path and an incomplete oracle. **Measured
+  (findings §3.11, third run): all five are omitted parents** — 5 cm segments the tool merged
+  and the table does not list — so the table is incomplete under the current definition of
+  degenerate (the XY tolerance), and T4.11's `dissolve` case should assert resolver ⊇ table
+  unless "degenerate" is widened to what the engine absorbs, a definition the user decides.
+  **On that partition the segment locator reproduced every table pair and paired the five
+  absent inputs, in 20 s added over plain; the point locator left 904 inputs unmatched.** The
+  synthetic ladder agrees: on every fixture where an input becomes several parts the segment
+  locator is exact and both point locators are not. The segment locator is therefore the line
+  candidate, and its cost is measured (after fixing the resolver's own pair validation, which
+  had built one set of parts per input — inputs x parts memory — fixed 2026-09-17 and
+  unit-tested at 40,000 x 40,000): 5.4 s at 10^5 on the segmented lattice, and on the STRESS
+  margin (250,000 elements, 5,000 m radius, no stage uses these) **47.7 s added over plain on a
+  267,429-row selection whose largest five-field key is 112,331 rows into 96,185 parts, pair
+  sets equal to the table** — 92 % of it in the spatial join. Two residual failure classes, both
+  on geometry the pipeline should not produce: sub-decimetre input segments (4–9 cm), which the
+  table omits and the segment locator finds only partly; and sliver output parts shorter than an
+  input segment when a single-key dissolve splits inputs mid-segment (265 of 267,429 inputs as one
+  group; none on the five-field key). The guard raised in both cases rather than dropping
+  silently. Two decisions follow: the degenerate threshold (XY tolerance, or a length the engine
+  absorbs, about 0.1 m), and whether the segment locator gains a distance-based second pass for
+  parts left without a parent. A 10^6 group does not occur in a partitioned stage.
+
+Resolves when the real-partition comparison and the ladder are recorded and one locator per
+geometry type is named.
+`destination:` `adapters/arcpy/` package docstring.
+
+**B18 — RESOLVED 2026-09-17, option (b), into the amendment on A18 and the supersession on A5.6.**
+`dissolve` is single-part by contract; `DissolveOption` leaves the port; `dissolve_multipart` and
+an unsplit method are added when callers are migrated. The question, kept for the record: A5.6 kept
+`option: DissolveOption` as an argument because it does not move the row-shape cell, while A18 and
+T2.9 said a multipart dissolve becomes a separate method. Both could not be the port; the real
+call sites are listed under A18.
+
+**B19 — RESOLVED 2026-09-17 into A9.12.** `statistics=((RANK, MAX),)` had an example and no type;
+A9.12 gives it `Statistic` and `StatisticSpec`, and A9.11 its semantics.
+
+**B20. Lineage through `run_dissolve_with_intersections`.** Found by the N:1 real-data probe
+(2026-09-17). `generalization/n100/road/data_preparation_2.py:336-346` runs, twice, on the
+**national, unpartitioned** road set: `PairwiseDissolve` on the 12-field key
+(`FieldNames.road_input_fields`) → `FeatureToLine` → `Merge`
+(`custom_tools/generalization_tools/road/dissolve_with_intersections.py:62-140`). In the grammar
+that is `GROUP + MINT` followed by `MANY + MINT`, an N:M chain, and it is the largest dissolve the
+pipeline runs — the ramps partition dissolve is bounded by 35,000 rows plus halo, this one by the
+national key. Three decisions:
+
+1. **Does it run before `lineage_id` exists?** If the chain is part of ingest (data preparation
+   before the first `StageInput`), no edges are needed and the parents question does not arise.
+   `data_preparation_2.run` is the live pipeline entry (`main_on_prem.py:155`), so where the
+   lineage boundary sits in it is a T3.4 question.
+2. **Otherwise, how do parents pass through the chain?** `dissolve` reports pairs (A11.15);
+   `FeatureToLine` would need to be a port method with its own `MANY + MINT` declaration and pairs
+   (T2.9 decides), and the facade composes the two mints; `Merge` is `ONE + CARRY`. Per-medium
+   selection between them is `select`, `ONE + CARRY`.
+3. **Is an unpartitioned national call acceptable in the container design at all?** The runtime
+   schedules only stages, fan-out → K pods → fan-in (02-runtime §2.3). A national dissolve is a
+   K = 1 stage with the whole dataset in one pod, or a partitioned dissolve whose groups cross
+   partition borders and depend on the halo, which changes which parents a pod can see. Neither
+   is decided, and A15.5's worst case was written for the partitioned form.
+
+The first number this item needs is the 12-field key counted on the chain's **input**,
+`Road_N100.data_preparation___road_single_part___n100_road` (`file_manager_roads.py:126`, the
+`MultipartToSinglepart` output at `data_preparation_2.py:331`). The count made on 2026-09-17 ran
+on `road_single_part_2`, the chain's **output** (2,038,774 rows, 80,482 keys, largest 155,944):
+an indicative figure only, since `FeatureToLine` splits rows and output parts per key bound the
+input in neither direction. **Measured on the input on 2026-09-17** (findings §3.13): 2,320,817
+rows, 80,482 keys, largest key **121,341** rows; the plain dissolve on that key **did not finish
+in 270 s**, and as one group it took 157.5 s with the native table adding 24.8 s and the segment
+locator 869 s. So a 10^6-row group does not occur here either, but a 2.3·10^6-row *call* does, and
+it is over every budget on its own: decision 3 is the live one, and the answer the numbers point
+to is a partitioned stage (or ingest before `lineage_id`), with parents a partition-size question.
+`destination:` `02-runtime.md` §2.3 for decision 3; `ports/geometry_ops.py` for decision 2; T3.4
+for decision 1.
+
+**B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
+creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
+and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port
+method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
+(b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.

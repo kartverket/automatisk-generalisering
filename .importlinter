@@ -1,0 +1,375 @@
+# Import contracts for src/ag. AUTHORITATIVE for the import rules of the package;
+# docs/refactor/03-architecture.md sections 4.1, 4.2 and 7 describe it and defer to it.
+#
+# Run: lint-imports   (from the repository root, with the project installed editable)
+#
+# Built against docs/refactor/temp/findings/project_tree.md section 6, one contract per
+# row, and named by row number so the file can be read against that table. Row 14 needs
+# two contracts and row 16 needs one per adapter and port, so there are more than
+# eighteen sections.
+#
+# EVERY CONTRACT HAS BEEN BROKEN ONCE ON PURPOSE with a throwaway probe module, and the
+# failure recorded in the pull request that added it. Do the same for a new contract:
+# over a nearly empty tree a contract passes whether or not its names are right.
+#
+# WHAT IMPORT-LINTER 2.15 DOES WITH A NAME THAT DOES NOT EXIST (probed):
+#   - it refuses to run for a missing module in `source_modules`, `protected_modules`,
+#     `allowed_importers`, `modules` (independence) and a non-optional layer;
+#   - it accepts, silently, a missing module in `forbidden_modules`, an optional layer
+#     in parentheses, and a wildcard that matches nothing.
+# So the modules named in the first group exist as docstring-only placeholders, and the
+# names in the second group are covered by the break-it-once evidence only. A typo in a
+# `forbidden_modules` entry passes forever; check the spelling against the tree.
+#
+# ALLOW-LISTS ARE WRITTEN AS `protected`, NOT `forbidden`, wherever the rule is "only X
+# may import Y": a forbidden list enumerates today's packages and admits tomorrow's.
+# Where a rule is "may import only these modules of a package" (rows 4, 8, 14, 15), the
+# contract forbids the whole package and lists the allowed imports under
+# `ignore_imports`, so a new module is denied until it is added here on purpose. Those
+# contracts set `unmatched_ignore_imports_alerting = none` because the allowed imports
+# do not exist yet.
+
+[importlinter]
+root_package = ag
+include_external_packages = True
+
+
+# --- Row 1 -------------------------------------------------------------------------
+[importlinter:contract:row-01-package-stack]
+name = Row 1: the package stack; every package under ag has a layer
+type = layers
+containers =
+    ag
+layers =
+    orchestrator
+    runtime
+    generalization
+    lineage | staging
+    adapters
+    ports
+    core
+exhaustive = true
+exhaustive_ignores =
+    observability
+
+
+# --- Row 2 -------------------------------------------------------------------------
+# `exhaustive` is not in the table; it is here so that a new module under
+# ag/generalization has to be given a layer, which is what keeps row 11's list complete.
+[importlinter:contract:row-02-domain-layers]
+name = Row 2: the layers inside ag.generalization
+type = layers
+containers =
+    ag.generalization
+layers =
+    registry
+    pipelines
+    operations
+    helpers
+    tuning | errors | sources | products | classification_rules
+exhaustive = true
+
+
+# --- Row 3 -------------------------------------------------------------------------
+[importlinter:contract:row-03-core-is-pure]
+name = Row 3: ag.core imports nothing else in ag
+type = forbidden
+source_modules =
+    ag.core
+forbidden_modules =
+    ag.ports
+    ag.adapters
+    ag.lineage
+    ag.staging
+    ag.observability
+    ag.runtime
+    ag.orchestrator
+    ag.generalization
+
+
+# --- Row 4 -------------------------------------------------------------------------
+[importlinter:contract:row-04-ports-import-four-core-modules]
+name = Row 4: ag.ports imports four ag.core modules and nothing else in ag
+type = forbidden
+source_modules =
+    ag.ports
+forbidden_modules =
+    ag.core
+    ag.adapters
+    ag.lineage
+    ag.staging
+    ag.observability
+    ag.runtime
+    ag.orchestrator
+    ag.generalization
+ignore_imports =
+    ag.ports -> ag.core.handles
+    ag.ports.** -> ag.core.handles
+    ag.ports -> ag.core.types
+    ag.ports.** -> ag.core.types
+    ag.ports -> ag.core.injection
+    ag.ports.** -> ag.core.injection
+    ag.ports -> ag.core.errors
+    ag.ports.** -> ag.core.errors
+unmatched_ignore_imports_alerting = none
+
+
+# --- Row 5 -------------------------------------------------------------------------
+[importlinter:contract:row-05-port-layers]
+name = Row 5: cartographic_ops sits above the other port Protocols
+type = layers
+containers =
+    ag.ports
+layers =
+    cartographic_ops
+    geometry_ops | table_ops | graph_ops
+
+
+# --- Row 6 -------------------------------------------------------------------------
+[importlinter:contract:row-06-adapters-chosen-at-the-top]
+name = Row 6: only a composition root imports ag.adapters
+type = protected
+protected_modules =
+    ag.adapters
+allowed_importers =
+    ag.runtime
+    ag.orchestrator
+
+
+# --- Row 7 -------------------------------------------------------------------------
+# `_shared` and `errors` are left out of the list on purpose: every adapter may import them.
+[importlinter:contract:row-07-adapters-are-independent]
+name = Row 7: adapter packages do not import each other
+type = independence
+modules =
+    ag.adapters.arcpy
+    ag.adapters.fakes
+    ag.adapters.networkx
+    ag.adapters.storage
+    ag.adapters.cluster
+
+
+# --- Row 8 -------------------------------------------------------------------------
+# The narrower rule, that only session.py runs a tool, touches arcpy.env or names a
+# vendor exception, is not an import rule. The stub in typings/arcpy/ and a static scan
+# enforce it (project_tree.md section 6.1); both arrive in slice 1b.
+[importlinter:contract:row-08-vendor-libraries]
+name = Row 8: a vendor library is imported only by its adapter
+type = forbidden
+source_modules =
+    ag
+forbidden_modules =
+    arcpy
+    networkx
+    shapely
+    boto3
+    minio
+    google
+ignore_imports =
+    ag.adapters.arcpy -> arcpy
+    ag.adapters.arcpy.** -> arcpy
+    ag.adapters.networkx.graph_ops -> networkx
+    ag.adapters.** -> shapely
+    ag.adapters.** -> boto3
+    ag.adapters.** -> minio
+    ag.adapters.** -> google
+unmatched_ignore_imports_alerting = none
+
+
+# --- Row 9 -------------------------------------------------------------------------
+[importlinter:contract:row-09-staging-is-runtimes-alone]
+name = Row 9: only ag.runtime imports ag.staging
+type = protected
+protected_modules =
+    ag.staging
+allowed_importers =
+    ag.runtime
+
+
+# --- Row 10 ------------------------------------------------------------------------
+# One allowed importer while `mint` is reached through the Toolbox (T4.3, decided at 2a).
+[importlinter:contract:row-10-lineage-is-runtimes-alone]
+name = Row 10: only ag.runtime imports ag.lineage
+type = protected
+protected_modules =
+    ag.lineage
+allowed_importers =
+    ag.runtime
+
+
+# --- Row 11 ------------------------------------------------------------------------
+# sources and products importing each other is row 2's business (they are independent
+# siblings there); a module may not be both a source and a forbidden module here.
+[importlinter:contract:row-11-identity-modules-are-leaves]
+name = Row 11: sources and products import only ag.core
+type = forbidden
+source_modules =
+    ag.generalization.sources
+    ag.generalization.products
+forbidden_modules =
+    ag.ports
+    ag.adapters
+    ag.lineage
+    ag.staging
+    ag.observability
+    ag.runtime
+    ag.orchestrator
+    ag.generalization.registry
+    ag.generalization.pipelines
+    ag.generalization.operations
+    ag.generalization.helpers
+    ag.generalization.tuning
+    ag.generalization.errors
+    ag.generalization.classification_rules
+
+
+# --- Row 12 ------------------------------------------------------------------------
+# Follows indirect imports on purpose: ag.core.locations, graph, selection, policy,
+# planning and validation each import one of the two, so they are ruled out as well.
+[importlinter:contract:row-12-operations-know-no-data-objects]
+name = Row 12: operations and helpers never see a DataObject (ADR-0003)
+type = forbidden
+source_modules =
+    ag.generalization.operations
+    ag.generalization.helpers
+forbidden_modules =
+    ag.core.data_objects
+    ag.core.pipeline
+    ag.generalization.sources
+    ag.generalization.products
+
+
+# --- Row 13 ------------------------------------------------------------------------
+# Redundant with rows 6, 9 and 10; kept because this is the message a domain developer
+# should read.
+[importlinter:contract:row-13-domain-stays-below-the-framework]
+name = Row 13: domain code never imports the framework above the ports
+type = forbidden
+source_modules =
+    ag.generalization
+forbidden_modules =
+    ag.adapters
+    ag.staging
+    ag.runtime
+    ag.orchestrator
+    ag.lineage
+
+
+# --- Row 14 ------------------------------------------------------------------------
+[importlinter:contract:row-14a-observability-is-a-leaf]
+name = Row 14a: ag.observability imports only stdlib and ag.core.types
+type = forbidden
+source_modules =
+    ag.observability
+forbidden_modules =
+    ag.core
+    ag.ports
+    ag.adapters
+    ag.lineage
+    ag.staging
+    ag.runtime
+    ag.orchestrator
+    ag.generalization
+ignore_imports =
+    ag.observability -> ag.core.types
+    ag.observability.** -> ag.core.types
+unmatched_ignore_imports_alerting = none
+
+[importlinter:contract:row-14b-no-ambient-context-in-declarations]
+name = Row 14b: no context accessor in ag.core or in pipelines
+type = forbidden
+source_modules =
+    ag.core
+    ag.generalization.pipelines
+forbidden_modules =
+    ag.observability.context
+
+
+# --- Row 15 ------------------------------------------------------------------------
+# Direct imports only. The orchestrator imports ag.generalization.registry, which
+# imports pipelines, which import operations for their declarations, and operations
+# import ports; a contract that followed indirect imports would fail on that legal chain.
+[importlinter:contract:row-15-orchestrator-schedules-and-touches-no-pod]
+name = Row 15: ag.orchestrator imports no pod-side code
+type = forbidden
+source_modules =
+    ag.orchestrator
+forbidden_modules =
+    ag.generalization.operations
+    ag.adapters.arcpy
+    ag.staging
+    ag.ports
+ignore_imports =
+    ag.orchestrator -> ag.ports.cluster
+    ag.orchestrator.** -> ag.ports.cluster
+    ag.orchestrator -> ag.ports.archive
+    ag.orchestrator.** -> ag.ports.archive
+unmatched_ignore_imports_alerting = none
+allow_indirect_imports = true
+
+
+# --- Row 16 ------------------------------------------------------------------------
+# One contract per adapter and port. The wildcard picks up a new group module by itself.
+[importlinter:contract:row-16-arcpy-geometry-ops-groups]
+name = Row 16: arcpy geometry_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.arcpy.geometry_ops.*
+
+[importlinter:contract:row-16-arcpy-table-ops-groups]
+name = Row 16: arcpy table_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.arcpy.table_ops.*
+
+[importlinter:contract:row-16-arcpy-cartographic-ops-groups]
+name = Row 16: arcpy cartographic_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.arcpy.cartographic_ops.*
+
+[importlinter:contract:row-16-memory-geometry-ops-groups]
+name = Row 16: memory geometry_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.fakes.memory.geometry_ops.*
+
+[importlinter:contract:row-16-memory-table-ops-groups]
+name = Row 16: memory table_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.fakes.memory.table_ops.*
+
+[importlinter:contract:row-16-memory-cartographic-ops-groups]
+name = Row 16: memory cartographic_ops group modules are independent
+type = independence
+modules =
+    ag.adapters.fakes.memory.cartographic_ops.*
+
+
+# --- Row 17 ------------------------------------------------------------------------
+# The last two layers are optional because each adapter has one of them.
+[importlinter:contract:row-17-adapter-layers]
+name = Row 17: adapter layers: port packages, support, _base, session or store
+type = layers
+containers =
+    ag.adapters.arcpy
+    ag.adapters.fakes.memory
+layers =
+    geometry_ops | table_ops | cartographic_ops
+    support
+    _base
+    (session)
+    (store)
+
+
+# --- Row 18 ------------------------------------------------------------------------
+# Narrower than row 6, and both apply: an import from ag.runtime.compose passes row 6
+# and fails here.
+[importlinter:contract:row-18-fakes-for-the-local-runner-only]
+name = Row 18: only ag.runtime.local imports ag.adapters.fakes
+type = protected
+protected_modules =
+    ag.adapters.fakes
+allowed_importers =
+    ag.runtime.local

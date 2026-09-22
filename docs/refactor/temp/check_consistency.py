@@ -37,14 +37,15 @@ because a green run from it is trusted.
 
 from __future__ import annotations
 
+import io
 import re
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DECISIONS = (HERE / "DECISIONS.md").read_text()
-TASKS = (HERE / "TASKS.md").read_text()
-TERMS = (HERE.parent / "01-terminology.md").read_text()
+DECISIONS = (HERE / "DECISIONS.md").read_text(encoding="utf-8")
+TASKS = (HERE / "TASKS.md").read_text(encoding="utf-8")
+TERMS = (HERE.parent / "01-terminology.md").read_text(encoding="utf-8")
 
 # Headwords whose wording legitimately differs from the prose in DECISIONS.
 # Keep this list short and justified; a new entry is a small smell.
@@ -54,6 +55,11 @@ HEADWORD_VARIANCE = {
     "disk-backed id map": "prose says 'the id map is disk-backed'",
     "parents": "appears as `parents=` and `PARENT_ID`",
 }
+
+# The documents are UTF-8 and the messages below carry non-ASCII; on Windows the default
+# console encoding is the locale code page, so the output stream is set explicitly.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 failures: list[str] = []
 

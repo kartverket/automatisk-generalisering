@@ -35,7 +35,7 @@ the wrong review comments.
 | **DataObject** | What a stage declares as IO. `ExternalSource`, `ProductIdentity` or `Derived`. Carries identity, lineage and legality. | [02-runtime §2.1](02-runtime.md#21-two-io-vocabularies-deliberately-different-types) |
 | **ExternalSource** | Data entering the *project* from outside it. Declared once in `sources.py`; `classification` is required. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
 | **ProductIdentity** | A published identity, carrying its own archive location. Declared once in `products.py`. Carries no classification. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
-| **LineageRoot** | `ExternalSource` or `ProductIdentity` — the two things that carry a location and that an `origin` may name. **Renaming to `OriginRoot`** (temp/TASKS.md T7.2); the code still says `LineageRoot`. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
+| **OriginRoot** | `ExternalSource` or `ProductIdentity` — the two things that carry a location and that an `origin` may name. `origin_roots()` returns them for a `DataObject`. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
 | **Derived** | A data object produced by a stage. Has no `location` parameter, by construction. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
 | **Publish** | Promotes a `Derived` to a `ProductIdentity` at the pipeline boundary. The only place a human may declassify. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
 | **origin** | The lineage roots a data object fundamentally *is*. Lineage, not influence, and not used for legality. | [02-runtime §2.2](02-runtime.md#22-data-objects) |
@@ -86,8 +86,8 @@ docstring; the A-ids below are that file's section numbers.
 | **lineage edge** | `(operation, kind, from_ids, to_ids)`. The N:M lineage relation lives here and never in a field. | A11.5 |
 | **`EdgeKind`** | `PARENTS_CONSUMED` \| `PARENTS_KEPT` \| `DROPPED` \| `CREATED`. Always derived by the runtime from parent survival; never declared. Descriptive — completeness is computed from set membership, not from the label. | A11.5, A11.6 |
 | **lineage log** | The out-of-band, run-scoped, write-only record of edges. Nothing in the pipeline reads it mid-run. | A11.1 |
-| **parents** | Which input rows produced an output row. Two senses, deliberately one word: the optional `parents:` out-param on a collapse method, and the `mint(parents=…)` argument. Columns are `PARENT_ID` / `CHILD_ID`. | A11.1 |
-| **row shape** | A per-output declaration on a port Protocol method, `@row_shape(out=Rows(...))`, read by the lineage facade. Two axes, never a single enum. | A12.1 |
+| **parents** | Which input rows produced an output row. Two senses, deliberately one word: the optional `parents:` out-param on every `MINT` method, and the `mint(parents=…)` argument. Columns are `PARENT_ID` / `CHILD_ID`: native indices at the port, `lineage_id` values in what the domain receives. | A11.1, A11.15 |
+| **row shape** | A per-output declaration on a port Protocol method, `@row_shape(<output parameter>=Rows(...))`, keyed by the output parameter's name, read by the lineage facade. Two axes, never a single enum. | A12.1, A12.5a |
 | **cardinality** | Row-shape axis: `ONE` \| `MANY` \| `GROUP` output rows per subject row. | A12.1 |
 | **`ids`** (row-shape axis) | `CARRY` (keep the subject's id) \| `MINT` (new ids, edges recorded) \| `FOREIGN` (no `lineage_id`; declared columns hold subject ids). `CARRY` implies `ONE`. | A12.1 |
 | **subject** | The input parameter whose rows contribute identity to an output. Subject versus `context` *is* PROCESSING versus CONTEXT at the port level, not a mirror of it — the same words on purpose. | A12.2 |
@@ -96,7 +96,7 @@ docstring; the A-ids below are that file's section numbers.
 | **`diff-tracked`** | A handle reaches a `StageOutput`. Decides whether the boundary diff runs. | A15.2 |
 | **lineage-bearing** | A handle's declaration chain ends in `CARRY` or `MINT`, so it has a `lineage_id` column. A `FOREIGN`-terminal handle can be `diff-tracked` without being lineage-bearing — `SNAP_DISPLACEMENT` is. | A15.6 |
 | **domain key** | A field whose value the data determines (`kommunenummer`, `vegkategori`). The only legitimate join key across a cardinality change, because attribute propagation preserves it and `lineage_id` does not. | A9.10 |
-| **combining rule** | How a collapse reduces several parents' values to one, stated at the call site as `dissolve(statistics=…)`. Domain logic. The log records that the collapse happened, never which parent's value won. | A11.14 |
+| **combining rule** | How a collapse reduces several parents' values to one, stated at the call site as `dissolve(statistics=…)`. Domain logic. The log records that the collapse happened, never which parent's value won. Evaluated over the parents of each output row; typed by `StatisticSpec`. | A11.14, A9.11, A9.12 |
 | **ingest map** | Per-input `(native_index, incoming_lineage_id, new_lineage_id, boundary_kind)`, written as a run artifact by the ingest step, which copies or maps each input the run reads from outside itself per A24.1's three-way rule. | A10.6, A10.7, A24.1 |
 | **dispatch registry** | `minter_id → (stage, partition_index)`, written at dispatch and merged at fan-in. | A10.3 |
 | **re-allocation** | What ingest does to a cross-run input: allocate fresh `lineage_id`s and record what was known of the incoming ones. Applies to `ExternalSource` and cross-run `Derived` alike. | A24 |
@@ -175,7 +175,7 @@ produce wrong code when guessed.
 | **layout** | Retired for storage. Not a concept when storage is not a tree. | Nothing. Locations come from declarations; scratch paths from `ScratchFileManager`. |
 | **container format** | Retired. | **`WorkspaceFormat`**. |
 | **`origin_id`** | Retired before it was written. It named a feature-level field that is re-minted on every cardinality change, so it never held an origin — and it sat one character from `origin`, which is object-level and plan-time. | **`lineage_id`** for the feature-level field; **`origin`** stays the object-level `Derived` declaration. Nothing should say `origin_id`. |
-| **`LineageRoot`** | Retired. It used "lineage" for the object level while `lineage_id` uses it for the feature level, and the two never join. | **`OriginRoot`**, aligning with `Derived.origin`; `lineage_roots()` becomes `origin_roots()`. A code rename — see temp/TASKS.md T7.2. |
+| **`LineageRoot`** | Retired. It used "lineage" for the object level while `lineage_id` uses it for the feature level, and the two never join. | **`OriginRoot`**, aligning with `Derived.origin`; `lineage_roots()` became `origin_roots()`. Renamed in the template and the documents by T7.2 (slice 0), so every lift carries the new name. |
 | **`TRANSFORMED` / `DERIVED`** (EdgeKind) | Retired. `DERIVED` was one capitalisation from `Derived`, the `DataObject` a stage produces — and **identical spoken aloud**, so a review could not disambiguate by ear. | **`PARENTS_CONSUMED`** / **`PARENTS_KEPT`**. Verbose is fine in an enum read from logs, and the names now state the distinction that is the reason for having two values. |
 | **`identity=`** (row-shape axis) | Retired. Collided with `ProductIdentity`, which is older and more load-bearing. | **`ids=`**, which says what the axis controls. |
 | **`reference=`** (row-shape) | Retired. Collided with `snap(reference=…)`, a dataset being snapped to — close enough in meaning to blur. | **`context=`**, which makes the `InputRole.CONTEXT` correspondence literal instead of explained. |

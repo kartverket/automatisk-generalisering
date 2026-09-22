@@ -22,9 +22,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent)
-)  # TEMPLATE: see conftest.py
+_TEMPLATE = Path(__file__).resolve().parent.parent  # TEMPLATE: see conftest.py
+sys.path.insert(0, str(_TEMPLATE))
+sys.path.insert(0, str(_TEMPLATE.parents[2] / "tests" / "fixtures"))  # example_pipelines
 
 from collections.abc import Sequence
 
@@ -32,14 +32,14 @@ from ag.core.types import ObjectName
 from ag.core.pipeline import StageRegistry
 from ag.adapters.fakes.recording_toolbox import PortCall
 from ag.staging.scratch import ScratchFileManager, Tier
-from ag.pipelines.building.n100_stages import BUILDING_N100
-from ag.pipelines.road.n100 import ROAD_N100
+from example_pipelines.pipelines.building.n100_stages import BUILDING_N100
+from example_pipelines.pipelines.road.n100 import ROAD_N100
 from ag.core.graph import derive_stage_dependencies, internal_handles, topological_order
 from ag.core.pipeline import flatten
 from ag.core.policy import ClassificationRule, classification_of, pipeline_environment
 from ag.core.selection import Closure, RunRequest, select_stages
 
-from ag.classification_rules import RULES
+from example_pipelines.classification_rules import RULES
 
 
 def short(name: str) -> str:
