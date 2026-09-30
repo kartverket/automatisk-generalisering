@@ -5,8 +5,10 @@
 ## The one list of checks
 
 `.pre-commit-config.yaml` is the one list of checks. A commit, a manual run and a pull request
-all run that file, from the tool versions pinned in `pyproject.toml`'s `dev` extra, so a pull
-request runs exactly what a commit runs. The checks are:
+all run that file, and every hook runs its tool through uv at the version pinned in
+`pyproject.toml`'s `dev` extra, so a pull request runs exactly what a commit runs and no
+machine's `PATH` decides which version that is ([setup and toolchain](toolchain.md)). The
+checks are:
 
 | hook | what it covers |
 |---|---|
@@ -21,16 +23,16 @@ request runs exactly what a commit runs. The checks are:
 
 ### Setting up
 
-Hooks run the tools from the project environment, so that environment has to be active.
-Once, in a Python 3.13 environment:
+Once, from the repository root, with uv installed ([setup and toolchain](toolchain.md)):
 
 ```
-pip install -e ".[dev]"
+uv sync --extra dev
 pre-commit install
 ```
 
-The first line installs `ag` editable together with the pinned tools; the second makes every
-commit run the hooks.
+The first line creates `.venv` with `ag` editable and the pinned tools; the second makes every
+commit run the hooks. The hooks run through uv, so they need `uv` on `PATH` and nothing else;
+activating `.venv` is only for typing the tools' names yourself.
 
 ### Running checks by hand
 
@@ -101,12 +103,17 @@ importable. The auto-skip is for bare manual runs only.
 
 They run under an ArcGIS Pro Python environment. The default `arcgispro-py3` environment is
 read-only, so clone it once in the ArcGIS Pro package manager (or with `conda create --clone
-arcgispro-py3 --name <name>`), activate the clone, and install the project into it:
+arcgispro-py3 --name <name>`), activate the clone, and install the project and pytest into
+it with pip, at the pytest version pinned in `pyproject.toml`:
 
 ```
-pip install -e ".[dev]"
+pip install -e .
+pip install pytest==<version>
 pytest -m arcpy
 ```
+
+The clone gets nothing else: the checks are never run from the Pro environment
+([setup and toolchain](toolchain.md), two environments).
 
 `pytest -m arcpy` runs the marked tests only; a bare `pytest` in that environment runs
 everything. Later the same tests run in the Linux image, where the conformance suite gates

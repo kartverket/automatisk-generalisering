@@ -1,10 +1,14 @@
 name: Checks
 
-# Runs the same checks a commit runs: the hooks in .pre-commit-config.yaml, from the tool
-# versions pinned in pyproject.toml's dev extra, on both runners the team's platforms map
-# to (Windows for development, Linux for the image). Neither runner has ArcPy, on purpose:
-# an `import arcpy` outside the adapter fails here, and the pytest hook excludes the
-# arcpy-marked tests by marker.
+# Runs the same checks a commit runs: the hooks in .pre-commit-config.yaml, through uv,
+# from the tool versions pinned in pyproject.toml's dev extra and resolved in uv.lock, on
+# both runners the team's platforms map to (Windows for development, Linux for the
+# image). The Python version comes from .python-version, as it does locally. Neither
+# runner has ArcPy, on purpose: an `import arcpy` outside the adapter fails here, and the
+# pytest hook excludes the arcpy-marked tests by marker.
+#
+# The two jobs this workflow reports, `pre-commit (ubuntu-latest)` and
+# `pre-commit (windows-latest)`, are the required status checks for main.
 
 on:
   pull_request:
@@ -29,13 +33,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
         with:
-          python-version: "3.13"
+          enable-cache: true
 
-      - name: Install the project and the dev tools
-        run: pip install -e ".[dev]"
+      - name: Install the project and the dev tools from the lock file
+        run: uv sync --locked --extra dev
 
       - name: Run every check
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: uv run --locked --extra dev pre-commit run --all-files --show-diff-on-failure

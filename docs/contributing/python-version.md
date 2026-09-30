@@ -16,7 +16,7 @@ Four settings state the target, and they always change together:
 | `requires-python = ">=3.13"` | `pyproject.toml`, `[project]` |
 | `pythonVersion = "3.13"` | `pyproject.toml`, `[tool.pyright]` |
 | `target-version = "py313"` | `pyproject.toml`, `[tool.ruff]` |
-| `python-version: "3.13"` | `.github/workflows/checks.yml`, the `setup-python` step |
+| `3.13` | `.python-version`: the interpreter uv creates `.venv` with, locally and in CI |
 
 Black, which checks only the legacy packages until they are migrated, infers its target from
 `requires-python` and needs no setting of its own.
