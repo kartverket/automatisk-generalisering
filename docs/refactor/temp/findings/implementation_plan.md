@@ -258,13 +258,17 @@ legacy code and start now (§3).
   for the new code, and Black keeps the legacy packages until they are migrated). `[tool.pyright]` is `strict` over `src`, `tests`, `tools`
   and replaces the template's `pyrightconfig.json`. The legacy packages are outside its include
   list.
-- One toolchain (revised in slice 0): tool versions pinned once, in `pyproject.toml`'s `dev`
-  extra; `.pre-commit-config.yaml` is the one list of checks, every hook local and running the
-  tool from that environment: `ruff format --check`, `ruff check`, Black over the legacy
+- One toolchain (revised in slice 0): uv manages the environment (A27); tool versions pinned
+  once, in `pyproject.toml`'s `dev` extra, resolved in the committed `uv.lock`;
+  `.pre-commit-config.yaml` is the one list of checks, every hook local and running its tool
+  through `uv run --locked --extra dev`, independent of `PATH` and activation: `ruff format --check`, `ruff check`, Black over the legacy
   packages only (removed when the last one is migrated), `pyright`, `lint-imports`, the source
   scans, `pytest -m "not arcpy"`, the two document checkers. CI on `ubuntu-latest` and
-  `windows-latest`, **Python 3.13**, installs the dev extra and runs `pre-commit run
-  --all-files` and nothing else for these checks; the old black workflow is deleted. The
+  `windows-latest`, **Python 3.13** from `.python-version`, runs `uv sync --locked --extra dev`
+  and then `pre-commit run --all-files` through uv, and nothing else for these checks; the old
+  black workflow is deleted, and its "Black Lint Check" is replaced as the required status
+  check on `main` by the two `pre-commit (<os>)` jobs once they have reported on the first pull
+  request. The
   legacy tests move to `tests_legacy/`, run by hand under a Pro environment.
 - `.importlinter` at the repository root, **rebuilt against `project_tree.md` §6** (rows 1 to
   18), not lifted from the template. Contracts over empty packages pass trivially, so each one
@@ -923,6 +927,7 @@ needs it.
 | `docs/architecture/errors.md` | the taxonomy of §6, the raise/warn/log rules, what every error carries | 1a (with the error modules), completed 1c |
 | `docs/architecture/lineage.md` | short: the seam in one page (parents at the port, ids above it, edges at the boundary), pointing at the ADRs and the `lineage/` docstrings | 3 |
 | `docs/contributing/adding-a-port-method.md` | the guide (§4.5) | 1c |
+| `docs/contributing/toolchain.md` | uv as the environment and tool manager: installing it, `uv sync --extra dev`, `uv.lock`, hooks through uv, the two environments on Windows (A27) | 0 |
 | `docs/contributing/python-version.md` | the Python target and how to raise the floor (§4.7) | 0 |
 | `docs/contributing/testing.md` | the layers of §5, markers, what runs where (the four buckets from the platform decision) | 0, updated 1c and 5 |
 | `docs/contributing/writing-an-operation.md` | operation authoring: In/Out, config, scratch, ports only, `mint(parents=)`, ref columns, what not to do | 3 |
@@ -1031,8 +1036,8 @@ the CI workflow states the version too, so four settings move together, not thre
   (the ArcGIS Pro interpreter the team develops with, and the Linux image). Nothing is in
   production yet, so no older build constrains it.
 - **Four settings state it, and they always change together:** `requires-python`, pyright's
-  `pythonVersion` and ruff's `target-version` in `pyproject.toml`, and the `setup-python`
-  version in `.github/workflows/checks.yml`. Black, which formats only the legacy packages
+  `pythonVersion` and ruff's `target-version` in `pyproject.toml`, and `.python-version`, which
+  uv reads locally and in CI. Black, which formats only the legacy packages
   until they are migrated, infers its target from `requires-python`.
 - **CI runs the pure-core suite on that version**, on both runners.
 - **Raising the floor.** Raise it only when every supported runtime has moved. Change the

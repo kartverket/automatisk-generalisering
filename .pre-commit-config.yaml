@@ -1,10 +1,13 @@
 # The one list of checks. Pre-commit, CI and a manual run all execute this file, so a
 # pull request runs exactly what a commit runs.
 #
-# Every hook is local and runs the tool from the project environment (`language: system`):
-# the versions are pinned once, in pyproject.toml's `dev` extra, and no hook pins its own
-# with `rev:`. Install with `pip install -e ".[dev]"` and `pre-commit install`; hooks
-# need that environment active. See docs/contributing/testing.md.
+# Every hook is local and runs its tool through uv (`uv run --locked --extra dev`), which
+# syncs .venv to uv.lock first and then runs the command from that environment. So a hook
+# runs the version pinned in pyproject.toml's `dev` extra whatever a machine has on PATH
+# and whether or not a virtual environment is activated; `--locked` fails if uv.lock does
+# not match pyproject.toml. The sync is not optional: `uv run --no-sync` falls back to
+# PATH for a command the environment lacks, which is exactly the case this guards against.
+# uv itself is the one tool that must be on PATH (docs/contributing/toolchain.md).
 #
 # ArcPy-marked tests are excluded by marker, not by the auto-skip in tests/conftest.py, so
 # the pytest hook selects the same tests on every machine, including one where ArcPy is
@@ -16,14 +19,14 @@ repos:
     hooks:
       - id: ruff-format
         name: ruff format --check (src, tests, tools)
-        entry: ruff format --check src tests tools
+        entry: uv run --locked --extra dev ruff format --check src tests tools
         language: system
         pass_filenames: false
         always_run: true
 
       - id: ruff-check
         name: ruff check (src, tests, tools)
-        entry: ruff check src tests tools
+        entry: uv run --locked --extra dev ruff check src tests tools
         language: system
         pass_filenames: false
         always_run: true
@@ -33,49 +36,49 @@ repos:
         # are migrated; Black checks them at the version pinned in the dev extra. This
         # hook is removed when the last legacy package is migrated.
         name: black --check (legacy packages)
-        entry: black --check --extend-exclude '^/(src|tests|tools|docs)/' .
+        entry: uv run --locked --extra dev black --check --extend-exclude '^/(src|tests|tools|docs)/' .
         language: system
         pass_filenames: false
         always_run: true
 
       - id: pyright
         name: pyright strict
-        entry: pyright
+        entry: uv run --locked --extra dev pyright
         language: system
         pass_filenames: false
         always_run: true
 
       - id: lint-imports
         name: import contracts (.importlinter)
-        entry: lint-imports
+        entry: uv run --locked --extra dev lint-imports
         language: system
         pass_filenames: false
         always_run: true
 
       - id: scan-sources
         name: source scans (environment reads, imports by string)
-        entry: python tools/scan_sources.py
+        entry: uv run --locked --extra dev python tools/scan_sources.py
         language: system
         pass_filenames: false
         always_run: true
 
       - id: pytest
         name: pytest -m "not arcpy"
-        entry: pytest -m "not arcpy"
+        entry: uv run --locked --extra dev pytest -m "not arcpy"
         language: system
         pass_filenames: false
         always_run: true
 
       - id: check-consistency
         name: design record consistency (DECISIONS, TASKS, terminology)
-        entry: python docs/refactor/temp/check_consistency.py
+        entry: uv run --locked --extra dev python docs/refactor/temp/check_consistency.py
         language: system
         pass_filenames: false
         always_run: true
 
       - id: check-terminology
         name: terminology anchors and headwords
-        entry: python docs/refactor/check_terminology.py
+        entry: uv run --locked --extra dev python docs/refactor/check_terminology.py
         language: system
         pass_filenames: false
         always_run: true

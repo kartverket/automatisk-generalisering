@@ -1808,10 +1808,33 @@ the three settings and runs pyright and the core suite.
 
 > *Landed 2026-09-22 (slice 0)* in `docs/contributing/python-version.md` and `pyproject.toml`,
 > with one amendment: the target is stated in **four** places, not three, because
-> `.github/workflows/checks.yml` names it for `setup-python`; and the formatter setting is
+> `.python-version` pins the interpreter uv creates the environment with, locally and in CI
+> (A27); and the formatter setting is
 > ruff's `target-version` (ruff format replaced Black for the new code in slice 0), with Black
 > inferring its target from `requires-python` for the legacy packages. The text above stays as
 > decided; the page is now the authority.
+
+## A27. Environment and tool management: uv
+
+*Decided 2026-09-30.* **uv manages the project environment and the tools.** `uv.lock` is
+committed and written only by uv: `uv sync --extra dev` creates `.venv` from it, `uv lock`
+regenerates it when a pin in `pyproject.toml` changes, and nobody edits it by hand. The
+pre-commit hooks and CI run every tool through `uv run --locked --extra dev <tool>`, so a
+check runs the pinned version whatever a machine has on `PATH` and whether or not an
+environment is activated; `--locked` fails when the lock file is behind `pyproject.toml`.
+`.python-version` pins the interpreter uv uses, and is one of the four places the Python
+target is stated (A26). Dependencies stay in the standard `pyproject.toml` tables
+(`[project]`, `[project.optional-dependencies]`); uv-specific extensions such as
+`[tool.uv.sources]` and workspaces are not used, so `pip install -e ".[dev]"` remains a
+working fallback. If uv is ever replaced, the work is regenerating the lock file in the new
+tool's format and changing the hook invocations and the CI step; the dependency declarations
+do not change. The alternative, hooks that run whatever tool `PATH` resolves, was rejected:
+`language: system` cannot enforce a version by design, and a check that passes using an
+unpinned tool is not the check that was configured.
+`destination:` `docs/contributing/toolchain.md`; `pyproject.toml`; `.pre-commit-config.yaml`.
+
+> *Landed 2026-09-30 (slice 0)* in `docs/contributing/toolchain.md`, `.pre-commit-config.yaml`,
+> `.github/workflows/checks.yml`, `.python-version` and `uv.lock`. The page is the authority.
 
 ---
 

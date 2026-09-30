@@ -2,10 +2,9 @@
 requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
-# The Python target (DECISIONS A26, docs/contributing/python-version.md) is stated by
-# four settings that always change together: `requires-python` here,
-# `[tool.pyright] pythonVersion`, `[tool.ruff] target-version` and the `setup-python`
-# version in .github/workflows/checks.yml.
+# The Python target (docs/contributing/python-version.md) is stated by four settings that
+# always change together: `requires-python` here, `[tool.pyright] pythonVersion`,
+# `[tool.ruff] target-version` and `.python-version`.
 [project]
 name = "ag"
 version = "0.0.0"
@@ -13,11 +12,13 @@ description = "Cartographic generalization behind a port and adapter boundary."
 requires-python = ">=3.13"
 dependencies = []
 
-# The one place tool versions are stated. Pre-commit, CI and manual runs all use these:
-# every hook in .pre-commit-config.yaml is a local hook that runs the tool from this
-# environment, and none pins a version of its own. Install with
-# `pip install -e ".[dev]"`. An extra rather than a `[dependency-groups]` table, because
-# `pip install --group` needs pip 25.1 and the WSL system pip is 24.0.
+# The one place tool versions are stated. Every hook in .pre-commit-config.yaml runs its
+# tool through `uv run --locked --extra dev`, and CI does the same, so nothing else pins a
+# version. uv resolves these into uv.lock, which is committed and written only by uv
+# (docs/contributing/toolchain.md). Set up with `uv sync --extra dev`;
+# `pip install -e ".[dev]"` is the fallback, which is why this is a standard extra rather
+# than a `[dependency-groups]` table (`pip install --group` needs pip 25.1) and why no
+# uv-specific table exists here.
 [project.optional-dependencies]
 dev = [
     "ruff==0.16.8",
