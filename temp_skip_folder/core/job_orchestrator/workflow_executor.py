@@ -15,6 +15,17 @@ from typing import Dict
 from temp_skip_folder.core.dag.dag_loader import load_dag
 from temp_skip_folder.core.dag.dag_model import DataflowDAG, ExecutionCatalog, StageSpec
 
+import logging
+import os
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
+
+
 
 class StageStatus(Enum):
     """Execution status of a stage."""
@@ -117,17 +128,17 @@ async def execute_stage_async(
 
     # Wait for all input artifacts to be available
     if stage_spec.inputs:
-        print(f"\n[{stage_name}] waiting for dependencies...")
+        logger.info(f"\n[{stage_name}] waiting for dependencies...")
         await asyncio.gather(
             *[artifact_events[artifact_id].wait() for artifact_id in stage_spec.inputs]
         )
 
-    print(f"\nstarting stage: {stage_name}")
+    logger.info(f"\nstarting stage: {stage_name}")
 
     # Execute the stage operation (fan out → indexed job → fan in)
     await execute_stage_operation(stage_name, stage_spec)
 
-    print(f"\ncompleted stage: {stage_name}\n")
+    logger.info(f"\ncompleted stage: {stage_name}\n")
 
     # Signal that all output artifacts are now available
     for output_artifact in stage_spec.outputs:
@@ -154,14 +165,14 @@ async def orchestrate_dag() -> ExecutionSummary:
     dag_path = Path(__file__).parent.parent / "dag" / "dependencies.yaml"
     catalog_path = Path(__file__).parent.parent / "dag" / "execution_catalog.yaml"
 
-    print(f"\nLoading DAG from: {dag_path}")
-    print(f"\nLoading catalog from: {catalog_path}")
+    logger.info(f"\nLoading DAG from: {dag_path}")
+    logger.info(f"\nLoading catalog from: {catalog_path}")
 
     # Load and validate DAG
     dag: DataflowDAG = load_dag(dag_path, catalog_path)
     catalog: ExecutionCatalog = dag.execution_catalog
 
-    print(f"\nLoaded {len(dag.artifacts)} artifacts and {len(catalog.stages)} stages\n")
+    logger.info(f"\nLoaded {len(dag.artifacts)} artifacts and {len(catalog.stages)} stages\n")
 
     # Create asyncio.Event for each artifact to track when it's produced
     artifact_events: Dict[str, asyncio.Event] = {
@@ -175,13 +186,13 @@ async def orchestrate_dag() -> ExecutionSummary:
         tasks.append(task)
 
     # Execute all stages concurrently
-    print("\nStarting stage execution...\n")
+    logger.info("\nStarting stage execution...\n")
     summary_start = datetime.now()
 
     results = await asyncio.gather(*tasks)
 
     summary_end = datetime.now()
-    print("\nStage execution complete.\n")
+    logger.info("\nStage execution complete.\n")
 
     # Build and return execution summary
     summary = ExecutionSummary(
@@ -196,7 +207,7 @@ async def orchestrate_dag() -> ExecutionSummary:
 def main() -> None:
     """Main entry point for DAG orchestrator."""
     summary = asyncio.run(orchestrate_dag())
-    print(summary)
+    logger.info(summary)
 
 
 if __name__ == "__main__":

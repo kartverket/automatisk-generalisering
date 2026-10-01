@@ -9,84 +9,109 @@ These steps execute sequentially for each stage:
 """
 
 import asyncio
-import hashlib
 import json
-import re
 from datetime import date, timedelta
-from pathlib import Path
+import logging
+import os
 
 from temp_skip_folder.core.dag.dag_model import StageSpec
+
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 async def fan_out(stage_name: str, stage_spec: StageSpec) -> None:
     """
     Fan out phase: distribute input artifacts to workers.
 
-    For now, prints status and sleeps for 5 seconds.
+    For now, logger.infos status and sleeps for 5 seconds.
 
     Args:
         stage_name: Name of the stage being executed.
         stage_spec: StageSpec defining the stage's inputs/outputs.
     """
     input_artifacts = ", ".join(stage_spec.inputs) if stage_spec.inputs else "none"
-    print(f"\nstarting fan out of artifacts: {input_artifacts}")
+    logger.info(f"\nstarting fan out of artifacts: {input_artifacts}")
     await asyncio.sleep(10)
-    print(f"\ncompleted fan out of artifacts: {input_artifacts}")
+    logger.info(f"\ncompleted fan out of artifacts: {input_artifacts}")
 
 
 async def indexed_job(stage_name: str, stage_spec: StageSpec) -> None:
     """
     Indexed job phase: execute the actual stage processing.
 
-    For now, prints status and sleeps for 5 seconds.
+    For now, logger.infos status and sleeps for 5 seconds.
 
     Args:
         stage_name: Name of the stage being executed.
         stage_spec: StageSpec defining the stage's inputs/outputs.
     """
-    print(f"\nstarting indexed job with stage: {stage_name}")
+    logger.info(f"\nstarting indexed job with stage: {stage_name}")
     await asyncio.sleep(10)
-    print(f"\ncompleted indexed job with stage: {stage_name}")
+    logger.info(f"\ncompleted indexed job with stage: {stage_name}")
 
 
 async def fan_in(stage_name: str, stage_spec: StageSpec) -> None:
     """
     Fan in phase: aggregate results from workers.
 
-    For now, prints status and sleeps for 5 seconds.
+    For now, logger.infos status and sleeps for 5 seconds.
 
     Args:
         stage_name: Name of the stage being executed.
         stage_spec: StageSpec defining the stage's inputs/outputs.
     """
     output_artifacts = ", ".join(stage_spec.outputs) if stage_spec.outputs else "none"
-    print(f"\nstarting fan in of artifacts: {output_artifacts}")
+    logger.info(f"\nstarting fan in of artifacts: {output_artifacts}")
     await asyncio.sleep(10)
-    print(f"\ncompleted fan in of artifacts: {output_artifacts}")
+    logger.info(f"\ncompleted fan in of artifacts: {output_artifacts}")
 
-def _completion_log_path(stage_name: str) -> Path:
-    """Return the completion-log path for a stage."""
-    completion_log_dir = Path("/tmp/completion_log")
-    completion_log_dir.mkdir(parents=True, exist_ok=True)
-    file_name = f"{stage_name}.json"
-    file_name = file_name.replace(":", "_")
-    return completion_log_dir / file_name
+def _required_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise ValueError(f"Required environment variable '{name}' is not set")
+    return value
+
+
+def _completion_log_blob_name(stage_name: str) -> str:
+    """Return the GCS object name for a stage completion log."""
+    prefix = "stage_completion_logs"
+    file_name = f"{stage_name}.json".replace(":", "_")
+    return f"{prefix}/{file_name}"
+
+
+def _completion_log_bucket():
+    from google.cloud import storage
+
+    return storage.Client().bucket(_required_env("LOG_BUCKET"))
 
 
 def load_json(stage_name: str) -> dict:
-    json_file_path = _completion_log_path(stage_name)
-    if not json_file_path.exists():
+    from google.cloud.exceptions import NotFound
+
+    completion_log_blob = _completion_log_bucket().blob(
+        _completion_log_blob_name(stage_name)
+    )
+    try:
+        json_string = completion_log_blob.download_as_text()
+    except NotFound:
         return {}
 
-    with open(json_file_path, "r", encoding="utf-8") as file:
-        return json.load(file)
+    return json.loads(json_string)
 
 
 def write_json(stage_name: str, data: dict) -> None:
-    json_file_path = _completion_log_path(stage_name)
-    json_string = json.dumps(data, indent=4)
-    with open(json_file_path, "w", encoding="utf-8") as file:
-        file.write(json_string)
+    completion_log_blob = _completion_log_bucket().blob(
+        _completion_log_blob_name(stage_name)
+    )
+    completion_log_blob.upload_from_string(
+        json.dumps(data, indent=4), content_type="application/json"
+    )
 
 async def update_stage_completion_date(stage_name: str, completion_log: dict) -> None:
     """
@@ -138,7 +163,7 @@ async def execute_stage_operation(stage_name: str, stage_spec: StageSpec) -> Non
     completion_log = load_json(stage_name)
     complete = check_completion(stage_name, completion_log)
     if complete:
-        print(f"Stage '{stage_name}' has been completed recently. Skipping execution.")
+        logger.info(f"Stage '{stage_name}' has been completed recently. Skipping execution.")
         return
 
     await fan_out(stage_name, stage_spec)
