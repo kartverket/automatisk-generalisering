@@ -12,9 +12,8 @@ checks are:
 
 | hook | what it covers |
 |---|---|
-| `ruff format --check` | formatting of `src/`, `tests/`, `tools/` |
-| `ruff check` | unused imports, import order, and `SLF001` on `src/ag/generalization/` only |
-| `black --check` | formatting of the legacy packages and `tests_legacy/`; removed when the last legacy package is migrated |
+| `ruff format --check` | formatting of every Python file |
+| `ruff check` | pyflakes, import order and `SLF001` on `src/ag/generalization/`; on the legacy packages `F401` and `I001` are held back and a per-file baseline applies ([setup and toolchain](toolchain.md)) |
 | `pyright` | strict type checking of `src/`, `tests/`, `tools/` |
 | `lint-imports` | the import contracts in `.importlinter` |
 | `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py` |
@@ -122,7 +121,8 @@ image promotion.
 ## `tests_legacy/`
 
 The tests of the legacy packages. They are not collected by a bare `pytest` (they are outside
-`testpaths`), are not type-checked, and are formatted by Black with the packages they test.
+`testpaths`), are not type-checked, and are formatted and linted by ruff like the packages they
+test.
 Run them by hand under the ArcGIS Pro environment, from the repository root:
 
 ```

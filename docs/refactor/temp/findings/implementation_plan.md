@@ -254,16 +254,17 @@ legacy code and start now (§3).
   `src/ag` in this slice.
 - `pyproject.toml`: a `[project]` table with the `src` layout and an editable install;
   **`requires-python = ">=3.13"`, `[tool.pyright] pythonVersion = "3.13"` and
-  `[tool.ruff] target-version = "py313"`, set together** (§4.7; ruff format replaces Black
-  for the new code, and Black keeps the legacy packages until they are migrated). `[tool.pyright]` is `strict` over `src`, `tests`, `tools`
+  `[tool.ruff] target-version = "py313"`, set together** (§4.7; ruff format replaces Black,
+  first for the new code and, from 2026-10-02, for the whole repository, A28). `[tool.pyright]` is `strict` over `src`, `tests`, `tools`
   and replaces the template's `pyrightconfig.json`. The legacy packages are outside its include
   list.
 - One toolchain (revised in slice 0): uv manages the environment (A27); tool versions pinned
   once, in `pyproject.toml`'s `dev` extra, resolved in the committed `uv.lock`;
   `.pre-commit-config.yaml` is the one list of checks, every hook local and running its tool
-  through `uv run --locked --extra dev`, independent of `PATH` and activation: `ruff format --check`, `ruff check`, Black over the legacy
-  packages only (removed when the last one is migrated), `pyright`, `lint-imports`, the source
-  scans, `pytest -m "not arcpy"`, the two document checkers. CI on `ubuntu-latest` and
+  through `uv run --locked --extra dev`, independent of `PATH` and activation: `ruff format --check`
+  and `ruff check` over the whole repository (A28: no Black; `F401`/`I001` held back on the
+  legacy packages with a per-file baseline), `pyright`, `lint-imports`, the source scans,
+  `pytest -m "not arcpy"`, the two document checkers. CI on `ubuntu-latest` and
   `windows-latest`, **Python 3.13** from `.python-version`, runs `uv sync --locked --extra dev`
   and then `pre-commit run --all-files` through uv, and nothing else for these checks; the old
   black workflow is deleted, and its "Black Lint Check" is replaced as the required status
@@ -1039,7 +1040,8 @@ its first use and the review of Task C is the review of the guide.
 
 Decided 2026-09-21; landed in slice 0 as `docs/contributing/python-version.md`, which is now
 the authority. Revised the same slice: Black was replaced by ruff format for the new code, and
-the CI workflow states the version too, so four settings move together, not three.
+the CI workflow states the version too, so four settings move together, not three. Black was
+retired altogether on 2026-10-02 (A28).
 
 - **The target is Python 3.13.** There is no fixed lower constraint. The project follows its
   runtimes upward: the target is the lowest Python minor version across the supported runtimes
@@ -1047,8 +1049,7 @@ the CI workflow states the version too, so four settings move together, not thre
   production yet, so no older build constrains it.
 - **Four settings state it, and they always change together:** `requires-python`, pyright's
   `pythonVersion` and ruff's `target-version` in `pyproject.toml`, and `.python-version`, which
-  uv reads locally and in CI. Black, which formats only the legacy packages
-  until they are migrated, infers its target from `requires-python`.
+  uv reads locally and in CI.
 - **CI runs the pure-core suite on that version**, on both runners.
 - **Raising the floor.** Raise it only when every supported runtime has moved. Change the
   four settings in one pull request; run the full check set; say in the pull request which

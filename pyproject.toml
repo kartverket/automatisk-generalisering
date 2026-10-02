@@ -26,38 +26,21 @@ dev = [
     "import-linter==2.15",
     "pytest==9.1.1",
     "pre-commit==4.6.2",
-    "black==26.5.1",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Ruff formats and lints src, tests and tools only. The hooks pass those paths; the
-# exclusions below, with `force-exclude`, keep ruff off everything else even when a file is
-# passed explicitly, as an editor does, so the legacy packages keep their current
-# formatting (checked by Black through its own hook) until they are migrated. The example
-# pipelines are excluded while they are inert; the exclusion goes when they go live.
+# Ruff is the one formatter and linter for the whole repository. `force-exclude` keeps the
+# exclusion in force when a file is passed explicitly, as an editor does; the example
+# pipelines are excluded while they are inert, and the exclusion goes when they go live;
+# docs/ holds the template the new code is lifted from, module by module, and staging
+# scripts, none of it shipped. Patterns are root-anchored (`dir/**`, `./file.py`): a bare name would match that name
+# anywhere in the tree, `src/ag/generalization/` included.
 [tool.ruff]
 target-version = "py313"
 force-exclude = true
-extend-exclude = [
-    "tests/fixtures/example_pipelines",
-    "composition_configs",
-    "constants",
-    "custom_tools",
-    "data_orchestrator",
-    "env_setup",
-    "file_manager",
-    "generalization",
-    "temp_skip_folder",
-    "tests_legacy",
-    "docs",
-    "conf.py",
-    "generate_pyvis_docu.py",
-    "main_on_cloud.py",
-    "main_on_prem.py",
-    "paths.py",
-]
+extend-exclude = ["tests/fixtures/example_pipelines", "docs/**"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -66,15 +49,64 @@ line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
-    "F401",    # unused imports
+    "F",       # pyflakes
+    "E9",      # io and syntax errors
     "I",       # isort (import order and grouping)
     "SLF001",  # private member access; scoped to ag/generalization below
 ]
 
 # SLF001 catches reach-through such as `tb.geometry._port`, which no import contract can
 # see. It applies to the domain code only.
+#
+# The legacy packages are linted, with two rules held back: F401 and I001 have autofixes
+# that remove or reorder imports, and the legacy convention is side-effect imports, so they
+# are reported nowhere a fix could change behaviour. Below them, a per-file baseline: the
+# findings present when linting was switched on. A baseline entry is removed when its
+# file is cleaned; new files and new findings elsewhere are not exempt.
 [tool.ruff.lint.per-file-ignores]
 "!src/ag/generalization/**" = ["SLF001"]
+"composition_configs/**" = ["F401", "I001"]
+"constants/**" = ["F401", "I001"]
+"custom_tools/**" = ["F401", "I001"]
+"data_orchestrator/**" = ["F401", "I001"]
+"env_setup/**" = ["F401", "I001"]
+"file_manager/**" = ["F401", "I001"]
+"generalization/**" = ["F401", "I001"]
+"geometry_validation/**" = ["F401", "I001"]
+"temp_skip_folder/**" = ["F401", "I001"]
+"tests_legacy/**" = ["F401", "I001"]
+"./conf.py" = ["F401", "I001"]
+"./generate_pyvis_docu.py" = ["F401", "I001"]
+"./main_on_cloud.py" = ["F401", "I001"]
+"./main_on_prem.py" = ["F401", "I001"]
+"./paths.py" = ["F401", "I001"]
+# Baseline, 2026-10-02: 26 files, 87 findings. Remove an entry when the file is cleaned.
+"custom_tools/generalization_tools/building/resolve_building_conflicts.py" = ["F811"]
+"custom_tools/generalization_tools/road/resolve_road_conflicts.py" = ["F811"]
+"generalization/n10/arealdekke/category_tools/area_aggregator.py" = ["F811"]
+"generalization/n10/arealdekke/overall_tools/eliminate_small_polygons.py" = ["F541"]
+"generalization/n10/arealdekke/overall_tools/replace_uncategorized.py" = ["F541"]
+"generalization/n10/facilities/ledning.py" = ["F541"]
+"generalization/n10/hoydepunkt_innsjo/hoydepunkt_innsjo.py" = ["F841"]
+"generalization/n10/landForms/hoydetall.py" = ["F821"]
+"generalization/n100/building/data_preparation.py" = ["F811", "F841"]
+"generalization/n100/building/removing_points_and_erasing_polygons_in_water_features.py" = ["F541"]
+"generalization/n100/river/extend_river_line.py" = ["F841"]
+"generalization/n100/river/mst_loop.py" = ["F841"]
+"generalization/n100/river/unconnected_river_geometry.py" = ["F841", "F541"]
+"generalization/n100/road/clean_elveg_and_sti.py" = ["F541"]
+"generalization/n100/road/data_preparation_2.py" = ["F811", "F541"]
+"generalization/n100/road/ramps.py" = ["F841", "F541"]
+"generalization/n100/road/resolve_road_conflict_preparation.py" = ["F541"]
+"generalization/n100/road/testing_file.py" = ["F821"]
+"generalization/n100/road/vir_test/test1.py" = ["F821"]
+"generalization/n100/road/vir_test/test2.py" = ["F821", "F811"]
+"generalization/n250/road/data_preparation_2.py" = ["F821", "F841", "F541"]
+"generalization/n250/road/ramps_point.py" = ["F821", "F841"]
+"main_on_cloud.py" = ["F841"]
+"temp_skip_folder/core/infrastructure/archive/gcs_client.py" = ["F841"]
+"tests_legacy/test_arealdekket_class.py" = ["F841"]
+"tests_legacy/test_category_class.py" = ["F841"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
