@@ -88,3 +88,39 @@ A developer on Windows keeps two environments and uses each for one purpose.
   active does not matter, because the hooks run through uv.
 
 The default `arcgispro-py3` environment is read-only, which is why the clone exists.
+
+## Editors
+
+An editor formats and analyses with whatever copy of a tool it finds, usually its own
+bundled one or a global install, not the version pinned in `pyproject.toml`. Point it at
+`.venv` so that what it writes on save is what the hooks accept. The same applies to any
+editor; the committed settings cover VS Code.
+
+**VS Code.** `.vscode/extensions.json` recommends Python, Pylance, Ruff and Black Formatter;
+`.vscode/settings.json` makes ruff the formatter for Python files and runs Black through uv.
+Both files are committed; the rest of `.vscode/` is ignored. Select the interpreter per task:
+`.venv` for `src/ag`, `tests/` and `tools/`; the cloned ArcGIS Pro environment for the legacy
+packages, `tests_legacy/`, scratch scripts and `pytest -m arcpy`. Nothing else is configured
+by hand: type checking, the strict scope and the ArcPy stub come from `pyproject.toml`, which
+Pylance reads. The Ruff extension's `importStrategy` is `fromEnvironment`: it takes ruff from
+the selected interpreter's environment, so it is the pinned one when `.venv` is selected and
+the extension's bundled one under the Pro interpreter; that is harmless, because ruff is
+force-excluded from the legacy scope and does nothing there.
+
+**What you see.** Under `.venv`, `import arcpy` in a legacy file is reported as unresolved and
+gets no completion; switch to the Pro interpreter for that work. A developer with no ArcPy
+available at all (WSL, no Pro interpreter) gets no completion in the legacy packages, full
+stop: pyright does not check them, so it is that one unresolved-import diagnostic and
+nothing else. The fix is not to widen the constrained stub and not to add a `stubPath` to
+`pyproject.toml`; either would apply a stub to code it was never written for. In
+`src/ag/adapters/arcpy/` and `tests/support/arcpy/` the editor shows the constrained ArcPy
+stub whichever interpreter is selected: a tool call, an `arcpy.env` access or
+`arcpy.ExecuteError` is an error there, exactly as in the hooks. The response is never to
+widen the stub for the editor's sake: a tool goes through `session.run_tool`, and a
+non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same pull
+request. Elsewhere in `src/ag`, `tests/` and `tools/`, ArcPy is not importable at all, which
+is what CI relies on.
+
+**Formatting both scopes by hand:** `tools/format.sh`, which runs ruff over the new code and
+Black over the legacy packages, both through uv. On Windows, run it from Git Bash or run its
+two commands directly.

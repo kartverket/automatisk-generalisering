@@ -1,12 +1,11 @@
-# Import contracts for src/ag. AUTHORITATIVE for the import rules of the package;
-# docs/refactor/03-architecture.md sections 4.1, 4.2 and 7 describe it and defer to it.
+# Import contracts for src/ag. AUTHORITATIVE for the import rules of the package; the
+# architecture document describes it and defers to it.
 #
 # Run: lint-imports   (from the repository root, with the project installed editable)
 #
-# Built against docs/refactor/temp/findings/project_tree.md section 6, one contract per
-# row, and named by row number so the file can be read against that table. Row 14 needs
-# two contracts and row 16 needs one per adapter and port, so there are more than
-# eighteen sections.
+# Built against the import-rule table of the accepted tree, one contract per row and named
+# by row number so the file can be read against that table. Row 14 needs two contracts and
+# row 16 needs one per adapter and port, so there are more than eighteen sections.
 #
 # EVERY CONTRACT HAS BEEN BROKEN ONCE ON PURPOSE with a throwaway probe module, and the
 # failure recorded in the pull request that added it. Do the same for a new contract:
@@ -151,8 +150,8 @@ modules =
 
 # --- Row 8 -------------------------------------------------------------------------
 # The narrower rule, that only session.py runs a tool, touches arcpy.env or names a
-# vendor exception, is not an import rule. The stub in typings/arcpy/ and a static scan
-# enforce it (project_tree.md section 6.1); both arrive in slice 1b.
+# vendor exception, is not an import rule. The stub in stubs/arcpy_constrained/ and a static scan
+# enforce it (docs/contributing/toolchain.md).
 [importlinter:contract:row-08-vendor-libraries]
 name = Row 8: a vendor library is imported only by its adapter
 type = forbidden
@@ -187,7 +186,7 @@ allowed_importers =
 
 
 # --- Row 10 ------------------------------------------------------------------------
-# One allowed importer while `mint` is reached through the Toolbox (T4.3, decided at 2a).
+# One allowed importer while `mint` is reached through the Toolbox.
 [importlinter:contract:row-10-lineage-is-runtimes-alone]
 name = Row 10: only ag.runtime imports ag.lineage
 type = protected
