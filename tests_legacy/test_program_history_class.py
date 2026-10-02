@@ -10,7 +10,6 @@ from generalization.n10.arealdekke.orchestrator.program_history_class import (
 
 
 class test_program_history_class(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         pass

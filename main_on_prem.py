@@ -242,7 +242,7 @@ def main():
 
     if os.environ.get("AREA"):
         object_name = (
-            f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/road.gdb.zip"
+            f"outputs/{args.scale}_{args.obj}_{os.environ.get('AREA')}/road.gdb.zip"
         )
     else:
         object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"

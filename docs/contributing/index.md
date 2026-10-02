@@ -2,8 +2,8 @@
 
 ### 1. Code Style & Formatting
 
-- Code under `src/`, `tests/` and `tools/` is formatted by `ruff format` and type-checked by
-  pyright in strict mode; the legacy packages are formatted by Black until they are migrated.
+- Every Python file is formatted by `ruff format`; code under `src/`, `tests/` and `tools/` is
+  type-checked by pyright in strict mode.
 - uv manages the environment and the tools; see [setup and toolchain](toolchain.md).
 - Every check runs as a pre-commit hook and again on every pull request; see
   [testing and checks](testing.md) for running them by hand.

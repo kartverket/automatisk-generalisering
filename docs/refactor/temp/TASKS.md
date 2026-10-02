@@ -151,6 +151,8 @@ work but have different lifetimes and different modules.
 | 41 | T7.2 | `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]` | **done** (slice 0) |
 | 42 | T7.3 | Consistency checks `[INDEPENDENT]` | **done** |
 | 43 | T7.5 | `run_partition_optimization` default bug `[INDEPENDENT]` | not started |
+| 44 | T7.6 | Legacy lint baseline: undefined names `[INDEPENDENT]` | not started |
+| 45 | T7.7 | Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]` | not started |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -2195,6 +2197,99 @@ A9.10. Adding them to `HEADWORD_VARIANCE` instead would hide a real defect.
 
 ---
 
+## 43. T7.5 — `run_partition_optimization` default bug `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** `PartitionRunConfig.run_partition_optimization` no longer defaults to
+`require("SELECT_STUDY_AREA")` (`composition_configs/core_config.py:232`) — a raw environment
+string, truthy even when it reads `"False"`, tied to an unrelated setting, and evaluated at import
+time. Found by the N:1 real-data probe (2026-09-17), which had to pass `False` explicitly. The
+same variable is parsed three different ways today (`generalization/n100/river/data_preparation.py:25`,
+`generalization/n100/road/data_preparation_2.py:67-70`,
+`generalization/n100/building/data_preparation.py:133`).
+
+- one boolean parser in `paths.py` (`require_bool(name)`: `true`/`false`, case-insensitive,
+  anything else raises);
+- a dedicated `RUN_PARTITION_OPTIMIZATION` setting read through it, with the dataclass default a
+  plain `False` and the caller passing the parsed value;
+- `SELECT_STUDY_AREA` read through the same parser at its three sites.
+
+Acceptance: `SELECT_STUDY_AREA=False` no longer enables optimisation; a unit test covers the parser
+on `true`, `False`, `""` and an unset variable.
+
+**files touched** `composition_configs/core_config.py`, `paths.py`, the three data-preparation
+modules, `tests/`.
+
+**depends on** nothing.
+
+**decision refs** none — a defect in the current code, not a design item.
+
+**doc migration** none.
+
+---
+
+## 44. T7.6 — Legacy lint baseline: undefined names `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** The six legacy files whose `F821` baseline entries in `pyproject.toml`
+(`[tool.ruff.lint.per-file-ignores]`) exist because they use a name that is never defined are
+fixed, and their entries are removed, so `ruff check` holds them to the full rule set. These
+are latent `NameError`s, which is why they come before the rest of the baseline:
+- `generalization/n10/landForms/hoydetall.py`
+- `generalization/n100/road/testing_file.py`
+- `generalization/n100/road/vir_test/test1.py`
+- `generalization/n100/road/vir_test/test2.py`
+- `generalization/n250/road/data_preparation_2.py`
+- `generalization/n250/road/ramps_point.py`
+
+Fixing means deciding per site whether the name was meant to be a parameter, an import or a
+dead branch; it is a behaviour change in legacy code and is reviewed as one. `F821` has no
+autofix.
+
+**files touched** the six files above; `pyproject.toml` (entries removed).
+
+**depends on** nothing.
+
+**decision refs** A28.
+
+**doc migration** none.
+
+---
+
+## 45. T7.7 — Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]`
+
+**status:** not started
+
+**what done means** Every remaining baseline entry (`F811` redefinition of an unused name,
+`F841` unused variable, `F541` f-string without placeholders) is removed from
+`pyproject.toml`, one reviewed change per directory, each by the developer who owns that
+package; after the last one the baseline section of `pyproject.toml` is empty and the comment
+introducing it is deleted. `F401` and `I001` stay held back on the legacy directories; that is
+not part of this task. The entries, by directory:
+- `custom_tools/generalization_tools`: `resolve_building_conflicts.py`, `resolve_road_conflicts.py`
+- `generalization/n10`: `area_aggregator.py`, `eliminate_small_polygons.py`, `replace_uncategorized.py`, `ledning.py`, `hoydepunkt_innsjo.py`, `hoydetall.py`
+- `generalization/n100`: `data_preparation.py`, `removing_points_and_erasing_polygons_in_water_features.py`, `extend_river_line.py`, `mst_loop.py`, `unconnected_river_geometry.py`, `clean_elveg_and_sti.py`, `data_preparation_2.py`, `ramps.py`, `resolve_road_conflict_preparation.py`, `testing_file.py`, `test1.py`, `test2.py`
+- `generalization/n250`: `data_preparation_2.py`, `ramps_point.py`
+- `repository root`: `main_on_cloud.py`
+- `temp_skip_folder`: `gcs_client.py`
+- `tests_legacy`: `test_arealdekket_class.py`, `test_category_class.py`
+
+`F541`'s fix is safe and cosmetic (`ruff check --fix --select F541 <file>`); `F811` and `F841`
+are fixed by hand, because removing a duplicate import or an assignment is a change a reviewer
+should see. A directory counts as done when `ruff check` on it passes with no baseline entry.
+
+**files touched** the files above; `pyproject.toml`.
+
+**depends on** T7.6 (the undefined names first).
+
+**decision refs** A28.
+
+**doc migration** none.
+
+---
+
 # Found while writing this
 
 Open items noticed during transcription. **None of these are resolved.** They are listed rather
@@ -2251,35 +2346,3 @@ than decided, per the constraint on this pass.
 10. **B8 — `LineageRoot` → `OriginRoot` is a code rename.** The collision ruling is settled but the
     work was not scoped; it touches `data_objects.py`, `locations.py`, `policy.py` and
     `validation.py`. Now **T7.2**.
-
-## 43. T7.5 — `run_partition_optimization` default bug `[INDEPENDENT]`
-
-**status:** not started
-
-**what done means** `PartitionRunConfig.run_partition_optimization` no longer defaults to
-`require("SELECT_STUDY_AREA")` (`composition_configs/core_config.py:232`) — a raw environment
-string, truthy even when it reads `"False"`, tied to an unrelated setting, and evaluated at import
-time. Found by the N:1 real-data probe (2026-09-17), which had to pass `False` explicitly. The
-same variable is parsed three different ways today (`generalization/n100/river/data_preparation.py:25`,
-`generalization/n100/road/data_preparation_2.py:67-70`,
-`generalization/n100/building/data_preparation.py:133`).
-
-- one boolean parser in `paths.py` (`require_bool(name)`: `true`/`false`, case-insensitive,
-  anything else raises);
-- a dedicated `RUN_PARTITION_OPTIMIZATION` setting read through it, with the dataclass default a
-  plain `False` and the caller passing the parsed value;
-- `SELECT_STUDY_AREA` read through the same parser at its three sites.
-
-Acceptance: `SELECT_STUDY_AREA=False` no longer enables optimisation; a unit test covers the parser
-on `true`, `False`, `""` and an unset variable.
-
-**files touched** `composition_configs/core_config.py`, `paths.py`, the three data-preparation
-modules, `tests/`.
-
-**depends on** nothing.
-
-**decision refs** none — a defect in the current code, not a design item.
-
-**doc migration** none.
-
----

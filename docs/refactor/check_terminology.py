@@ -83,7 +83,9 @@ def anchors_of(path: Path) -> set[str]:
         return set()
     return {
         github_anchor(m.group(1))
-        for m in re.finditer(r"^#{1,6}\s+(.+?)\s*$", path.read_text(encoding="utf-8"), re.M)
+        for m in re.finditer(
+            r"^#{1,6}\s+(.+?)\s*$", path.read_text(encoding="utf-8"), re.M
+        )
     }
 
 
@@ -101,8 +103,11 @@ for name, _, _, authority in rows:
             broken.append(f"{name}: {target} does not exist")
         elif anchor not in anchor_cache[target]:
             broken.append(f"{name}: {target}#{anchor} — no such heading")
-report("authority-resolves  every cited file.md#anchor exists", broken,
-       "a heading was renamed, or the citation was never right")
+report(
+    "authority-resolves  every cited file.md#anchor exists",
+    broken,
+    "a heading was renamed, or the citation was never right",
+)
 
 # --- 2. every headword appears in what it cites ---------------------------
 doc_cache: dict[str, str] = {}
@@ -125,8 +130,11 @@ for name, _, _, authority in rows:
     if key.lower() in hay.lower() or (squashed_key and squashed_key in squashed_hay):
         continue
     missing.append(f"{key}  (cites {', '.join(sorted(targets))})")
-report("headword-present    every term appears in the doc it cites", missing,
-       "a concept was renamed and the glossary kept the old word")
+report(
+    "headword-present    every term appears in the doc it cites",
+    missing,
+    "a concept was renamed and the glossary kept the old word",
+)
 
 print()
 if failures:

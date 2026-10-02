@@ -1813,6 +1813,9 @@ the three settings and runs pyright and the core suite.
 > ruff's `target-version` (ruff format replaced Black for the new code in slice 0), with Black
 > inferring its target from `requires-python` for the legacy packages. The text above stays as
 > decided; the page is now the authority.
+>
+> *2026-10-02:* Black retired altogether (A28); ruff's `target-version` is the formatter
+> setting for the whole repository.
 
 ## A27. Environment and tool management: uv
 
@@ -1835,6 +1838,35 @@ unpinned tool is not the check that was configured.
 
 > *Landed 2026-09-30 (slice 0)* in `docs/contributing/toolchain.md`, `.pre-commit-config.yaml`,
 > `.github/workflows/checks.yml`, `.python-version` and `uv.lock`. The page is the authority.
+
+## A28. One formatter, and lint on the legacy packages
+
+*Decided 2026-10-02.* **Ruff is the only formatter, over the whole repository; Black is
+retired.** Slice 0 had kept Black over the legacy packages so that their formatting stayed
+untouched until migration. That split cannot be expressed in an editor (VS Code binds one
+formatter per language, not per directory), so format-on-save could reach only one scope, and
+the legacy code, which keeps receiving work for months, would have been formatted by hand or
+not at all. Measured first: ruff's formatter changes 35 of the legacy files relative to Black,
+and the syntax tree of every file is identical before and after, so the cost was one
+whitespace-only commit, recorded in `.git-blame-ignore-revs`.
+
+**Lint runs on the legacy packages too.** After Black left, legacy code had no check in CI at
+all (pyright, pytest, the import contracts and the scans all cover `src/ag`, `tests/` and
+`tools/` only). Ruff lints it with `F`, `E9`, `I` and `SLF001`, with two rules held back under
+the legacy directories by root-anchored `per-file-ignores`: `F401` and `I001`, whose autofixes
+remove or reorder imports, against the legacy convention of side-effect imports. The findings
+present when linting was switched on form a per-file baseline in `pyproject.toml`, one entry
+per file with the rules it fails; each entry is a tracked task, removed when the file is
+cleaned, the undefined-name (`F821`) files first because those are latent `NameError`s. The
+alternative, excluding the legacy packages from lint, was rejected: it would have left the
+code that is still changing with the weakest check in the repository. The exclusion patterns
+are root-anchored because a bare name (`"generalization"`) matches that name anywhere in the
+tree, which had silently excluded `src/ag/generalization/` from formatting and linting.
+`destination:` `docs/contributing/toolchain.md`; `pyproject.toml`.
+
+> *Landed 2026-10-02* in `pyproject.toml`, `.pre-commit-config.yaml`, `tools/format.sh`,
+> `.vscode/`, `.git-blame-ignore-revs` and `docs/contributing/toolchain.md`. The page is the
+> authority.
 
 ---
 

@@ -92,7 +92,7 @@ def validate_positional_arity(fn: Any, n: int, *, allow_varargs=True) -> None:
     if allow_varargs and has_varargs:
         return
     raise TypeError(
-        f"{getattr(fn,'__name__',fn)} does not accept {n} positional dataclass arg(s)"
+        f"{getattr(fn, '__name__', fn)} does not accept {n} positional dataclass arg(s)"
     )
 
 

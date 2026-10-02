@@ -14,7 +14,6 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class RoadStatistics(LineStatistics):
-
     RULES: list[Rule] = [
         Rule(
             "road_categories",
@@ -51,7 +50,6 @@ class RoadStatistics(LineStatistics):
 
 
 class RiverStatistics(LineStatistics):
-
     ##########################
     # Main functions
     ##########################
@@ -69,7 +67,6 @@ class RiverStatistics(LineStatistics):
 
 
 class LanduseStatistics(PolygonStatistics):
-
     RULES: list[Rule] = [
         Rule(
             "landuse_categories",

@@ -223,7 +223,6 @@ def rotate_roadblocks(files: dict, out_feature_class, rotation_difference) -> No
         input_point_lyr, ["OBJECTID", "rotasjon"]
     ) as cursor_roadblock:
         for roadblock in cursor_roadblock:
-
             with arcpy.da.SearchCursor(
                 target_lines_w_bearing_lyr, ["JOIN_FID", "LINE_BEARING"]
             ) as cursor_intersections_road_n_roadblock:

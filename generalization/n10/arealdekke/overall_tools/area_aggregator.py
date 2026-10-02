@@ -46,7 +46,7 @@ def aggregate_areas(input_fc: str, output_fc: str, map_scale: str) -> None:
     wfm = WorkFileManager(config=config)
 
     print(
-        f"\n{'====='*15}\nAggregating small polygons at map scale '{map_scale}'\n{'====='*15}\n"
+        f"\n{'=====' * 15}\nAggregating small polygons at map scale '{map_scale}'\n{'=====' * 15}\n"
     )
 
     features = {"Innsjo": 1 / 2}

@@ -13,7 +13,6 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class PolygonStatistics(VectorStatistics):
-
     RULES: list[Rule] = [
         Rule("total_area", "eqd", 0, Severity.ERROR),
         Rule(
@@ -74,7 +73,6 @@ class PolygonStatistics(VectorStatistics):
 
 
 class LineStatistics(VectorStatistics):
-
     RULES: list[Rule] = [
         Rule(
             "total_length",
@@ -174,7 +172,6 @@ class LineStatistics(VectorStatistics):
 
 
 class PointStatistics(VectorStatistics):
-
     ##########################
     # Main functions
     ##########################

@@ -107,8 +107,7 @@ def main():
     data_clean_up.main()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
         f.write(
-            f"Total amount of work files created: "
-            f"{WorkFileManager._build_file_counter}"
+            f"Total amount of work files created: {WorkFileManager._build_file_counter}"
         )
 
 

@@ -1,0 +1,6 @@
+# Whitespace-only commits, hidden from `git blame`. Enable once per clone with
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (docs/contributing/toolchain.md).
+
+# Reformat of the legacy packages with ruff when it became the one formatter.
+f1b14c9abbe26c93b178fe4ab76957dcc08d4c7e

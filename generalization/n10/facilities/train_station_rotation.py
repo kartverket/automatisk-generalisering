@@ -135,7 +135,6 @@ def find_track_rotation(files: dict, output_fc: str) -> None:
                 files["train_station_rotated"], ["OBJECTID", "LINE_BEARING"]
             ) as copy_cursor:
                 for copy_station in copy_cursor:
-
                     if original_station[0] == copy_station[0]:
                         original_station[1] = copy_station[1]
                         original_cursor.updateRow(original_station)

@@ -885,7 +885,6 @@ def edit_geom_pre():
         arcpy.da.SearchCursor(temp_fc, fields) as search,
         arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert,
     ):
-
         for row in search:
             oid = row[0]
             geom = row[1]

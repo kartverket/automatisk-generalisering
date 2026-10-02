@@ -14,7 +14,6 @@ from generalization.n10.arealdekke.orchestrator.program_history_class import (
 
 
 class test_arealdekket_class(unittest.TestCase):
-
     def setUp(self):
 
         data_pre_comp: dict = {
@@ -84,7 +83,6 @@ class test_arealdekket_class(unittest.TestCase):
 
         # Does arealdekke initiate correctly if it previously completed the preprocessing?
         with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp:
-
             mock_history_pre_comp.return_value = self.temp_obj_pre_comp
             arealdekke_pre_comp = Arealdekke(map_scale="N10")
 
@@ -100,7 +98,6 @@ class test_arealdekket_class(unittest.TestCase):
                 History_class, "restore_arealdekke_attributes"
             ) as mock_restore,
         ):
-
             mock_history_pre_incomp.return_value = self.temp_obj_pre_incomp
 
             mock_restore.return_value = {
@@ -132,7 +129,6 @@ class test_arealdekket_class(unittest.TestCase):
                 mode="w", suffix=".yml", delete=False
             ) as temp_pre_comp,
         ):
-
             data_pre_comp: dict = {
                 "newest_version": "path",
                 "map_scale": "N10",
@@ -185,7 +181,6 @@ class test_arealdekket_class(unittest.TestCase):
                 self.arealdekke_module + ".arcpy.management.CopyFeatures"
             ) as mock_arcpy_copy,
         ):
-
             mock_history_pre_comp.return_value = self.temp_obj_pre_comp
             mock_get_locked.return_value = "locked_cats"
             mock_get_category.return_value = "category"

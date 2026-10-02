@@ -2,7 +2,6 @@ from enum import Enum
 
 
 class history_keys(Enum):
-
     category_history = "category_history"
     accessibility = "accessibility"
     reinsert = "reinsert"

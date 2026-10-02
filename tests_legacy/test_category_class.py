@@ -5,7 +5,6 @@ from generalization.n10.arealdekke.orchestrator.category_class import Category
 
 
 class test_category_class(unittest.TestCase):
-
     def test_process_category(self) -> None:
 
         module = "generalization.n10.arealdekke.orchestrator.category_class"
@@ -18,7 +17,6 @@ class test_category_class(unittest.TestCase):
             patch(module + ".inspect.signature", return_value=mock_sig),
             patch(module + ".arcpy.management.CopyFeatures") as mock_arcpy_copy,
         ):
-
             # A) What happens if the category has to start from the beginning?
 
             mock_cat_tools.return_value = {

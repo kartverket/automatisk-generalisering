@@ -50,8 +50,8 @@ Every hook in `.pre-commit-config.yaml` runs as `uv run --locked --extra dev <to
 first brings `.venv` up to date with `uv.lock`, then runs the tool from that environment.
 Two consequences:
 
-- the hooks do not depend on shell activation or on `PATH` order: a global `ruff` or
-  `black` of another version is never what runs;
+- the hooks do not depend on shell activation or on `PATH` order: a global `ruff` of
+  another version is never what runs;
 - a package installed into `.venv` by hand is removed at the next hook run, because the
   sync is exact. Add it to `pyproject.toml` instead.
 
@@ -81,8 +81,8 @@ A developer on Windows keeps two environments and uses each for one purpose.
 - The Pro clone is managed with pip, not uv: `pip install -e .` there installs the project
   beside ArcPy, and `pip install pytest==<version>` adds pytest at the version pinned in
   `pyproject.toml`'s `dev` extra. It does not get the `dev` extra: the checks are never run
-  from the Pro environment, so ruff, pyright, Black, import-linter and pre-commit have no
-  place in it. **Never run `uv sync` in the Pro environment**; it would replace it with a
+  from the Pro environment, so ruff, pyright, import-linter and pre-commit have no place in
+  it. **Never run `uv sync` in the Pro environment**; it would replace it with a
   Python that has no ArcPy.
 - Commits are made from a shell where `uv` is on `PATH`; which interpreter the shell has
   active does not matter, because the hooks run through uv.
@@ -96,8 +96,8 @@ bundled one or a global install, not the version pinned in `pyproject.toml`. Poi
 `.venv` so that what it writes on save is what the hooks accept. The same applies to any
 editor; the committed settings cover VS Code.
 
-**VS Code.** `.vscode/extensions.json` recommends Python, Pylance, Ruff and Black Formatter;
-`.vscode/settings.json` makes ruff the formatter for Python files and runs Black through uv.
+**VS Code.** `.vscode/extensions.json` recommends Python, Pylance and Ruff;
+`.vscode/settings.json` makes ruff the formatter for every Python file and formats on save.
 Both files are committed; the rest of `.vscode/` is ignored. Select the interpreter per task:
 `.venv` for `src/ag`, `tests/` and `tools/`; the cloned ArcGIS Pro environment for the legacy
 packages, `tests_legacy/`, scratch scripts and `pytest -m arcpy`. Nothing else is configured
@@ -121,6 +121,22 @@ non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same
 request. Elsewhere in `src/ag`, `tests/` and `tools/`, ArcPy is not importable at all, which
 is what CI relies on.
 
-**Formatting both scopes by hand:** `tools/format.sh`, which runs ruff over the new code and
-Black over the legacy packages, both through uv. On Windows, run it from Git Bash or run its
-two commands directly.
+**Formatting by hand:** `tools/format.sh` sorts imports and formats the whole repository with
+the pinned ruff through uv. On Windows, run it from Git Bash or run its two commands directly.
+
+## One formatter, and lint on the legacy packages
+
+Ruff formats and lints the whole repository; there is no second formatter. The legacy
+packages were reformatted once when ruff became the formatter, as a whitespace-only commit
+that changed no file's syntax tree; its SHA is in `.git-blame-ignore-revs`, so run
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` once per clone and `git blame`
+skips it.
+
+Lint runs on the legacy packages too, with two rules held back there: `F401` (unused import)
+and `I001` (import order) have autofixes that remove or reorder imports, and the legacy
+convention is side-effect imports, so `pyproject.toml` ignores them under the legacy
+directories. Below those entries sits a per-file baseline: the findings that were present when
+linting was switched on, listed file by file with the rules they fail. A baseline entry is
+removed when its file is cleaned, and nothing else is exempt: a new file, or a new finding in
+a file not on the list, fails the hook. The hooks only report; no rule is fixed
+automatically, and the editor settings run no fixes on save.
