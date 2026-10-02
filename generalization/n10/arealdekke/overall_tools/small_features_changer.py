@@ -326,9 +326,10 @@ def find_holes(input_fc: str, singlepart_fc: str, line_fc: str, output_fc: str) 
         spatial_reference=sr,
     )
 
-    with arcpy.da.SearchCursor(line_fc, ["SHAPE@"]) as cursor_in, arcpy.da.InsertCursor(
-        output_fc, ["SHAPE@"]
-    ) as cursor_out:
+    with (
+        arcpy.da.SearchCursor(line_fc, ["SHAPE@"]) as cursor_in,
+        arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as cursor_out,
+    ):
         for row in cursor_in:
             geom = row[0]
             for i in range(1, geom.partCount):

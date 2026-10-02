@@ -1,14 +1,84 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+# The Python target (docs/contributing/python-version.md) is stated by four settings that
+# always change together: `requires-python` here, `[tool.pyright] pythonVersion`,
+# `[tool.ruff] target-version` and `.python-version`.
+[project]
+name = "ag"
+version = "0.0.0"
+description = "Cartographic generalization behind a port and adapter boundary."
+requires-python = ">=3.13"
+dependencies = []
+
+# The one place tool versions are stated. Every hook in .pre-commit-config.yaml runs its
+# tool through `uv run --locked --extra dev`, and CI does the same, so nothing else pins a
+# version. uv resolves these into uv.lock, which is committed and written only by uv
+# (docs/contributing/toolchain.md). Set up with `uv sync --extra dev`;
+# `pip install -e ".[dev]"` is the fallback, which is why this is a standard extra rather
+# than a `[dependency-groups]` table (`pip install --group` needs pip 25.1) and why no
+# uv-specific table exists here.
+[project.optional-dependencies]
+dev = [
+    "ruff==0.16.8",
+    "pyright==1.1.399",
+    "import-linter==2.15",
+    "pytest==9.1.1",
+    "pre-commit==4.6.2",
+    "black==26.5.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff formats and lints src, tests and tools only. The hooks pass those paths; the
+# exclusions below, with `force-exclude`, keep ruff off everything else even when a file is
+# passed explicitly, as an editor does, so the legacy packages keep their current
+# formatting (checked by Black through its own hook) until they are migrated. The example
+# pipelines are excluded while they are inert; the exclusion goes when they go live.
 [tool.ruff]
 target-version = "py313"
+force-exclude = true
+extend-exclude = [
+    "tests/fixtures/example_pipelines",
+    "composition_configs",
+    "constants",
+    "custom_tools",
+    "data_orchestrator",
+    "env_setup",
+    "file_manager",
+    "generalization",
+    "temp_skip_folder",
+    "tests_legacy",
+    "docs",
+    "conf.py",
+    "generate_pyvis_docu.py",
+    "main_on_cloud.py",
+    "main_on_prem.py",
+    "paths.py",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
-    "F401",  # unused imports
-    "I",     # isort (import order and grouping)
+    "F401",    # unused imports
+    "I",       # isort (import order and grouping)
+    "SLF001",  # private member access; scoped to ag/generalization below
 ]
+
+# SLF001 catches reach-through such as `tb.geometry._port`, which no import contract can
+# see. It applies to the domain code only.
+[tool.ruff.lint.per-file-ignores]
+"!src/ag/generalization/**" = ["SLF001"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
+    "ag",
     "composition_configs",
     "constants",
     "custom_tools",
@@ -17,4 +87,56 @@ known-first-party = [
     "generalization",
     "input_data",
     "tests",
+]
+
+# Strict over the new code only, by path: the legacy packages and tests_legacy/ are outside
+# the include list, and `strict` names the checked roots so that a legacy file opened in
+# an editor is analysed in standard mode, not strict. The example pipelines are excluded
+# while they are inert; the exclusion goes when they go live. `extraPaths` lets the static
+# tests import the scripts under tools/ the way pytest does.
+[tool.pyright]
+include = ["src", "tests", "tools"]
+exclude = [
+    "**/__pycache__",
+    "tests/fixtures/example_pipelines",
+]
+extraPaths = ["tools"]
+typeCheckingMode = "standard"
+strict = ["src", "tests", "tools"]
+pythonVersion = "3.13"
+
+# The constrained ArcPy stub (stubs/arcpy_constrained/, non-tool names only) applies to
+# these two roots and nowhere else. An execution environment's extraPaths outranks the
+# interpreter's site-packages, so the constraint holds whichever interpreter an editor has
+# selected. The stub is never placed at `typings/`: pyright treats that directory as the
+# global stubPath and would apply the stub to every file in the repository, legacy
+# packages included (docs/contributing/toolchain.md).
+[[tool.pyright.executionEnvironments]]
+root = "src/ag/adapters/arcpy"
+extraPaths = ["stubs/arcpy_constrained"]
+
+[[tool.pyright.executionEnvironments]]
+root = "tests/support/arcpy"
+extraPaths = ["stubs/arcpy_constrained"]
+
+[[tool.pyright.executionEnvironments]]
+root = "."
+extraPaths = ["tools"]
+
+# The marker and the collection roots, and nothing else: no default `addopts`.
+# `testpaths` keeps a bare `pytest` away from the legacy tests, the template and the
+# staging scripts under docs/, which import ArcPy or are not part of this suite.
+# tests/conftest.py gives the marker the same behaviour everywhere: without ArcPy a bare
+# run skips marked tests, and `-m arcpy` fails the session instead of reporting green.
+[tool.pytest.ini_options]
+markers = [
+    "arcpy: needs ArcPy; runs under an ArcGIS Pro Python environment. Skipped when ArcPy is absent; with `-m arcpy` and no ArcPy the session fails.",
+]
+testpaths = [
+    "tests/unit",
+    "tests/static",
+    "tests/conformance",
+    "tests/goldens",
+    "tests/invariance",
+    "tests/smoke",
 ]

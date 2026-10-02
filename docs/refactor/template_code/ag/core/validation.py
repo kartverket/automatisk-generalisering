@@ -50,9 +50,9 @@ from enum import Enum
 from ag.core.data_objects import (
     Derived,
     ExternalSource,
-    LineageRoot,
+    OriginRoot,
     ProductIdentity,
-    lineage_roots,
+    origin_roots,
 )
 from ag.core.operations import ScratchHandle
 from ag.core.pipeline import Stage, StageRegistry
@@ -440,13 +440,13 @@ def _reachable_roots(
     stage: Stage,
     registry: StageRegistry,
     seen: set[str],
-) -> frozenset[LineageRoot]:
+) -> frozenset[OriginRoot]:
     if stage.qualified_name in seen:
         return frozenset()
     seen.add(stage.qualified_name)
     producer = registry.producer_of()
     by_identity = registry.identity_producer()
-    found: set[LineageRoot] = set()
+    found: set[OriginRoot] = set()
     for stage_input in stage.inputs:
         obj = stage_input.obj
         if isinstance(obj, ExternalSource):
@@ -457,7 +457,7 @@ def _reachable_roots(
             if upstream is not None:
                 found.update(_reachable_roots(upstream, registry, seen))
         else:
-            found.update(lineage_roots(obj))
+            found.update(origin_roots(obj))
             upstream = producer.get(obj)
             if upstream is not None:
                 found.update(_reachable_roots(upstream, registry, seen))

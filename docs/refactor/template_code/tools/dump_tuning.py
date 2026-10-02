@@ -23,9 +23,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent)
-)  # TEMPLATE: see conftest.py
+_TEMPLATE = Path(__file__).resolve().parent.parent  # TEMPLATE: see conftest.py
+sys.path.insert(0, str(_TEMPLATE))
+sys.path.insert(0, str(_TEMPLATE.parents[2] / "tests" / "fixtures"))  # example_pipelines
 
 import argparse
 import importlib
@@ -34,14 +34,14 @@ from dataclasses import asdict, is_dataclass
 
 
 def resolved(scale: str, object_name: str) -> dict[str, object]:
-    """Every public config in `ag.operations.<object>.tuning.<scale>`, fully resolved.
+    """Every public config in `example_pipelines.operations.<object>.tuning.<scale>`, fully resolved.
 
     `*_BASE` names are skipped: a scale module imports the bases it deltas from, so
     they land in its namespace, and printing them would put two values for the same
     config side by side - exactly the "answered in two places" confusion the
     base-plus-one-delta rule exists to avoid.
     """
-    module = importlib.import_module(f"ag.operations.{object_name}.tuning.{scale}")
+    module = importlib.import_module(f"example_pipelines.operations.{object_name}.tuning.{scale}")
     return {
         name: asdict(value)
         for name, value in vars(module).items()

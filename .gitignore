@@ -1,6 +1,8 @@
 # Exclude user-specific config file
-personal_testing.py
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
 .env
 
 # Ignore Python bytecode files

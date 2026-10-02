@@ -15,9 +15,10 @@ partition correctness and validation are [02-runtime](02-runtime.md); vocabulary
 adapter plus a contract-test suite. At that point the tree here becomes illustrative and the
 contracts file is authoritative.
 
-**Executable companion:** [`template_code/`](template_code/README.md) is laid out to mirror
-[§7](#7-the-tree) exactly, so that tree is checkable with `ls` rather than trusted. Where it and
-this document disagree, this document is right and the code is the bug.
+**Executable companion:** [`template_code/`](template_code/README.md) was a learning pass and is
+not promoted. It is the source for lifts into `src/ag`, module by module, each citing its verdict
+in `temp/findings/template_review.md`; it no longer mirrors [§7](#7-the-tree). Where it and this
+document disagree, this document is right and the code is the bug.
 
 **Assumption:** all existing code is changeable. `temp_skip_folder/` is a WIP proof that the
 K8s shape works; nothing in it survives as written.
@@ -146,7 +147,7 @@ module, plus one adapter × port matrix in `tests/static/`. ADR-0007.
 
 - Cockburn 2005 for the pattern itself.
 - Percival & Gregory, *Architecture Patterns with Python* (O'Reilly), for the Python treatment
-  this design follows on fakes over mocks and edge-to-edge testing — see `tests/contract/` and
+  this design follows on fakes over mocks and edge-to-edge testing — see `tests/conformance/` and
   `adapters/fakes/`. Its store-oriented patterns are rejected per
   [§4.7](#47-deliberate-deviations).
 - Django's `Q` and SQLAlchemy's `BooleanClauseList` for the predicate algebra in
@@ -167,6 +168,23 @@ rather than as magic relations:
 - `HAVE_THEIR_CENTER_IN` → not a relation but `s_within(centroid(geom), other)`. Express it
   that way so a SQL or dataframe adapter has something to compile. This is the rule fan-in
   uses to decide feature ownership.
+
+**The general form, because this recurs across the cartography toolbox.** An arcpy tool with
+no OGC counterpart usually decomposes into **two standard operations plus one explicit rule**,
+and expressing it that way rather than adopting it as a port method is the default:
+
+| vendor tool | standard operations | the rule |
+|---|---|---|
+| `HAVE_THEIR_CENTER_IN` | `centroid`, `s_within` | apply the second to the first |
+| `Identity` | `intersection`, `difference` | `merge` the two results |
+| `FeatureToPoint(inside=)` | `point_on_surface`, `centroid` | pick by whether the point must lie on the feature |
+
+The test is whether the rule is something a cartographer would state. If it is, it belongs in
+the domain layer where someone can argue with it; a port method named after the vendor's
+composite hides it, and buys a future adapter a primitive nothing else has. If the rule is
+arbitrary — true bookkeeping internal to one engine — that is the case for a port method
+instead. The worked decomposition is `_attach_area_attributes` in
+[`template_code`](template_code/ag/operations/road/__init__.py).
 
 **Geometry operations: OGC Simple Features.** `buffer`, `intersection`, `difference`,
 `union`, `convex_hull`, `centroid`, `boundary` carry the same semantics in PostGIS, GEOS,
@@ -387,80 +405,87 @@ convert at the boundary: `arcpy.Polyline(arcpy.Array(pts))` ↔ `LineString(coor
 ## 4. Layers and the import hierarchy
 
 ```
-runtime/  orchestrator/      composition roots: choose adapters, assemble Toolbox
-     └────┬────┘
-   pipelines/                Stage / Source / Derived declarations
-   operations/               declarable units (have an OperationCall factory)
-   helpers/                  reusable composites (no factory)
-   ports/  ◄─ adapters/ ──►  arcpy, networkx, shapely, gcs, kubernetes
-   core/                     types, declarations, planning; imports stdlib only
+orchestrator/                composition root for a run
+runtime/                     composition root for a pod: chooses adapters, assembles Toolbox
+generalization/              ALL domain code: registry > pipelines > operations > helpers >
+                             tuning | errors | sources | products | classification_rules
+lineage/   staging/          identity above the ports; pod-local paths. runtime/ only.
+adapters/                    arcpy, fakes, networkx, storage, cluster; _shared, errors
+ports/                       Protocols and the values that cross them
+core/                        types, declarations, planning; imports stdlib only
 
-   staging/         imports core/ + ports/; imported by runtime/ only
-   observability/   imports stdlib + core.types; imported by all except core/
+observability/               horizontal leaf: stdlib + core.types; imported by all except core/
 ```
 
-Nothing imports `adapters/` except the composition roots.
+Nothing imports `adapters/` except the composition roots. The stack is enforced by
+[`.importlinter`](../../.importlinter) at the repository root (§4.2), which is authoritative;
+this section and §7 describe it.
 
 ### 4.1 The rules
 
-**Decided.**
+**Decided** (revised 2026-09-22 when the contracts landed; the accepted tree is
+`temp/findings/project_tree.md`, whose §6 is the row-by-row source of the contracts).
 
-| package | may import | may **not** import |
-|---|---|---|
-| `core/` | stdlib only | everything else in `ag` |
-| `ports/` | `core.operations` (handles only), `core.types`, stdlib | `adapters`, `operations`, `staging`, `core.pipeline` |
-| `adapters/` | `ports`, `core.operations` (handles only), **its own vendor library** | `operations`, `pipelines`, other adapters |
-| `helpers/` | `ports`, `core.operations` | `adapters`, `core.pipeline`, `staging`, `operations` |
-| `operations/` | `ports`, `core.operations`, `helpers` | `adapters`, `core.pipeline`, `staging` |
-| `sources/`, `products/` | `core` only — leaf modules | everything else in `ag` |
-| `tuning/` | `core`, the config types in `operations` | `adapters`, `ports`, `staging`, `pipelines` |
-| `pipelines/` | `core`, `sources`, `products`, `tuning`, `operations` (declarations only) | `adapters`, `ports`, `staging`, `runtime` |
-| `staging/` | `core`, `ports` | `operations`, `pipelines`, `adapters` |
-| `observability/` | stdlib, `core.types` | everything else in `ag` |
-| `runtime/` | everything — composition root | — |
-| `orchestrator/` | `core`, `pipelines`, `ports.cluster`, `ports.archive`, `observability` | `operations`, `adapters.arcpy`, `staging` |
+| package | may import | may **not** import | contract |
+|---|---|---|---|
+| `core/` | stdlib only | everything else in `ag` | row 3 |
+| `ports/` | `core.handles`, `core.types`, `core.injection`, `core.errors`, stdlib | any other `core` module; everything above `ports` | row 4; row 5 keeps the ports acyclic (`cartographic_ops` above the other three) |
+| `adapters/` | `ports`, `core`, `adapters._shared`, `adapters.errors`, **its own vendor library** | another adapter package; anything above `adapters` | rows 6, 7, 8, 16, 17, 18 |
+| `lineage/`, `staging/` | `core`, `ports`, `adapters` | each other; anything above | rows 9, 10 (importable by `runtime` only) |
+| `generalization/` | `core`, `ports`, `observability`, and inside it the layers of row 2 | `adapters`, `staging`, `runtime`, `orchestrator`, `lineage` | rows 2, 11, 12, 13 |
+| `generalization/sources.py`, `products.py` | `core` only; leaves | everything else in `ag` | row 11 |
+| `generalization/operations/`, `helpers/` | `core.handles`, `core.operations`, `core.types`, `core.injection`, `core.errors`, `core.warnings`, `ports`, `observability`, `generalization.helpers`, `generalization.errors` | `core.data_objects`, `core.pipeline` and anything that imports them; `sources`, `products`, `pipelines`, `registry` | rows 2, 12 |
+| `observability/` | stdlib, `core.types` | everything else in `ag`; and `core`, `generalization.pipelines` may not import `observability.context` | rows 14a, 14b |
+| `runtime/` | everything; `runtime.local` alone may import `adapters.fakes` | — | rows 1, 18 |
+| `orchestrator/` | `core`, `generalization.registry`, `ports.cluster`, `ports.archive`, `observability`, `adapters` except `arcpy` | `generalization.operations`, `adapters.arcpy`, `staging`, `lineage`, other ports | rows 1, 10, 15 |
 
 Every package except `core/` may import `observability/`; `core/` stays side-effect free.
 
-**Only `adapters/` may import a third-party processing library.** `import arcpy` appears in
-exactly one file (`adapters/arcpy/session.py`, lazily bound so the module stays
-import-safe); `networkx` in one; `shapely` only under `adapters/`. This makes
+**Only `adapters/` may import a third-party processing library.** `arcpy` may be imported
+anywhere under `adapters/arcpy/`; tools, `arcpy.env` and vendor exceptions are reached through
+`adapters/arcpy/session.py` only, enforced by the type stub in `stubs/arcpy_constrained/`,
+applied by pyright execution environments to the adapter and to `tests/support/arcpy/` and
+nowhere else, and a static scan, not by an import contract (`project_tree.md` §6.1; the stub
+location was corrected there on 2026-10-02). `networkx` is imported by
+`adapters/networkx/graph_ops.py` alone; `shapely` and the storage clients only under
+`adapters/`. This makes
 [02-runtime §2.6](02-runtime.md#26-declarations-must-be-constructible-without-touching-data)
 (declarations constructible with no data and no arcpy) pass by construction.
 
 **`runtime/` and `orchestrator/` are the only places that choose which adapter to
-instantiate.**
+instantiate.** The fake is narrower still: `runtime/local.py` is its only importer, so
+`runtime/compose.py` takes port instances and never an adapter name.
 
-**`sources/` and `products/` must stay leaves.** They are only useful as the single place every
-identity is declared; one convenience import back into a pipeline makes them a cycle and the
-"read one file and see everything entering the project" property is gone silently. A docstring
-saying "leaf module" is not enforcement — a contract is. ADR-0012.
+**`sources.py` and `products.py` must stay leaves.** They are only useful as the single place
+every identity is declared; one convenience import back into a pipeline makes them a cycle and
+the "read one file and see everything entering the project" property is gone silently. A
+docstring saying "leaf module" is not enforcement — a contract is. ADR-0012.
 
 ### 4.2 Enforcement
 
-**Decided.**
+**Decided.** Landed 2026-09-22 (slice 0).
 
-`import-linter` contracts in `.importlinter`, run in CI, plus the
-[02-runtime §2.6](02-runtime.md#26-declarations-must-be-constructible-without-touching-data)
-subprocess guard. The table above in machine-readable form:
+[`.importlinter`](../../.importlinter) at the repository root, run by the `lint-imports` hook in
+pre-commit and CI, is **authoritative** for the import rules; §4.1 and §7 are descriptions of
+it. It holds twenty-four contracts over the eighteen rows of `project_tree.md` §6, named by row
+number, and every contract was broken once on purpose with a probe module when it was written,
+because a contract over an empty tree passes whether or not its names are right.
 
-| contract type | enforces |
-|---|---|
-| `layers` | the package ordering in the table above: `core` at the bottom, `runtime`/`orchestrator` at the top |
-| `forbidden`, `include_external_packages = True` | `import arcpy` appears in exactly one module; same for `networkx`, `shapely` |
-| `forbidden` | `sources/` and `products/` import nothing but `core/` |
-| `forbidden` | `operations/` never imports `core.data_objects` — the port-boundary rule of ADR-0003, made mechanical |
-| `forbidden` | `core/` and `pipelines/` may not import the ambient observability accessor |
-| `layers`, `exhaustive = True` | fails when a module exists in the package without being declared — the mechanism that stops the tree and the table drifting apart |
+| contract type | rows | enforces |
+|---|---|---|
+| `layers`, `exhaustive = true` | 1 | the package stack, `core` at the bottom, `orchestrator` at the top; a new top-level package fails until it is given a layer |
+| `layers`, `exhaustive = true` | 2 | the stack inside `generalization/`, and a new domain module fails until it is placed |
+| `layers` | 5, 17 | the ports acyclic; inside each adapter, port packages over `support` over `_base` over the session or store |
+| `forbidden` | 3, 4, 11, 12, 13, 14a, 14b, 15 | what a package may not import, following indirect imports where the rule needs it (row 12: `operations/` never reaches a `DataObject`, ADR-0003) |
+| `forbidden`, external packages | 8 | `arcpy` only under `adapters/arcpy/`, `networkx` in one module, `shapely` and the storage clients only under `adapters/` |
+| `protected` | 6, 9, 10, 18 | the allow-lists: who may import `adapters`, `staging`, `lineage`, `adapters.fakes`; written as `protected` rather than `forbidden` so that a new package is denied until added on purpose |
+| `independence` | 7, 16 | adapter packages do not import each other; the group modules of one port package do not import each other |
 
-Once `.importlinter` exists **over `src/ag/`** it is authoritative and [§7](#7-the-tree) is
-illustrative.
-
-[`template_code/.importlinter`](template_code/.importlinter) is a first instalment, not that
-trigger: four contracts — identity modules are leaves, the package stack, `core` imports nothing
-above it, and operations never import a `DataObject` — passing over the companion's packages. The
-rows above that it cannot yet express are the ones needing `ports/` and `adapters/` to have
-content: the vendor-import contracts, and any layering that mentions them.
+What the contracts cannot see is covered elsewhere, as `project_tree.md` §6.1 lists:
+environment reads and imports by string by `tools/scan_sources.py` (also a static test); the
+reach-through `tb.geometry._port` by ruff `SLF001` over `generalization/`; the tools-only rule
+for `session.py` by the ArcPy stub; class contents by `tests/static/test_adapter_groups.py`
+(slice 1a).
 
 ### 4.3 Port layering and thick adapters
 
@@ -511,7 +536,7 @@ exception is observability context, which carries no capability. ADR-0008.
 
 **Decided.**
 
-All six declared ports are driven (secondary): the core calls out through them. The driving
+All six declared ports are driven ports (secondary): the core calls out through them. The driving
 (primary) side is `orchestrator/cli.py`, the three `runtime/` pod entry points, and
 `tests/invariance/`.
 
@@ -647,77 +672,50 @@ structured duration records, so the merged log doubles as a partition profile.
 
 ## 7. The tree
 
-Packages, responsibilities and import direction. Object and scale subdirectories under
-`operations/` and `pipelines/` are per-pipeline and not enumerated here.
-
-**This tree is mirrored by [`template_code/ag/`](template_code/README.md), directory for
-directory**, so it is checked by `ls` rather than by reading. That matters because the previous
-version of this tree had drifted in eight places — it listed four modules that never existed and
-omitted four that did. A directory cannot drift the way a code block can.
-
-Packages the design specifies and the companion has not written — `ports/`, `adapters/`,
-`helpers/`, `observability/`, and most of `runtime/` and `orchestrator/` — exist there as
-directories holding only a docstring that names what belongs in them. Omitting them would make
-the tree read as though the port design were not real.
+Packages, responsibilities and import direction. The accepted tree, with the options weighed
+and the departures from the earlier draft, is `temp/findings/project_tree.md` (accepted
+2026-09-21); slice 0 created it as docstring-only packages on 2026-09-22, each `__init__.py`
+saying what belongs there and its membership test. **`.importlinter` is authoritative for the
+import rules; this tree is illustrative.** The template under `template_code/` no longer mirrors
+it: the template is the source for lifts, module by module, and its worked examples are now
+`tests/fixtures/example_pipelines/`.
 
 ```
 src/ag/
-├── core/                    pure. no arcpy, no clients, no filesystem, no k8s.
-│   ├── types.py                 Scale, ObjectName (StrEnums), DatasetName, enums
-│   ├── data_objects.py          ExternalSource, ProductIdentity, Derived, lineage_roots
-│   ├── operations.py            ScratchHandle, __set_name__, Handles, In/Out,
-│   │                            ScratchScope, @operation, OperationCall  (ADR-0011)
-│   ├── pipeline.py              Stage, StageInput/Output, Publish, Pipeline,
-│   │                            StageRegistry, flatten
-│   ├── locations.py             StorageRoots + every remote path: archive, source,
-│   │                            scratch, payload, scratch dump  (single owner)
-│   ├── graph.py                 edge derivation, topological order
-│   ├── selection.py             RunRequest, closures
-│   ├── policy.py                classification, placement
-│   ├── planning.py              RunPlan, pinning
-│   └── validation.py            validate() -> list[Finding]
-│
-├── sources.py               every ExternalSource in the project. leaf.
-├── products.py              every ProductIdentity in the project. leaf.
-│
-├── ports/                   __init__ index docstring, toolbox.py, archive.py, cluster.py
-│   ├── geometry_ops.py          + Predicate, Relation, EndCap, DissolveOption
-│   ├── table_ops.py             + FieldType, Row
-│   ├── geometry.py              the Geometry value type
-│   ├── cartographic_ops.py      ICA operator names
-│   └── graph_ops.py
-│
-├── adapters/                only place a vendor library is imported
-│   ├── arcpy/                   session.py (lazy import, env, licence, handle release,
-│   │                            GetMessages drain), geometry_ops, table_ops,
-│   │                            cartographic_ops, predicates, geometry, errors
+├── core/                    pure: stdlib only. types, injection, handles, operations,
+│                            data_objects, pipeline, locations, graph, selection, policy,
+│                            planning, findings, validation, errors, warnings
+├── ports/                   Protocols and the values that cross them. flat, one module per
+│                            port: geometry_ops, table_ops, cartographic_ops, graph_ops,
+│                            archive, cluster; plus geometry, predicates, row_shape, columns,
+│                            capabilities, workspace_format, errors, toolbox
+├── adapters/                the only place a vendor library is imported
+│   ├── errors.py                AdapterDefectError and its members
+│   ├── _shared/                 engine-free code more than one adapter needs
+│   ├── arcpy/                   session.py, _base.py, support/, and one package per port,
+│   │                            one module per method group
+│   ├── fakes/                   recording.py (the spy); memory/ in the same shape as arcpy/
 │   ├── networkx/  storage/  cluster/
-│   └── fakes/                   in-memory implementations of every port
-│
-├── helpers/                 reusable composites below the operation level
-├── operations/              declarable units; object subdirectories, scale-free.
-│   └── road/                    config CLASSES beside the operations they constrain
-│       └── tuning/              config VALUES: base, plus one delta per scale
-├── tuning/scale/            cartographic constants per scale, shared across objects
-├── pipelines/               declarations; object/scale subdirectories
-├── classification_rules.py  the one file a security reviewer reads
-│
-├── staging/
-│   ├── scratch.py               ScratchFileManager, trail rendering, name budget
-│   ├── workspace.py             WorkspaceFormat: join rule, legality, pack/unpack
-│   └── transfer.py              stage_down / stage_up / dump_scratch
-│
-├── observability/           JSONL records, context filter, timing
-├── runtime/                 fan_out, partition, fan_in, env. Toolbox assembled here.
-│   └── stage_entry.py           the pod dispatch loop and the post-operation output
-│                                sweep — the one check that cannot move earlier
-└── orchestrator/            execute, jobs, metadata, log_merge, cli
+├── lineage/                 identity above the ports; imported by runtime/ only
+├── staging/                 pod-local paths and transfer; imported by runtime/ only
+├── observability/           horizontal leaf: records, context, timing
+├── runtime/                 composition root for a pod: env, compose, stage_ref, stage_entry,
+│                            local, fan_out, partition, fan_in, ingest, errors
+├── orchestrator/            composition root for a run: dispatch (rest not in this pass)
+└── generalization/          ALL cartographic domain code
+    ├── errors.py  sources.py  products.py  classification_rules.py  registry.py
+    ├── tuning/scale/            cartographic constants per scale
+    ├── helpers/                 subject axis: lines, polygons, points, topology, ...
+    ├── operations/              scale-free; shared/ and one package per object, with tuning/
+    └── pipelines/               <object>/<scale>/: objects.py, one module per stage, __init__
 
-tools/                       dev-only scripts, not shipped in the image
-                             (incl. dump_tuning — resolved configs per scale)
-tests/                       static/ (validation + arcpy-blocked guard + port matrix),
-                             contract/ (every adapter against one per-port suite),
-                             invariance/ (K=4 vs K=16), unit/
+stubs/arcpy_constrained/     the local ArcPy stub: non-tool names only; applied to the adapter
+                             and tests/support/arcpy/ by execution environments (slice 1b)
+tools/                       dev-only scripts, never shipped: scan_sources, run_example, ...
+tests/                       unit/ static/ conformance/ goldens/ invariance/ smoke/ support/
+                             (support/arcpy/: the engine-touching builders, constrained)
+                             fixtures/example_pipelines/
+tests_legacy/                the tests of the legacy packages
 ```
 
 ### 7.1 `src/ag/`
@@ -729,10 +727,12 @@ tests/                       static/ (validation + arcpy-blocked guard + port ma
 The repository root is therefore not importable, so a module resolves only if it was actually
 packaged. Tests import `ag` from the installed distribution, which is what ships in the image.
 
-The companion already uses `ag` as its top-level package for that reason: promotion is
-`git mv docs/refactor/template_code/ag src/ag`, with no re-layout and no import rewrite, because
-`from ag.core.pipeline import Stage` is already the production path. It needs a `conftest.py` to
-put itself on `sys.path`; the shipped distribution does not, which is the whole difference.
+Landed 2026-09-22 (slice 0): `pyproject.toml` declares the distribution with the `src` layout,
+and `pip install -e ".[dev]"` installs it editable with the pinned tools. The companion uses `ag`
+as its top-level package too, so a lifted module keeps its import path; it needs a `conftest.py`
+to put itself on `sys.path`, and the shipped distribution does not, which is the whole
+difference. No wholesale `git mv` happens: modules are lifted one at a time in the slice that
+needs them.
 
 ### 7.2 Ports directory conventions
 
@@ -849,6 +849,14 @@ not by interface segregation ([§4.7](#47-deliberate-deviations)).
 **Q-C — Does `GraphOps` know about datasets?** Whether graph construction is a `GraphOps`
 method taking a `ScratchHandle`, or a helper that calls `read_rows` and hands edges to a
 pure `GraphOps`. The second is cleaner; confirm against the strahler code first.
+
+*Evidence so far, and it is not enough to close this.* `template_code/` takes the pure form
+and one caller was writable against it — `_build_topology` in `operations/road`, reaching two
+of six methods. One caller is evidence that one caller was writable, not evidence about a
+port's shape, and the strahler code this question actually turns on has not been read. Left
+open deliberately: if it wants graph and geometry together, the dataset-aware form costs a
+rewrite of that one helper and **no operation signature changes**, which is what makes
+deferring cheap rather than evasive.
 
 **Q-D — Who authors symbol dimensions.** Cartographer-authored means an `ExternalSource` with a
 vintage and pinning; developer-authored means pipeline parameters.

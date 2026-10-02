@@ -27,9 +27,9 @@ from dataclasses import replace
 
 import pytest
 
-import ag.pipelines.road.n100 as pipeline
+import example_pipelines.pipelines.road.n100 as pipeline
 from ag.core.types import DataType
-from ag.operations.road import ThinRoadConfig, thin_road_network
+from example_pipelines.operations.road import ThinRoadConfig, thin_road_network
 from ag.core.operations import ScratchHandle, ScratchScope
 
 # ---------------------------------------------------------------------------
@@ -147,7 +147,9 @@ def test_config_validates_itself() -> None:
 
 
 @pytest.mark.skipif(
-    importlib.util.find_spec("arcpy") is None, reason="arcpy not installed"
+    importlib.util.find_spec("arcpy") is None
+    or importlib.util.find_spec("ag.adapters.arcpy.session") is None,
+    reason="needs arcpy AND the arcpy adapter, which is not written yet",
 )
 def test_thin_road_network_against_local_gdbs(tmp_path: object) -> None:
     """The shape of every operation test in the project.
@@ -156,6 +158,8 @@ def test_thin_road_network_against_local_gdbs(tmp_path: object) -> None:
     here: no RunPlan, no PinnedInput, no ScratchFileManager, no ArchiveClient, no
     partition index, no Kubernetes. The operation cannot tell this from a pod.
     """
+    from ag.adapters.arcpy.session import arcpy_toolbox
+
     root = str(tmp_path)
     call = thin_road_network(
         roads=pipeline.Network.merged,
@@ -172,7 +176,53 @@ def test_thin_road_network_against_local_gdbs(tmp_path: object) -> None:
         output=local(pipeline.Network.thinned, root),
         dropped=local(pipeline.Network.dropped, root),
         config=pipeline.tuning.THIN_ROAD,
+        tb=arcpy_toolbox(),
         scratch=local_scope(root),
     )
     # assert on the two outputs: feature counts, that every dropped segment is absent
     # from output, that no segment appears in both.
+
+
+def test_the_same_operation_runs_with_no_engine_at_all() -> None:
+    """The counterpart, and it is NOT skipped.
+
+    Same function, same declaration, a recording Toolbox instead of arcpy - and it
+    runs to completion on any machine. That is what ADR-0008 buys beyond tidiness: a
+    fake is CONSTRUCTED AND PASSED, with no global to set, no module to monkeypatch
+    and no import to intercept.
+
+    Asserting on the port calls is a real test of the operation's logic, not a
+    tautology: it says thin_road_network dissolves before building topology, builds
+    topology twice, and hands the network to the selection operator - all of which
+    are decisions someone could break.
+    """
+    from ag.adapters.fakes.recording_toolbox import recording_toolbox
+
+    root = "/tmp/example"
+    toolbox, recorder = recording_toolbox()
+    call = thin_road_network(
+        roads=pipeline.Network.merged,
+        ranks=pipeline.Network.ranks,
+        merge_report=pipeline.Network.merge_report,
+        output=pipeline.Network.thinned,
+        dropped=pipeline.Network.dropped,
+        config=pipeline.tuning.THIN_ROAD,
+    )
+    call.fn(
+        roads=local(pipeline.Network.merged, root),
+        ranks=local(pipeline.Network.ranks, root),
+        merge_report=local(pipeline.Network.merge_report, root),
+        output=local(pipeline.Network.thinned, root),
+        dropped=local(pipeline.Network.dropped, root),
+        config=pipeline.tuning.THIN_ROAD,
+        tb=toolbox,
+        scratch=local_scope(root),
+    )
+
+    sequence = [f"{c.port}.{c.method}" for c in recorder.calls]
+    assert sequence[0] == "geometry.dissolve"
+    assert sequence.count("geometry.extract_vertices") == 2, (
+        "the topology helper is called twice, which is the case ScratchScope.child "
+        "auto-indexes"
+    )
+    assert sequence[-1] == "cartographic.select_network"

@@ -1,0 +1,11 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.configurationPreference": "filesystemFirst",
+  "black-formatter.path": ["uv", "run", "--locked", "--extra", "dev", "black"],
+  "black-formatter.args": ["--force-exclude", "^/(src|tests|tools|docs)/"],
+  "python.analysis.diagnosticMode": "openFilesOnly"
+}
