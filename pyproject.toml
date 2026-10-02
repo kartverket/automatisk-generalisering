@@ -34,13 +34,19 @@ where = ["src"]
 # Ruff is the one formatter and linter for the whole repository. `force-exclude` keeps the
 # exclusion in force when a file is passed explicitly, as an editor does; the example
 # pipelines are excluded while they are inert, and the exclusion goes when they go live;
-# docs/ holds the template the new code is lifted from, module by module, and staging
-# scripts, none of it shipped. Patterns are root-anchored (`dir/**`, `./file.py`): a bare name would match that name
+# the template the new code is lifted from, module by module, and the staging scripts are
+# excluded because neither ships and both are deleted; Markdown is excluded because ruff
+# would otherwise reformat the Python examples inside documents. Patterns are root-anchored (`dir/**`, `./file.py`): a bare name would match that name
 # anywhere in the tree, `src/ag/generalization/` included.
 [tool.ruff]
 target-version = "py313"
 force-exclude = true
-extend-exclude = ["tests/fixtures/example_pipelines", "docs/**"]
+extend-exclude = [
+    "tests/fixtures/example_pipelines",
+    "docs/refactor/template_code/**",
+    "docs/refactor/temp/**",
+    "*.md",
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -80,6 +86,7 @@ select = [
 "./main_on_cloud.py" = ["F401", "I001"]
 "./main_on_prem.py" = ["F401", "I001"]
 "./paths.py" = ["F401", "I001"]
+"docs/setup/**" = ["F401", "I001"]
 # Baseline, 2026-10-02: 26 files, 87 findings. Remove an entry when the file is cleaned.
 "custom_tools/generalization_tools/building/resolve_building_conflicts.py" = ["F811"]
 "custom_tools/generalization_tools/road/resolve_road_conflicts.py" = ["F811"]
