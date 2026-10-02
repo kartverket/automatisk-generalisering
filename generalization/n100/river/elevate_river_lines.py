@@ -97,7 +97,6 @@ class RiverElevator:
             ) as cur,
             arcpy.da.InsertCursor(self.output_fc, out_fields) as icur,
         ):
-
             for row in cur:
                 attrs = row[:-1]
                 geom = row[-1]
@@ -134,7 +133,6 @@ class RiverElevator:
 
         with arcpy.da.UpdateCursor(self.output_fc, ["SHAPE@", "meanZ"]) as cur:
             for geom, meanz in cur:
-
                 zvals = []
 
                 if geom is None:

@@ -175,7 +175,7 @@ class GeometryValidator:
             )
 
         message = (
-            f"\n{'====='*15}"
+            f"\n{'=====' * 15}"
             f"\nCheck Repair Sequence: "
             f"status={status} | "
             f"iterations={self.iteration}/{max_iterations}"
@@ -185,7 +185,7 @@ class GeometryValidator:
                 f" | remaining_issues={len(self.problematic_features)}"
                 f" | features={problematic_aliases}"
             )
-        message += f"\n{'====='*15}\n"
+        message += f"\n{'=====' * 15}\n"
 
         print(message)
 

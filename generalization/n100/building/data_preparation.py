@@ -363,9 +363,7 @@ def railway_station_points_to_polygons(data_orc: InputDataOrchestrator):
     Transforms the train station points to polygons representing their symbology size.
     """
     # Railway stations from input data
-    railway_stations = (
-        Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value
-    )
+    railway_stations = Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value
 
     # Adding symbol_val field
     arcpy.AddField_management(

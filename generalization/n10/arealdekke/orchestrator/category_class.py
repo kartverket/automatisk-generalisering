@@ -24,7 +24,6 @@ from generalization.n10.arealdekke.orchestrator.enum_variables import (
 
 
 class Category:
-
     def __init__(
         self,
         title: str,
@@ -62,7 +61,6 @@ class Category:
 
         if self.__operations:
             for item in self.__operations:
-
                 if item not in list(self.set_cat_tools()):
                     raise Exception(
                         f"\nIncorrect syntax in history yml file for arealdekke: {self.__title}.\nGo check history yml file and set_cat_tools in category class for tool name inconsistencies.\n"
@@ -90,7 +88,6 @@ class Category:
 
         # Iterate through operations specified for this category not applied yet
         for operation in range(self.__operations_completed, len(self.__operations), 1):
-
             func = cat_tools[self.__operations[operation]]
 
             # Get required number of arguments

@@ -62,7 +62,7 @@ def _build_context() -> WorkerContext:
         partition_index += 1  # Glemte 0 i test data, så vi starter på 1 i stedet for 0. Dette er kun for test.
     except ValueError as error:
         raise ValueError(
-            "JOB_COMPLETION_INDEX must be an integer, " f"got: {raw_partition_index}"
+            f"JOB_COMPLETION_INDEX must be an integer, got: {raw_partition_index}"
         ) from error
 
     bucket = _required_env("SCALITY_BUCKET")

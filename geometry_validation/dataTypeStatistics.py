@@ -10,7 +10,6 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class VectorStatistics:
-
     ##########################
     # Rules
     ##########################

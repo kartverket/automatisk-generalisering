@@ -1486,7 +1486,7 @@ class PartitionIterator:
         total_str = str(timedelta(seconds=int(total_runtime)))
         estimate_str = str(timedelta(seconds=int(estimate_remaining)))
 
-        print(f"\n[{now_str}] " f"Runtime: {total_str} | " f"Remaining: {estimate_str}")
+        print(f"\n[{now_str}] Runtime: {total_str} | Remaining: {estimate_str}")
 
     def resolve_injected_io_for_methods(
         self,

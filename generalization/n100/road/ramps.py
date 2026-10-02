@@ -1538,7 +1538,6 @@ def group_endpoints_not_belonging_to_a_ramp_id(files: dict, endpoints_per_rampid
         files["endpoints_for_connections"], ["uid", "SHAPE@"]
     ) as s_cur:
         for endpoint_oid, endpoint_geom in s_cur:
-
             if endpoint_oid not in endpoint_oids_in_groups:
                 intersecting_ramp_oids = []
 
@@ -2265,7 +2264,6 @@ def _build_endpoint_to_potential_connection_map(
                         )
                         < 1000
                     ):
-
                         connected = True
                         break
 
@@ -3030,7 +3028,6 @@ def _check_endpoints_connection(
                     potential_road_oids.append(road_oid)
 
             for endpoint_road_oid in endpoint_road_oids:
-
                 if connected:
                     break
                 for potential_road_oid in potential_road_oids:
@@ -3043,7 +3040,6 @@ def _check_endpoints_connection(
                     )
 
                     if paths:
-
                         for path in paths:
                             if (
                                 _path_length_linear(
@@ -3361,7 +3357,6 @@ def explode_roads(files: dict):
         arcpy.da.SearchCursor(files["copy_of_roads"], search_fields) as s_cur,
         arcpy.da.InsertCursor(files["exploded_roads"], insert_fields) as i_cur,
     ):
-
         ramp_field = search_fields[ramp_idx]
 
         for s_row in s_cur:

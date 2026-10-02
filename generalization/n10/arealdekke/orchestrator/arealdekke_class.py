@@ -63,7 +63,6 @@ arcpy.env.overwriteOutput = True
 
 
 class Arealdekke:
-
     def __init__(
         self,
         input_data: str,
@@ -169,7 +168,6 @@ class Arealdekke:
         # But not all of them were completed, the program will continue where it left off
         if cat_lvl_info["cats_exist"]:
             if not all(not c.get_accessibility() for c in cat_lvl_info["cats"]):
-
                 category: Category
                 for category in cat_lvl_info["cats"]:
                     # .. fetch this as last processed
@@ -266,7 +264,6 @@ class Arealdekke:
                     python_structured = yaml.safe_load(yml)
 
                     for category in python_structured["Categories"]:
-
                         category_obj = Category(**category)
 
                         if category_obj.get_map_scale() == self.__map_scale:

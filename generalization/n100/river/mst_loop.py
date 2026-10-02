@@ -184,9 +184,9 @@ def extract_closed_lines(input_feature_class, output_feature_class):
         for field in arcpy.ListFields(input_feature_class)
         if field.type not in ("OID", "Geometry")
     ]
-    fields = [
-        "SHAPE@XY"
-    ] + fields_to_copy  # 'SHAPE@XY' used for simplicity, consider 'SHAPE@' for exact geometry copy
+    fields = (
+        ["SHAPE@XY"] + fields_to_copy
+    )  # 'SHAPE@XY' used for simplicity, consider 'SHAPE@' for exact geometry copy
     for field in fields_to_copy:
         arcpy.AddField_management(
             output_feature_class,

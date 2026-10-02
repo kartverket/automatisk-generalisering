@@ -31,16 +31,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: black-legacy
-        # The legacy packages and tests_legacy/ keep their current formatting until they
-        # are migrated; Black checks them at the version pinned in the dev extra. This
-        # hook is removed when the last legacy package is migrated.
-        name: black --check (legacy packages)
-        entry: uv run --locked --extra dev black --check --extend-exclude '^/(src|tests|tools|docs)/' .
-        language: system
-        pass_filenames: false
-        always_run: true
-
       - id: pyright
         name: pyright strict
         entry: uv run --locked --extra dev pyright
