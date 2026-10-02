@@ -1,0 +1,10 @@
+tests.smoke package
+===================
+
+Module contents
+---------------
+
+.. automodule:: tests.smoke
+   :members:
+   :show-inheritance:
+   :undoc-members:

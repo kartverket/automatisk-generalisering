@@ -1,0 +1,37 @@
+tests\_legacy package
+=====================
+
+Submodules
+----------
+
+tests\_legacy.test\_arealdekket\_class module
+---------------------------------------------
+
+.. automodule:: tests_legacy.test_arealdekket_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests\_legacy.test\_category\_class module
+------------------------------------------
+
+.. automodule:: tests_legacy.test_category_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests\_legacy.test\_program\_history\_class module
+--------------------------------------------------
+
+.. automodule:: tests_legacy.test_program_history_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests_legacy
+   :members:
+   :show-inheritance:
+   :undoc-members:

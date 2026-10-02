@@ -19,3 +19,4 @@ automatisk-generalisering
    paths
    temp_skip_folder
    tests
+   tests_legacy

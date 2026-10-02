@@ -1,0 +1,18 @@
+tests.fixtures.example\_pipelines.tuning package
+================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.fixtures.example_pipelines.tuning.scale
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines.tuning
+   :members:
+   :show-inheritance:
+   :undoc-members:

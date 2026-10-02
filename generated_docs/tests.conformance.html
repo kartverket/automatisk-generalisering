@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tests.test_arealdekke package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>tests.conformance package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
@@ -20,6 +20,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tests.fixtures package" href="tests.fixtures.html" />
     <link rel="prev" title="tests package" href="tests.html" /> 
 </head>
 
@@ -65,12 +66,22 @@
 <li class="toctree-l2"><a class="reference internal" href="temp_skip_folder.html">temp_skip_folder package</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="tests.html">tests package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">tests.test_arealdekke package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">tests.conformance package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.fixtures.html">tests.fixtures package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.goldens.html">tests.goldens package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.invariance.html">tests.invariance package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.smoke.html">tests.smoke package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.static.html">tests.static package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.support.html">tests.support package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unit.html">tests.unit package</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests-conftest-module">tests.conftest module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tests.html#module-tests">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="tests_legacy.html">tests_legacy package</a></li>
 </ul>
 </li>
 </ul>
@@ -91,9 +102,9 @@
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="modules.html">automatisk-generalisering</a></li>
           <li class="breadcrumb-item"><a href="tests.html">tests package</a></li>
-      <li class="breadcrumb-item active">tests.test_arealdekke package</li>
+      <li class="breadcrumb-item active">tests.conformance package</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated_docs/tests.test_arealdekke.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated_docs/tests.conformance.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -101,22 +112,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="tests-test-arealdekke-package">
-<h1>tests.test_arealdekke package<a class="headerlink" href="#tests-test-arealdekke-package" title="Link to this heading"></a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
-</section>
-<section id="tests-test-arealdekke-test-arealdekket-class-module">
-<h2>tests.test_arealdekke.test_arealdekket_class module<a class="headerlink" href="#tests-test-arealdekke-test-arealdekket-class-module" title="Link to this heading"></a></h2>
-</section>
-<section id="tests-test-arealdekke-test-category-class-module">
-<h2>tests.test_arealdekke.test_category_class module<a class="headerlink" href="#tests-test-arealdekke-test-category-class-module" title="Link to this heading"></a></h2>
-</section>
-<section id="tests-test-arealdekke-test-program-history-class-module">
-<h2>tests.test_arealdekke.test_program_history_class module<a class="headerlink" href="#tests-test-arealdekke-test-program-history-class-module" title="Link to this heading"></a></h2>
-</section>
-<section id="module-tests.test_arealdekke">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests.test_arealdekke" title="Link to this heading"></a></h2>
+  <section id="tests-conformance-package">
+<h1>tests.conformance package<a class="headerlink" href="#tests-conformance-package" title="Link to this heading"></a></h1>
+<section id="module-tests.conformance">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests.conformance" title="Link to this heading"></a></h2>
+<p>The adapter conformance suite: one module per port method group, parametrized over
+adapters.</p>
+<p>Membership test: the case drives a port Protocol, not the facade, and must hold for
+every adapter. The in-memory adapter runs everywhere; the ArcPy cases carry the <cite>arcpy</cite>
+marker and run under an ArcGIS Pro Python environment and, later, in the image.</p>
 </section>
 </section>
 
@@ -125,6 +129,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="tests.html" class="btn btn-neutral float-left" title="tests package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tests.fixtures.html" class="btn btn-neutral float-right" title="tests.fixtures package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -1,0 +1,21 @@
+tests.fixtures.example\_pipelines.pipelines.road package
+========================================================
+
+Submodules
+----------
+
+tests.fixtures.example\_pipelines.pipelines.road.n100 module
+------------------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines.road.n100
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines.road
+   :members:
+   :show-inheritance:
+   :undoc-members:

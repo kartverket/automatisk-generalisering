@@ -1,0 +1,18 @@
+tests.support package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.support.arcpy
+
+Module contents
+---------------
+
+.. automodule:: tests.support
+   :members:
+   :show-inheritance:
+   :undoc-members:

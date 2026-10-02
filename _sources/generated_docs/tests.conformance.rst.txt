@@ -1,0 +1,10 @@
+tests.conformance package
+=========================
+
+Module contents
+---------------
+
+.. automodule:: tests.conformance
+   :members:
+   :show-inheritance:
+   :undoc-members:

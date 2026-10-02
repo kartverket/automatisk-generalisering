@@ -1,0 +1,29 @@
+tests.fixtures.example\_pipelines.pipelines.building package
+============================================================
+
+Submodules
+----------
+
+tests.fixtures.example\_pipelines.pipelines.building.n100\_objects module
+-------------------------------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines.building.n100_objects
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.fixtures.example\_pipelines.pipelines.building.n100\_stages module
+------------------------------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines.building.n100_stages
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines.building
+   :members:
+   :show-inheritance:
+   :undoc-members:

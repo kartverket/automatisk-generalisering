@@ -1,0 +1,19 @@
+tests.fixtures.example\_pipelines.pipelines package
+===================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.fixtures.example_pipelines.pipelines.building
+   tests.fixtures.example_pipelines.pipelines.road
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines.pipelines
+   :members:
+   :show-inheritance:
+   :undoc-members:

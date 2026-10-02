@@ -1,0 +1,10 @@
+tests.invariance package
+========================
+
+Module contents
+---------------
+
+.. automodule:: tests.invariance
+   :members:
+   :show-inheritance:
+   :undoc-members:

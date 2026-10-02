@@ -1,0 +1,47 @@
+tests.fixtures.example\_pipelines package
+=========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.fixtures.example_pipelines.operations
+   tests.fixtures.example_pipelines.pipelines
+   tests.fixtures.example_pipelines.tuning
+
+Submodules
+----------
+
+tests.fixtures.example\_pipelines.classification\_rules module
+--------------------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.classification_rules
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.fixtures.example\_pipelines.products module
+-------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.products
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.fixtures.example\_pipelines.sources module
+------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.sources
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,18 @@
+tests.fixtures package
+======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.fixtures.example_pipelines
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures
+   :members:
+   :show-inheritance:
+   :undoc-members:

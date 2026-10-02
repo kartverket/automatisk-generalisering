@@ -1,0 +1,21 @@
+tests.fixtures.example\_pipelines.tuning.scale package
+======================================================
+
+Submodules
+----------
+
+tests.fixtures.example\_pipelines.tuning.scale.n100 module
+----------------------------------------------------------
+
+.. automodule:: tests.fixtures.example_pipelines.tuning.scale.n100
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.fixtures.example_pipelines.tuning.scale
+   :members:
+   :show-inheritance:
+   :undoc-members:

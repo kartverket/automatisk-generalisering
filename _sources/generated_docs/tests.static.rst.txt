@@ -1,0 +1,21 @@
+tests.static package
+====================
+
+Submodules
+----------
+
+tests.static.test\_source\_scans module
+---------------------------------------
+
+.. automodule:: tests.static.test_source_scans
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.static
+   :members:
+   :show-inheritance:
+   :undoc-members:

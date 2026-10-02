@@ -1,0 +1,10 @@
+tests.support.arcpy package
+===========================
+
+Module contents
+---------------
+
+.. automodule:: tests.support.arcpy
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,10 @@
+tests.goldens package
+=====================
+
+Module contents
+---------------
+
+.. automodule:: tests.goldens
+   :members:
+   :show-inheritance:
+   :undoc-members:
