@@ -30,8 +30,9 @@ Shown for the recommended options of §2 and §3.
 pyproject.toml            [project] src layout, requires-python 3.13; [tool.pyright] strict;
                           [tool.black]; [tool.ruff]; [tool.pytest.ini_options] markers
 .importlinter             the contracts of §6
-typings/arcpy/            the local type stub for ArcPy: only the non-tool names the adapter
-                          may use (§6.1). Not shipped.
+stubs/arcpy_constrained/  the local type stub for ArcPy: only the non-tool names the adapter
+                          and the test builders may use (§6.1). Applied to two roots only,
+                          by pyright execution environments. Not shipped.
 
 src/ag/
 ├── core/                     pure: stdlib only. No filesystem, no engine, no environment.
@@ -525,26 +526,44 @@ does: with a stub that declares only `arcpy.da.SearchCursor`, the module is clea
 to `arcpy.management.Delete` in it is an error (`"management" is not a known attribute of
 module "arcpy"`). So:
 
-1. `typings/arcpy/` is a hand-written stub declaring **only the non-tool names the adapter may
-   use**: the `da` cursors and array functions, the geometry and spatial-reference
+1. `stubs/arcpy_constrained/arcpy/` is a hand-written stub declaring **only the non-tool names
+   the adapter may use**: the `da` cursors and array functions, the geometry and spatial-reference
    constructors, `Describe`, `ListFields`, `Exists`, `AddFieldDelimiters`. It declares **no
    toolbox module** (`management`, `analysis`, `cartography`, ...), **no `env`**, **no
    `ExecuteError`** and no licence functions. It is the allowlist, and adding a name to it is a
    reviewed diff.
 2. Any module under `ag/adapters/arcpy/` may `import arcpy`, and pyright then rejects a tool
    call, an `arcpy.env` access or a vendor exception name anywhere in it, because for the type
-   checker those names do not exist.
+   checker those names do not exist. The same holds for `tests/support/arcpy/`, the second
+   root the stub applies to (below).
 3. `session.py` is the one module that reaches them, dynamically: `run_tool("analysis.
    PairwiseBuffer", ...)` resolves the tool by name, and the environment, the licence, the
    message drain and the exception wrapping sit behind the same small typed surface. It is the
    only module allowed `getattr` on the `arcpy` module.
-4. A static scan over `ag/adapters/arcpy/` is the backstop for what a stub cannot see:
-   `getattr(arcpy, ...)`, `vars(arcpy)`, `from arcpy import *` and the strings `ExecuteError`
-   and `except arcpy` outside `session.py`.
+4. A static scan over `ag/adapters/arcpy/` and `tests/support/arcpy/` is the backstop for what
+   a stub cannot see: `getattr(arcpy, ...)`, `vars(arcpy)`, `from arcpy import *` and the
+   strings `ExecuteError` and `except arcpy` outside `session.py`.
 
 The adapter modules import `arcpy` at module level; nothing outside `ag.adapters.arcpy` is
 affected, because `runtime/compose.arcpy_ports` imports the adapter lazily and row 6 keeps
 everyone else out. The first converter and the first stub entries are written in slice 1b.
+
+**Corrected 2026-10-02, before the first push of slice 0: where the stub lives, and a second
+root.** The stub was placed at `typings/arcpy/`. Probed with pyright 1.1.399: a directory of
+that name is pyright's default `stubPath` and applies to every file in the repository, so a
+legacy module opened in an editor under the ArcGIS Pro interpreter reported `"management" is
+not a known attribute of module "arcpy"` and lost ArcPy completion. The stub moved to
+`stubs/arcpy_constrained/arcpy/`, reached only through two pyright execution environments in
+`pyproject.toml` (`root = "src/ag/adapters/arcpy"` and `root = "tests/support/arcpy"`, each
+with `extraPaths = ["stubs/arcpy_constrained"]`). An execution environment's `extraPaths`
+outranks the interpreter's site-packages, so the constraint holds whichever interpreter an
+editor has selected, and every other directory resolves `arcpy` from the interpreter or not
+at all. The second root settles slice 1b's `.gdb` fixture builders: they live in
+`tests/support/arcpy/`, are written against the same stub, run tools through
+`session.run_tool`, and are imported lazily inside `arcpy`-marked fixtures, never at the top
+of a test module, because collection imports test modules and CI has no ArcPy. Strictness is
+scoped the same way: `typeCheckingMode = "standard"` with `strict = ["src", "tests",
+"tools"]`, so an open legacy file gets standard-mode diagnostics, not strict ones.
 
 **What the tree cannot express as an import contract**, each with the check that covers it:
 
@@ -555,7 +574,7 @@ everyone else out. The first converter and the first stub entries are written in
 | no environment reads outside `runtime/env.py` | `os` is stdlib | a static test scanning for `os.environ` and `os.getenv` |
 | no import by string outside `runtime/stage_ref.py`, and that one only into `ag.generalization.` | a dynamic import is invisible to import-linter | the same static test, failing on `importlib`, `__import__`, `runpy`; plus a unit test that the resolver rejects `ag.adapters.fakes.*`, `ag.runtime.*` and a non-`Stage` attribute before importing anything (§4) |
 | a group class holds Protocol methods only; no name defined in two groups; no state outside `_base.py` | class contents, not imports | `tests/static/test_adapter_groups.py` (§3.2 rule 7) |
-| only `session.py` runs a tool, touches `arcpy.env` or names a vendor exception | not an import: every adapter module may import `arcpy` (row 8) | the stub in `typings/arcpy/` omits those names, so pyright strict rejects them; a static scan covers `getattr` on the module and the exception strings (§6.1) |
+| only `session.py` runs a tool, touches `arcpy.env` or names a vendor exception | not an import: every adapter module may import `arcpy` (row 8) | the stub in `stubs/arcpy_constrained/` omits those names, so pyright strict rejects them in the adapter and in `tests/support/arcpy/`; a static scan covers `getattr` on the module and the exception strings (§6.1) |
 | driven-port Protocols declared only in `ports/` | a class definition, not an import | a static test over the port names |
 | every handle parameter of a port carries a marker; every `Out` has a row shape | annotations | the T4.1 check |
 | an adapter module ends with its `TYPE_CHECKING` conformance assignment, and has a conformance test module | file content | the port matrix test |
@@ -573,11 +592,11 @@ For the two developers, without asking.
 2. Declare it in `ag/ports/<port>.py`, under the section heading of its group, with `In`,
    `Out`, `Mutates`, `ParentsOut` on every handle parameter and its `@row_shape`.
 3. ArcPy: `ag/adapters/arcpy/<port>/<group>.py`. You may `import arcpy` there, for cursors,
-   geometry objects, `Describe` and the other names declared in `typings/arcpy/`. **Every tool
+   geometry objects, `Describe` and the other names declared in `stubs/arcpy_constrained/`. **Every tool
    goes through `session.run_tool("<toolbox>.<Tool>", ...)`**; never call
    `arcpy.<toolbox>.<Tool>` directly, never touch `arcpy.env`, never name `arcpy.ExecuteError`.
    Pyright will stop you, because the stub does not declare them. If you need an ArcPy name the
-   stub lacks and it is not a tool, add it to `typings/arcpy/` in the same pull request and say
+   stub lacks and it is not a tool, add it to `stubs/arcpy_constrained/` in the same pull request and say
    why (§6.1).
 4. Fake: `ag/adapters/fakes/memory/<port>/<group>.py`, reading and writing only through
    `self._store`.
@@ -656,7 +675,7 @@ first.
 | 4 | `ports/capabilities.py` | adapters publish the record and may not import `lineage/` |
 | 5 | `adapters/_shared/` | the engine-free resolver is needed by the ArcPy adapter, the fake and the tests; an adapter may not import another adapter |
 | 6 | a package per port inside each adapter, one module per method group; group classes hold Protocol methods only; `_base.py` and a `support/` package per adapter. The planned tree's `adapters/arcpy/predicates.py` and `geometry.py` become `support/predicate_compiler.py` and `support/geometry_values.py`, so that an adapter's root holds only the session, the base and the port packages | §3.2 |
-| 6b | `arcpy` may be imported anywhere under `ag/adapters/arcpy/`, not only in `session.py`; a local stub in `typings/arcpy/` that omits tools, `env` and exceptions keeps the one-module rule for those. The planned tree's "`import arcpy` appears in exactly one file" becomes "tools, the environment and vendor exceptions appear in exactly one file" | §6.1 |
+| 6b | `arcpy` may be imported anywhere under `ag/adapters/arcpy/`, not only in `session.py`; a local stub in `stubs/arcpy_constrained/` that omits tools, `env` and exceptions keeps the one-module rule for those. The planned tree's "`import arcpy` appears in exactly one file" becomes "tools, the environment and vendor exceptions appear in exactly one file" | §6.1 |
 | 6c | `ports/workspace_format.py`: `WorkspaceFormat` moves out of `staging/workspace.py` because `TableOps.create_workspace` names it | A5.7 |
 | 6a | `runtime/compose.py` takes port instances, never an adapter name; `runtime/stage_ref.py` is the one import by string; `ag.adapters.fakes` importable by `runtime/local.py` only | §4 |
 | 7 | `lineage/` as a top-level package, with `work_key.py` inside it | absent from 03-architecture §7 because it postdates it; T3.2's "no home" finding |

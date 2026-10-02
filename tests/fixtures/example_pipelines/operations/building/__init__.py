@@ -55,7 +55,7 @@ def data_selection(
 
     `codes` is a NON-SPATIAL LOOKUP TABLE, replicated whole to every pod rather than
     partitioned. It is the case that earns `TableOps` its separation from
-    `GeometryOps` (03-architecture §2.1).
+    `GeometryOps`.
     """
     tb.geometry.select(
         input=source,

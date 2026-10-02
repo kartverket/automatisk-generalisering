@@ -380,11 +380,15 @@ are seeded by test support, not through a port.
 ##### Slice 1b: the ArcPy session and adapter, conformance, the Windows run, the timing run
 
 **Contains.**
-- `typings/arcpy/`: the local stub, declaring only the non-tool names the adapter uses so far
-  (the `da` cursors, the geometry and spatial-reference constructors, `Describe`). It omits
-  every toolbox, `env` and `ExecuteError` on purpose, which is what lets pyright strict pass in
-  a CI without ArcPy and makes it reject a tool call outside the session (`project_tree.md`
-  §6.1).
+- `stubs/arcpy_constrained/arcpy/`: the local stub, declaring only the non-tool names the
+  adapter and the builders use so far (the `da` cursors, the geometry and spatial-reference
+  constructors, `Describe`). It omits every toolbox, `env` and `ExecuteError` on purpose,
+  which is what lets pyright strict pass in a CI without ArcPy and makes it reject a tool
+  call outside the session (`project_tree.md` §6.1). Its module docstring states the rule a
+  developer meets on hover or go-to-definition: a tool goes through `session.run_tool`; a
+  non-tool name is added here with its reason in the same pull request. The two pyright
+  execution environments that apply it (`src/ag/adapters/arcpy`, `tests/support/arcpy`)
+  already exist in `pyproject.toml` from slice 0.
 - `adapters/arcpy/session.py`: the only module that runs a tool, touches `arcpy.env` or names a
   vendor exception; tools are resolved by name inside `run_tool`; the environment (spatial
   reference 25833, XY tolerance 0.02 m, resolution 0.01 m, from `env_setup/environment_setup.py`);
@@ -396,9 +400,13 @@ are seeded by test support, not through a port.
   pair_tables.py` (reads `ORIG_FID`, writes the pair table); the group modules for the three
   methods.
 - `tests/conformance/` for the three methods, parametrized over both adapters (§5.2).
-  Engine-neutral fixture builders in `tests/support/`; the ArcPy side of the builder sits under
-  the `arcpy` marker and writes small `.gdb` inputs with the engine directly, because no write
-  method exists on the port yet.
+  Engine-neutral fixture builders in `tests/support/`; the ArcPy side of the builder lives in
+  `tests/support/arcpy/`, sits under the `arcpy` marker and writes small `.gdb` inputs with
+  the engine directly, because no write method exists on the port yet: tools through
+  `session.run_tool`, rows through the stub's cursors, under the same constrained stub as the
+  adapter. Those modules are imported lazily, inside an `arcpy`-marked fixture or test, never
+  at the top of a test module: collection imports test modules and CI has no ArcPy. The 1b
+  static scan covers both roots.
 - The run of the conformance suite under an ArcGIS Pro Python environment (`pytest -m arcpy`,
   `docs/contributing/testing.md`), with its log kept.
 - **The `read_rows` timing run**, `tools/time_read_rows.py`, on
@@ -466,7 +474,9 @@ are seeded by test support, not through a port.
   `ports/workspace_format.py`, and `ScratchFileManager.create_workspaces` implemented through it
   (the stage workspace, one per operation, and the sidecar directories, which the manager makes
   itself).
-- The example fixtures go live: included in pyright and collection, with the skeleton's fixture
+- The example fixtures go live: the `tests/fixtures/example_pipelines` exclusions in
+  `[tool.pyright]` and `[tool.ruff]` of `pyproject.toml` are both removed in this slice, so the
+  fixtures are type-checked, formatted, linted and collected from here on; with the skeleton's fixture
   stage, two operations using only `select` and `explode_multipart`, derived from the building
   example.
 - That stage run through `run_operations` under the fake in CI and under ArcPy on Windows.
@@ -1075,11 +1085,19 @@ disposable by their own terms.
 
 **The retargeting, all of it greppable:**
 
-- `check_consistency.py`: its three path constants (`DECISIONS`, `TASKS`, `TERMS`) point at the
-  new locations, and its docstring stops saying it dies with `temp/`. Run before and after; the
-  output must be identical.
-- `check_terminology.py`: the authority column's `file.md#anchor` citations are rewritten for the
-  new relative paths; the checker proves every one resolves.
+- **The two checker scripts become tests and their hooks go** (decided 2026-10-02). Every hook
+  must still run after `docs/refactor/` is deleted in full, so no hook may name a document path
+  after the move. `check_terminology.py` becomes `tests/static/test_terminology.py` over
+  `docs/terminology.md` and the architecture documents, and absorbs the two checks of
+  `check_consistency.py` that concern the glossary's authority column (every cited A-id resolves
+  in `docs/decisions/lineage-decision-record.md`; every headword appears there): permanent.
+  `check_consistency.py`'s other four checks (A-orphan, dangling-ref, ordering, B-referenced) all
+  read `TASKS.md` and become `tests/static/test_task_plan.py`, the one test module that still
+  reads `docs/refactor/`; the deletion commit deletes it with the directory. Both checker hooks
+  are removed from `.pre-commit-config.yaml` at the move; the `pytest` hook carries the tests.
+  Run the scripts and the tests side by side once; the findings must be identical. The
+  terminology test rewrites nothing: the authority column's `file.md#anchor` citations are
+  retargeted in the documents by the move itself, and the test proves every one resolves.
 - Citation paths: `temp/DECISIONS.md`, `temp/findings/...`, `02-runtime.md`, `03-architecture.md`,
   `01-terminology.md` and `decisions/NNNN-...` as they appear in the documents themselves (their
   links to each other), in `TASKS.md`'s `destination` and `doc migration` lines, in module and
@@ -1097,15 +1115,17 @@ disposable by their own terms.
 **`TASKS.md`'s completion test passes and `04-migration.md`'s per-stage table shows every stage
 migrated**, at which point both documents have done what they exist for. One pull request then:
 
-- deletes `docs/refactor/` with everything under it, including `temp/`;
-- removes the `TASKS.md` checks from `check_consistency.py` (A-orphan, dangling-ref, ordering,
-  B-referenced) in the same pull request, so the hook keeps passing with only the permanent
-  documents (`lineage-decision-record.md` and `terminology.md`); the two terminology checks stay;
-- retargets or removes every hook, workflow step and allowlist entry that named the deleted
-  paths.
+- deletes `docs/refactor/` with everything under it, including `temp/`, `TASKS.md` and
+  `04-migration.md`;
+- deletes `tests/static/test_task_plan.py`, the one remaining reader of the directory;
+- removes any allowlist entry that named the deleted paths.
 
 **Acceptance for the deletion:** `git grep "docs/refactor"` over the whole repository returns
-nothing, and the pre-commit run is green.
+nothing, and `pre-commit run --all-files` is green with no hook referencing a path that no
+longer exists. Deleting `docs/refactor/` is one commit that breaks nothing; what makes that
+true is kept true from slice 0 on: prose outside `docs/refactor/` names no slice number, plan
+section, task id or temp document, and only the two checker hooks reference the directory
+until the move removes them.
 
 ---
 
@@ -1122,7 +1142,8 @@ tests/
   goldens/         recorded artifacts and their replay tests
   invariance/      K = 4 vs K = 16, local processes; arcpy marked (slice 5)
   smoke/           one real stage end to end; arcpy marked (slice 6)
-  support/         engine-neutral builders, the adapter fixture, local_scope, .gdb builders
+  support/         engine-neutral builders, the adapter fixture, local_scope
+    arcpy/         the .gdb builders: constrained stub, session.run_tool, imported lazily
   fixtures/        example_pipelines/, row fixtures
 ```
 

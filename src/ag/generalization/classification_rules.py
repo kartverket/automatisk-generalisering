@@ -1,5 +1,5 @@
 """The classification rules: the one file a security reviewer reads. Placeholder until
-slice 6.
+the first stage is migrated.
 
 A leaf of the domain layers.
 """

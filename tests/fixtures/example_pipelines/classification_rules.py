@@ -1,7 +1,7 @@
 """TEMPLATE — not shipped. Target module: `src/ag/classification_rules.py`.
 
 The whole classification policy, in one file, so a security reviewer can read it
-without reading any pipeline — 02-runtime §5.4.
+without reading any pipeline.
 
 MOST SPECIFIC FIRST. A rule keys on VALUES, a scale and a dataset name, deliberately:
 it is written against a policy document rather than against this codebase's symbols,

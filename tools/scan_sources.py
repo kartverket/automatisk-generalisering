@@ -9,7 +9,7 @@ relative to the scanned root. Run from the repository root as
 `python tools/scan_sources.py`; the exit code is non-zero when anything is found.
 
 Why: `os` is part of the standard library and a dynamic import is invisible to
-import-linter, so neither rule can be an import contract (project_tree.md section 6.1).
+import-linter, so neither rule can be an import contract.
 `Settings` is built once by an entry point and passed down, and the one import by string
 accepts only `ag.generalization.*`; a second site for either would bypass that. `importlib`
 is banned wholesale on purpose: a legitimate later need is added to the allowlist in a

@@ -443,8 +443,10 @@ Every package except `core/` may import `observability/`; `core/` stays side-eff
 
 **Only `adapters/` may import a third-party processing library.** `arcpy` may be imported
 anywhere under `adapters/arcpy/`; tools, `arcpy.env` and vendor exceptions are reached through
-`adapters/arcpy/session.py` only, enforced by the type stub in `typings/arcpy/` and a static
-scan, not by an import contract (`project_tree.md` §6.1). `networkx` is imported by
+`adapters/arcpy/session.py` only, enforced by the type stub in `stubs/arcpy_constrained/`,
+applied by pyright execution environments to the adapter and to `tests/support/arcpy/` and
+nowhere else, and a static scan, not by an import contract (`project_tree.md` §6.1; the stub
+location was corrected there on 2026-10-02). `networkx` is imported by
 `adapters/networkx/graph_ops.py` alone; `shapely` and the storage clients only under
 `adapters/`. This makes
 [02-runtime §2.6](02-runtime.md#26-declarations-must-be-constructible-without-touching-data)
@@ -707,9 +709,11 @@ src/ag/
     ├── operations/              scale-free; shared/ and one package per object, with tuning/
     └── pipelines/               <object>/<scale>/: objects.py, one module per stage, __init__
 
-typings/arcpy/               the local ArcPy stub: non-tool names only (slice 1b)
+stubs/arcpy_constrained/     the local ArcPy stub: non-tool names only; applied to the adapter
+                             and tests/support/arcpy/ by execution environments (slice 1b)
 tools/                       dev-only scripts, never shipped: scan_sources, run_example, ...
 tests/                       unit/ static/ conformance/ goldens/ invariance/ smoke/ support/
+                             (support/arcpy/: the engine-touching builders, constrained)
                              fixtures/example_pipelines/
 tests_legacy/                the tests of the legacy packages
 ```
