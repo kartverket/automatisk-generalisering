@@ -163,8 +163,9 @@ MaterializeFn: TypeAlias = Callable[[tuple[str, ...], str, DataType], str]
 Supplied by the scratch manager, which owns workspaces, layer names and name budgets and
 renders the trail into a layer name its own way. It returns the path only: the handle's
 name and namespace are the scope's to decide, so identity never depends on how a manager
-renders a name. It must raise on a repeated (trail, leaf) within one operation rather than
-return a second path, because the two handles would be equal and name different files.
+renders a name. It must raise on a repeated (trail, leaf) within one bound materialiser,
+which the stage entry point binds per call, rather than return a second path, because the
+two handles would be equal and name different files.
 """
 
 
@@ -204,6 +205,8 @@ class ScratchScope(Injected):
         The leaf is validated like a label: a separator inside it would make
         `scratch("a/b")` equal to `scratch.child("a")("b")`.
         """
+        if self.materialize is _unbound:
+            raise InjectionError(_unbound_message(call=f"scratch({name!r})"))
         _check_segment(text=name, what="leaf")
         path = self.materialize(self.trail, name, data_type)
         return ScratchHandle(
@@ -227,11 +230,7 @@ class ScratchScope(Injected):
         would fail a long run over something the system resolves correctly.
         """
         if self.materialize is _unbound:
-            raise InjectionError(
-                f"scratch.child({label!r}) was called on a scope the runtime never "
-                "bound. The stage entry point must hand its own scope to any operation "
-                "whose signature declares `scratch: ScratchScope = INJECTED`."
-            )
+            raise InjectionError(_unbound_message(call=f"scratch.child({label!r})"))
         _check_segment(text=label, what="label")
         if tag is not None:
             _check_segment(text=tag, what="tag")
@@ -258,13 +257,17 @@ def _check_segment(*, text: str, what: str) -> None:
         )
 
 
-def _unbound(trail: tuple[str, ...], leaf: str, data_type: DataType) -> str:
-    """The materialiser of `INJECTED`: any call means the runtime never bound a scope."""
-    raise InjectionError(
-        f"scratch({leaf!r}) was called on a scope the runtime never bound. The stage "
-        "entry point must hand its own scope to any operation whose signature declares "
+def _unbound_message(*, call: str) -> str:
+    return (
+        f"{call} was called on a scope the runtime never bound. The stage entry point "
+        "must hand its own scope to any operation whose signature declares "
         "`scratch: ScratchScope = INJECTED`."
     )
+
+
+def _unbound(trail: tuple[str, ...], leaf: str, data_type: DataType) -> str:
+    """The materialiser of `INJECTED`: any call means the runtime never bound a scope."""
+    raise InjectionError(_unbound_message(call=f"scratch({leaf!r})"))
 
 
 INJECTED = ScratchScope(namespace="", trail=(), materialize=_unbound)

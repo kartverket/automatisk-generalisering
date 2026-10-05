@@ -251,6 +251,12 @@ def test_the_injected_sentinel_fails_with_a_sentence() -> None:
         INJECTED("dissolved")
 
 
+def test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf() -> None:
+    """An unbound scope is the larger fault; a bad leaf on it must not hide it."""
+    with pytest.raises(InjectionError, match="never bound"):
+        INJECTED("a/b")
+
+
 def test_the_injected_sentinel_refuses_a_child_before_any_bookkeeping() -> None:
     with pytest.raises(InjectionError, match="never bound"):
         INJECTED.child("build_topology")

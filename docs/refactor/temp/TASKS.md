@@ -121,6 +121,7 @@ work but have different lifetimes and different modules.
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
 | 16b | T2.12 | `TableOps.create_workspace` | not started |
+| 16c | T2.13 | Call identity: per-call workspace and scope namespace | not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
 | 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
@@ -1151,6 +1152,33 @@ slice 1c of `findings/implementation_plan.md`.
 
 **doc migration** A5.7 → `ports/table_ops.py`, the `staging/scratch.py` docstring and
 `02-runtime.md` §4.2.
+
+---
+
+## 16c. T2.13 — Call identity: per-call workspace and scope namespace
+
+**status:** not started
+
+**what done means** `Stage` gives each `OperationCall` a call identity in declaration order:
+the operation's short name, with `_2`, `_3`, ... on repeats, and rejects at import two
+different functions (different `qualified_name`) that share a short name in one stage. The
+stage entry point binds one scratch scope per call with the call identity as its namespace,
+and one materialiser per call. `ScratchFileManager` renders the operation workspace from the
+call identity and raises on a repeated (trail, leaf) within one call rather than returning a
+second path. Tests: two calls of one operation in a stage get two workspaces and pairwise
+unequal internal handles; the repeated-(trail, leaf) contract raises; the same-short-name
+check fires with both qualified names in the message.
+
+**files touched** `core/pipeline.py` (Task B), `staging/scratch.py`, `runtime/stage_entry.py`
+(slice 1c of `findings/implementation_plan.md`). `core/handles.py` already stamps the
+scope's namespace and names internal handles by trail and leaf; nothing there changes.
+
+**depends on** nothing.
+
+**decision refs** A29, A15.3.
+
+**doc migration** A29 → the `Stage` docstring in `core/pipeline.py`, the `staging/scratch.py`
+docstring and `02-runtime.md` §4.2.
 
 ---
 

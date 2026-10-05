@@ -8,9 +8,10 @@ How: the subclasses are discovered, not listed: every `errors.py` under the pack
 imported and the class tree below `AgError` walked, so a new error module is covered the
 day it lands. The boundary: an `AgError` subclass lives in a module named `errors.py`;
 one defined elsewhere is covered only if something imported it first. Error modules
-import the standard library and `ag.core` only, checked here from their source before
-anything is imported, so this module collects where no engine is installed and every
-error unpickles on a machine without one.
+import the standard library and `ag.core` only. That rule is checked from each module's
+source, and a module that breaks it is left out of the import step, so this file still
+collects where no engine is installed, the violation is reported by its own test, and
+every error that passes unpickles on a machine without an engine.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ import ast
 import importlib
 import pickle
 import sys
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 import pytest
@@ -36,21 +38,45 @@ def _error_modules() -> list[tuple[str, Path]]:
     ]
 
 
-def _imported_modules(path: Path) -> set[str]:
-    """Every module an `import` or `from ... import` in the file names, dotted."""
+def _imported_modules(module: str, path: Path) -> set[str]:
+    """Every module the file imports, as a full dotted name.
+
+    A relative import is resolved against the module's own package, so `from .x import`
+    in `ag.ports.errors` names `ag.ports.x`.
+    """
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    package = module.rsplit(".", 1)[0]
     names: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             names.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom):
-            names.add(node.module or "" if node.level == 0 else "ag.<relative>")
+            if node.level == 0:
+                names.add(node.module or "")
+            else:
+                base = (
+                    package.rsplit(".", node.level - 1)[0]
+                    if node.level > 1
+                    else package
+                )
+                names.add(f"{base}.{node.module}" if node.module else base)
     return names
 
 
+def _forbidden_imports(module: str, path: Path) -> set[str]:
+    """Imports that are neither standard library nor under `ag.core`."""
+    return {
+        name
+        for name in _imported_modules(module, path)
+        if not (name == "ag.core" or name.startswith("ag.core."))
+        and name.split(".")[0] not in sys.stdlib_module_names
+    }
+
+
 def _error_types() -> list[type[AgError]]:
-    for module, _ in _error_modules():
-        importlib.import_module(module)
+    for module, path in _error_modules():
+        if not _forbidden_imports(module, path):
+            importlib.import_module(module)
     found: set[type[AgError]] = set()
     pending: list[type[AgError]] = [AgError]
     while pending:
@@ -78,20 +104,26 @@ def test_error_modules_import_only_the_standard_library_and_core(
 ) -> None:
     """Why: an error module that imported an engine would stop this file collecting
     where the engine is absent, and would make its errors unpicklable there."""
-    imported = _imported_modules(path)
-    foreign = {
-        name
-        for name in imported
-        if name.split(".")[0] != "ag"
-        and name.split(".")[0] not in sys.stdlib_module_names
+    assert _forbidden_imports(module, path) == set(), module
+
+
+def test_the_import_rule_sees_relative_and_dotted_imports() -> None:
+    """The rule reads the source, so it is checked here on sources of its own."""
+    cases: dict[str, set[str]] = {
+        "from ag.core.errors import AgError\nimport json\n": set(),
+        "import ag.adapters.arcpy\n": {"ag.adapters.arcpy"},
+        "from ag.ports import toolbox\n": {"ag.ports"},
+        "from . import toolbox\n": {"ag.ports"},
+        "from .errors import PortError\n": {"ag.ports.errors"},
+        "import arcpy\nfrom shapely import geometry\n": {"arcpy", "shapely"},
     }
-    assert foreign == set(), module
-    outside_core = {
-        name
-        for name in imported
-        if name.startswith("ag") and not name.startswith("ag.core")
-    }
-    assert outside_core == set(), module
+    for source, expected in cases.items():
+        probe = PACKAGE.parent / "probe_errors.py"
+        try:
+            probe.write_text(source, encoding="utf-8")
+            assert _forbidden_imports("ag.ports.errors", probe) == expected, source
+        finally:
+            probe.unlink()
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +191,49 @@ def test_fill_context_reads_a_generator_only_up_to_the_cap_when_the_count_is_giv
     fill_context(error, row_indices=produced, row_count=10_000)
     assert error.context.row_indices == tuple(range(ROW_INDEX_CAP))
     assert next(produced) == ROW_INDEX_CAP
+
+
+class _ArrayLike[T]:
+    """Stands in for an engine array: iterable, and ambiguous as a truth value."""
+
+    def __init__(self, values: Sequence[T]) -> None:
+        self._values = values
+
+    def __bool__(self) -> bool:
+        raise ValueError("the truth value of an array is ambiguous")
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._values)
+
+
+class _EngineInt(int):
+    """Stands in for an engine integer such as a 64-bit NumPy scalar."""
+
+
+def test_fill_context_accepts_array_like_rows_and_messages() -> None:
+    error = AgError("boom")
+    fill_context(
+        error,
+        row_indices=_ArrayLike([_EngineInt(3), _EngineInt(4)]),
+        tool_messages=_ArrayLike(["ERROR 000210"]),
+    )
+    assert error.context.row_indices == (3, 4)
+    assert all(type(index) is int for index in error.context.row_indices)
+    assert error.context.row_count == 2
+    assert error.context.tool_messages == ("ERROR 000210",)
+
+
+def test_a_directly_constructed_context_normalises_its_sequences() -> None:
+    context = ErrorContext(
+        row_indices=[_EngineInt(7), 8],  # pyright: ignore[reportArgumentType]
+        tool_messages=["a", "b"],  # pyright: ignore[reportArgumentType]
+    )
+    assert context.row_indices == (7, 8)
+    assert all(type(index) is int for index in context.row_indices)
+    assert context.tool_messages == ("a", "b")
+    assert hash(context) == hash(
+        ErrorContext(row_indices=(7, 8), tool_messages=("a", "b"))
+    )
 
 
 def test_a_directly_constructed_context_is_capped_and_counted() -> None:

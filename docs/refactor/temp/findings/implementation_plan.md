@@ -313,6 +313,14 @@ are seeded by test support, not through a port.
 
 ##### Slice 1a: the grammar, the markers, the errors, the fake, the facade spike. No ArcPy.
 
+**Status, 2026-10-05.** The core lift (first pull request) is drafted on `slice_1a` and under
+review: `core/types.py`, `core/injection.py`, `core/handles.py`, `core/operations.py`, plus
+`core/errors.py`, pulled forward because the handle module raises `InjectionError`. Departures
+recorded on the way: `ErrorContext.messages` is `tool_messages` (§6.2 below repointed);
+`Scale.rank` because a `StrEnum` orders as text; `Classification.join` fails closed; internal
+handles are named by trail and leaf and stamped with the scope's namespace; call identity is
+A29 (T2.13). Evidence: `findings/slice_1a_core_lift_evidence.md`.
+
 **Contains.**
 - **The first pull request of 1a is the core lift, by the architect**: `core/types.py`,
   `core/injection.py`, `core/handles.py` and `core/operations.py`, with the split, the restamp
@@ -462,7 +470,9 @@ are seeded by test support, not through a port.
 - Lifts, each citing its verdict: `core/locations.py` (bucket names out to settings;
   `core/data_objects.py` and `core/pipeline.py`, which it imports, arrive with Task B);
   `staging/workspace.py` with the
-  `sidecar` fix; `staging/scratch.py` with the collision check keyed on (operation, layer);
+  `sidecar` fix; `staging/scratch.py` with the collision check keyed on (call identity, layer)
+  per A29 and T2.13, and its contract test: a repeated (trail, leaf) within one bound
+  materialiser raises rather than returning a second path;
   `runtime/stage_entry.py` with its errors moved into the taxonomy; the recording spy;
   `tools/run_example.py`; `tests/unit/test_road_operations.py` with its helpers moved to
   `tests/support/`. `staging/transfer.py` is rewritten down to `dump_scratch` over
@@ -1285,7 +1295,7 @@ docstring), or one of the three parents errors. A new exception type is justifie
 ### 6.2 What every error carries
 
 `ErrorContext(operation: str | None, port: str | None, method: str | None, handle: str | None,
-row_indices: tuple[int, ...], row_count: int | None, tool: str | None, messages: tuple[str,
+row_indices: tuple[int, ...], row_count: int | None, tool: str | None, tool_messages: tuple[str,
 ...])`, on `AgError.context`. Row indices are capped (first 20) with the total in `row_count`.
 The layer that knows a field fills it: the adapter fills `method`, `tool`, `messages`,
 `row_indices`; the facade fills `handle` and `port`; `run_operations` fills `operation` on any

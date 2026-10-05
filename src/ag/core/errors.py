@@ -30,7 +30,9 @@ class ErrorContext:
     facade knows `handle` and `port`; the stage runner knows `operation`. Layers add
     fields through `fill_context` only, which never overwrites one already set.
     `row_indices` is a sample of at most `ROW_INDEX_CAP` rows on every construction
-    path, and `row_count` is the total, derived from the indices when not given.
+    path, and `row_count` is the total, derived from the indices when not given. Both
+    sequences are normalised to tuples, the indices to plain `int`, so an adapter may
+    hand over engine integers or an array and the context stays hashable.
     """
 
     operation: str | None = None
@@ -43,10 +45,11 @@ class ErrorContext:
     tool_messages: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if self.row_indices and self.row_count is None:
-            object.__setattr__(self, "row_count", len(self.row_indices))
-        if len(self.row_indices) > ROW_INDEX_CAP:
-            object.__setattr__(self, "row_indices", self.row_indices[:ROW_INDEX_CAP])
+        indices = tuple(int(index) for index in self.row_indices)
+        object.__setattr__(self, "tool_messages", tuple(self.tool_messages))
+        if indices and self.row_count is None:
+            object.__setattr__(self, "row_count", len(indices))
+        object.__setattr__(self, "row_indices", indices[:ROW_INDEX_CAP])
 
 
 class AgError(Exception):
@@ -91,13 +94,16 @@ def fill_context(
     replaces fields another layer filled.
     """
     current = error.context
+    # Explicit None tests: an array-like argument may refuse to be tested for truth.
+    offered_rows: Iterable[int] = () if row_indices is None else row_indices
+    offered_messages: Iterable[str] = () if tool_messages is None else tool_messages
     if current.row_indices or current.row_count is not None:
         indices: tuple[int, ...] = current.row_indices
         row_count = current.row_count
     elif row_count is not None:
-        indices = tuple(islice(row_indices or (), ROW_INDEX_CAP))
+        indices = tuple(islice(offered_rows, ROW_INDEX_CAP))
     else:
-        indices = tuple(row_indices or ())
+        indices = tuple(offered_rows)
     error.context = ErrorContext(
         operation=_first(current.operation, operation),
         port=_first(current.port, port),
@@ -106,7 +112,7 @@ def fill_context(
         row_indices=indices,
         row_count=row_count,
         tool=_first(current.tool, tool),
-        tool_messages=current.tool_messages or tuple(tool_messages or ()),
+        tool_messages=current.tool_messages or tuple(offered_messages),
     )
 
 

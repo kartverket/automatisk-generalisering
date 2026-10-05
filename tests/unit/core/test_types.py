@@ -32,7 +32,6 @@ def test_every_member_has_a_rank_and_definition_order_is_rank_order() -> None:
     """A member added without a rank entry would fail only when first read; here it
     fails at once, and the members stay listed finest to coarsest."""
     ranks = [scale.rank for scale in Scale]
-    assert len(ranks) == len(Scale)
     assert ranks == sorted(ranks)
     assert len(set(ranks)) == len(ranks)
 
@@ -69,10 +68,9 @@ def test_join_truth_table() -> None:
     assert len(Classification) == 2
 
 
-def test_join_is_symmetric_and_closed_over_every_pair() -> None:
+def test_join_is_symmetric_over_every_pair() -> None:
     for left, right in product(Classification, repeat=2):
         assert left.join(right) is right.join(left), (left, right)
-        assert left.join(right) in Classification
 
 
 def test_permits_truth_table() -> None:

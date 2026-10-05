@@ -30,7 +30,7 @@ from types import MappingProxyType
 from typing import (
     Annotated,
     TypeAlias,
-    TypeIs,
+    TypeGuard,
     Union,
     get_args,
     get_origin,
@@ -192,10 +192,9 @@ def operation[**P](fn: Callable[P, None]) -> OperationDeclaration[P]:
     instance of its kind; two parameters of one injected kind; a `Mutates` or `ParentsOut`
     marker, which belong to port methods; a default on a handle or on `config`; a `config`
     whose annotation is not a frozen dataclass type compared by value; a positional
-    parameter. At a
-    declaration site: a misspelled or missing keyword, an undeclared handle, a config that
-    is not an instance of the declared type or cannot be hashed, and any injected
-    argument.
+    parameter. At a declaration site: a misspelled or missing keyword, an undeclared
+    handle, a config that is not an instance of the declared type or cannot be hashed,
+    and any injected argument.
 
     Why: all of it fires while the pipeline module is being imported, which is CI or
     orchestrator startup, rather than in a pod three hours in. ADR-0011.
@@ -337,7 +336,7 @@ def _injected_kind_in_union(*, hint: object) -> str | None:
     return None
 
 
-def _is_frozen_dataclass_type(hint: object) -> TypeIs[type]:
+def _is_frozen_dataclass_type(hint: object) -> TypeGuard[type]:
     """Whether `hint` is a class decorated `@dataclass(frozen=True)` with `eq` on.
 
     Both flags matter: with `eq=False` a frozen dataclass hashes by identity, so a list

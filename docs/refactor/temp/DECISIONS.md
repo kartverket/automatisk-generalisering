@@ -1868,6 +1868,33 @@ tree, which had silently excluded `src/ag/generalization/` from formatting and l
 > `.vscode/`, `.git-blame-ignore-revs` and `docs/contributing/toolchain.md`. The page is the
 > authority.
 
+## A29. Call identity
+
+*Decided 2026-10-05, during the core lift of slice 1a.* **An operation's call in a stage is
+identified by its call identity, not by the operation's short name.** Call identity is the
+stage, the operation's short name (`fn.__name__`, ADR-0011) and an ordinal on repeats in
+declaration order, the first call unnumbered and the second `_2`, the same rule
+`ScratchScope.child()` applies to repeated labels. The scratch scope's namespace and the
+rendered operation workspace both derive from call identity, never from the short name
+alone, so two calls of one operation in a stage have two workspaces and two sets of internal
+handles. The stage entry point binds one scope and one materialiser per call, and the scratch
+manager raises on a repeated (trail, leaf) within one call rather than returning a second
+path, because the two handles would compare equal and name different files. `Stage` rejects,
+at import, two different functions (different module or qualified name) that share a short
+name in one stage: the rendered workspace would carry one name for two bodies.
+
+Why: the record named an operation by `fn.__name__` and made that name the workspace stem
+(`02-runtime.md` §4.2) without saying what a stage that calls one operation twice, or two
+same-named operations from different modules, gets. The template keyed the workspace and the
+pod-wide leaf-collision check on the short name alone, so the second call either collided or
+conflated with the first, and A15.3 keys the id-map cache on handle equality, so internal
+handles of different calls must be different values. Alternatives weighed: forbidding a
+repeated operation in a stage (cheaper, but it forces a wrapper operation wherever one
+function is applied to two inputs); a module-qualified name as the workspace stem (unreadable
+in a scratch dump, and still ambiguous for two calls of one function).
+`destination:` `core/pipeline.py` (`Stage` docstring and check, Task B); `staging/scratch.py`
+and `runtime/stage_entry.py` (slice 1c); `02-runtime.md` §4.2.
+
 ---
 
 # B. Open
