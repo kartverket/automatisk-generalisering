@@ -101,14 +101,33 @@ def run_pytest(
     for cache in (ROOT / "src").rglob("__pycache__"):
         shutil.rmtree(cache)
     extra = ("--collect-only",) if collect_only else ()
+    # UTF-8 on both sides whatever the console code page: the child writes UTF-8 and the
+    # output is decoded as UTF-8, so a non-ASCII character in a message cannot break a run.
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", *PYTEST_FLAGS, *extra, *targets],
         cwd=ROOT,
         capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        encoding="utf-8",
+        errors="replace",
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONUTF8": "1"},
     )
     return proc.returncode, proc.stdout + proc.stderr
+
+
+def read_source(path: Path) -> tuple[bytes, str]:
+    """The file's bytes, and its text with `\\n` line endings whatever the file uses.
+
+    Needles are written with `\\n`; a clone with CRLF files must match them too, and the
+    restore must put back the exact bytes, so the bytes are kept beside the text.
+    """
+    data = path.read_bytes()
+    return data, data.decode("utf-8").replace("\r\n", "\n")
+
+
+def write_source(path: Path, text: str, *, like: bytes) -> None:
+    """Writes `text` with the line endings the original bytes `like` use."""
+    newline = "\r\n" if b"\r\n" in like else "\n"
+    path.write_bytes(text.replace("\n", newline).encode("utf-8"))
 
 
 def reported(kinds: str, target: str, out: str) -> bool:
@@ -141,7 +160,7 @@ def preflight(sets: Iterable[CaseSet]) -> list[str]:
     targets: set[str] = set()
     for case_set in sets:
         for case in case_set.cases:
-            original = (ROOT / case.file).read_text(encoding="utf-8")
+            _, original = read_source(ROOT / case.file)
             if mutate(original, case.edits) is None:
                 problems.append(
                     f"{case_set.name}/{case.id}: a needle is missing from {case.file} "
@@ -213,18 +232,18 @@ def run_case(case: Case) -> tuple[bool, str]:
             f"{head}\n\nResult: **HARNESS ERROR, nothing mutated**\n\n```\n{problem}\n```\n",
         )
     path = ROOT / case.file
-    original = path.read_text(encoding="utf-8")
+    original_bytes, original = read_source(path)
     mutated = mutate(original, case.edits)
     if mutated is None:
         return (
             False,
             f"{head}\n\nResult: **HARNESS ERROR, needle not unique, nothing mutated**\n",
         )
-    path.write_text(mutated, encoding="utf-8")
+    write_source(path, mutated, like=original_bytes)
     try:
         code, out = run_pytest(case.tests)
     finally:
-        path.write_text(original, encoding="utf-8")
+        path.write_bytes(original_bytes)
     ok = verdict(case, code, out)
     edits = "; ".join(describe(old, new) for old, new in case.edits)
     targets = ", ".join(t.split("::")[-1] if "::" in t else t for t in case.tests)

@@ -67,7 +67,7 @@ Result: **FAILED as expected** (exit 1)
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_an_injected_parameter_without_a_default_is_rejected
 FAILED tests/unit/core/test_operation_classification.py::test_an_injected_default_of_the_wrong_kind_is_rejected
-2 failed in 0.03s
+2 failed in 0.02s
 ```
 
 ### O3: default on an In/Out handle accepted
@@ -113,7 +113,7 @@ Result: **FAILED as expected** (exit 1)
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_mutable_config_type_is_rejected
 FAILED tests/unit/core/test_operation_classification.py::test_a_config_that_is_not_a_dataclass_type_is_rejected
-2 failed in 0.02s
+2 failed in 0.03s
 ```
 
 ### O6: config hashability not checked at the declaration site
@@ -348,7 +348,7 @@ Result: **FAILED as expected** (exit 1)
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_handles.py::test_a_handle_bound_in_two_class_bodies_is_refused
 FAILED tests/unit/core/test_handles.py::test_a_prenamed_handle_is_refused_as_a_class_attribute
-2 failed in 0.03s
+2 failed in 0.02s
 ```
 
 ### H2: internal handle not stamped with the scope namespace
@@ -363,7 +363,7 @@ Result: **FAILED as expected** (exit 1)
 >       assert first != second
 E       AssertionError: assert ScratchHandle('dissolved', UNDECLARED, path='/scratch/dissolved') != ScratchHandle('dissolved', UNDECLARED, path='/scratch/dissolved')
 FAILED tests/unit/core/test_handles.py::test_internal_handles_of_two_operations_are_different_values
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### H3: internal handle named by leaf only, not trail
@@ -446,7 +446,7 @@ Result: **FAILED as expected** (exit 1)
 
 ```
 >       assert one != other
-E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7701eae3d4e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7701eae3d4e0>)
+E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x769ffa2754e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x769ffa2754e0>)
 FAILED tests/unit/core/test_handles.py::test_a_scope_has_identity_equality_and_is_hashable
 1 failed in 0.02s
 ```
@@ -497,7 +497,7 @@ Result: **FAILED as expected** (exit 1)
 >           raise ValueError(
 E           ValueError: scope leaf 'a/b' must be letters, digits and single underscores; it becomes part of a layer name.
 FAILED tests/unit/core/test_handles.py::test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### T1: Classification.join with the fail-open logic and a third member
@@ -519,7 +519,7 @@ E            +  where False = permits(<Classification.RESTRICTED: 'restricted'>)
 E            +    where permits = <Classification.RESTRICTED: 'restricted'>.permits
 FAILED tests/unit/core/test_types.py::test_join_truth_table - assert 3 == 2
 FAILED tests/unit/core/test_types.py::test_every_classification_permits_its_own_storage
-2 failed in 0.02s
+2 failed in 0.01s
 ```
 
 ### T2: Scale rank mapping out of order
@@ -567,7 +567,7 @@ Result: **FAILED as expected** (exit 1)
 >       original = error_type("the message", context=context)
 E       TypeError: _Probe.__init__() missing 1 required keyword-only argument: 'code'
 FAILED tests/unit/core/test_errors.py::test_every_error_survives_a_pickle_round_trip[ag.core.errors._Probe]
-1 failed, 2 passed in 0.03s
+1 failed, 2 passed in 0.02s
 ```
 
 ### E2: fill_context overwrites instead of filling empty fields
@@ -670,7 +670,7 @@ Result: **FAILED as expected** (exit 1)
 ```
 >       assert all(type(index) is int for index in context.row_indices)
 E       assert False
-E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x731431df42b0>)
+E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x7162badf42b0>)
 >       with pytest.raises(TypeError):
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_errors.py::test_a_directly_constructed_context_normalises_its_sequences
@@ -785,6 +785,14 @@ break-it-once: harness errors, nothing was edited
   targets do not collect:
   ERROR: not found: /home/elling/projects/ag_refactor_docs/tests/unit/core/test_types.py::test_rank_orders_every_scale_finest_to_coarsest
 (test_types.py restored)
+```
+
+### I. A CRLF file matches LF needles, is mutated with CRLF, and restores byte-exact
+
+```
+needle matched on CRLF text: True
+mutated file keeps CRLF only, with the edit: True
+restored bytes identical: True
 ```
 
 ### Hashes
