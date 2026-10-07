@@ -132,14 +132,16 @@ known-first-party = [
 # the include list, and `strict` names the checked roots so that a legacy file opened in
 # an editor is analysed in standard mode, not strict. The example pipelines are excluded
 # while they are inert; the exclusion goes when they go live. `extraPaths` lets the static
-# tests import the scripts under tools/ the way pytest does.
+# tests import the scripts under tools/ the way pytest does, and makes `src` resolve as
+# local source rather than as the installed library, which strict mode would otherwise
+# ask stubs for.
 [tool.pyright]
 include = ["src", "tests", "tools"]
 exclude = [
     "**/__pycache__",
     "tests/fixtures/example_pipelines",
 ]
-extraPaths = ["tools"]
+extraPaths = ["tools", "src"]
 typeCheckingMode = "standard"
 strict = ["src", "tests", "tools"]
 pythonVersion = "3.13"
@@ -160,7 +162,7 @@ extraPaths = ["stubs/arcpy_constrained"]
 
 [[tool.pyright.executionEnvironments]]
 root = "."
-extraPaths = ["tools"]
+extraPaths = ["tools", "src"]
 
 # The marker and the collection roots, and nothing else: no default `addopts`.
 # `testpaths` keeps a bare `pytest` away from the legacy tests, the template and the

@@ -18,6 +18,7 @@ checks are:
 | `lint-imports` | the import contracts in `.importlinter` |
 | `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py` |
 | `pytest -m "not arcpy"` | every test that does not need ArcPy |
+| `python -m tools.break_once --check` | the break-it-once case tables still match the source and their tests still exist (see below) |
 | `check_consistency.py`, `check_terminology.py` | the design record's internal consistency |
 
 ### Setting up
@@ -130,3 +131,32 @@ pytest tests_legacy
 ```
 
 They are deleted with the legacy code they test.
+
+## Break-it-once evidence
+
+Every new guard, static rule and import contract ships with a break-it case in the same
+pull request, because a guard that has never been seen to fail is not known to work.
+Ordinary behaviour tests need no case. The cases live in `tools/break_once/cases/`, one
+module per mutated source package (`core` today; `ports`, `adapters`, `lineage` and a
+static set as they land); each names, per guard, the exact source text that removes it and
+the pytest targets that must then fail. A target is a node id, or a test module that must
+fail to import.
+
+The full run is by hand, on a clean tree, from the repository root, and its report is the
+evidence a pull request cites:
+
+```
+python -m tools.break_once core --out report.md
+```
+
+Per case it runs the targets on the clean tree first (they must all pass), applies the
+edit, runs the same targets again (they must fail, exit code 1 with every target reported),
+restores the file, and runs the set's suite after the last restore. A needle that no longer
+matches exactly once, a renamed test, or a target that fails on the clean tree is a harness
+error and nothing is edited.
+
+The pre-commit hook `break-once-check` runs the preflight only, `--check`: every needle
+matches and every target collects, with no edit. A renamed test or an edited guard then
+fails on the commit that causes it, not at the next lift. If a wider measure of suite
+strength is ever wanted, that is an automated mutation tool run occasionally over
+`src/ag/core`, not more hand-written cases.
