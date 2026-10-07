@@ -1,0 +1,29 @@
+# Sandbox policy for AI coding agents run via cplt.
+# Docs: https://github.com/navikt/cplt/blob/main/docs/configuration.md
+#
+# cplt reads this file from git HEAD. [deny] and the tightening key under
+# [propose] apply without approval. No permissions are requested: agents get
+# cplt defaults only (project directory read/write, outbound 443, no
+# localhost, no Docker, sanitized environment).
+#
+# Denied by cplt defaults and not repeated here:
+#   ~/.ssh, ~/.gnupg, ~/.aws, ~/.azure, ~/.kube, ~/.docker,
+#   ~/.config/gcloud, ~/.git-credentials, ~/.netrc, ~/.pypirc,
+#   .env* / .pem / .key files in the project, SSH_AUTH_SOCK, AWS_*, AZURE_*.
+
+[deny]
+env = [
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
+  "GH_ENTERPRISE_TOKEN",
+  "GOOGLE_APPLICATION_CREDENTIALS",
+  "GOOGLE_OAUTH_ACCESS_TOKEN",
+  "CLOUDSDK_AUTH_ACCESS_TOKEN",
+]
+# Repo-local credential files go here as concrete paths that exist.
+# Globs are not documented; do not use them.
+# paths = ["terraform/terraform.tfstate"]
+
+[propose]
+gh_guard = true
+git_push_prevention = true
