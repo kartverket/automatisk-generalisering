@@ -14,6 +14,7 @@ mean.
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import islice
@@ -31,8 +32,10 @@ class ErrorContext:
     fields through `fill_context` only, which never overwrites one already set.
     `row_indices` is a sample of at most `ROW_INDEX_CAP` rows on every construction
     path, and `row_count` is the total, derived from the indices when not given. Both
-    sequences are normalised to tuples, the indices to plain `int`, so an adapter may
-    hand over engine integers or an array and the context stays hashable.
+    sequences are normalised to tuples, the indices to plain `int` through
+    `operator.index`, so an adapter may hand over engine integers or an array and the
+    context stays hashable, while a float row position fails instead of truncating. A
+    bare string passed as `tool_messages` is one message, not its characters.
     """
 
     operation: str | None = None
@@ -45,8 +48,8 @@ class ErrorContext:
     tool_messages: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        indices = tuple(int(index) for index in self.row_indices)
-        object.__setattr__(self, "tool_messages", tuple(self.tool_messages))
+        indices = tuple(operator.index(index) for index in self.row_indices)
+        object.__setattr__(self, "tool_messages", _as_messages(self.tool_messages))
         if indices and self.row_count is None:
             object.__setattr__(self, "row_count", len(indices))
         object.__setattr__(self, "row_indices", indices[:ROW_INDEX_CAP])
@@ -96,7 +99,7 @@ def fill_context(
     current = error.context
     # Explicit None tests: an array-like argument may refuse to be tested for truth.
     offered_rows: Iterable[int] = () if row_indices is None else row_indices
-    offered_messages: Iterable[str] = () if tool_messages is None else tool_messages
+    offered_messages = _as_messages(tool_messages)
     if current.row_indices or current.row_count is not None:
         indices: tuple[int, ...] = current.row_indices
         row_count = current.row_count
@@ -112,8 +115,17 @@ def fill_context(
         row_indices=indices,
         row_count=row_count,
         tool=_first(current.tool, tool),
-        tool_messages=current.tool_messages or tuple(offered_messages),
+        tool_messages=current.tool_messages or offered_messages,
     )
+
+
+def _as_messages(value: Iterable[str] | None) -> tuple[str, ...]:
+    """Tool messages as a tuple; a bare string is one message, not its characters."""
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    return tuple(value)
 
 
 def _first[T](current: T | None, offered: T | None) -> T | None:

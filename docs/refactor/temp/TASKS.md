@@ -1167,7 +1167,11 @@ and one materialiser per call. `ScratchFileManager` renders the operation worksp
 call identity and raises on a repeated (trail, leaf) within one call rather than returning a
 second path. Tests: two calls of one operation in a stage get two workspaces and pairwise
 unequal internal handles; the repeated-(trail, leaf) contract raises; the same-short-name
-check fires with both qualified names in the message.
+check fires with both qualified names in the message. The call identity can never equal a
+declared handle's namespace, which is a dotted module path: it carries the stage's qualified
+name, whose `/` no module path can contain, and a test asserts that a declared handle and an
+internal handle with the same short name never compare equal, since both meet in handle-keyed
+maps.
 
 **files touched** `core/pipeline.py` (Task B), `staging/scratch.py`, `runtime/stage_entry.py`
 (slice 1c of `findings/implementation_plan.md`). `core/handles.py` already stamps the

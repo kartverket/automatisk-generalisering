@@ -1297,7 +1297,7 @@ docstring), or one of the three parents errors. A new exception type is justifie
 `ErrorContext(operation: str | None, port: str | None, method: str | None, handle: str | None,
 row_indices: tuple[int, ...], row_count: int | None, tool: str | None, tool_messages: tuple[str,
 ...])`, on `AgError.context`. Row indices are capped (first 20) with the total in `row_count`.
-The layer that knows a field fills it: the adapter fills `method`, `tool`, `messages`,
+The layer that knows a field fills it: the adapter fills `method`, `tool`, `tool_messages`,
 `row_indices`; the facade fills `handle` and `port`; `run_operations` fills `operation` on any
 `AgError` passing through it and appends a one-line `add_note()` (PEP 678) so the traceback reads
 `operation resolve_ramps, geometry.dissolve, handle Network.dissolved, rows 8701, 11698 ...`.

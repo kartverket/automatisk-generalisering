@@ -107,8 +107,9 @@ def test_error_modules_import_only_the_standard_library_and_core(
     assert _forbidden_imports(module, path) == set(), module
 
 
-def test_the_import_rule_sees_relative_and_dotted_imports() -> None:
-    """The rule reads the source, so it is checked here on sources of its own."""
+def test_the_import_rule_sees_relative_and_dotted_imports(tmp_path: Path) -> None:
+    """The rule reads the source, so it is checked here on sources of its own. The
+    module name given resolves relative imports; the file can live anywhere."""
     cases: dict[str, set[str]] = {
         "from ag.core.errors import AgError\nimport json\n": set(),
         "import ag.adapters.arcpy\n": {"ag.adapters.arcpy"},
@@ -117,13 +118,10 @@ def test_the_import_rule_sees_relative_and_dotted_imports() -> None:
         "from .errors import PortError\n": {"ag.ports.errors"},
         "import arcpy\nfrom shapely import geometry\n": {"arcpy", "shapely"},
     }
+    probe = tmp_path / "errors.py"
     for source, expected in cases.items():
-        probe = PACKAGE.parent / "probe_errors.py"
-        try:
-            probe.write_text(source, encoding="utf-8")
-            assert _forbidden_imports("ag.ports.errors", probe) == expected, source
-        finally:
-            probe.unlink()
+        probe.write_text(source, encoding="utf-8")
+        assert _forbidden_imports("ag.ports.errors", probe) == expected, source
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +232,19 @@ def test_a_directly_constructed_context_normalises_its_sequences() -> None:
     assert hash(context) == hash(
         ErrorContext(row_indices=(7, 8), tool_messages=("a", "b"))
     )
+
+
+def test_a_float_row_position_is_refused_rather_than_truncated() -> None:
+    with pytest.raises(TypeError):
+        ErrorContext(row_indices=(1.5,))  # pyright: ignore[reportArgumentType]
+
+
+def test_a_bare_string_is_one_tool_message() -> None:
+    context = ErrorContext(tool_messages="ERROR 000210")  # pyright: ignore[reportArgumentType]
+    assert context.tool_messages == ("ERROR 000210",)
+    error = AgError("boom")
+    fill_context(error, tool_messages="ERROR 000210")
+    assert error.context.tool_messages == ("ERROR 000210",)
 
 
 def test_a_directly_constructed_context_is_capped_and_counted() -> None:

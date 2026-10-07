@@ -65,7 +65,7 @@ Result: **FAILED as expected**
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_an_injected_parameter_without_a_default_is_rejected
 FAILED tests/unit/core/test_operation_classification.py::test_an_injected_default_of_the_wrong_kind_is_rejected
-2 failed in 0.02s
+2 failed in 0.03s
 ```
 
 ### O3: default on an In/Out handle accepted
@@ -111,7 +111,7 @@ Result: **FAILED as expected**
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_mutable_config_type_is_rejected
 FAILED tests/unit/core/test_operation_classification.py::test_a_config_that_is_not_a_dataclass_type_is_rejected
-2 failed in 0.02s
+2 failed in 0.03s
 ```
 
 ### O6: config hashability not checked at the declaration site
@@ -157,7 +157,6 @@ Result: **FAILED as expected**
 E       AssertionError: Regex pattern did not match.
 E         Expected regex: 'no annotation'
 E         Actual message: "unannotated: parameter 'whatever' is annotated None, which is not a recognised kind. An operation takes In and Out handles, one frozen config dataclass, and whatever the runtime injects. Tuning values go in the config rather than as loose parameters, so a run manifest can record what tuning produced an output without special-casing each operation."
-tests/unit/core/test_operation_classification.py:250: AssertionError
 FAILED tests/unit/core/test_operation_classification.py::test_an_unannotated_parameter_is_rejected
 1 failed in 0.02s
 ```
@@ -271,7 +270,6 @@ Result: **FAILED as expected**
 E       AssertionError: Regex pattern did not match.
 E         Expected regex: 'union containing the injected kind Ports'
 E         Actual message: "optional: parameter 'tb' is annotated tests.unit.core.test_operation_classification.Ports | None, which is not a recognised kind. An operation takes In and Out handles, one frozen config dataclass, and whatever the runtime injects. Tuning values go in the config rather than as loose parameters, so a run manifest can record what tuning produced an output without special-casing each operation."
-tests/unit/core/test_operation_classification.py:229: AssertionError
 FAILED tests/unit/core/test_operation_classification.py::test_a_union_containing_an_injected_kind_is_rejected
 1 failed in 0.02s
 ```
@@ -285,7 +283,6 @@ Tests: tests/unit/core/test_operation_classification.py
 Result: **FAILED as expected**
 
 ```
-    raise TypeError(
 E   TypeError: worked: parameter 'roads' is annotated <class 'ag.core.handles.ScratchHandle'>, which is not a recognised kind. An operation takes In and Out handles, one frozen config dataclass, and whatever the runtime injects. Tuning values go in the config rather than as loose parameters, so a run manifest can record what tuning produced an output without special-casing each operation.
 ERROR tests/unit/core/test_operation_classification.py - TypeError: worked: p...
 ```
@@ -299,9 +296,9 @@ Tests: test_the_mappings_are_read_only_views
 Result: **FAILED as expected**
 
 ```
+>           assert isinstance(mapping, MappingProxyType)
 E           AssertionError: assert False
 E            +  where False = isinstance({'roads': ScratchHandle(tests.unit.core.test_operation_classification.Example.roads)}, MappingProxyType)
-tests/unit/core/test_operation_classification.py:156: AssertionError
 FAILED tests/unit/core/test_operation_classification.py::test_the_mappings_are_read_only_views
 1 failed in 0.02s
 ```
@@ -315,9 +312,24 @@ Tests: test_two_identical_declarations_are_two_calls
 Result: **FAILED as expected**
 
 ```
+>       assert first != second
 E       AssertionError: assert OperationCall(operation='worked', qualified_name='tests.unit.core.test_operation_classification.worked', fn=<function ...lass 'tests.unit.core.test_operation_classification.Ports'>: 'tb', <class 'ag.core.handles.ScratchScope'>: 'scratch'})) != OperationCall(operation='worked', qualified_name='tests.unit.core.test_operation_classification.worked', fn=<function ...lass 'tests.unit.core.test_operation_classification.Ports'>: 'tb', <class 'ag.core.handles.ScratchScope'>: 'scratch'}))
-tests/unit/core/test_operation_classification.py:162: AssertionError
 FAILED tests/unit/core/test_operation_classification.py::test_two_identical_declarations_are_two_calls
+1 failed in 0.02s
+```
+
+### O19: frozen dataclass type accepted without eq
+
+File: `src/ag/core/operations.py`. Edit: `return frozen and eq` -> `return frozen`.
+
+Tests: test_a_frozen_config_type_without_equality_is_rejected
+
+Result: **FAILED as expected**
+
+```
+>       with pytest.raises(TypeError, match="not a frozen dataclass type with equality"):
+E       Failed: DID NOT RAISE TypeError
+FAILED tests/unit/core/test_operation_classification.py::test_a_frozen_config_type_without_equality_is_rejected
 1 failed in 0.02s
 ```
 
@@ -346,8 +358,8 @@ Tests: test_internal_handles_of_two_operations_are_different_values
 Result: **FAILED as expected**
 
 ```
+>       assert first != second
 E       AssertionError: assert ScratchHandle('dissolved', UNDECLARED, path='/scratch/dissolved') != ScratchHandle('dissolved', UNDECLARED, path='/scratch/dissolved')
-tests/unit/core/test_handles.py:169: AssertionError
 FAILED tests/unit/core/test_handles.py::test_internal_handles_of_two_operations_are_different_values
 1 failed in 0.02s
 ```
@@ -361,8 +373,8 @@ Tests: test_the_same_leaf_at_three_points_of_one_trail_is_three_handles
 Result: **FAILED as expected**
 
 ```
+>       assert at_root != in_first_child
 E       AssertionError: assert ScratchHandle(op.x, path='/scratch/x') != ScratchHandle(op.x, path='/scratch/h__x')
-tests/unit/core/test_handles.py:180: AssertionError
 FAILED tests/unit/core/test_handles.py::test_the_same_leaf_at_three_points_of_one_trail_is_three_handles
 1 failed in 0.02s
 ```
@@ -376,21 +388,21 @@ Tests: test_repeated_child_labels_take_the_first_unused_index, test_a_tagged_lab
 Result: **FAILED as expected**
 
 ```
+>       assert segments == ["a", "a_2", "a_2_2"]
 E       AssertionError: assert ['a', 'a', 'a_2'] == ['a', 'a_2', 'a_2_2']
 E         At index 1 diff: 'a' != 'a_2'
 E         Use -v to get more diff
-tests/unit/core/test_handles.py:210: AssertionError
+>       assert spelled == "a_b_2"
 E       AssertionError: assert 'a_b' == 'a_b_2'
 E         - a_b_2
 E         ?    --
 E         + a_b
-tests/unit/core/test_handles.py:219: AssertionError
 FAILED tests/unit/core/test_handles.py::test_repeated_child_labels_take_the_first_unused_index
 FAILED tests/unit/core/test_handles.py::test_a_tagged_label_and_a_label_spelled_like_it_are_two_segments
 2 failed in 0.02s
 ```
 
-### H5: label and tag not validated
+### H5: label, tag and leaf not validated
 
 File: `src/ag/core/handles.py`. Edit: `if _SEGMENT.fullmatch(text) is None:` -> `if False:`.
 
@@ -422,57 +434,6 @@ FAILED tests/unit/core/test_handles.py::test_the_injected_sentinel_refuses_a_chi
 1 failed in 0.02s
 ```
 
-### H10: leaf validated before the unbound check
-
-File: `src/ag/core/handles.py`. Edit: delete `if self.materialize is _unbound:`.
-
-Tests: test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf
-
-Result: **FAILED as expected**
-
-```
-        with pytest.raises(InjectionError, match="never bound"):
->           raise ValueError(
-E           ValueError: scope leaf 'a/b' must be letters, digits and single underscores; it becomes part of a layer name.
-src/ag/core/handles.py:252: ValueError
-FAILED tests/unit/core/test_handles.py::test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf
-1 failed in 0.02s
-```
-
-### E6: truth test on an array-like argument
-
-File: `src/ag/core/errors.py`. Edit: `offered_rows: Iterable[int] = () if row_indices is None else row_indices` -> `offered_rows: Iterable[int] = row_indices or ()`.
-
-Tests: test_fill_context_accepts_array_like_rows_and_messages
-
-Result: **FAILED as expected**
-
-```
-        error = AgError("boom")
->       raise ValueError("the truth value of an array is ambiguous")
-E       ValueError: the truth value of an array is ambiguous
-tests/unit/core/test_errors.py:203: ValueError
-FAILED tests/unit/core/test_errors.py::test_fill_context_accepts_array_like_rows_and_messages
-1 failed in 0.02s
-```
-
-### E7: indices not normalised to int
-
-File: `src/ag/core/errors.py`. Edit: `indices = tuple(int(index) for index in self.row_indices)` -> `indices = tuple(self.row_indices)`.
-
-Tests: test_a_directly_constructed_context_normalises_its_sequences
-
-Result: **FAILED as expected**
-
-```
-        context = ErrorContext(
-E       assert False
-E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x7173eedc1cb0>)
-tests/unit/core/test_errors.py:232: AssertionError
-FAILED tests/unit/core/test_errors.py::test_a_directly_constructed_context_normalises_its_sequences
-1 failed in 0.02s
-```
-
 ### H7: ScratchScope with value equality
 
 File: `src/ag/core/handles.py`. Edit: `@dataclass(kw_only=True, eq=False)` -> `@dataclass(kw_only=True)`.
@@ -482,8 +443,8 @@ Tests: test_a_scope_has_identity_equality_and_is_hashable
 Result: **FAILED as expected**
 
 ```
-E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7cd6e22994e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7cd6e22994e0>)
-tests/unit/core/test_handles.py:244: AssertionError
+>       assert one != other
+E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x75cd97c954e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x75cd97c954e0>)
 FAILED tests/unit/core/test_handles.py::test_a_scope_has_identity_equality_and_is_hashable
 1 failed in 0.02s
 ```
@@ -497,24 +458,8 @@ Tests: test_each_marker_carries_its_direction, tests/unit/core/test_operation_cl
 Result: **FAILED as expected**
 
 ```
-    raise TypeError(
 E   TypeError: worked: parameter 'roads' is annotated In, which is not a recognised kind. An operation takes In and Out handles, one frozen config dataclass, and whatever the runtime injects. Tuning values go in the config rather than as loose parameters, so a run manifest can record what tuning produced an output without special-casing each operation.
 ERROR tests/unit/core/test_operation_classification.py - TypeError: worked: p...
-```
-
-### O19: frozen dataclass type accepted without eq
-
-File: `src/ag/core/operations.py`. Edit: `return frozen and eq` -> `return frozen`.
-
-Tests: test_a_frozen_config_type_without_equality_is_rejected
-
-Result: **FAILED as expected**
-
-```
->       with pytest.raises(TypeError, match="not a frozen dataclass type with equality"):
-E       Failed: DID NOT RAISE TypeError
-FAILED tests/unit/core/test_operation_classification.py::test_a_frozen_config_type_without_equality_is_rejected
-1 failed in 0.02s
 ```
 
 ### H9: leaf not validated
@@ -532,19 +477,20 @@ FAILED tests/unit/core/test_handles.py::test_a_leaf_that_cannot_be_a_layer_name_
 1 failed in 0.02s
 ```
 
-### T3: a Scale member without a rank entry
+### H10: leaf validated before the unbound check
 
-File: `src/ag/core/types.py`. Edit: delete `Scale.N250: 250,`.
+File: `src/ag/core/handles.py`. Edit: delete `if self.materialize is _unbound:`.
 
-Tests: test_every_member_has_a_rank_and_definition_order_is_rank_order
+Tests: test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf
 
 Result: **FAILED as expected**
 
 ```
-E       KeyError: <Scale.N250: 'n250'>
-src/ag/core/types.py:69: KeyError
-FAILED tests/unit/core/test_types.py::test_every_member_has_a_rank_and_definition_order_is_rank_order
-1 failed in 0.01s
+>           INJECTED("a/b")
+>           raise ValueError(
+E           ValueError: scope leaf 'a/b' must be letters, digits and single underscores; it becomes part of a layer name.
+FAILED tests/unit/core/test_handles.py::test_the_injected_sentinel_reports_the_missing_binding_before_the_leaf
+1 failed in 0.02s
 ```
 
 ### T1: Classification.join with the fail-open logic and a third member
@@ -556,17 +502,17 @@ Tests: test_join_truth_table, test_every_classification_permits_its_own_storage
 Result: **FAILED as expected**
 
 ```
+>       assert len(Classification) == 2
 E       assert 3 == 2
 E        +  where 3 = len(Classification)
-tests/unit/core/test_types.py:68: AssertionError
+>           assert member.permits(member), member
 E           AssertionError: <Classification.RESTRICTED: 'restricted'>
 E           assert False
 E            +  where False = permits(<Classification.RESTRICTED: 'restricted'>)
 E            +    where permits = <Classification.RESTRICTED: 'restricted'>.permits
-tests/unit/core/test_types.py:88: AssertionError
 FAILED tests/unit/core/test_types.py::test_join_truth_table - assert 3 == 2
 FAILED tests/unit/core/test_types.py::test_every_classification_permits_its_own_storage
-2 failed in 0.01s
+2 failed in 0.02s
 ```
 
 ### T2: Scale rank mapping out of order
@@ -578,11 +524,27 @@ Tests: test_rank_orders_every_scale_finest_to_coarsest
 Result: **FAILED as expected**
 
 ```
+>       assert tuple(sorted(Scale, key=lambda scale: scale.rank)) == FINEST_TO_COARSEST
 E       AssertionError: assert (<Scale.RAW: ...N250: 'n250'>) == (<Scale.RAW: ...N250: 'n250'>)
 E         At index 2 diff: <Scale.N50: 'n50'> != <Scale.N25: 'n25'>
 E         Use -v to get more diff
-tests/unit/core/test_types.py:25: AssertionError
 FAILED tests/unit/core/test_types.py::test_rank_orders_every_scale_finest_to_coarsest
+1 failed in 0.01s
+```
+
+### T3: a Scale member without a rank entry
+
+File: `src/ag/core/types.py`. Edit: delete `Scale.N250: 250,`.
+
+Tests: test_every_member_has_a_rank_and_definition_order_is_rank_order
+
+Result: **FAILED as expected**
+
+```
+>       ranks = [scale.rank for scale in Scale]
+>       return _SCALE_RANK[self]
+E       KeyError: <Scale.N250: 'n250'>
+FAILED tests/unit/core/test_types.py::test_every_member_has_a_rank_and_definition_order_is_rank_order
 1 failed in 0.01s
 ```
 
@@ -595,10 +557,8 @@ Tests: test_every_error_survives_a_pickle_round_trip
 Result: **FAILED as expected**
 
 ```
-    def test_every_error_survives_a_pickle_round_trip(error_type: type[AgError]) -> None:
-        context = ErrorContext(
+>       original = error_type("the message", context=context)
 E       TypeError: _Probe.__init__() missing 1 required keyword-only argument: 'code'
-tests/unit/core/test_errors.py:271: TypeError
 FAILED tests/unit/core/test_errors.py::test_every_error_survives_a_pickle_round_trip[ag.core.errors._Probe]
 1 failed, 2 passed in 0.02s
 ```
@@ -612,17 +572,14 @@ Tests: test_fill_context_fills_empty_fields_only, test_fill_context_never_replac
 Result: **FAILED as expected**
 
 ```
-        error = AgError(
-            "boom", context=ErrorContext(method="dissolve", tool="PairwiseDissolve")
+>       assert error.context.method == "dissolve"
 E       AssertionError: assert 'select' == 'dissolve'
 E         - dissolve
 E         + select
-tests/unit/core/test_errors.py:145: AssertionError
-        error = AgError("boom")
+>       assert error.context.operation == "resolve_ramps"
 E       AssertionError: assert 'thin_road_network' == 'resolve_ramps'
 E         - resolve_ramps
 E         + thin_road_network
-tests/unit/core/test_errors.py:251: AssertionError
 FAILED tests/unit/core/test_errors.py::test_fill_context_fills_empty_fields_only
 FAILED tests/unit/core/test_errors.py::test_fill_context_never_replaces_the_operation
 2 failed in 0.02s
@@ -637,13 +594,11 @@ Tests: test_fill_context_caps_the_row_sample_and_derives_the_count, test_a_direc
 Result: **FAILED as expected**
 
 ```
-        error = AgError("boom")
+>       assert error.context.row_indices == tuple(range(ROW_INDEX_CAP))
 E       assert (0, 1, 2, 3, 4, 5, ...) == (0, 1, 2, 3, 4, 5, ...)
 E         Left contains 80 more items, first extra item: 20
 E         Use -v to get more diff
-tests/unit/core/test_errors.py:161: AssertionError
-        context = ErrorContext(row_indices=tuple(range(100)))
-tests/unit/core/test_errors.py:241: AssertionError
+>       assert context.row_indices == tuple(range(ROW_INDEX_CAP))
 FAILED tests/unit/core/test_errors.py::test_fill_context_caps_the_row_sample_and_derives_the_count
 FAILED tests/unit/core/test_errors.py::test_a_directly_constructed_context_is_capped_and_counted
 2 failed in 0.02s
@@ -658,11 +613,10 @@ Tests: test_fill_context_keeps_indices_and_count_as_one_pair
 Result: **FAILED as expected**
 
 ```
-        only_count = AgError("boom", context=ErrorContext(row_count=7))
+>       assert only_count.context.row_indices == ()
 E       assert (1, 2, 3) == ()
 E         Left contains 3 more items, first extra item: 1
 E         Use -v to get more diff
-tests/unit/core/test_errors.py:177: AssertionError
 FAILED tests/unit/core/test_errors.py::test_fill_context_keeps_indices_and_count_as_one_pair
 1 failed in 0.02s
 ```
@@ -676,14 +630,67 @@ Tests: test_fill_context_reads_a_generator_only_up_to_the_cap_when_the_count_is_
 Result: **FAILED as expected**
 
 ```
-        error = AgError("boom")
+>       assert next(produced) == ROW_INDEX_CAP
 E       StopIteration
 FAILED tests/unit/core/test_errors.py::test_fill_context_reads_a_generator_only_up_to_the_cap_when_the_count_is_given
+1 failed in 0.02s
+```
+
+### E6: truth test on an array-like argument
+
+File: `src/ag/core/errors.py`. Edit: `offered_rows: Iterable[int] = () if row_indices is None else row_indices` -> `offered_rows: Iterable[int] = row_indices or ()`.
+
+Tests: test_fill_context_accepts_array_like_rows_and_messages
+
+Result: **FAILED as expected**
+
+```
+>       fill_context(
+>       raise ValueError("the truth value of an array is ambiguous")
+E       ValueError: the truth value of an array is ambiguous
+FAILED tests/unit/core/test_errors.py::test_fill_context_accepts_array_like_rows_and_messages
+1 failed in 0.02s
+```
+
+### E7: indices not normalised through operator.index
+
+File: `src/ag/core/errors.py`. Edit: `indices = tuple(operator.index(index) for index in self.row_indices)` -> `indices = tuple(self.row_indices)`.
+
+Tests: test_a_directly_constructed_context_normalises_its_sequences, test_a_float_row_position_is_refused_rather_than_truncated
+
+Result: **FAILED as expected**
+
+```
+>       assert all(type(index) is int for index in context.row_indices)
+E       assert False
+E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x7bc6854f82b0>)
+>       with pytest.raises(TypeError):
+E       Failed: DID NOT RAISE TypeError
+FAILED tests/unit/core/test_errors.py::test_a_directly_constructed_context_normalises_its_sequences
+FAILED tests/unit/core/test_errors.py::test_a_float_row_position_is_refused_rather_than_truncated
+2 failed in 0.02s
+```
+
+### E8: a bare string as tool_messages taken as its characters
+
+File: `src/ag/core/errors.py`. Edit: `if isinstance(value, str):` -> `if False:`.
+
+Tests: test_a_bare_string_is_one_tool_message
+
+Result: **FAILED as expected**
+
+```
+>       assert context.tool_messages == ("ERROR 000210",)
+E       AssertionError: assert ('E', 'R', 'R...'R', ' ', ...) == ('ERROR 000210',)
+E         At index 0 diff: 'E' != 'ERROR 000210'
+E         Left contains 11 more items, first extra item: 'R'
+E         Use -v to get more diff
+FAILED tests/unit/core/test_errors.py::test_a_bare_string_is_one_tool_message
 1 failed in 0.02s
 ```
 
 ### After the last restore
 
 ```
-81 passed in 0.05s
+83 passed in 0.06s
 ```
