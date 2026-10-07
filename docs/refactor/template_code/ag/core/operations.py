@@ -4,11 +4,15 @@ Operations: the leaf processing units, and the scratch boundary.
 
 THE RULE THIS MODULE ENFORCES
 
-    An operation only ever sees ScratchHandles and one config object. Never a
-    DataObject, never a URI, never a client, never a partition index, never a
-    context radius, never a scale.
+    An operation only ever sees ScratchHandles, one config object, and the ports
+    the runtime injects. Never a DataObject, never a URI, never a client, never a
+    partition index, never a context radius, never a scale.
 
-An operation is dumb on purpose. It runs a fixed sequence of GP tools against
+The Toolbox is not a loophole in that list. It carries CAPABILITY and no CONTEXT:
+an operation can call `tb.geometry.buffer`, and can learn nothing whatever about
+where it is running, what it is running on, or which adapter it is holding.
+
+An operation is dumb on purpose. It runs a fixed sequence of port calls against
 whatever it is handed. It does not know the data is a partition, does not know how
 many partitions exist, does not know whether its input came from GCS or Scality, and
 does not know how much halo was included. That ignorance is what lets an operation
@@ -113,6 +117,7 @@ from typing import (
     get_type_hints,
 )
 
+from ag.core.injection import Injected
 from ag.core.types import DataType, OperationName, ParamName
 
 
@@ -239,13 +244,19 @@ in the operation vocabulary, while paths, workspaces and budgets stay in staging
 
 
 @dataclass
-class ScratchScope:
+class ScratchScope(Injected):
     """A trail-bound factory for internal scratch. What an operation is handed.
 
         @operation
-        def thin_road_network(*, roads: In, output: Out, scratch: ScratchScope = INJECTED):
+        def thin_road_network(*, roads: In, output: Out, tb: Toolbox = NOT_INJECTED,
+                              scratch: ScratchScope = INJECTED):
             dissolved = scratch("dissolved")
-            _build_topology(roads=dissolved, scratch=scratch.child("build_topology"))
+            tb.geometry.dissolve(input=roads, output=dissolved)
+            _build_topology(roads=dissolved, tb=tb, scratch=scratch.child("build_topology"))
+
+    INHERITS `Injected` so @operation recognises it without a name convention and
+    without a special case - the same mechanism that admits `Toolbox`, which lives in
+    `ports/` where `core/` cannot reach it. ADR-0014.
 
     A helper tool receives a scope exactly the way an operation does - derive
     downward. A helper never learns its own trail, so it stays reusable from
@@ -320,40 +331,58 @@ def _unbound(trail: tuple[str, ...], leaf: str, data_type: DataType) -> ScratchH
 INJECTED = ScratchScope(trail=(), materialize=_unbound)
 """The default for an operation's `scratch` parameter.
 
-It exists so the DECLARATION site may omit the argument while the runtime signature
-still requires a scope. The entry point overwrites it, and passing one at a
-declaration site is rejected. A real ScratchScope rather than None, so the type is
-honest and a missed injection fails loudly at the first scratch(...) call rather
-than as an AttributeError.
+WHY A SENTINEL AND NOT A MISSING DEFAULT. @operation returns
+`Callable[P, OperationCall]`, and P is taken from the declared signature - so a
+parameter with no default makes EVERY DECLARATION SITE a type error for omitting an
+argument the declaration site must not supply. The sentinel is what lets the runtime
+signature require a scope while the declaration signature does not. The entry point
+overwrites it, and passing one at a declaration site is rejected.
+
+A real ScratchScope rather than None, so the type is honest and a missed injection
+fails loudly at the first scratch(...) call rather than as an AttributeError.
+`ports.toolbox.NOT_INJECTED` is the same construction for the same reason. ADR-0014.
 """
 
 
 CONFIG_PARAM = "config"
-"""The one non-IO parameter an operation may take. See @operation."""
+"""The one non-IO parameter an operation may take. See @operation.
+
+Classified BY NAME, unlike the injected parameters, and the asymmetry is deliberate:
+a config's TYPE differs per operation - ThinRoadConfig, SnapConfig, SimplifyConfig -
+so there is nothing to match against and the name is the only handle available.
+`ScratchScope` and `Toolbox` are each one type, so they are matched on it. ADR-0014.
+"""
 
 
 OperationFn: TypeAlias = Callable[..., None]
 """The runtime callable.
 
 Signature convention: keyword-only; In/Out for every IO argument; at most one
-`config`; an optional `scratch: ScratchScope = INJECTED`. Nothing else.
+`config`; whatever the runtime injects, each with its sentinel default. Nothing else.
 
     @operation
     def simplify_road_geometry(
-        *, roads: In, output: Out, collapsed_points: Out, config: SimplifyConfig
+        *, roads: In, output: Out, collapsed_points: Out, config: SimplifyConfig,
+        tb: Toolbox = NOT_INJECTED, scratch: ScratchScope = INJECTED,
     ) -> None:
-        arcpy.cartography.SimplifyLine(in_features=roads, out_feature_class=output, ...)
+        tb.cartographic.simplify(input=roads, output=output, ...)
 
 Note what is absent: no DataRef, no read/write callables, no run id, no partition
 index, no context radius, no scale. Keeping them out is what makes the declaration
-authoritative and lets one function serve N50 and N100.
+authoritative and lets one function serve N50 and N100. `tb` is not an exception -
+it carries capability, not context, and an operation cannot learn anything about its
+situation from it.
 
 ANNOTATIONS MUST RESOLVE AT IMPORT. Under `from __future__ import annotations` every
 annotation is a string, and @operation resolves them with get_type_hints against the
 operation module's globals at decoration time. So an operation signature may not use
 a type imported under `if TYPE_CHECKING`, or one defined inside a function - either
-is a NameError at import rather than a type-checker complaint. Currently satisfied
-everywhere; invisible until violated, hence written down.
+is a NameError at import rather than a type-checker complaint.
+
+THAT IS ALSO WHAT MAKES `Toolbox` CLASSIFIABLE. It resolves in the operation module,
+which imports it; `core/` receives the resolved class and asks whether it subclasses
+`Injected`, so the name never has to exist in `core/` - where importing it would be a
+cycle. ADR-0014.
 """
 
 
@@ -386,9 +415,38 @@ class OperationCall:
     inputs: Mapping[ParamName, ScratchHandle]
     outputs: Mapping[ParamName, ScratchHandle]
     parameters: Mapping[ParamName, object] = field(default_factory=dict)
-    wants_scratch: bool = False
-    """True if `fn` takes a `scratch: ScratchScope` keyword. Read from the signature
-    at decoration time, so the entry point never inspects anything at dispatch."""
+
+    injected: Mapping[type[Injected], ParamName] = field(default_factory=dict)
+    """Which runtime-supplied kinds `fn` wants, and what it calls each of them.
+
+        {ScratchScope: "scratch", Toolbox: "tb"}
+
+    KEYED BY TYPE AND CARRYING THE NAME, rather than a bool per kind. Three things
+    follow, and the third is a bug this replaced:
+
+      core/ never names `Toolbox`. It lives in ports/, which core may not import
+      (ADR-0014), so a `toolbox_param` field here would put a ports word in a core
+      dataclass and invite someone to type it.
+
+      adding a kind changes nothing here. The entry point supplies whatever it knows
+      how to build and this dataclass stays as it is.
+
+      the parameter name stops being load-bearing. Under `wants_scratch: bool` the
+      entry point hardcoded "scratch", so an operation writing
+      `scope: ScratchScope = INJECTED` classified correctly, reported wants_scratch,
+      then never received a scope - it kept the sentinel and failed at the first
+      scratch(...) call, in a pod.
+
+    Read from the signature at decoration, so the entry point still inspects nothing
+    at dispatch."""
+
+    @property
+    def wants_scratch(self) -> bool:
+        """Kept because `ScratchScope` is a core type and reads better than a
+        mapping lookup at the two call sites that ask. There is deliberately no
+        `wants_toolbox` twin: core cannot name `Toolbox`, and the entry point that
+        can just asks the mapping."""
+        return ScratchScope in self.injected
 
     def reads(self) -> tuple[ScratchHandle, ...]:
         return tuple(self.inputs.values())
@@ -423,22 +481,25 @@ def operation(fn: Callable[P, None]) -> Callable[P, OperationCall]:
 
     WHAT IT REJECTS AT IMPORT
 
-      - a parameter with no annotation, or one that is not In, Out, ScratchScope or
-        `config`. Without this, `minimum_length_m=400` returns at the first deadline
-        and `parameters` stops being a uniform tuning record.
+      - a parameter with no annotation, or one that is not In, Out, `config` or a
+        subclass of Injected. Without this, `minimum_length_m=400` returns at the
+        first deadline and `parameters` stops being a uniform tuning record.
+      - two parameters of the same injected kind. The entry point supplies one of
+        each, so the second would silently receive the same object.
       - a positional-or-keyword parameter. Operations are keyword-only so that every
         argument names the parameter it binds to.
       - at a DECLARATION site: a misspelled or missing keyword (via signature.bind),
         a non-ScratchHandle for an In/Out, an undeclared handle, a config that is not
-        a frozen dataclass, and a `scratch=` argument. The last one type-checks -
-        the sentinel default keeps it in P - and passing a scope before there is a
-        workspace to allocate in is always a mistake.
+        a frozen dataclass, and any injected argument - `scratch=` or `tb=`. Those
+        last two type-check, because the sentinel defaults keep them in P; a
+        declaration is evaluated at import, where there is no workspace to allocate
+        in and no adapter has been chosen.
 
     All of it fires while the pipeline module is being imported, which is CI or
     orchestrator startup, rather than in a pod three hours in.
     """
     signature = inspect.signature(fn)
-    directions, scratch_param, config_param = _classify(fn, signature)
+    directions, injected, config_param = _classify(fn, signature)
     name = fn.__name__
 
     def declare(*args: P.args, **kwargs: P.kwargs) -> OperationCall:
@@ -446,12 +507,14 @@ def operation(fn: Callable[P, None]) -> Callable[P, OperationCall]:
             bound = signature.bind(*args, **kwargs)
         except TypeError as error:
             raise TypeError(f"{name}: {error}") from None
-        if scratch_param is not None and scratch_param in bound.arguments:
-            raise TypeError(
-                f"{name}: {scratch_param!r} must not be passed at a declaration "
-                "site. The stage entry point injects the scope; there is no "
-                "workspace to allocate in when this module is imported."
-            )
+        for param in injected.values():
+            if param in bound.arguments:
+                raise TypeError(
+                    f"{name}: {param!r} must not be passed at a declaration site - "
+                    "the stage entry point injects it. A declaration is evaluated at "
+                    "import, where there is no workspace to allocate in and no "
+                    "adapter chosen."
+                )
         inputs: dict[ParamName, ScratchHandle] = {}
         outputs: dict[ParamName, ScratchHandle] = {}
         parameters: dict[ParamName, object] = {}
@@ -469,7 +532,7 @@ def operation(fn: Callable[P, None]) -> Callable[P, OperationCall]:
             inputs=inputs,
             outputs=outputs,
             parameters=parameters,
-            wants_scratch=scratch_param is not None,
+            injected=injected,
         )
 
     functools.update_wrapper(declare, fn)
@@ -479,12 +542,24 @@ def operation(fn: Callable[P, None]) -> Callable[P, OperationCall]:
 def _classify(
     fn: Callable[..., object],
     signature: inspect.Signature,
-) -> tuple[Mapping[ParamName, Direction], ParamName | None, ParamName | None]:
-    """Read the shape of an operation off its annotations, once, at decoration."""
+) -> tuple[
+    Mapping[ParamName, Direction],
+    Mapping[type[Injected], ParamName],
+    ParamName | None,
+]:
+    """Read the shape of an operation off its annotations, once, at decoration.
+
+    `get_type_hints` resolves each annotation against `fn.__globals__` - the
+    OPERATION MODULE's namespace, which imports `Toolbox` normally. So this function
+    receives an already-resolved class object and asks `issubclass(hint, Injected)`
+    about it. The name `Toolbox` never appears in `core/`, which is the whole point
+    of the marker (ADR-0014), and `from __future__ import annotations` in any module
+    involved does not change it.
+    """
     name = fn.__name__
     hints = get_type_hints(fn, include_extras=True)
     directions: dict[ParamName, Direction] = {}
-    scratch_param: ParamName | None = None
+    injected: dict[type[Injected], ParamName] = {}
     config_param: ParamName | None = None
 
     for param, parameter in signature.parameters.items():
@@ -501,8 +576,16 @@ def _classify(
                 "direction and shape from the annotations; an unannotated parameter "
                 "cannot be classified."
             )
-        if hint is ScratchScope:
-            scratch_param = param
+        if isinstance(hint, type) and issubclass(hint, Injected):
+            # The isinstance guard is load-bearing: In and Out resolve to
+            # Annotated[...], which is not a type, and issubclass raises on it.
+            if hint in injected:
+                raise TypeError(
+                    f"{name}: parameters {injected[hint]!r} and {param!r} are both "
+                    f"{hint.__name__}. The entry point supplies one of each kind, so "
+                    "a second would silently receive the same object."
+                )
+            injected[hint] = param
         elif _direction_of(hint) is not None:
             direction = _direction_of(hint)
             assert direction is not None
@@ -511,12 +594,14 @@ def _classify(
             config_param = param
         else:
             raise TypeError(
-                f"{name}: parameter {param!r} is neither In, Out, ScratchScope nor "
-                f"{CONFIG_PARAM!r}. Tuning values go in one frozen dataclass passed "
-                f"as {CONFIG_PARAM}, so that a run manifest can record what tuning "
-                "produced an output without special-casing each operation."
+                f"{name}: parameter {param!r} is annotated {hint!r}, which is not a "
+                f"recognised kind. An operation takes In and Out handles, one frozen "
+                f"{CONFIG_PARAM} dataclass, and whatever the runtime injects "
+                f"(ScratchScope, Toolbox). Tuning values go in the {CONFIG_PARAM} "
+                "rather than as loose parameters, so a run manifest can record what "
+                "tuning produced an output without special-casing each operation."
             )
-    return directions, scratch_param, config_param
+    return directions, injected, config_param
 
 
 def _direction_of(hint: object) -> Direction | None:

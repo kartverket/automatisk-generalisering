@@ -1,14 +1,123 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+# The Python target (docs/contributing/python-version.md) is stated by four settings that
+# always change together: `requires-python` here, `[tool.pyright] pythonVersion`,
+# `[tool.ruff] target-version` and `.python-version`.
+[project]
+name = "ag"
+version = "0.0.0"
+description = "Cartographic generalization behind a port and adapter boundary."
+requires-python = ">=3.13"
+dependencies = []
+
+# The one place tool versions are stated. Every hook in .pre-commit-config.yaml runs its
+# tool through `uv run --locked --extra dev`, and CI does the same, so nothing else pins a
+# version. uv resolves these into uv.lock, which is committed and written only by uv
+# (docs/contributing/toolchain.md). Set up with `uv sync --extra dev`;
+# `pip install -e ".[dev]"` is the fallback, which is why this is a standard extra rather
+# than a `[dependency-groups]` table (`pip install --group` needs pip 25.1) and why no
+# uv-specific table exists here.
+[project.optional-dependencies]
+dev = [
+    "ruff==0.16.8",
+    "pyright==1.1.399",
+    "import-linter==2.15",
+    "pytest==9.1.1",
+    "pre-commit==4.6.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff is the one formatter and linter for the whole repository. `force-exclude` keeps the
+# exclusion in force when a file is passed explicitly, as an editor does; the example
+# pipelines are excluded while they are inert, and the exclusion goes when they go live;
+# the template the new code is lifted from, module by module, and the staging scripts are
+# excluded because neither ships and both are deleted; Markdown is excluded because ruff
+# would otherwise reformat the Python examples inside documents. Patterns are root-anchored (`dir/**`, `./file.py`): a bare name would match that name
+# anywhere in the tree, `src/ag/generalization/` included.
 [tool.ruff]
 target-version = "py313"
+force-exclude = true
+extend-exclude = [
+    "tests/fixtures/example_pipelines",
+    "docs/refactor/template_code/**",
+    "docs/refactor/temp/**",
+    "*.md",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
-    "F401",  # unused imports
-    "I",     # isort (import order and grouping)
+    "F",       # pyflakes
+    "E9",      # io and syntax errors
+    "I",       # isort (import order and grouping)
+    "SLF001",  # private member access; scoped to ag/generalization below
 ]
+
+# SLF001 catches reach-through such as `tb.geometry._port`, which no import contract can
+# see. It applies to the domain code only.
+#
+# The legacy packages are linted, with two rules held back: F401 and I001 have autofixes
+# that remove or reorder imports, and the legacy convention is side-effect imports, so they
+# are reported nowhere a fix could change behaviour. Below them, a per-file baseline: the
+# findings present when linting was switched on. A baseline entry is removed when its
+# file is cleaned; new files and new findings elsewhere are not exempt.
+[tool.ruff.lint.per-file-ignores]
+"!src/ag/generalization/**" = ["SLF001"]
+"composition_configs/**" = ["F401", "I001"]
+"constants/**" = ["F401", "I001"]
+"custom_tools/**" = ["F401", "I001"]
+"data_orchestrator/**" = ["F401", "I001"]
+"env_setup/**" = ["F401", "I001"]
+"file_manager/**" = ["F401", "I001"]
+"generalization/**" = ["F401", "I001"]
+"geometry_validation/**" = ["F401", "I001"]
+"temp_skip_folder/**" = ["F401", "I001"]
+"tests_legacy/**" = ["F401", "I001"]
+"./conf.py" = ["F401", "I001"]
+"./generate_pyvis_docu.py" = ["F401", "I001"]
+"./main_on_cloud.py" = ["F401", "I001"]
+"./main_on_prem.py" = ["F401", "I001"]
+"./paths.py" = ["F401", "I001"]
+"docs/setup/**" = ["F401", "I001"]
+# Baseline, 2026-10-02: 26 files, 87 findings. Remove an entry when the file is cleaned.
+"custom_tools/generalization_tools/building/resolve_building_conflicts.py" = ["F811"]
+"custom_tools/generalization_tools/road/resolve_road_conflicts.py" = ["F811"]
+"generalization/n10/arealdekke/category_tools/area_aggregator.py" = ["F811"]
+"generalization/n10/arealdekke/overall_tools/eliminate_small_polygons.py" = ["F541"]
+"generalization/n10/arealdekke/overall_tools/replace_uncategorized.py" = ["F541"]
+"generalization/n10/facilities/ledning.py" = ["F541"]
+"generalization/n10/hoydepunkt_innsjo/hoydepunkt_innsjo.py" = ["F841"]
+"generalization/n10/landForms/hoydetall.py" = ["F821"]
+"generalization/n100/building/data_preparation.py" = ["F811", "F841"]
+"generalization/n100/building/removing_points_and_erasing_polygons_in_water_features.py" = ["F541"]
+"generalization/n100/river/extend_river_line.py" = ["F841"]
+"generalization/n100/river/mst_loop.py" = ["F841"]
+"generalization/n100/river/unconnected_river_geometry.py" = ["F841", "F541"]
+"generalization/n100/road/clean_elveg_and_sti.py" = ["F541"]
+"generalization/n100/road/data_preparation_2.py" = ["F811", "F541"]
+"generalization/n100/road/ramps.py" = ["F841", "F541"]
+"generalization/n100/road/resolve_road_conflict_preparation.py" = ["F541"]
+"generalization/n100/road/testing_file.py" = ["F821"]
+"generalization/n100/road/vir_test/test1.py" = ["F821"]
+"generalization/n100/road/vir_test/test2.py" = ["F821", "F811"]
+"generalization/n250/road/data_preparation_2.py" = ["F821", "F841", "F541"]
+"generalization/n250/road/ramps_point.py" = ["F821", "F841"]
+"main_on_cloud.py" = ["F841"]
+"temp_skip_folder/core/infrastructure/archive/gcs_client.py" = ["F841"]
+"tests_legacy/test_arealdekket_class.py" = ["F841"]
+"tests_legacy/test_category_class.py" = ["F841"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
+    "ag",
     "composition_configs",
     "constants",
     "custom_tools",
@@ -17,4 +126,56 @@ known-first-party = [
     "generalization",
     "input_data",
     "tests",
+]
+
+# Strict over the new code only, by path: the legacy packages and tests_legacy/ are outside
+# the include list, and `strict` names the checked roots so that a legacy file opened in
+# an editor is analysed in standard mode, not strict. The example pipelines are excluded
+# while they are inert; the exclusion goes when they go live. `extraPaths` lets the static
+# tests import the scripts under tools/ the way pytest does.
+[tool.pyright]
+include = ["src", "tests", "tools"]
+exclude = [
+    "**/__pycache__",
+    "tests/fixtures/example_pipelines",
+]
+extraPaths = ["tools"]
+typeCheckingMode = "standard"
+strict = ["src", "tests", "tools"]
+pythonVersion = "3.13"
+
+# The constrained ArcPy stub (stubs/arcpy_constrained/, non-tool names only) applies to
+# these two roots and nowhere else. An execution environment's extraPaths outranks the
+# interpreter's site-packages, so the constraint holds whichever interpreter an editor has
+# selected. The stub is never placed at `typings/`: pyright treats that directory as the
+# global stubPath and would apply the stub to every file in the repository, legacy
+# packages included (docs/contributing/toolchain.md).
+[[tool.pyright.executionEnvironments]]
+root = "src/ag/adapters/arcpy"
+extraPaths = ["stubs/arcpy_constrained"]
+
+[[tool.pyright.executionEnvironments]]
+root = "tests/support/arcpy"
+extraPaths = ["stubs/arcpy_constrained"]
+
+[[tool.pyright.executionEnvironments]]
+root = "."
+extraPaths = ["tools"]
+
+# The marker and the collection roots, and nothing else: no default `addopts`.
+# `testpaths` keeps a bare `pytest` away from the legacy tests, the template and the
+# staging scripts under docs/, which import ArcPy or are not part of this suite.
+# tests/conftest.py gives the marker the same behaviour everywhere: without ArcPy a bare
+# run skips marked tests, and `-m arcpy` fails the session instead of reporting green.
+[tool.pytest.ini_options]
+markers = [
+    "arcpy: needs ArcPy; runs under an ArcGIS Pro Python environment. Skipped when ArcPy is absent; with `-m arcpy` and no ArcPy the session fails.",
+]
+testpaths = [
+    "tests/unit",
+    "tests/static",
+    "tests/conformance",
+    "tests/goldens",
+    "tests/invariance",
+    "tests/smoke",
 ]

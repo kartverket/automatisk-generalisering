@@ -171,9 +171,10 @@ def restore_lines_that_cross_buffer(files: dict, clipped: str, erased: str):
         if v[1] > 2:
             id_list.append(v[0])
 
-    with arcpy.da.UpdateCursor(
-        clipped_sp, ["UNIQ_ID", "SHAPE@"]
-    ) as u_cur, arcpy.da.InsertCursor(erased_sp, ["UNIQ_ID", "SHAPE@"]) as i_cur:
+    with (
+        arcpy.da.UpdateCursor(clipped_sp, ["UNIQ_ID", "SHAPE@"]) as u_cur,
+        arcpy.da.InsertCursor(erased_sp, ["UNIQ_ID", "SHAPE@"]) as i_cur,
+    ):
         for row in u_cur:
             if row[0] in id_list:
                 i_cur.insertRow(row)
@@ -558,9 +559,10 @@ def iterative_side_lines(
         extra_lines = "in_memory\\extra_side_lines"
         arcpy.management.CopyFeatures("joined_lyr", extra_lines)
 
-        with arcpy.da.SearchCursor(
-            extra_lines, ["SHAPE@"]
-        ) as s_cur, arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as i_cur:
+        with (
+            arcpy.da.SearchCursor(extra_lines, ["SHAPE@"]) as s_cur,
+            arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as i_cur,
+        ):
             for row in s_cur:
                 i_cur.insertRow(row)
 
@@ -589,10 +591,10 @@ def attach_extra_lines_endpoints(orig_layer: str, output_fc: str, meters: int):
 
     out_ep_buffer_geoms = []
     # iterate endpoints and check for nearby side lines
-    with arcpy.da.SearchCursor(
-        orig_endpoints, ["OID@", "SHAPE@"]
-    ) as ep_cur, arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as out_ins:
-
+    with (
+        arcpy.da.SearchCursor(orig_endpoints, ["OID@", "SHAPE@"]) as ep_cur,
+        arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as out_ins,
+    ):
         for ep_oid, ep_geom in ep_cur:
             # buffer the endpoint 20 m
             ep_buf = f"in_memory\\ep_buf_{ep_oid}"
@@ -893,7 +895,6 @@ def create_whole_lines(clipped_fc: str, centroid_fc: str, buffer_fc: str):
             buffer_outlines_geoms.append(row[0])
 
     for bid in group_ids:
-
         sql = f"bufferID = {bid}"
         arcpy.management.SelectLayerByAttribute(clipped_layer, "NEW_SELECTION", sql)
         arcpy.management.SelectLayerByAttribute(centroid_layer, "NEW_SELECTION", sql)
@@ -983,11 +984,9 @@ def create_whole_lines(clipped_fc: str, centroid_fc: str, buffer_fc: str):
             combined_path = list(path1)
             combined_path.extend(path2[1:])
             if found1 and found2:
-
                 keep_line_list_list_prio1.append(combined_path)
 
             elif found1 or found2:
-
                 keep_line_list_list_prio2.append(combined_path)
 
             else:
@@ -1298,10 +1297,10 @@ def restore_medium_b_lines(
         )
     ]
 
-    with arcpy.da.SearchCursor(
-        b_outside_layer, ["SHAPE@"]
-    ) as b_cur, arcpy.da.InsertCursor(inside_lines, ["SHAPE@"]) as i_cur:
-
+    with (
+        arcpy.da.SearchCursor(b_outside_layer, ["SHAPE@"]) as b_cur,
+        arcpy.da.InsertCursor(inside_lines, ["SHAPE@"]) as i_cur,
+    ):
         for b_row in b_cur:
             possible_lines = {}
             b_geom = b_row[0]

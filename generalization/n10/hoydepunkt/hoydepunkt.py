@@ -115,7 +115,6 @@ def label_hoyde_int(
                     labelclass.maplexLabelPlacementProperties.featureWeight = 1000
                 l.setDefinition(lyr_cim)
         else:
-
             lyr_cim = lyr.getDefinition("V3")
             for i in range(len(lyr_cim.labelClasses)):
                 labelclass = lyr_cim.labelClasses[i]

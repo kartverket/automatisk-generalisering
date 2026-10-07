@@ -14,7 +14,6 @@ from geometry_validation.validationStatus import ValidationStatus
 
 
 class ValidatorOrchestrator:
-
     def __init__(self, stats_provider):
         self.stats_provider = stats_provider
 

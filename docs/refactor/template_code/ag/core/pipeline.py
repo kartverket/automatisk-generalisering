@@ -36,7 +36,7 @@ from ag.core.types import (
     Scale,
     StageName,
 )
-from ag.core.data_objects import DataObject, Derived, LineageRoot, ProductIdentity
+from ag.core.data_objects import DataObject, Derived, OriginRoot, ProductIdentity
 from ag.core.operations import OperationCall, ScratchHandle
 
 
@@ -257,7 +257,7 @@ class Pipeline:
         return (self.scale, self.object_name)
 
     @property
-    def external_inputs(self) -> tuple[LineageRoot, ...]:
+    def external_inputs(self) -> tuple[OriginRoot, ...]:
         """Every ExternalSource and ProductIdentity this pipeline's stages read.
 
         DERIVED, not declared. It used to be a hand-written tuple, which was a
@@ -272,7 +272,7 @@ class Pipeline:
         run on-prem for exactly the same reason as one reading an s3:// external
         source.
         """
-        seen: dict[int, LineageRoot] = {}
+        seen: dict[int, OriginRoot] = {}
         for stage in self.stages:
             for stage_input in stage.inputs:
                 if not isinstance(stage_input.obj, Derived):

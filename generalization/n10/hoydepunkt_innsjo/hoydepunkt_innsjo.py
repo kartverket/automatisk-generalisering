@@ -17,7 +17,6 @@ arcpy.env.overwriteOutput = True
 
 
 class prog_config(Enum):
-
     # Buffer for lakes below 5000 m^2. 'Number Unit'. 40 Meters is the minimum distance for label with 4 units to not intersect lake edge
     buffer_innsjo_below_5000_distance = "40 Meters"
 
@@ -662,12 +661,10 @@ def check_if_point_inside_lake(files: dict) -> None:
         in_table=centroids, field_names=["OBJECTID", "SHAPE@"]
     ) as update_cursor:
         for centroid_id, shape_centroid in update_cursor:
-
             with arcpy.da.SearchCursor(
                 in_table=inside, field_names=["OBJECTID", "outside", "SHAPE@"]
             ) as search_cursor:
                 for inner_id, outside, shape_inner in search_cursor:
-
                     if centroid_id == inner_id:
                         if outside == 1:
                             innerpoints_outside_lakes.append(inner_id)

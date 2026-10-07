@@ -51,7 +51,7 @@ from ag.core.data_objects import (
     DataObject,
     Derived,
     ExternalSource,
-    LineageRoot,
+    OriginRoot,
     ProductIdentity,
 )
 from ag.core.pipeline import Pipeline, StageRegistry
@@ -95,14 +95,14 @@ class ClassificationRule:
     dataset: DatasetName | None
     gives: Classification
 
-    def matches(self, root: LineageRoot) -> bool:
+    def matches(self, root: OriginRoot) -> bool:
         return (self.scale is None or self.scale == root.scale) and (
             self.dataset is None or self.dataset == root.dataset
         )
 
 
 def _from_rules(
-    root: LineageRoot, rules: Sequence[ClassificationRule]
+    root: OriginRoot, rules: Sequence[ClassificationRule]
 ) -> Classification:
     result = Classification.PREM_ONLY  # fail closed
     matched = [rule.gives for rule in rules if rule.matches(root)]

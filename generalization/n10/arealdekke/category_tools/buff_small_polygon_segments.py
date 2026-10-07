@@ -96,7 +96,7 @@ def buff_small_polygon_segments(
         map_scale (str): The map scale for the operation
     """
     print(
-        f"\n{'====='*15}\nBuffering small segments of '{target}' at map scale '{map_scale}'\n{'====='*15}\n"
+        f"\n{'=====' * 15}\nBuffering small segments of '{target}' at map scale '{map_scale}'\n{'=====' * 15}\n"
     )
 
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
@@ -128,7 +128,7 @@ def buff_small_polygon_segments(
     else:
         arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
-    print(f"\n✅ Buffering of small segments finished!\n{'====='*15}\n")
+    print(f"\n✅ Buffering of small segments finished!\n{'=====' * 15}\n")
 
     wfm.delete_created_files()
 
@@ -215,7 +215,7 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
     arcpy.analysis.Buffer(
         in_features=files[fc.input_polygon_edge],
         out_feature_class=files[fc.input_polygon_minus_buffer],
-        buffer_distance_or_field=f"{min_width/2} Meters",
+        buffer_distance_or_field=f"{min_width / 2} Meters",
         line_side="FULL",
     )
     arcpy.analysis.Erase(
@@ -233,7 +233,7 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
     arcpy.analysis.PairwiseBuffer(
         in_features=files[fc.core_wide_enough_segments_singlepart],
         out_feature_class=files[fc.segments_wide_enough],
-        buffer_distance_or_field=f"{min_width/2} Meters",
+        buffer_distance_or_field=f"{min_width / 2} Meters",
     )
     arcpy.analysis.Erase(
         in_features=files[fc.target_fc],
@@ -296,7 +296,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         arcpy.analysis.PairwiseBuffer(
             in_features=files[fc.locked_fc_line_clipped],
             out_feature_class=files[fc.locked_fc_line_clipped_n_buffed_fc],
-            buffer_distance_or_field=f"{min_width/2} Meters",
+            buffer_distance_or_field=f"{min_width / 2} Meters",
         )
         arcpy.analysis.Intersect(
             in_features=[
@@ -308,7 +308,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         arcpy.analysis.PairwiseBuffer(
             in_features=files[fc.areas_chosen_within_locked_fc],
             out_feature_class=files[fc.areas_chosen_within_locked_buffed_fc],
-            buffer_distance_or_field=f"{min_width/2} Meter",
+            buffer_distance_or_field=f"{min_width / 2} Meter",
         )
         arcpy.analysis.Intersect(
             in_features=[
@@ -320,7 +320,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         arcpy.analysis.PairwiseBuffer(
             in_features=files[fc.locked_fc_line_intersecting],
             out_feature_class=files[fc.locked_areas_outside_buffer],
-            buffer_distance_or_field=f"{min_width/2} Meter",
+            buffer_distance_or_field=f"{min_width / 2} Meter",
         )
         arcpy.analysis.Erase(
             in_features=files[fc.locked_areas_outside_buffer],
@@ -480,7 +480,7 @@ def buff_small_segments(
     arcpy.analysis.Buffer(
         in_features=files[fc.only_small_segments_centre] if status else lines_to_expand,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
-        buffer_distance_or_field=f"{min_width/2} Meters",
+        buffer_distance_or_field=f"{min_width / 2} Meters",
     )
 
     print("⭕ Small segments buffered and dissolved with locked areas buffers")

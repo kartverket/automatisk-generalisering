@@ -56,9 +56,10 @@ def segment_line(
     carried_fields = [f.name for f in arcpy.ListFields(input_fc) if not f.required]
     cursor_fields = ["SHAPE@"] + carried_fields
 
-    with arcpy.da.SearchCursor(input_fc, cursor_fields) as src, arcpy.da.InsertCursor(
-        output_fc, cursor_fields
-    ) as dst:
+    with (
+        arcpy.da.SearchCursor(input_fc, cursor_fields) as src,
+        arcpy.da.InsertCursor(output_fc, cursor_fields) as dst,
+    ):
         for row in src:
             geom = row[0]
             if geom is None:

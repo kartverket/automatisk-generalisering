@@ -11,9 +11,9 @@
 # see everything entering the project") is gone silently. A docstring saying "leaf
 # module" is not enforcement; this is.
 #
-# NOT YET EXPRESSIBLE: the `ports` / `adapters` rows of 03-architecture §4.2, and the
-# "arcpy appears in exactly one module" forbidden contract. Both need those packages to
-# have content. See ag/ports/__init__.py.
+# NOT YET EXPRESSIBLE: the vendor-import contracts of 03-architecture §4.2 - "arcpy
+# appears in exactly one module", and the same for networkx and shapely. Those need
+# `adapters/` to have content; the `ports/` rows below are now real.
 
 [importlinter]
 root_package = ag
@@ -42,7 +42,58 @@ layers =
     ag.pipelines
     ag.operations
     ag.staging
+    ag.ports
     ag.core
+
+[importlinter:contract:ports-are-a-boundary]
+name = a port knows nothing above or beside it
+type = forbidden
+source_modules =
+    ag.ports
+forbidden_modules =
+    ag.adapters
+    ag.operations
+    ag.pipelines
+    ag.staging
+    ag.runtime
+    ag.orchestrator
+    ag.sources
+    ag.products
+    ag.core.pipeline
+    ag.core.data_objects
+
+# The next two are ALLOW-LISTS, not forbidden lists, because that is how
+# 03-architecture §4.1 states the rule: `adapters/` is imported by the composition
+# roots, `staging/` by `runtime/` only. A forbidden contract enumerates today's
+# packages and silently admits tomorrow's - add `ag.reporting` next year and it may
+# import an adapter with nothing complaining. `protected` inverts that: a new package
+# is denied until someone adds it here on purpose.
+
+[importlinter:contract:adapters-are-chosen-only-at-the-top]
+name = only a composition root chooses an adapter
+type = protected
+protected_modules =
+    ag.adapters
+allowed_importers =
+    ag.runtime
+    ag.orchestrator
+broken_contract_guidance =
+    An adapter is chosen, not depended on. Take the port as a parameter and let
+    runtime/ or orchestrator/ decide which implementation to pass - that is what
+    keeps the dependency arrow pointing at the contract. 03-architecture §4.1.
+
+[importlinter:contract:staging-is-runtimes-alone]
+name = only runtime reaches the staging layer
+type = protected
+protected_modules =
+    ag.staging
+allowed_importers =
+    ag.runtime
+broken_contract_guidance =
+    staging/ owns local paths, workspaces and transfers - pod concerns. An operation
+    that reaches it has learned where it is running, which is the ignorance the whole
+    declaration model depends on. orchestrator/ is excluded too: it schedules pods and
+    never touches a pod's disk. 03-architecture §4.1.
 
 [importlinter:contract:core-is-pure]
 name = core imports nothing above it
@@ -57,6 +108,7 @@ forbidden_modules =
     ag.staging
     ag.runtime
     ag.orchestrator
+    ag.ports
     ag.adapters
     ag.helpers
     ag.observability

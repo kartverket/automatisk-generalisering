@@ -930,9 +930,9 @@ class _GlobalProposal:
     def from_network(
         cls, n: "_ConnectionProposal", score: "_ProposalScore"
     ) -> "_GlobalProposal":
-        assert (
-            n.gap_source is not None
-        ), "_ConnectionProposal.gap_source must be stamped before promotion to Stage B"
+        assert n.gap_source is not None, (
+            "_ConnectionProposal.gap_source must be stamped before promotion to Stage B"
+        )
         return cls(
             ctx=n.ctx,
             dangle_norm_z=n.dangle_norm_z,
@@ -1442,9 +1442,9 @@ class FillLineGaps:
             ang.connect_to_features_angle_mode or {}
         )
 
-        self._angle_mode_by_external_ds_key: dict[str, logic_config.AngleTargetMode] = (
-            {}
-        )
+        self._angle_mode_by_external_ds_key: dict[
+            str, logic_config.AngleTargetMode
+        ] = {}
 
         self.raster_paths: tuple[str, ...] = (
             tuple(z.raster_paths) if z.raster_paths else ()

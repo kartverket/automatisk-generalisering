@@ -12,6 +12,7 @@ from composition_configs.logic_config import DataRef
 from stage_factory import make_stage
 from n100.road.function_calls import your_processing_function
 
+
 def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
     input_fc = DataRef(
         path=f"{input_root.path}/input",
@@ -21,11 +22,12 @@ def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
         path=f"{output_root.path}/output",
         tag=output_root.tag,
     )
-    
+
     your_processing_function(
         input=input_fc,
         output=output_fc,
     )
+
 
 your_stage_name = make_stage(process_your_stage)
 ```
@@ -38,6 +40,7 @@ If your stage produces multiple outputs (e.g., lines and points):
 from composition_configs.logic_config import DataRef
 from stage_factory import make_stage
 from n100.road.function_calls import your_processing_function
+
 
 def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
     input_fc = DataRef(
@@ -52,12 +55,13 @@ def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
         path=f"{output_root.path}/output_secondary",
         tag=output_root.tag,
     )
-    
+
     your_processing_function(
         input=input_fc,
         output_main=output_fc,
         output_secondary=output_secondary_fc,
     )
+
 
 your_stage_name = make_stage(process_your_stage)
 ```
@@ -70,6 +74,7 @@ If your stage needs multiple input datasets (e.g., roads and buildings):
 from composition_configs.logic_config import DataRef
 from stage_factory import make_stage
 from n100.road.function_calls import your_processing_function
+
 
 def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
     # Construct multiple inputs from input_root
@@ -85,12 +90,13 @@ def process_your_stage(input_root: DataRef, output_root: DataRef) -> None:
         path=f"{output_root.path}/output",
         tag=output_root.tag,
     )
-    
+
     your_processing_function(
         input_roads=input_roads,
         input_buildings=input_buildings,
         output=output_fc,
     )
+
 
 your_stage_name = make_stage(process_your_stage)
 ```
@@ -110,9 +116,9 @@ After creating your stage file, add it to stages/__init__.py:
 from .your_stage_name import your_stage_name
 
 __all__ = [
-    'thin_road_stage',
-    'ramps_stage',
-    'your_stage_name',  # Add here
+    "thin_road_stage",
+    "ramps_stage",
+    "your_stage_name",  # Add here
 ]
 ```
 
@@ -125,7 +131,7 @@ n100_roads_pipeline = PipelineDefinition(
         "thin_road": thin_road_stage,
         "ramps": ramps_stage,
         "your_stage": your_stage_name,  # Add here
-    }
+    },
 )
 ```
 """

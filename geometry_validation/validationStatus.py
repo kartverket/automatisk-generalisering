@@ -46,7 +46,6 @@ OPERATORS = {
 
 
 class ValidationStatus:
-
     def __init__(self):
         self.permanent_rules: list[Rule] = []
         self.temporary_rules: list[Rule] = []

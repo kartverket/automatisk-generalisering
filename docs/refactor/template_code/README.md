@@ -39,7 +39,7 @@ It exists for two reasons:
 
 ```
 cd docs/refactor/template_code
-python3 tools/run_example.py            # the whole derivation, end to end
+python3 tools/run_example.py            # the derivation, then every stage executed
 python3 tools/dump_tuning.py n100 road  # resolved configs for one (scale, object)
 pytest tests/                           # declaration tests; the arcpy one skips
 lint-imports                            # the layer contracts in .importlinter
@@ -72,25 +72,31 @@ be diffed against the document rather than trusted.
 | `ag/orchestrator/` | same | `execute.py` |
 | `tools/`, `tests/` | repo root | dev scripts; declaration tests |
 
-**Four packages are directories with only a docstring**, and that is deliberate:
-`ports/`, `adapters/`, `helpers/`, `observability/`. They are designed and undecided
-only in their details, so omitting them would make the tree read as "the port design is
-not real" — the one misreading the documents work hardest to prevent. Each `__init__.py`
-names what belongs there and links the section and ADRs that already settled it.
+**`ports/` is now written** — six `Protocol`s, the `Geometry` value type and the
+`Toolbox`, with every method traceable to a call site in `ag/operations/`. `adapters/` is
+partial: the pure half of the arcpy predicate compiler, and a recording Toolbox used to
+execute both pipelines with no engine. Still directories with only a docstring:
+`helpers/` (empty by the promotion rule — no second caller from a different object) and
+`observability/`. Each `__init__.py` names what belongs there and links the ADRs that
+already settled it.
 
 `runtime/` and `orchestrator/` are likewise partial: `fan_out`, `partition`, `fan_in`,
 `jobs`, `metadata`, `log_merge` and `cli` are all designed and unwritten.
 
-## The one place this code leads the documents
+## Where this code leads the documents
 
-Everything else follows the docs. The exception, recorded so it is not read as drift:
+Nothing, currently. The one standing exception — no `Toolbox`, operations naming arcpy
+tools in `NotImplementedError` strings — is closed: `ports/` exists, every operation
+calls it, and `@operation` admits `Toolbox` as a fifth parameter kind via ADR-0014.
 
-**`ag/core/operations.py` has no `Toolbox`.** 02-runtime §2.4 and ADR-0008 say an
-operation takes `tb: Toolbox` and calls ports; this template's operations name arcpy
-tools directly in their `NotImplementedError` strings, because `ports/` is not written.
-When it is, `@operation`'s parameter classifier must admit `Toolbox` as a fifth kind
-alongside `In`, `Out`, `config` and `ScratchScope` — today it rejects anything else at
-decoration. Noted in `ag/ports/__init__.py` too, where whoever does the work will be.
+Two things this pass discovered that the documents did not have, both now written
+back into them rather than left here:
+
+- **The general decomposition form** — a vendor tool with no OGC counterpart is usually
+  two standard operations plus one explicit rule. Found by trying to write `Identity` as
+  a port method. Now [03-architecture §2.2](../03-architecture.md#22-port-vocabulary-comes-from-open-standards).
+- **Q-C's evidence, and why it is insufficient.** One caller, two of six methods. Now
+  [03-architecture §9](../03-architecture.md#9-open-questions); the question stays open.
 
 ## What is verified, and by what
 
@@ -101,6 +107,9 @@ decoration. Noted in `ag/ports/__init__.py` too, where whoever does the work wil
 | declarations need no data and no arcpy (02-runtime §2.6) | import with `arcpy` blocked |
 | the layering in 03-architecture §4.1 holds | `.importlinter` |
 | a misspelled parameter fails at import, not in a pod | `tests/unit/test_road_operations.py` |
+| a string annotation still classifies as injected | `tests/unit/test_operation_classification.py` |
+| the De Morgan rewrite ADR-0001 depends on | `tests/unit/test_predicates.py` |
+| every operation runs to completion against the ports | `tools/run_example.py`, last section |
 | tuning resolves by reading, not computing (ADR-0013) | `tools/dump_tuning.py` |
 
 ## Conventions

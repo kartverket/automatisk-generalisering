@@ -106,11 +106,10 @@ def split_polyline_featureclass(
             )
 
     # Divide the geometries
-    with arcpy.da.SearchCursor(
-        single_in, ["SHAPE@"] + type_fields
-    ) as s_cursor, arcpy.da.InsertCursor(
-        split_fc, ["SHAPE@"] + type_fields
-    ) as i_cursor:
+    with (
+        arcpy.da.SearchCursor(single_in, ["SHAPE@"] + type_fields) as s_cursor,
+        arcpy.da.InsertCursor(split_fc, ["SHAPE@"] + type_fields) as i_cursor,
+    ):
         for s_row in s_cursor:
             geom = s_row[0]
             new_row = list(s_row)

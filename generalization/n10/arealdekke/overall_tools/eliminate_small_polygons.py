@@ -433,9 +433,10 @@ class EliminateSmallPolygons:
         arcpy.management.CreateFeatureclass(
             out_path=path, out_name=name, geometry_type="POLYLINE", spatial_reference=sr
         )
-        with arcpy.da.SearchCursor(lines, ["SHAPE@"]) as scur, arcpy.da.InsertCursor(
-            potential_holes_lines, ["SHAPE@"]
-        ) as icur:
+        with (
+            arcpy.da.SearchCursor(lines, ["SHAPE@"]) as scur,
+            arcpy.da.InsertCursor(potential_holes_lines, ["SHAPE@"]) as icur,
+        ):
             for row in scur:
                 poly = row[0]
                 # parts: index 0 = exterior; indexes 1..n-1 = holes

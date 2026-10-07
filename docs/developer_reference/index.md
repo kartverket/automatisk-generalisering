@@ -1,5 +1,7 @@
 # Developer Reference
 
+**Status:** CURRENT. Describes the legacy packages as implemented.
+
 This section is for contributors working directly on the codebase. It explains the core design
 principles, IO conventions, runtime patterns, and how to extend the project safely.
 

@@ -1,0 +1,12 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.configurationPreference": "filesystemFirst",
+  "python.analysis.diagnosticMode": "openFilesOnly"
+}

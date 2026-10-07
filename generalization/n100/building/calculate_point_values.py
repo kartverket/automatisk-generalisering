@@ -217,9 +217,7 @@ def calculate_angle_and_visibility():
     Adds angle and visibility fields, and sets their value to 0
     """
     # Feature class to check fields existence
-    point_feature_class = (
-        Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value
-    )
+    point_feature_class = Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value
 
     # List of fields to add and calculate
     fields_to_add = [["angle", "LONG"], ["invisibility", "LONG"]]

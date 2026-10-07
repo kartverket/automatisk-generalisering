@@ -154,10 +154,10 @@ def main():
     for i, municipality in enumerate(municipalities):
         space = "   " if i + 1 < 10 else ("  " if i + 1 < 100 else " ")
         if municipality in seen_municipalities:
-            print(f"{i+1}{space}- {municipality} - SKIPS")
+            print(f"{i + 1}{space}- {municipality} - SKIPS")
             continue
 
-        print(f"{i+1}{space}- {municipality} - PROCESSING")
+        print(f"{i + 1}{space}- {municipality} - PROCESSING")
 
         # 8.1) Select municipality polygon for clip
         select_area(work_files["area"], municipality)
@@ -809,14 +809,12 @@ def move_ladders_to_valid_area(files: dict, valid_fc: str, ladders: dict) -> dic
         )
     }
 
-    contours_clipped = (
-        {  # For valid contours: ID -> valid, dissolved, multipart geometry
-            contour_id: geom
-            for contour_id, geom in arcpy.da.SearchCursor(
-                valid_dissolved_fc, ["contour_ID", "SHAPE@"]
-            )
-        }
-    )
+    contours_clipped = {  # For valid contours: ID -> valid, dissolved, multipart geometry
+        contour_id: geom
+        for contour_id, geom in arcpy.da.SearchCursor(
+            valid_dissolved_fc, ["contour_ID", "SHAPE@"]
+        )
+    }
 
     clip_lyr = "clip_lyr"
     points_lyr = "points_lyr"
@@ -1020,7 +1018,6 @@ def set_tangential_rotation(files: dict) -> None:
     # 3) Update tangent rotation for each point
     with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@", "ROTATION"]) as cur:
         for oid, pt, _ in cur:
-
             if oid not in contour_by_join:
                 continue
 
