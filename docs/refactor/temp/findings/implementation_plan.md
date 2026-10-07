@@ -319,7 +319,13 @@ review: `core/types.py`, `core/injection.py`, `core/handles.py`, `core/operation
 recorded on the way: `ErrorContext.messages` is `tool_messages` (§6.2 below repointed);
 `Scale.rank` because a `StrEnum` orders as text; `Classification.join` fails closed; internal
 handles are named by trail and leaf and stamped with the scope's namespace; call identity is
-A29 (T2.13). Evidence: `findings/slice_1a_core_lift_evidence.md`.
+A29 (T2.13). Evidence: `findings/slice_1a_core_lift_evidence.md`. The core lift merged as #688.
+**Second pull request, the port values (2026-10-07):** `ports/geometry.py`, `ports/attributes.py`
+(a departure, project_tree §8 row 9), `ports/table_ops.py` values, `ports/predicates.py` with
+structured `Attr` (A2.1 to A2.3 struck into ADR-0015), `ports/toolbox.py` with the sentinel as a
+`Toolbox` subclass and no cast, `ports/errors.py`, `core/warnings.py`, the four Protocol classes
+empty, `ports/__init__.py` rebuilt; T2.7 done, T2.1's port half done. Evidence:
+`findings/slice_1a_port_values_evidence.md`.
 
 **Contains.**
 - **The first pull request of 1a is the core lift, by the architect**: `core/types.py`,

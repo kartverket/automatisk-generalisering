@@ -239,7 +239,7 @@ backend can short-circuit (SQL `EXISTS`, `LIMIT 1`), and arcpy's `GetCount` cann
 The full vertical slice, port to call site — the only end-to-end example in these documents.
 
 ```python
-# ── ports/geometry_ops.py ────────────────────────────────────────────────────
+# ── ports/predicates.py ──────────────────────────────────────────────────────
 class Relation(Enum):                        # CQL2 names, see "port vocabulary" above
     INTERSECTS = "s_intersects"; WITHIN = "s_within"; DWITHIN = "s_dwithin"
 
@@ -248,8 +248,11 @@ class Predicate:                             # `&`, `|`, `~` construct And/Or/No
     def __or__(self, other: Predicate) -> Predicate:  return Or((self, other))
     def __invert__(self) -> Predicate:                return Not(self)
 
-@dataclass(frozen=True)                      # variants: Attr, Spatial, And, Or, Not
-class Attr(Predicate):    cql: str
+@dataclass(frozen=True)                      # attribute leaves (ADR-0015): Compare, IsIn,
+class Compare(Predicate): field: FieldName; op: Comparison; value: AttributeValue  # IsNull,
+class Attr:               # RawAttr; built as Attr.cmp / Attr.in_ / Attr.is_null / Attr.raw
+    @staticmethod
+    def cmp(field: FieldName, op: Comparison, value: AttributeValue) -> Compare: ...
 @dataclass(frozen=True)
 class Spatial(Predicate): relate_to: ScratchHandle; relation: Relation; distance_m: float | None = None
 @dataclass(frozen=True)
@@ -304,18 +307,19 @@ def apply(layer: str, p: Predicate, combine: Combine) -> None:
 # ── runtime/partition.py ─────────────────────────────────────────────────────
 toolbox = Toolbox(geometry=ArcpyGeometryOps(session), table=..., cartographic=..., graph=...)
 
-# ── operations/building/selection.py ─────────────────────────────────────────
-# every church building within 500 m of water, excluding any that touch a road
+# ── operations/road/selection.py ─────────────────────────────────────────────
+# every European road within 500 m of water, excluding any that cross a railway
 tb.geometry.select(
-    input=buildings,
-    where=Attr("byggtyp_nbr = 970") & Within(water, 500) & ~Intersects(roads),
+    input=roads,
+    where=Attr.cmp("vegkategori", Comparison.EQ, "E") & DWithin(water, 500) & ~Intersects(railway),
     output=selected,
 )
 ```
 
-`Within(water, 500)` and `Intersects(roads)` are constructors over
+`DWithin(water, 500)` and `Intersects(railway)` are constructors over
 `Spatial(relate_to=..., relation=Relation.DWITHIN, distance_m=500)` and
-`Relation.INTERSECTS`.
+`Relation.INTERSECTS`; `Attr.cmp` builds a `Compare` leaf, one of the four structured
+attribute leaves of ADR-0015 (the field names are NVDB's).
 
 ### 2.5 The other libraries
 
@@ -889,3 +893,5 @@ re-running the stage on failure. Measure once one operator is reimplemented
 | 0011 | Declarations come from signatures and class attributes, not from strings |
 | 0012 | Sources and products are declared once, centrally, as symbols |
 | 0013 | Tuning is base plus one delta, with no resolution mechanism |
+| 0014 | Runtime-injected parameters are recognised by a marker base class |
+| 0015 | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |

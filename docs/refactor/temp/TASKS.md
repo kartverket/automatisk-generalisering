@@ -109,8 +109,8 @@ work but have different lifetimes and different modules.
 | 3 | T1.1 | Shadow centroid selection and comparison | not started |
 | 4 | T1.3 | Synthetic transform suite | not started |
 | 5 | T1.4 | **GATE** — national-scale shadow run | not started |
-| 6 | T2.1 | Structured `Attr` `[INDEPENDENT]` | not started |
-| 7 | T2.7 | `Row` slots and value-type docstrings `[INDEPENDENT]` | not started |
+| 6 | T2.1 | Structured `Attr` `[INDEPENDENT]` | port half **done** (slice 1a); adapter compile 1b, call-site fixes 1c |
+| 7 | T2.7 | `Row` slots and value-type docstrings `[INDEPENDENT]` | **done** (slice 1a) |
 | 8 | T2.5 | Linear referencing on `Geometry` `[INDEPENDENT]` | not started |
 | 9 | T2.6 | Raster `sample_at` `[INDEPENDENT]` | not started |
 | 10 | T2.2 | `update_rows` | not started |
@@ -778,7 +778,11 @@ which is why T1.4 is started early and left in flight rather than blocking.
 
 ## 6. T2.1 — Structured `Attr` `[INDEPENDENT]`
 
-**status:** not started
+**status:** port half done, slice 1a, 2026-10-07: `Attr.cmp`, `Attr.in_`, `Attr.is_null`,
+`Attr.raw` and the leaf types in `ports/predicates.py`, the pinned call-site count in
+`tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0015.
+Remaining: the adapter compile with identifier quoting (slice 1b) and the three call-site
+rewrites in the example fixtures (slice 1c).
 *(merged: the A17.4 and A17.7 call-site fixes)*
 
 **what done means**
@@ -812,7 +816,9 @@ the form that cannot compile.
 
 ## 7. T2.7 — `Row` slots and value-type docstrings `[INDEPENDENT]`
 
-**status:** not started
+**status:** done, slice 1a, 2026-10-07: `Row` is `@dataclass(frozen=True, slots=True)` in
+`ports/table_ops.py`; the `AttributeValue` docstring (`ports/attributes.py`) states the BLOB
+and raster answer; the `Coordinate` docstring (`ports/geometry.py`) states why it stays z-free.
 
 **what done means** `Row` is `@dataclass(frozen=True, slots=True)`. The `AttributeValue`
 docstring states that BLOB and Raster values are out of scope and that the answer if they arrive

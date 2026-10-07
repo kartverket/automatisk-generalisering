@@ -680,6 +680,7 @@ first.
 | 6a | `runtime/compose.py` takes port instances, never an adapter name; `runtime/stage_ref.py` is the one import by string; `ag.adapters.fakes` importable by `runtime/local.py` only | §4 |
 | 7 | `lineage/` as a top-level package, with `work_key.py` inside it | absent from 03-architecture §7 because it postdates it; T3.2's "no home" finding |
 | 8 | **all domain code under `ag/generalization/`** (if you choose option B) | §2 |
+| 9 | `ports/attributes.py` holds `FieldName`, `AttributeValue`, `FieldType` and `Field`, below every port; `table_ops.py` keeps `Schema`, `Row` and the Protocol (slice 1a, 2026-10-07) | `predicates.py` names fields and values and `geometry_ops.py` imports it; with those names in `table_ops.py` the chain would break row 5 of §6, which independence checks through indirect imports |
 | — | `tests/conformance/` instead of `tests/contract/`; `tests/support/` added | §4 |
 
 `adapters/arcpy/errors.py` from the planned tree is not created: the errors a caller sees are in

@@ -44,28 +44,13 @@ guidance).
 
 ## A2. Predicates
 
-**A2.1** `Attr` becomes **structured leaves** — `Attr.cmp(field, op, value)`,
-`Attr.in_(field, values)`, `Attr.is_null(field)` — with `Attr.raw(cql)` as a rare, greppable
-escape hatch guarded by a call-site count test.
+**A2.1** moved to ADR-0015 §Decision and the `ports/predicates.py` module docstring
+(2026-10-07, slice 1a). `destination:` ADR-0015.
 
-Rationale: an opaque CQL2 string forces every adapter to write a parser before it can quote
-identifiers correctly (`AddFieldDelimiters` differs by workspace type), and it admits
-expressions no adapter can compile. The template already contains two — `Attr("... in (select
-... from merge_report)")` at `operations/road/__init__.py:678` and `:942` are subqueries against
-a `ScratchHandle`.
-**`Attr.cmp`'s operator set** *(decided 2026-09-21)*: `=`, `<>`, `<`, `<=`, `>`, `>=` and `LIKE`;
-`value` is an `AttributeValue` other than `None`, and a null test goes through `Attr.is_null`,
-because `= NULL` is never true in SQL and no adapter should have to special-case it.
-`destination:` new ADR; amends ADR-0001.
+**A2.2** moved to ADR-0015 §Context and §Decision (2026-10-07). `destination:` ADR-0015.
 
-**A2.2** Three independent needs converged on `Attr.in_`: the predicate design itself, the 39
-`deleteRow()` sites (which become `select(where=~Attr.in_(id, ids))`), and `key.where_in` in the
-work-key API. A fourth arrived later — see A17.7.
-`destination:` same ADR as A2.1.
-
-**A2.3** Known limit: this catches structure and types at import, not wrong field names. Schema
-declarations on handles would catch those. Deferred, and additive to A2.1.
-`destination:` same ADR as A2.1, as a stated non-goal.
+**A2.3** moved to ADR-0015 §Consequences, as the stated non-goal (2026-10-07).
+`destination:` ADR-0015.
 
 ## A3. Graph port
 
