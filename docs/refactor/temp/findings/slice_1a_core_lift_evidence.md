@@ -704,7 +704,7 @@ FAILED tests/unit/core/test_errors.py::test_a_bare_string_is_one_tool_message
 
 ## Part 3: the harness catching its own failure modes
 
-Produced by a throwaway self-check script run against the committed engine; each scenario builds a probe case in memory, so the case tables are untouched. A30.
+Produced by a throwaway self-check script run against the committed engine; each scenario builds a probe case in memory, so the case tables are untouched. A30. Since then the scenarios are repeatable: C, D, F, G and I as unit tests in `tests/unit/tools/test_break_once.py`, on the captured output; A, B, E and H as `python -m tools.break_once --self-check`. Making H repeatable found a preflight defect: when a test module is itself a target (O16, H8), pytest exits 0 for a renamed node id inside that module, so the preflight now compares the collected ids against the targets instead of trusting the exit code (`uncollected`, unit-tested).
 
 ### A. A renamed node id stops at preflight, nothing edited
 

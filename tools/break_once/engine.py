@@ -130,14 +130,17 @@ def write_source(path: Path, text: str, *, like: bytes) -> None:
     path.write_bytes(text.replace("\n", newline).encode("utf-8"))
 
 
-def reported(kinds: str, target: str, out: str) -> bool:
+def reported(kinds: str, target: str, out: str, *, members: bool = False) -> bool:
     """Whether a summary line `<kind> <target>` is in `out`.
 
-    A parametrised node id is reported with its `[param]` suffix and a module target by
-    its collection error or by its tests, so the target may be followed by `[...]`, by
-    `::name`, by ` - message`, or by the end of the line.
+    A parametrised node id is reported with its `[param]` suffix, so the target may be
+    followed by `[...]`, by ` - message`, or by the end of the line. With `members`, a
+    module target also counts when one of its tests is reported (`<module>::name`), which
+    the baseline wants and the verdict must not: a module target's expected failure is
+    the module's own `ERROR` line, not a test inside it failing.
     """
-    pattern = rf"^(?:{kinds}) {re.escape(target)}(?:\[[^\]]*\]|::\S+)?(?: - .*)?$"
+    suffix = r"(?:\[[^\]]*\]|::\S+)?" if members else r"(?:\[[^\]]*\])?"
+    pattern = rf"^(?:{kinds}) {re.escape(target)}{suffix}(?: - .*)?$"
     return re.search(pattern, out, re.M) is not None
 
 
@@ -175,13 +178,51 @@ def preflight(sets: Iterable[CaseSet]) -> list[str]:
         problems.append(
             "targets do not collect:\n  " + "\n  ".join(detail or [out.strip()])
         )
+    problems.extend(
+        f"target not collected: {target}" for target in uncollected(targets, out)
+    )
     return problems
+
+
+def uncollected(targets: Iterable[str], collect_output: str) -> list[str]:
+    """Targets that a `--collect-only -q` run did not list.
+
+    Why not the exit code alone: when a module is itself a target, pytest treats a node
+    id inside it that no longer exists as matched and exits 0, so a renamed test would
+    pass unnoticed. A node id must appear as itself or with a `[param]` suffix; a module
+    must have at least one collected `module::name`.
+    """
+    collected = [line.strip() for line in collect_output.splitlines() if "::" in line]
+    missing: list[str] = []
+    for target in sorted(set(targets)):
+        if target.endswith(".py"):
+            found = any(item.startswith(f"{target}::") for item in collected)
+        else:
+            found = any(
+                item == target or item.startswith(f"{target}[") for item in collected
+            )
+        if not found:
+            missing.append(target)
+    return missing
 
 
 def baseline(case: Case) -> str | None:
     """Why the case's targets do not pass on the clean tree, or None when they do."""
     code, out = run_pytest(case.tests)
-    missing = [target for target in case.tests if not reported("PASSED", target, out)]
+    return baseline_problem(case, code, out)
+
+
+def baseline_problem(case: Case, code: int, out: str) -> str | None:
+    """Reads a clean-tree run: exit 0, a `PASSED` line per target, nothing else reported.
+
+    A module target passes through any of its tests passing; a node id through its own
+    line, with any parameter.
+    """
+    missing = [
+        target
+        for target in case.tests
+        if not reported("PASSED", target, out, members=target.endswith(".py"))
+    ]
     not_passed = [line for line in out.splitlines() if _SUMMARY_LINE.match(line)]
     if code == 0 and not missing and not not_passed:
         return None
@@ -190,11 +231,19 @@ def baseline(case: Case) -> str | None:
 
 
 def verdict(case: Case, code: int, out: str) -> bool:
-    """Whether the mutated run failed the way the case says it must."""
+    """Whether the mutated run failed the way the case says it must.
+
+    Exit code 1 (tests failed or errored; 4 is an unknown target, 2 an interrupted
+    session), a `FAILED` or `ERROR` line per node id, and for a module target the
+    module's own `ERROR` line: a test failing inside the module is not the collection
+    failure the case claims.
+    """
     if code != 1:
         return False
     return all(
-        reported("ERROR" if target.endswith(".py") else "FAILED|ERROR", target, out)
+        reported("ERROR", target, out)
+        if target.endswith(".py")
+        else reported("FAILED|ERROR", target, out)
         for target in case.tests
     )
 

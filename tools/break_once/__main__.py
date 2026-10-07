@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from .engine import load_sets, preflight, run_set
+from .selfcheck import self_check
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -21,9 +22,22 @@ def main(argv: list[str] | None = None) -> int:
         help="preflight only: needles match and targets collect; nothing is edited",
     )
     parser.add_argument(
+        "--self-check",
+        action="store_true",
+        help="run the harness's own scenarios that need a subprocess and a real edit",
+    )
+    parser.add_argument(
         "--out", type=Path, help="write the report here instead of stdout"
     )
     args = parser.parse_args(argv)
+    if args.self_check:
+        bad, report = self_check()
+        if args.out is None:
+            print(report)
+        else:
+            args.out.write_text(report, encoding="utf-8")
+        print(f"break-it-once self-check: {bad} unexpected", file=sys.stderr)
+        return 1 if bad else 0
     sets = load_sets(args.sets or None)
     problems = preflight(sets)
     if problems:
