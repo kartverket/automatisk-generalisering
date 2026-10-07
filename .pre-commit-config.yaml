@@ -59,6 +59,13 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: break-once-check
+        name: break-it-once case tables (needles match, targets collect)
+        entry: uv run --locked --extra dev python -m tools.break_once --check
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: check-consistency
         name: design record consistency (DECISIONS, TASKS, terminology)
         entry: uv run --locked --extra dev python docs/refactor/temp/check_consistency.py

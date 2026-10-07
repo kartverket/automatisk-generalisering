@@ -1895,6 +1895,31 @@ in a scratch dump, and still ambiguous for two calls of one function).
 `destination:` `core/pipeline.py` (`Stage` docstring and check, Task B); `staging/scratch.py`
 and `runtime/stage_entry.py` (slice 1c); `02-runtime.md` §4.2.
 
+## A30. Break-it-once evidence is reproducible and scoped
+
+*Decided 2026-10-07.* **Every new guard, static rule and import contract ships with a
+break-it case in the same pull request; ordinary behaviour tests do not.** The cases are
+data in `tools/break_once/cases/`, one module per mutated source package, and the engine in
+`tools/break_once/` runs them: preflight on the clean tree (every needle matches once, every
+target collects), a per-case baseline (the case's own targets pass with the identical
+command), the edit, the same targets failing with exit code 1 and every target reported,
+the restore, and the suite after the last restore. The pre-commit hook runs the preflight
+only, so a renamed test or an edited guard fails on the commit that causes it. The full run
+is manual per pull request, and a path-filtered CI job once CI exists. If a broad measure of
+suite strength is wanted later, that is an automated mutation tool run occasionally over
+`src/ag/core`, not more hand-written cases.
+
+Why: the slice 0 and core-lift evidence was produced by throwaway scripts, so a reader could
+not rerun it, and the first engine accepted any nonzero pytest exit as a caught guard, which
+read a renamed test (exit 4, "not found") as a failure; a target that failed in isolation on
+the clean tree would have read the same way under every mutation. Keeping the engine and
+the tables in the repository, and making the verdict exact, is what makes the evidence
+checkable; scoping the cases to guards is what keeps the tables small enough to maintain.
+`destination:` `docs/contributing/testing.md`; `tools/break_once/`.
+
+> *Landed 2026-10-07* in `tools/break_once/`, `.pre-commit-config.yaml` and
+> `docs/contributing/testing.md`. The page is the authority.
+
 ---
 
 # B. Open
