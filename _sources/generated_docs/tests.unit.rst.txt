@@ -1,6 +1,14 @@
 tests.unit package
 ==================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.unit.core
+
 Module contents
 ---------------
 

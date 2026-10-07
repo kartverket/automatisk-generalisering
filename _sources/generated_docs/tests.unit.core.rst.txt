@@ -1,0 +1,45 @@
+tests.unit.core package
+=======================
+
+Submodules
+----------
+
+tests.unit.core.test\_errors module
+-----------------------------------
+
+.. automodule:: tests.unit.core.test_errors
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.core.test\_handles module
+------------------------------------
+
+.. automodule:: tests.unit.core.test_handles
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.core.test\_operation\_classification module
+------------------------------------------------------
+
+.. automodule:: tests.unit.core.test_operation_classification
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.core.test\_types module
+----------------------------------
+
+.. automodule:: tests.unit.core.test_types
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

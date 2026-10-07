@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tests_legacy package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>tests.unit.core package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
@@ -20,7 +20,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="tests.unit.core package" href="tests.unit.core.html" /> 
+    <link rel="next" title="tests_legacy package" href="tests_legacy.html" />
+    <link rel="prev" title="tests.unit package" href="tests.unit.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -63,15 +64,24 @@
 <li class="toctree-l2"><a class="reference internal" href="mdGenerator.html">mdGenerator module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="temp_skip_folder.html">temp_skip_folder package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">tests_legacy package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tests-legacy-test-arealdekket-class-module">tests_legacy.test_arealdekket_class module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tests-legacy-test-category-class-module">tests_legacy.test_category_class module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tests-legacy-test-program-history-class-module">tests_legacy.test_program_history_class module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-tests_legacy">Module contents</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tests.html">tests package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="tests.conformance.html">tests.conformance package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.fixtures.html">tests.fixtures package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.goldens.html">tests.goldens package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.invariance.html">tests.invariance package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.smoke.html">tests.smoke package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.static.html">tests.static package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.support.html">tests.support package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="tests.unit.html">tests.unit package</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests-conftest-module">tests.conftest module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#module-tests">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests_legacy.html">tests_legacy package</a></li>
 </ul>
 </li>
 </ul>
@@ -91,9 +101,11 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="modules.html">automatisk-generalisering</a></li>
-      <li class="breadcrumb-item active">tests_legacy package</li>
+          <li class="breadcrumb-item"><a href="tests.html">tests package</a></li>
+          <li class="breadcrumb-item"><a href="tests.unit.html">tests.unit package</a></li>
+      <li class="breadcrumb-item active">tests.unit.core package</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated_docs/tests_legacy.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated_docs/tests.unit.core.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -101,22 +113,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="tests-legacy-package">
-<h1>tests_legacy package<a class="headerlink" href="#tests-legacy-package" title="Link to this heading"></a></h1>
+  <section id="tests-unit-core-package">
+<h1>tests.unit.core package<a class="headerlink" href="#tests-unit-core-package" title="Link to this heading"></a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="tests-legacy-test-arealdekket-class-module">
-<h2>tests_legacy.test_arealdekket_class module<a class="headerlink" href="#tests-legacy-test-arealdekket-class-module" title="Link to this heading"></a></h2>
+<section id="tests-unit-core-test-errors-module">
+<h2>tests.unit.core.test_errors module<a class="headerlink" href="#tests-unit-core-test-errors-module" title="Link to this heading"></a></h2>
 </section>
-<section id="tests-legacy-test-category-class-module">
-<h2>tests_legacy.test_category_class module<a class="headerlink" href="#tests-legacy-test-category-class-module" title="Link to this heading"></a></h2>
+<section id="tests-unit-core-test-handles-module">
+<h2>tests.unit.core.test_handles module<a class="headerlink" href="#tests-unit-core-test-handles-module" title="Link to this heading"></a></h2>
 </section>
-<section id="tests-legacy-test-program-history-class-module">
-<h2>tests_legacy.test_program_history_class module<a class="headerlink" href="#tests-legacy-test-program-history-class-module" title="Link to this heading"></a></h2>
+<section id="tests-unit-core-test-operation-classification-module">
+<h2>tests.unit.core.test_operation_classification module<a class="headerlink" href="#tests-unit-core-test-operation-classification-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-tests_legacy">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests_legacy" title="Link to this heading"></a></h2>
+<section id="tests-unit-core-test-types-module">
+<h2>tests.unit.core.test_types module<a class="headerlink" href="#tests-unit-core-test-types-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.unit.core">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests.unit.core" title="Link to this heading"></a></h2>
+<p>Unit tests for <cite>ag.core</cite>: pure declarations, no engine and no filesystem.</p>
 </section>
 </section>
 
@@ -124,7 +140,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="tests.unit.core.html" class="btn btn-neutral float-left" title="tests.unit.core package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tests.unit.html" class="btn btn-neutral float-left" title="tests.unit package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tests_legacy.html" class="btn btn-neutral float-right" title="tests_legacy package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
