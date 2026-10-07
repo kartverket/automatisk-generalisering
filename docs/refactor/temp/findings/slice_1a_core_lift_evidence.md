@@ -2,11 +2,12 @@
 
 **Status:** EVIDENCE, 2026-10-05. Produced for the first pull request of slice 1a (the core lift:
 `core/types.py`, `core/injection.py`, `core/handles.py`, `core/operations.py`, `core/errors.py` and
-their unit tests) by a throwaway harness kept in the session scratchpad, not in the repository, on
-the slice 0 precedent (`slice_0_contract_evidence.md`). Two parts: the two template defects the
-lift fixes, reproduced against the template; and every guard in the lifted modules broken once,
-with the covering tests failing, then restored. File hashes before and after the harness run
-were identical and the full suite was green after the last restore.
+their unit tests). Part 1 was produced by a throwaway probe against the template, on the slice 0
+precedent (`slice_0_contract_evidence.md`); part 2 is the output of `tools/break_once.py
+core-lift`, whose case table is `tools/break_once_cases.py`, so it can be rerun. Two parts: the two
+template defects the lift fixes, reproduced against the template; and every guard in the lifted
+modules broken once, with the covering tests failing, then restored. File hashes before and after
+the run were identical and the full suite was green after the last restore.
 
 ## Part 1: the template defects, run against `template_code/ag/core/operations.py`
 
@@ -36,6 +37,7 @@ E       AssertionError: assert ScratchHandle('dissolved', UNDECLARED) != Scratch
 
 ## Part 2: every guard broken once
 
+Case set `core-lift`, run by `python tools/break_once.py core-lift`. Each case edits one source file, runs the tests that cover the guard, and restores the file. Expected: the listed tests fail (or the module fails to import) while the guard is removed, and the whole suite is green after the last restore.
 
 ### O1: bare Injected base accepted
 
@@ -80,7 +82,7 @@ Result: **FAILED as expected**
 >       with pytest.raises(TypeError, match="has a default"):
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_defaulted_handle_is_rejected
-1 failed in 0.02s
+1 failed in 0.03s
 ```
 
 ### O4: default on config accepted
@@ -111,7 +113,7 @@ Result: **FAILED as expected**
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_mutable_config_type_is_rejected
 FAILED tests/unit/core/test_operation_classification.py::test_a_config_that_is_not_a_dataclass_type_is_rejected
-2 failed in 0.03s
+2 failed in 0.02s
 ```
 
 ### O6: config hashability not checked at the declaration site
@@ -141,7 +143,7 @@ Result: **FAILED as expected**
 >       with pytest.raises(TypeError, match="keyword-only"):
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_positional_parameter_is_rejected
-1 failed in 0.02s
+1 failed in 0.03s
 ```
 
 ### O8: unannotated parameter not reported as such
@@ -175,7 +177,7 @@ E       Failed: DID NOT RAISE TypeError
 >       with pytest.raises(TypeError, match="port-only marker ParentsOut"):
 FAILED tests/unit/core/test_operation_classification.py::test_the_mutates_marker_is_rejected_on_an_operation
 FAILED tests/unit/core/test_operation_classification.py::test_the_parents_out_marker_is_rejected_on_an_operation
-2 failed in 0.02s
+2 failed in 0.03s
 ```
 
 ### O10: two parameters of one injected kind accepted
@@ -330,7 +332,7 @@ Result: **FAILED as expected**
 >       with pytest.raises(TypeError, match="not a frozen dataclass type with equality"):
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_operation_classification.py::test_a_frozen_config_type_without_equality_is_rejected
-1 failed in 0.02s
+1 failed in 0.03s
 ```
 
 ### H1: __set_name__ restamps silently
@@ -444,7 +446,7 @@ Result: **FAILED as expected**
 
 ```
 >       assert one != other
-E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x75cd97c954e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x75cd97c954e0>)
+E       AssertionError: assert ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7dd8a15094e0>) != ScratchScope(namespace='op', trail=(), materialize=<function _fake_materialize at 0x7dd8a15094e0>)
 FAILED tests/unit/core/test_handles.py::test_a_scope_has_identity_equality_and_is_hashable
 1 failed in 0.02s
 ```
@@ -663,7 +665,7 @@ Result: **FAILED as expected**
 ```
 >       assert all(type(index) is int for index in context.row_indices)
 E       assert False
-E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x7bc6854f82b0>)
+E        +  where False = all(<generator object test_a_directly_constructed_context_normalises_its_sequences.<locals>.<genexpr> at 0x7e5a82cd42b0>)
 >       with pytest.raises(TypeError):
 E       Failed: DID NOT RAISE TypeError
 FAILED tests/unit/core/test_errors.py::test_a_directly_constructed_context_normalises_its_sequences

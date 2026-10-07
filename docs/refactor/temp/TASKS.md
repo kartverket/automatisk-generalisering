@@ -1171,7 +1171,9 @@ check fires with both qualified names in the message. The call identity can neve
 declared handle's namespace, which is a dotted module path: it carries the stage's qualified
 name, whose `/` no module path can contain, and a test asserts that a declared handle and an
 internal handle with the same short name never compare equal, since both meet in handle-keyed
-maps.
+maps. The scratch manager renders the call identity into a path-safe workspace stem, so no
+identity separator reaches a geodatabase or folder name; a test asserts that the rendered
+workspace path contains no `/` from the identity and no `:`.
 
 **files touched** `core/pipeline.py` (Task B), `staging/scratch.py`, `runtime/stage_entry.py`
 (slice 1c of `findings/implementation_plan.md`). `core/handles.py` already stamps the

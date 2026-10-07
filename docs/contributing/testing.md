@@ -130,3 +130,20 @@ pytest tests_legacy
 ```
 
 They are deleted with the legacy code they test.
+
+## Break-it-once evidence
+
+Every check and guard added to the new code is broken on purpose once, with the failure
+recorded, because a guard that has never been seen to fail is not known to work.
+`tools/break_once.py` makes that reproducible: a case table in `tools/break_once_cases.py`
+names, per guard, the exact source text that removes it and the tests that must then fail;
+the script applies each edit, runs those tests, restores the file, and runs the whole suite
+after the last restore. It is not a hook. Run it by hand, on a clean tree, from the
+repository root:
+
+```
+python tools/break_once.py core-lift --out report.md
+```
+
+A case whose needle no longer matches the source exactly once is reported as a harness error,
+not as a caught guard. Add a case set for each lift and keep the earlier ones running.
