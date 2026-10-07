@@ -3,9 +3,14 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from data_orchestrator_2.fields import ALL_FIELDS, FieldDefinition, Fields, FieldUsage
-from data_orchestrator_2.names_paths import get_feature_class_full_path
-from data_orchestrator_2.names_paths import FeatureClassName, GeometryType, ObjectType, Scale
+from data_orchestrator_2.fields import FieldDefinition, Fields, FieldUsage
+from data_orchestrator_2.names_paths import (
+    FeatureClassName,
+    GeometryType,
+    ObjectType,
+    Scale,
+    get_feature_class_full_path,
+)
 
 ######################
 # Classes
@@ -14,7 +19,7 @@ from data_orchestrator_2.names_paths import FeatureClassName, GeometryType, Obje
 
 @dataclass(frozen=True)
 class DatasetDefinition:
-    name: str
+    name: FeatureClassName
     source: Scale
     geometry_type: GeometryType
     fields: tuple[FieldDefinition, ...]

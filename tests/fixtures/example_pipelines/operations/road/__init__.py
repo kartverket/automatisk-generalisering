@@ -233,8 +233,7 @@ def _build_topology(
     rows = list(tb.table.read_rows(input=endpoints, fields=(FEATURE_ID,)))
     # BOTH_ENDS emits start then end per feature, so the rows pair off two at a time.
     edge_list = [
-        (_node_id(start), _node_id(end))
-        for start, end in zip(rows[::2], rows[1::2])
+        (_node_id(start), _node_id(end)) for start, end in zip(rows[::2], rows[1::2])
     ]
     degrees = tb.graph.degree(edges=edge_list)
     components = tb.graph.connected_components(edges=edge_list)
@@ -388,9 +387,7 @@ def select_source_roads(
         where=Attr(f"{ROAD_CLASS} <= {config.minimum_class}"),
         output=selected,
     )
-    _repair_geometry(
-        features=selected, output=output, errors=geometry_errors, tb=tb
-    )
+    _repair_geometry(features=selected, output=output, errors=geometry_errors, tb=tb)
 
 
 @operation
@@ -503,9 +500,7 @@ def calculate_road_hierarchy(
     weights = config.weights
 
     tb.geometry.copy(input=roads, output=with_fields)
-    tb.table.add_field(
-        input=with_fields, field=Field(name=RANK, type=FieldType.DOUBLE)
-    )
+    tb.table.add_field(input=with_fields, field=Field(name=RANK, type=FieldType.DOUBLE))
     tb.table.calculate_field(
         input=with_fields,
         field=RANK,
@@ -573,9 +568,7 @@ def merge_divided_highways(
     candidates = scratch("candidates")
     paired = scratch("paired", TABLE)
 
-    tb.geometry.select(
-        input=roads, where=Attr("divided = 1"), output=candidates
-    )
+    tb.geometry.select(input=roads, where=Attr("divided = 1"), output=candidates)
     _pair_carriageways(
         roads=candidates,
         output=paired,
@@ -701,9 +694,7 @@ def resolve_ramps(
     reinstated = scratch("reinstated")
     collapsed = scratch("collapsed")
 
-    tb.geometry.select(
-        input=roads, where=Attr("is_ramp = 1"), output=ramp_candidates
-    )
+    tb.geometry.select(input=roads, where=Attr("is_ramp = 1"), output=ramp_candidates)
     tb.geometry.merge(inputs=(ramp_candidates, dropped), output=reinstated)
     tb.cartographic.collapse_to_centerline(
         input=reinstated, output=collapsed, max_separation_m=config.cluster_radius_m
@@ -932,9 +923,7 @@ def finalize_road_attributes(
         input=joined, key=FEATURE_ID, join=ranks, join_key=FEATURE_ID, fields=(RANK,)
     )
     tb.geometry.copy(input=joined, output=flagged)
-    tb.table.add_field(
-        input=flagged, field=Field(name="edited", type=FieldType.SHORT)
-    )
+    tb.table.add_field(input=flagged, field=Field(name="edited", type=FieldType.SHORT))
     tb.table.calculate_field(
         input=flagged,
         field="edited",

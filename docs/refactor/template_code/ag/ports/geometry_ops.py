@@ -187,9 +187,7 @@ def Within(other: ScratchHandle) -> Spatial:
 
 
 def DWithin(other: ScratchHandle, distance_m: float) -> Spatial:
-    return Spatial(
-        relate_to=other, relation=Relation.DWITHIN, distance_m=distance_m
-    )
+    return Spatial(relate_to=other, relation=Relation.DWITHIN, distance_m=distance_m)
 
 
 # ---------------------------------------------------------------------------
@@ -233,9 +231,7 @@ class GeometryOps(Protocol):
         """Concatenate several datasets of the same geometry kind."""
         ...
 
-    def explode_multipart(
-        self, *, input: ScratchHandle, output: ScratchHandle
-    ) -> None:
+    def explode_multipart(self, *, input: ScratchHandle, output: ScratchHandle) -> None:
         """One row per part. arcpy calls this MultipartToSinglepart."""
         ...
 
@@ -301,9 +297,7 @@ class GeometryOps(Protocol):
 
     # -- geometry quality ---------------------------------------------------
 
-    def validate_geometry(
-        self, *, input: ScratchHandle, output: ScratchHandle
-    ) -> None:
+    def validate_geometry(self, *, input: ScratchHandle, output: ScratchHandle) -> None:
         """A table of validity problems. Does not modify `input`.
 
         NOT `ST_IsValid`, which is a boolean per row. This reports WHAT is wrong and
@@ -342,9 +336,7 @@ class GeometryOps(Protocol):
         """The vertices as points. PostGIS spells this ST_DumpPoints."""
         ...
 
-    def point_on_surface(
-        self, *, input: ScratchHandle, output: ScratchHandle
-    ) -> None:
+    def point_on_surface(self, *, input: ScratchHandle, output: ScratchHandle) -> None:
         """One representative point per feature, guaranteed to lie ON the feature.
 
         SEPARATE FROM `centroid`, NOT A FLAG ON IT. arcpy's FeatureToPoint takes an

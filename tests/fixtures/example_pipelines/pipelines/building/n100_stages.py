@@ -21,7 +21,11 @@ puts everything in one file and the declarations are identical.
 from __future__ import annotations
 
 from ag.core.types import DataType, InputRole, ObjectName, Scale
-from example_pipelines.pipelines.building.n100_objects import DISPLACED, DISPLACEMENT_FEATURE, SELECTED
+from example_pipelines.pipelines.building.n100_objects import (
+    DISPLACED,
+    DISPLACEMENT_FEATURE,
+    SELECTED,
+)
 from example_pipelines.operations.building.tuning import n100 as tuning
 from example_pipelines.operations.building import (
     build_displacement_feature,
@@ -31,7 +35,11 @@ from example_pipelines.operations.building import (
 )
 from ag.core.operations import Handles, handle
 from ag.core.pipeline import Pipeline, Publish, Stage, StageInput, StageOutput
-from example_pipelines.products import N50_BUILDING_POLYGONS, N100_BUILDING_POLYGONS, N100_ROAD
+from example_pipelines.products import (
+    N50_BUILDING_POLYGONS,
+    N100_BUILDING_POLYGONS,
+    N100_ROAD,
+)
 from example_pipelines.sources import MUNICIPALITY_CODES, NVDB_ROADS
 
 # ---------------------------------------------------------------------------

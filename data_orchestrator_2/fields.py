@@ -103,10 +103,3 @@ class Fields:
         usage=(FieldUsage.INPUT),
         system_field=True,
     )
-
-
-ALL_FIELDS = {
-    field.name: field
-    for field in Fields.__dict__.values()
-    if isinstance(field, FieldDefinition)
-}

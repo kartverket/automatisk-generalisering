@@ -23,6 +23,5 @@ class ValidationResult:
 
 
 class DatasetValidator:
-
     def validate_pipeline(self, pipeline: PipelineDefinition) -> ValidationResult:
         pass
