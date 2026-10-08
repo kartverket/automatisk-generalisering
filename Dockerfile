@@ -34,3 +34,6 @@ CMD ["python", "temp_skip_folder/core/pipelines/run_partition.py"]
 
 FROM base AS workflow_executor
 CMD ["python", "temp_skip_folder/core/job_orchestrator/workflow_executor.py"]
+
+FROM base AS stage_execution_controller
+CMD ["python", "temp_skip_folder/core/job_orchestrator/stage_execution_controller.py"]
