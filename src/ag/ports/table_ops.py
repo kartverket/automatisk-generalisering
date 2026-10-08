@@ -27,7 +27,7 @@ class Schema:
     """What a write needs in order to create a dataset from nothing.
 
     A feature class needs its CRS: one written without it is the failure that surfaces two
-    stages later as an empty spatial join.
+    stages later as an empty spatial join. A table has no geometry and takes none.
     """
 
     fields: tuple[Field, ...]
@@ -40,6 +40,14 @@ class Schema:
                 "a FEATURE_CLASS schema needs geometry_crs. A feature class written with "
                 "no CRS is the failure that surfaces two stages later as an empty spatial "
                 "join."
+            )
+        if (
+            self.data_type is not DataType.FEATURE_CLASS
+            and self.geometry_crs is not None
+        ):
+            raise ValueError(
+                f"a {self.data_type.value} schema takes no geometry_crs; only a feature "
+                "class has a geometry to reference."
             )
 
 

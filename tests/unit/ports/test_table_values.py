@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime
 
 import pytest
 
@@ -27,11 +27,14 @@ def test_a_feature_class_schema_needs_a_crs_and_a_table_does_not() -> None:
     assert Schema(fields, data_type=DataType.TABLE).geometry_crs is None
     with pytest.raises(ValueError, match="needs geometry_crs"):
         Schema(fields)
+    with pytest.raises(ValueError, match="takes no geometry_crs"):
+        Schema(fields, data_type=DataType.TABLE, geometry_crs=CRS)
 
 
 def test_a_row_holds_attributes_and_an_optional_geometry() -> None:
     spatial = Row(
-        {"count": 3, "when": date(2026, 1, 1)}, Geometry.point(1.0, 2.0, crs=CRS)
+        {"count": 3, "when": datetime(2026, 1, 1, 12, 30)},
+        Geometry.point(1.0, 2.0, crs=CRS),
     )
     tabular = Row({"code": "x", "ratio": 0.5, "note": None})
     assert spatial.geometry is not None and spatial.geometry.coords == ((1.0, 2.0),)

@@ -12,7 +12,7 @@ every port shares, so they sit below all of them.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import datetime
 from enum import Enum
 from typing import TypeAlias
 
@@ -20,8 +20,13 @@ FieldName: TypeAlias = str
 """Names a column in data the program does not own, so it stays a literal: the value half
 of the identifier-or-value test. ADR-0011."""
 
-AttributeValue: TypeAlias = int | float | str | date | None
+AttributeValue: TypeAlias = int | float | str | datetime | None
 """What a cell can hold: exactly the `FieldType` members, plus None for a null.
+
+A `DATE` field holds a date and a time, carried as a naive `datetime` in the workspace's
+own convention, because that is what the engine stores and returns; a date-only value is a
+`datetime` at midnight. The engine's separate date-only and time-only field types are not
+represented, because no pipeline declares one.
 
 Why: a closed union rather than `object`, because `object` pushes a cast to every read
 site, and a cast asserts something no one checked. With the union a caller that needs an
@@ -39,6 +44,7 @@ class FieldType(Enum):
     DOUBLE = "double"
     TEXT = "text"
     DATE = "date"
+    """Date and time, as a naive `datetime`; never a bare `date`."""
 
 
 @dataclass(frozen=True)

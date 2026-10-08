@@ -154,8 +154,8 @@ CASES: tuple[Case, ...] = (
         TOOLBOX,
         (
             (
-                "    def __getattr__(self, name: str) -> object:\n        raise InjectionError(",
-                "    def __getattr__(self, name: str) -> object:\n        return None\n        raise InjectionError(",
+                "            raise AttributeError(name)\n        raise InjectionError(",
+                "            raise AttributeError(name)\n        return None\n        raise InjectionError(",
             ),
         ),
         tests_in(T_TOOLBOX, "test_the_sentinel_is_a_toolbox_that_refuses_every_port"),
@@ -166,6 +166,85 @@ CASES: tuple[Case, ...] = (
         PREDICATES,
         (("", '\n\n_UNPINNED = Attr.raw("1=1")\n'),),
         tests_in(T_RAW, "test_attr_raw_call_sites_are_pinned"),
+    ),
+    Case(
+        "P14",
+        "a predicate has a truth value",
+        PREDICATES,
+        (
+            (
+                "    def __bool__(self) -> bool:\n"
+                '        """Refuses a truth value: `a and b` would silently return `b`, `not a` False."""\n'
+                "        raise TypeError(",
+                "    def __bool__(self) -> bool:\n"
+                '        """Refuses a truth value: `a and b` would silently return `b`, `not a` False."""\n'
+                "        return True\n"
+                "        raise TypeError(",
+            ),
+        ),
+        tests_in(T_PRED, "test_a_predicate_has_no_truth_value"),
+    ),
+    Case(
+        "P15",
+        "a connective with fewer than two terms accepted",
+        PREDICATES,
+        (("    if len(terms) < 2:", "    if False:"),),
+        tests_in(T_PRED, "test_a_connective_needs_at_least_two_terms"),
+    ),
+    Case(
+        "P16",
+        "LIKE accepted with a non-string value",
+        PREDICATES,
+        (
+            (
+                "        if self.op is Comparison.LIKE and not isinstance(self.value, str):",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_like_takes_a_string_pattern"),
+    ),
+    Case(
+        "P17",
+        "DWITHIN accepted with a zero or negative distance",
+        PREDICATES,
+        (
+            (
+                "        if needs_distance and self.distance_m is not None and self.distance_m <= 0:",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_dwithin_requires_a_positive_distance"),
+    ),
+    Case(
+        "P18",
+        "a table schema accepted with a CRS",
+        TABLE,
+        (
+            (
+                "        if (\n"
+                "            self.data_type is not DataType.FEATURE_CLASS\n"
+                "            and self.geometry_crs is not None\n"
+                "        ):",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_feature_class_schema_needs_a_crs_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P19",
+        "the sentinel with the dataclass equality",
+        TOOLBOX,
+        (
+            (
+                "    def __eq__(self, other: object) -> bool:\n        return self is other\n",
+                "",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
     ),
 )
 

@@ -7,8 +7,21 @@ another dataset by an OGC relation; `And`, `Or` and `Not` combine, built by `&`,
 `~`. The sugar `Intersects`, `Within` and `DWithin` read as a cartographer would say them.
 
 How: the operators are constructors, never simplifiers: `~~a` is `Not(Not(a))` and an
-adapter rewrites the tree its own way. The node set is closed on purpose, five kinds of
-leaf and three connectives, so an adapter can pattern-match it exhaustively.
+adapter rewrites the tree its own way. A predicate has no truth value, so `and`, `or` and
+`not` are errors rather than silent misreads. The node set is closed on purpose, five kinds
+of leaf and three connectives, so an adapter can pattern-match it exhaustively.
+
+Evaluation, which every adapter implements alike: a predicate is TRUE, FALSE or UNKNOWN
+per row, as SQL evaluates it, and `select` keeps the rows where it is TRUE. `Compare` and
+a non-empty `IsIn` are UNKNOWN when the field is NULL; the empty `IsIn` is FALSE for every
+row; `IsNull` is never UNKNOWN; `Spatial` is UNKNOWN for a row with a null geometry; `Not`
+of UNKNOWN is UNKNOWN, `And` is FALSE if any term is FALSE and otherwise UNKNOWN if any
+term is, `Or` the mirror. So `~Attr.in_(f, (1,))` excludes the NULL rows and a caller that
+wants them writes `~Attr.in_(f, ids) | Attr.is_null(f)`. `LIKE` matches with `%` for any
+run of characters and `_` for one, case-sensitively, with no escape character; a pattern
+that needs a literal `%` or `_` goes through `Attr.raw`. A value whose type does not match
+the field's type is a `PortContractError` from the adapter, never an engine coercion. The
+in-memory adapter raises `PortContractError` on `RawAttr` rather than guess at CQL.
 
 Why: a mutable selection is one engine's idiom, not the concept; exposing it would make
 every future adapter emulate that statefulness, and it is lazier to materialise nothing
@@ -16,9 +29,9 @@ until `select`. Attribute leaves are structured rather than one CQL string becau
 opaque string forces every adapter to write a parser before it can quote identifiers for
 its workspace type, and admits expressions no adapter can compile; `Attr.raw` keeps the
 string form available, greppable, and counted by a static test. A `Spatial` leaf carries a
-handle inside a value, outside any `In` or `Out` annotation: harmless for lineage, since a
-predicate's dataset is context by nature and is never written, but no handle check sees
-it, and that is deliberate. ADR-0001 and its amendment on structured leaves.
+handle inside a value, outside any `In` or `Out` annotation: no handle check sees it, which
+is deliberate, and which handles it may name is an open question of the record.
+ADR-0001 and ADR-0015.
 """
 
 from __future__ import annotations
@@ -58,7 +71,8 @@ class Comparison(Enum):
     """The operators an attribute comparison may use, spelled as SQL spells them.
 
     A null test is not among them: `= NULL` is never true in SQL, so it goes through
-    `Attr.is_null` and no adapter has to special-case it.
+    `Attr.is_null` and no adapter has to special-case it. `LIKE` takes a string pattern
+    with `%` and `_` as its wildcards.
     """
 
     EQ = "="
@@ -87,10 +101,17 @@ class Predicate:
     def __invert__(self) -> Predicate:
         return Not(self)
 
+    def __bool__(self) -> bool:
+        """Refuses a truth value: `a and b` would silently return `b`, `not a` False."""
+        raise TypeError(
+            "a Predicate has no truth value. Combine predicates with &, | and ~; "
+            "`and`, `or` and `not` would evaluate to the wrong thing without an error."
+        )
+
 
 @dataclass(frozen=True)
 class Compare(Predicate):
-    """`field <op> value`, with a non-null value."""
+    """`field <op> value`, with a non-null value, a string for `LIKE`."""
 
     field: FieldName
     op: Comparison
@@ -101,6 +122,11 @@ class Compare(Predicate):
             raise ValueError(
                 f"Attr.cmp({self.field!r}, {self.op.name}, None): a comparison with NULL "
                 "is never true in SQL. Use Attr.is_null(field), or its negation."
+            )
+        if self.op is Comparison.LIKE and not isinstance(self.value, str):
+            raise ValueError(
+                f"Attr.cmp({self.field!r}, LIKE, {self.value!r}): LIKE takes a string "
+                "pattern with % and _ as wildcards."
             )
 
 
@@ -131,7 +157,8 @@ class RawAttr(Predicate):
     """A CQL2 text expression an adapter must compile as written.
 
     The escape hatch for what the structured leaves cannot say. Every call site is counted
-    by a static test, so adding one is a deliberate edit to that test.
+    by a static test, so adding one is a deliberate edit to that test. An adapter that
+    cannot compile CQL raises `PortContractError` rather than guess.
     """
 
     cql: str
@@ -172,8 +199,8 @@ AttributeLeaf: TypeAlias = Compare | IsIn | IsNull | RawAttr
 class Spatial(Predicate):
     """A spatial predicate against another dataset.
 
-    `DWITHIN` is the one relation that takes a distance; a distance on any other relation
-    means the caller expected a buffer that will not happen.
+    `DWITHIN` is the one relation that takes a distance, and the distance is positive; a
+    distance on any other relation means the caller expected a buffer that will not happen.
     """
 
     relate_to: ScratchHandle
@@ -184,6 +211,11 @@ class Spatial(Predicate):
         needs_distance = self.relation is Relation.DWITHIN
         if needs_distance and self.distance_m is None:
             raise ValueError("DWITHIN requires distance_m")
+        if needs_distance and self.distance_m is not None and self.distance_m <= 0:
+            raise ValueError(
+                f"DWITHIN requires a positive distance_m, got {self.distance_m!r}; a zero "
+                "or negative distance is INTERSECTS or nothing."
+            )
         if not needs_distance and self.distance_m is not None:
             raise ValueError(
                 f"{self.relation.value} takes no distance_m. Only DWITHIN is a distance "
@@ -196,15 +228,30 @@ class Spatial(Predicate):
 class And(Predicate):
     terms: tuple[Predicate, ...]
 
+    def __post_init__(self) -> None:
+        _at_least_two(terms=self.terms, name="And")
+
 
 @dataclass(frozen=True)
 class Or(Predicate):
     terms: tuple[Predicate, ...]
 
+    def __post_init__(self) -> None:
+        _at_least_two(terms=self.terms, name="Or")
+
 
 @dataclass(frozen=True)
 class Not(Predicate):
     term: Predicate
+
+
+def _at_least_two(*, terms: tuple[Predicate, ...], name: str) -> None:
+    """A connective with fewer than two terms has no meaning the adapters agree on."""
+    if len(terms) < 2:
+        raise ValueError(
+            f"{name} needs at least two terms, got {len(terms)}. Build connectives with "
+            "& and |; a single predicate stands on its own."
+        )
 
 
 def Intersects(other: ScratchHandle) -> Spatial:  # noqa: N802

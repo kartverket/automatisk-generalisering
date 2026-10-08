@@ -45,7 +45,9 @@ class _NotInjected(Toolbox):
     """Stands in for a toolbox the runtime never supplied.
 
     How: a `Toolbox` subclass whose constructor sets no field, so reaching any port falls
-    through to `__getattr__` and fails with a sentence naming the port. A subclass rather
+    through to `__getattr__` and fails with a sentence naming the port. Equality and hash
+    are by identity, since the dataclass versions would read a field, and it pickles as a
+    reference to the one instance. A subclass rather
     than a cast, so that it is an instance of the kind it stands in for, which is what
     `@operation` requires of a sentinel default.
 
@@ -59,6 +61,9 @@ class _NotInjected(Toolbox):
         pass
 
     def __getattr__(self, name: str) -> object:
+        if name.startswith("__") and name.endswith("__"):
+            # A protocol probe (copy, pickle, inspection) wants a plain miss.
+            raise AttributeError(name)
         raise InjectionError(
             f"tb.{name} was reached on a toolbox that was never injected. The stage entry "
             "point must pass its assembled Toolbox to any operation whose signature "
@@ -68,8 +73,15 @@ class _NotInjected(Toolbox):
     def __repr__(self) -> str:
         return "NOT_INJECTED"
 
+    def __eq__(self, other: object) -> bool:
+        return self is other
+
     def __hash__(self) -> int:
         return id(self)
+
+    def __reduce__(self) -> str:
+        """Pickles as a reference to the module global, so the singleton survives."""
+        return "NOT_INJECTED"
 
 
 NOT_INJECTED: Toolbox = _NotInjected()

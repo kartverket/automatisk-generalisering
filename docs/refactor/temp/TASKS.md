@@ -1542,6 +1542,9 @@ And the parents channel's facade side (A11.15):
   domain's handle; the port never sees the domain's handle;
 - a domain `parents=` on a subject without `lineage_id` raises in the facade, before the port call.
 
+And B22's enforcement, if that question is decided for the facade: a handle embedded in a
+predicate argument must be one of the current call's handles.
+
 **note** A15.1's "ask on every `MINT` call" versus "only when diff-tracked" is a live cost decision
 on lines (parents resolution is not free there); T4.14 records the numbers and the revisit is
 listed under it. Nothing in this task's interface changes either way.

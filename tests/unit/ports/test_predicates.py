@@ -57,6 +57,28 @@ def test_the_operators_build_a_tree_and_fold_nothing() -> None:
     assert ~(EUROPEAN_ROAD | FAST) == Not(Or((EUROPEAN_ROAD, FAST)))
 
 
+def test_a_predicate_has_no_truth_value() -> None:
+    """`a and b` would return `b`, `not a` False, `if a:` always true, with no type error
+    in any of them."""
+    with pytest.raises(TypeError, match="no truth value"):
+        bool(EUROPEAN_ROAD)
+    with pytest.raises(TypeError, match="no truth value"):
+        _ = EUROPEAN_ROAD and FAST
+    with pytest.raises(TypeError, match="no truth value"):
+        _ = not DWithin(Layers.water, 500.0)
+
+
+def test_a_connective_needs_at_least_two_terms() -> None:
+    for connective in (And, Or):
+        with pytest.raises(ValueError, match="at least two terms"):
+            connective(())
+        with pytest.raises(ValueError, match="at least two terms"):
+            connective((EUROPEAN_ROAD,))
+    assert And((EUROPEAN_ROAD, FAST, Attr.is_null("fartsgrense"))).terms[2] == IsNull(
+        "fartsgrense"
+    )
+
+
 def test_every_node_is_a_predicate() -> None:
     near_water = DWithin(Layers.water, 500.0)
     leaves = (
@@ -88,6 +110,12 @@ def test_cmp_refuses_a_null_value() -> None:
         Attr.cmp("fartsgrense", Comparison.EQ, None)
     with pytest.raises(ValueError, match="never true"):
         Attr.cmp("fartsgrense", Comparison.NE, None)
+
+
+def test_like_takes_a_string_pattern() -> None:
+    assert Attr.cmp("vegnummer", Comparison.LIKE, "E%").value == "E%"
+    with pytest.raises(ValueError, match="LIKE takes a string pattern"):
+        Attr.cmp("fartsgrense", Comparison.LIKE, 80)
 
 
 def test_in_builds_a_tuple_and_accepts_an_empty_set() -> None:
@@ -131,6 +159,12 @@ def test_dwithin_carries_its_distance_and_the_others_refuse_one() -> None:
         Spatial(relate_to=Layers.water, relation=Relation.DWITHIN)
     with pytest.raises(ValueError, match="takes no distance_m"):
         Spatial(relate_to=Layers.water, relation=Relation.WITHIN, distance_m=10.0)
+
+
+def test_dwithin_requires_a_positive_distance() -> None:
+    for distance in (0.0, -5.0):
+        with pytest.raises(ValueError, match="positive distance_m"):
+            DWithin(Layers.water, distance)
 
 
 def test_relations_are_spelled_as_cql2_spells_them() -> None:

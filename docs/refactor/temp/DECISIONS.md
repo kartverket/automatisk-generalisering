@@ -2538,6 +2538,20 @@ to is a partitioned stage (or ingest before `lineage_id`), with parents a partit
 `destination:` `02-runtime.md` §2.3 for decision 3; `ports/geometry_ops.py` for decision 2; T3.4
 for decision 1.
 
+**B22. Which handles a predicate may name.** Found in the review of slice 1a's port values,
+2026-10-08. `Spatial.relate_to` is a handle inside a value: no `In` annotation sees it, the
+dependency graph derives from `OperationCall.inputs` and `outputs` only, and ADR-0011's
+own-handles check walks those same parameters. An operation body can therefore build
+`Within(SomeStage.roads)` from another stage's class attribute, and the graph and the fan-out
+halo would miss that read. The rule is unstated anywhere in the record. Proposed rule: an
+operation reaches a dataset only through a handle it was handed, an `In` or `Out` parameter
+of its own call or internal scratch from its own scope, and a predicate's `relate_to` must be
+one of those. Proposed enforcement point: the lineage facade (T4.3), which sees every port
+call and its arguments and can match a handle embedded in a predicate against the handles of
+the current call; a static scan of operation bodies for `Class.attribute` handle references
+is the cheaper partial check. Not enforced in slice 1a; `ports/predicates.py` says the check
+does not see the handle.
+
 **B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
 creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
 and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port

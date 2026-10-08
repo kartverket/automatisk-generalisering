@@ -40,6 +40,20 @@ The attribute leaf is a closed set of structured nodes, built through four const
   structured leaves cannot say; every call site in the package is counted by a static test
   pinned to the current number, so adding one is a deliberate edit to that test.
 
+Every adapter evaluates a predicate the same way, in three values as SQL does: a predicate is
+TRUE, FALSE or UNKNOWN per row and `select` keeps the rows where it is TRUE. `Compare` and a
+non-empty `IsIn` are UNKNOWN when the field is NULL; the empty `IsIn` is FALSE for every row;
+`IsNull` is never UNKNOWN; `Spatial` is UNKNOWN for a row with a null geometry; `Not` of
+UNKNOWN is UNKNOWN, `And` is FALSE if any term is FALSE and otherwise UNKNOWN if any term is,
+and `Or` is the mirror. So `~Attr.in_(f, (1,))` excludes the NULL rows, as SQL does, and a
+caller that wants them writes `~Attr.in_(f, ids) | Attr.is_null(f)`. `LIKE` takes a string
+pattern, `%` for any run of characters and `_` for one, matched case-sensitively with no
+escape character; a literal `%` or `_` goes through `Attr.raw`. A value whose type does not
+match the field's type is a `PortContractError` raised by the adapter, so an engine's
+coercion and a Python comparison can never disagree. A predicate has no truth value in
+Python: `and`, `or` and `not` raise rather than silently evaluate to an operand, and a
+connective has at least two terms.
+
 The leaves are frozen dataclasses (`Compare`, `IsIn`, `IsNull`, `RawAttr`) so that an adapter
 pattern-matches them exhaustively, and a type alias names the closed set. The algebra lives in
 its own module, `ports/predicates.py`, beside the column vocabulary it names, because two
@@ -52,7 +66,8 @@ declaration module. A wrong field name is not: that needs schema declarations on
 which would be additive to this decision and is a stated non-goal here.
 
 An adapter compiles four leaf shapes plus the raw string, quoting identifiers for its
-workspace type as it goes; it never parses. The ArcPy adapter still pushes negation to the
+workspace type as it goes; it never parses. The in-memory adapter evaluates the three-valued
+rule in Python and raises `PortContractError` on `RawAttr` rather than guess at CQL. The ArcPy adapter still pushes negation to the
 leaves by De Morgan, as ADR-0001 says, and its adapter-internal `Negated` node still never
 crosses the port.
 

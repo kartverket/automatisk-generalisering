@@ -7,6 +7,9 @@ with a sentence; a real toolbox is a frozen value of four ports.
 
 from __future__ import annotations
 
+import copy
+import pickle
+
 import pytest
 
 from ag.core.errors import InjectionError
@@ -27,6 +30,21 @@ def test_the_sentinel_is_a_toolbox_that_refuses_every_port() -> None:
             getattr(NOT_INJECTED, port)
     assert repr(NOT_INJECTED) == "NOT_INJECTED"
     assert hash(NOT_INJECTED) == hash(NOT_INJECTED)
+
+
+def test_the_sentinel_compares_by_identity_and_survives_pickling() -> None:
+    """The inherited dataclass equality reads a field, so comparing two sentinel
+    instances would raise rather than answer; identity equality keeps hash and equality
+    consistent. A copy or a pickle must come back as the same singleton, since the stage
+    runner compares against it."""
+    assert NOT_INJECTED == NOT_INJECTED
+    assert NOT_INJECTED != Toolbox(object(), object(), object(), object())
+    # The static type is Toolbox; the sentinel's class takes no arguments.
+    second_instance = type(NOT_INJECTED)()  # pyright: ignore[reportCallIssue]
+    assert second_instance != NOT_INJECTED
+    assert hash(second_instance) != hash(NOT_INJECTED)
+    assert pickle.loads(pickle.dumps(NOT_INJECTED)) is NOT_INJECTED
+    assert copy.deepcopy(NOT_INJECTED) is NOT_INJECTED
 
 
 def test_an_operation_classifies_the_toolbox_as_injected() -> None:

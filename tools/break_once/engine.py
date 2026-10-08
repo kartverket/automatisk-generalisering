@@ -263,12 +263,16 @@ def excerpt(out: str) -> str:
 
 
 def describe(old: str, new: str) -> str:
-    """One line naming an edit by its first line."""
+    """One line naming an edit by the first line that differs."""
     if old == "":
         return f"append {new.strip().splitlines()[0]!r} ..."
     if new.strip() == "":
         return f"delete `{old.strip().splitlines()[0]}`"
-    return f"`{old.strip().splitlines()[0]}` -> `{new.strip().splitlines()[0]}`"
+    before, after = old.strip().splitlines(), new.strip().splitlines()
+    for left, right in zip(before, after, strict=False):
+        if left != right:
+            return f"`{left.strip()}` -> `{right.strip()}`"
+    return f"`{before[0]}` -> `{after[0]}`"
 
 
 def run_case(case: Case) -> tuple[bool, str]:
