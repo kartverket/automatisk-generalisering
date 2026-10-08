@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from enum import Flag, auto
 
+from data_orchestrator_2.names_paths import ColumnName as C
 from data_orchestrator_2.names_paths import FieldType
 
 ######################
@@ -20,7 +21,7 @@ class FieldUsage(Flag):
 # Definition of a field, including its name, datatype, and usage.
 @dataclass(frozen=True)
 class FieldDefinition:
-    name: str
+    name: C
     datatype: FieldType
     usage: FieldUsage
     required: bool = True
@@ -35,70 +36,70 @@ class FieldDefinition:
 # Field registry, where all defined fields can be stored for easy access.
 class Fields:
     OBJTYPE = FieldDefinition(
-        name="objtype", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.OBJTYPE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     SUBTYPEKODE = FieldDefinition(
-        name="subtypekode", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.SUBTYPEKODE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     TYPEVEG = FieldDefinition(
-        name="typeveg", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.TYPEVEG, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     VEGKATEGORI = FieldDefinition(
-        name="vegkategori", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.VEGKATEGORI, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     VEGNUMMER = FieldDefinition(
-        name="vegnummer", datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
+        name=C.VEGNUMMER, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
     )
     VEGSTATUS = FieldDefinition(
-        name="vegstatus", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.VEGSTATUS, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     MEDIUM = FieldDefinition(
-        name="medium", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.MEDIUM, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     MOTORVEGTYPE = FieldDefinition(
-        name="motorvegtype", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.MOTORVEGTYPE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     RUTEMERKING = FieldDefinition(
-        name="rutemerking", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.RUTEMERKING, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     VEDLIKEH = FieldDefinition(
-        name="vedlikeh", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.VEDLIKEH, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     UTTEGNING = FieldDefinition(
-        name="uttegning", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.UTTEGNING, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     VEGKLASSE = FieldDefinition(
-        name="vegklasse", datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
+        name=C.VEGKLASSE, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
     )
     FELTOVERSIKT = FieldDefinition(
-        name="feltoversikt", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.FELTOVERSIKT, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     KONNEKTERINGSLENKE = FieldDefinition(
-        name="konnekteringslenke", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.KONNEKTERINGSLENKE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     SIDEANLEGGSDEL = FieldDefinition(
-        name="sideanleggsdel", datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
+        name=C.SIDEANLEGGSDEL, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
     )
     KRYSSDEL = FieldDefinition(
-        name="kryssdel", datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
+        name=C.KRYSSDEL, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
     )
     ADSKILTELOP = FieldDefinition(
-        name="adskiltelop", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.ADSKILTELOP, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     ADSKILTELOPNUMMER = FieldDefinition(
-        name="adskiltelopnummer", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.ADSKILTELOPNUMMER, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     ADRESSENAVN = FieldDefinition(
-        name="adressenavn", datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=C.ADRESSENAVN, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
     )
     OBJECTID = FieldDefinition(
-        name="objectid",
+        name=C.OBJECTID,
         datatype=FieldType.OID,
         usage=(FieldUsage.INPUT),
         system_field=True,
     )
     SHAPE = FieldDefinition(
-        name="shape",
+        name=C.SHAPE,
         datatype=FieldType.GEOMETRY,
         usage=(FieldUsage.INPUT),
         system_field=True,

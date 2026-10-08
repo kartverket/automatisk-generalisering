@@ -1,10 +1,13 @@
 # Libraries
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
+from typing import Mapping
 
 from data_orchestrator_2.fields import FieldDefinition, Fields, FieldUsage
 from data_orchestrator_2.names_paths import (
+    ColumnName,
     FeatureClassName,
     GeometryType,
     ObjectType,
@@ -20,33 +23,73 @@ from data_orchestrator_2.names_paths import (
 @dataclass(frozen=True)
 class DatasetDefinition:
     name: FeatureClassName
-    source: Scale
+    source_scale: Scale  # TODO: Slette?
+    object_type: ObjectType  # TODO: Slette?
     geometry_type: GeometryType
     fields: tuple[FieldDefinition, ...]
+    path: Path = field(init=False)
+    _field_lookup: Mapping[str, FieldDefinition] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        normalized_fields = tuple(self.fields)
+        field_lookup = {field.name: field for field in normalized_fields}
+        if len(field_lookup) != len(normalized_fields):
+            raise ValueError(f"Dataset {self.name} contains duplicate field names")
+
+        object.__setattr__(self, "fields", normalized_fields)
+        object.__setattr__(
+            self,
+            "path",
+            get_feature_class_full_path(
+                scale=self.source_scale,
+                object_type=self.object_type,
+                feature_class_name=self.name,
+            ),
+        )
+        object.__setattr__(self, "_field_lookup", MappingProxyType(field_lookup))
 
     @property
-    def field_lookup(self) -> dict[str, FieldDefinition]:
-        return {field.name: field for field in self.fields}
+    def field_lookup(self) -> Mapping[str, FieldDefinition]:
+        return self._field_lookup
 
-    def get_input_fields(self) -> tuple[FieldDefinition, ...]:
+    def __str__(self) -> str:
+        fields = "".join(f"\n\t\t- {f.name}" for f in self.fields)
+        return (
+            "\nDatasetDefinition("
+            f"\n\tname={self.name},"
+            f"\n\tgeometry_type={self.geometry_type},"
+            f"\n\tpath={self.path},"
+            f"\n\tfields ({len(self.fields)}):{fields}"
+            "\n)\n"
+        )
+
+    def getName(self) -> FeatureClassName:
+        return self.name
+
+    def getGeometryType(self) -> GeometryType:
+        return self.geometry_type
+
+    def getFields(self) -> tuple[ColumnName, ...]:
+        return tuple(f.name for f in self.fields)
+
+    def getField(self, field_name: str) -> FieldDefinition:
+        return self.field_lookup[field_name]
+
+    def getInputFields(self) -> tuple[FieldDefinition, ...]:
         return tuple(field for field in self.fields if field.usage & FieldUsage.INPUT)
 
-    def get_processing_fields(self) -> tuple[FieldDefinition, ...]:
+    def getProcessingFields(self) -> tuple[FieldDefinition, ...]:
         return tuple(
             field for field in self.fields if field.usage & FieldUsage.PROCESSING
         )
 
-    def get_output_fields(self) -> tuple[FieldDefinition, ...]:
+    def getOutputFields(self) -> tuple[FieldDefinition, ...]:
         return tuple(field for field in self.fields if field.usage & FieldUsage.OUTPUT)
 
-    def get_field(self, field_name: str) -> FieldDefinition:
-        return self.field_lookup[field_name]
-
-
-@dataclass(frozen=True)
-class FeatureClass:
-    definition: DatasetDefinition
-    path: Path
+    def getPath(self) -> Path:
+        return self.path
 
 
 ######################
@@ -54,53 +97,33 @@ class FeatureClass:
 ######################
 
 
-ELVEG_AND_STI = DatasetDefinition(
-    name=FeatureClassName.ELVEG_AND_STI,
-    source=Scale.RAW_DATA,
-    geometry_type=GeometryType.POLYLINE,
-    fields=(
-        Fields.OBJTYPE,
-        Fields.SUBTYPEKODE,
-        Fields.TYPEVEG,
-        Fields.VEGKATEGORI,
-        Fields.VEGNUMMER,
-        Fields.VEGSTATUS,
-        Fields.MEDIUM,
-        Fields.MOTORVEGTYPE,
-        Fields.RUTEMERKING,
-        Fields.VEDLIKEH,
-        Fields.UTTEGNING,
-        Fields.VEGKLASSE,
-        Fields.FELTOVERSIKT,
-        Fields.KONNEKTERINGSLENKE,
-        Fields.SIDEANLEGGSDEL,
-        Fields.KRYSSDEL,
-        Fields.ADSKILTELOP,
-        Fields.ADSKILTELOPNUMMER,
-        Fields.ADRESSENAVN,
-        Fields.OBJECTID,
-        Fields.SHAPE,
-    ),
-)
-
-
 class Datasets:
-    ELVEG_AND_STI = ELVEG_AND_STI
-
-
-######################
-# Feature Classes
-######################
-
-elveg_and_sti = FeatureClass(
-    definition=ELVEG_AND_STI,
-    path=get_feature_class_full_path(
-        scale=ELVEG_AND_STI.source,
+    ELVEG_AND_STI = DatasetDefinition(
+        name=FeatureClassName.ELVEG_AND_STI,
+        source_scale=Scale.RAW_DATA,
         object_type=ObjectType.ROAD,
-        feature_class_name=ELVEG_AND_STI.name,
-    ),
-)
-
-
-class Registry:
-    ELVEG_AND_STI = elveg_and_sti
+        geometry_type=GeometryType.POLYLINE,
+        fields=(
+            Fields.OBJTYPE,
+            Fields.SUBTYPEKODE,
+            Fields.TYPEVEG,
+            Fields.VEGKATEGORI,
+            Fields.VEGNUMMER,
+            Fields.VEGSTATUS,
+            Fields.MEDIUM,
+            Fields.MOTORVEGTYPE,
+            Fields.RUTEMERKING,
+            Fields.VEDLIKEH,
+            Fields.UTTEGNING,
+            Fields.VEGKLASSE,
+            Fields.FELTOVERSIKT,
+            Fields.KONNEKTERINGSLENKE,
+            Fields.SIDEANLEGGSDEL,
+            Fields.KRYSSDEL,
+            Fields.ADSKILTELOP,
+            Fields.ADSKILTELOPNUMMER,
+            Fields.ADRESSENAVN,
+            Fields.OBJECTID,
+            Fields.SHAPE,
+        ),
+    )

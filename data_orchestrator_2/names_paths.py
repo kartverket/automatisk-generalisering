@@ -41,6 +41,30 @@ class FeatureClassName(StrEnum):
     ELVEG_AND_STI = "elveg_and_sti"
 
 
+class ColumnName(StrEnum):
+    OBJTYPE = "objtype"
+    SUBTYPEKODE = "subtypekode"
+    TYPEVEG = "typeveg"
+    VEGKATEGORI = "vegkategori"
+    VEGNUMMER = "vegnummer"
+    VEGSTATUS = "vegstatus"
+    MEDIUM = "medium"
+    MOTORVEGTYPE = "motorvegtype"
+    RUTEMERKING = "rutemerking"
+    VEDLIKEH = "vedlikeh"
+    UTTEGNING = "uttegning"
+    VEGKLASSE = "vegklasse"
+    FELTOVERSIKT = "feltoversikt"
+    KONNEKTERINGSLENKE = "konnekteringslenke"
+    SIDEANLEGGSDEL = "sideanleggsdel"
+    KRYSSDEL = "kryssdel"
+    ADSKILTELOP = "adskiltelop"
+    ADSKILTELOPNUMMER = "adskiltelopnummer"
+    ADRESSENAVN = "adressenavn"
+    OBJECTID = "objectid"
+    SHAPE = "shape"
+
+
 ######################
 # Path Factory
 ######################
