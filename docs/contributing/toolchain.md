@@ -72,25 +72,24 @@ the CI step; the dependency declarations do not change.
 
 ## Two environments on Windows
 
-A developer on Windows keeps two environments and uses each for one purpose.
+A developer on Windows uses two interpreters, each for one purpose.
 
-| environment | created by | Python | for |
-|---|---|---|---|
-| `.venv` in the repository | `uv sync --extra dev` | 3.13, no ArcPy | `src/ag`, every check, every commit |
-| a clone of `arcgispro-py3` | the ArcGIS Pro package manager, or `conda create --clone arcgispro-py3 --name <name>` | the Pro interpreter, with ArcPy | `pytest -m arcpy` and the legacy code |
+| interpreter | comes from | for |
+|---|---|---|
+| `.venv` in the repository | `uv sync --extra dev` | `src/ag`, every check, every commit |
+| the ArcGIS Pro interpreter, the default `arcgispro-py3` environment | the ArcGIS Pro install (`C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3` on the team's machines) | legacy scripts, `tests_legacy/`, scratch scripts |
 
-- In an editor, select `.venv`'s interpreter when working on `src/ag`, `tests/` or `tools/`;
-  select the Pro clone's interpreter when running ArcPy tests or the legacy packages.
-- The Pro clone is managed with pip, not uv: `pip install -e .` there installs the project
-  beside ArcPy, and `pip install pytest==<version>` adds pytest at the version pinned in
-  `pyproject.toml`'s `dev` extra. It does not get the `dev` extra: the checks are never run
-  from the Pro environment, so ruff, pyright, import-linter and pre-commit have no place in
-  it. **Never run `uv sync` in the Pro environment**; it would replace it with a
-  Python that has no ArcPy.
+- Nothing is installed into the Pro environment, by pip or by uv: Esri's package manager
+  treats it as read-only, and a Pro upgrade replaces it. A legacy script needs no install
+  (below), and `tests_legacy/` needs nothing the Pro environment does not already ship
+  ([testing and checks](testing.md)). The one uv command that can write into it is
+  `uv pip install --python <pro python>` without `--target`; do not run it. `uv sync` only
+  ever touches `.venv`, whichever interpreter an editor or a shell has selected.
 - Commits are made from a shell where `uv` is on `PATH`; which interpreter the shell has
   active does not matter, because the hooks run through uv.
-
-The default `arcgispro-py3` environment is read-only, which is why the clone exists.
+- The environment for `pytest -m arcpy` is open, see B23 in the design record: no test
+  carries the marker yet, and the first ones arrive with the ArcPy adapter. Until then no
+  run needs `ag` or pytest beside ArcPy.
 
 ## Running legacy scripts
 

@@ -39,8 +39,9 @@ repository.
 
 | work | interpreter |
 |---|---|
-| legacy scripts, `tests_legacy/`, scratch scripts, `pytest -m arcpy` | ArcGIS Pro |
+| legacy scripts, `tests_legacy/`, scratch scripts | ArcGIS Pro |
 | `src/ag`, `tests/`, `tools/` | `.venv` |
+| `pytest -m arcpy` | open until the first marked test lands: B23 in the design record (The environment for `pytest -m arcpy`)|
 
 Once `uv sync` has created `.venv`, VS Code tends to select it on its own; switch to the
 ArcGIS Pro interpreter before running a legacy script. If it is not listed, choose **Enter
