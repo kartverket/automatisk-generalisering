@@ -101,36 +101,29 @@ importable. The auto-skip is for bare manual runs only.
 
 ## Running the ArcPy tests
 
-They run under an ArcGIS Pro Python environment. The default `arcgispro-py3` environment is
-read-only, so clone it once in the ArcGIS Pro package manager (or with `conda create --clone
-arcgispro-py3 --name <name>`), activate the clone, and install the project and pytest into
-it with pip, at the pytest version pinned in `pyproject.toml`:
-
-```
-pip install -e .
-pip install pytest==<version>
-pytest -m arcpy
-```
-
-The clone gets nothing else: the checks are never run from the Pro environment
-([setup and toolchain](toolchain.md), two environments).
-
-`pytest -m arcpy` runs the marked tests only; a bare `pytest` in that environment runs
-everything. Later the same tests run in the Linux image, where the conformance suite gates
-image promotion.
+They run under an interpreter that has ArcPy. No test carries the `arcpy` marker yet; the
+first ones arrive with the ArcPy adapter, and how that run gets `ag` and the pinned pytest
+beside ArcPy is open until then (B23 in the design record; the checks never run from the
+Pro environment either way). `pytest -m arcpy` runs the marked tests only; a bare `pytest`
+in that environment runs everything. Later the same tests run in the Linux image, where the
+conformance suite gates image promotion.
 
 ## `tests_legacy/`
 
-The tests of the legacy packages. They are not collected by a bare `pytest` (they are outside
-`testpaths`), are not type-checked, and are formatted and linted by ruff like the packages they
-test.
-Run them by hand under the ArcGIS Pro environment, from the repository root:
+The tests of the legacy packages: `unittest.TestCase` classes that need nothing the Pro
+environment does not already ship. They are not collected by a bare `pytest` (they are
+outside `testpaths`), are not type-checked, and are formatted and linted by ruff like the
+packages they test. Run them with the ArcGIS Pro interpreter, from the repository root,
+with nothing installed:
 
 ```
-pytest tests_legacy
+C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3\python.exe -m unittest discover -s tests_legacy -t .
 ```
 
-They are deleted with the legacy code they test.
+They are unmaintained: the legacy code moved on and the tests did not, so several fail
+against the current code. They are neither fixed nor deleted, and the legacy packages get no
+new tests; tests are written for the new architecture only. These are replaced when the n10
+pipeline moves to it, and deleted with the code they test.
 
 ## Break-it-once evidence
 

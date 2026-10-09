@@ -2558,3 +2558,29 @@ creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in
 and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port
 method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
 (b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.
+
+**B23. The environment for `pytest -m arcpy`.** Opened 2026-10-09, due with slice 1b, when
+the first `arcpy`-marked tests (the conformance cases and the timing run) land. The run
+needs two things beside ArcPy: `ag` importable, and pytest at the version `pyproject.toml`
+pins. The team runs the default `arcgispro-py3` environment at a non-standard location
+and installs nothing into it; Esri's package manager treats it as read-only and a Pro
+upgrade replaces it. Legacy scripts and `tests_legacy/` need no install, so nothing is
+decided by them. Candidates, each unverified on the team's machines until tried:
+
+- (a) a `venv` created from the Pro interpreter with `--system-site-packages`, then
+  `pip install -e .` and the pinned pytest into it. Pinned, standard editable install,
+  nothing written into the Pro environment, rebuilt in a minute after a Pro upgrade. Unknown:
+  whether ArcPy's native libraries, found from the Pro environment's own directories, load
+  under the venv's redirected `python.exe`.
+- (b) a target folder outside the Pro environment holding the pinned pytest
+  (`uv pip install --target <dir> --python <pro python> pytest==<pinned>`; with `--target`
+  nothing is written into the Pro environment), run with the Pro `python.exe` and
+  `PYTHONPATH=src;<dir>`. Pinned, no venv and so no native-library unknown. Cost: `ag` comes
+  from `PYTHONPATH`, not an install.
+- (c) a clone of the environment with the project and pytest installed: known to work, and
+  the fallback; a multi-gigabyte environment per developer, recreated after every upgrade.
+
+Ruled out: `PYTHONPATH=src` with whatever pytest Pro bundles, because an unpinned pytest
+would run the one test bucket CI never sees. Settled by trying (a) and (b) on one Windows
+machine when the first marked test exists; the answer lands in
+`docs/contributing/toolchain.md` and `testing.md`, which say "open, see B23" until then.

@@ -416,8 +416,10 @@ A29 (T2.13). Evidence: `findings/slice_1a_core_lift_evidence.md`.
   adapter. Those modules are imported lazily, inside an `arcpy`-marked fixture or test, never
   at the top of a test module: collection imports test modules and CI has no ArcPy. The 1b
   static scan covers both roots.
-- The run of the conformance suite under an ArcGIS Pro Python environment (`pytest -m arcpy`,
-  `docs/contributing/testing.md`), with its log kept.
+- The run of the conformance suite under an interpreter that has ArcPy (`pytest -m arcpy`,
+  `docs/contributing/testing.md`), with its log kept. The environment for that run is B23,
+  settled in this slice by trying its candidates on one Windows machine; the result lands
+  on the toolchain and testing pages.
 - **The `read_rows` timing run**, `tools/time_read_rows.py`, on
   `data_preparation___road_single_part___n100_road` (2,320,817 rows), two passes: attributes only
   (three fields), then with geometry.

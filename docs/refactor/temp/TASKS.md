@@ -1826,7 +1826,8 @@ resulting capability record as an argument — data, not a call. No exemption ne
 
 **status:** not started
 
-**what done means** Three halves.
+**what done means** Three halves. The environment the ArcPy half runs in is B23, settled
+with the first marked test.
 
 **(1) `MINT` parents.** One case per `MINT` method: run it over a known input set, obtain the
 pairs through the Protocol's `parents=` out-param (A11.15), and assert they match the oracle. The
