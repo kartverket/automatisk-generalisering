@@ -36,6 +36,14 @@ tests.unit.core.test\_types module
    :show-inheritance:
    :undoc-members:
 
+tests.unit.core.test\_warnings module
+-------------------------------------
+
+.. automodule:: tests.unit.core.test_warnings
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

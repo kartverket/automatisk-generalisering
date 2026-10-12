@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.unit.tools.test_break_once &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tests.unit.tools.test_break_once</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tests.unit.tools.test_break_once</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The break-it-once engine's pure logic, fed with captured pytest output.</span>
+
+<span class="sd">What: the summary-line matcher, the verdict, the baseline parser, needle application and</span>
+<span class="sd">the line-ending round trip, each on strings and bytes the real runs produced. No</span>
+<span class="sd">subprocess, so these run inside the normal suite and fail whenever the engine is edited.</span>
+<span class="sd">The scenarios that need pytest running are `python -m tools.break_once --self-check`.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tools.break_once</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span>
+
+<span class="n">T_OPS</span> <span class="o">=</span> <span class="s2">"tests/unit/core/test_operation_classification.py"</span>
+<span class="n">T_ERR</span> <span class="o">=</span> <span class="s2">"tests/unit/core/test_errors.py"</span>
+<span class="n">NODE</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_the_bare_injected_base_is_rejected"</span>
+<span class="n">PARAM</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_ERR</span><span class="si">}</span><span class="s2">::test_every_error_survives_a_pickle_round_trip"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_case</span><span class="p">(</span><span class="o">*</span><span class="n">targets</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">engine</span><span class="o">.</span><span class="n">Case</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">Case</span><span class="p">(</span>
+        <span class="s2">"X"</span><span class="p">,</span> <span class="s2">"probe"</span><span class="p">,</span> <span class="s2">"src/ag/core/operations.py"</span><span class="p">,</span> <span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">),),</span> <span class="n">targets</span>
+    <span class="p">)</span>
+
+
+<span class="n">NOT_FOUND</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"ERROR: not found: /home/user/repo/</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_this_name_does_not_exist</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"(no match in any of [&lt;Module test_operation_classification.py&gt;])</span><span class="se">\n\n</span><span class="s2">"</span>
+    <span class="s2">"no tests ran in 0.01s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">ONE_FAILED</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"F                                                                        [100%]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"FAILED </span><span class="si">{</span><span class="n">NODE</span><span class="si">}</span><span class="s2"> - Failed: DID NOT RAISE &lt;class 'TypeError'&gt;</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"1 failed in 0.02s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">PARAM_FAILED</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"..F                                                                      [100%]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.AgError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.InjectionError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"FAILED </span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors._Probe] - TypeError: _Probe.__init__() missing 1</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"1 failed, 2 passed in 0.02s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">MODULE_ERROR</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"ERROR </span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2"> - TypeError: worked: parameter 'roads' is annotated</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"1 error in 0.05s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">MEMBER_ERROR</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"ERROR </span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_x - fixture 'missing' not found</span><span class="se">\n</span><span class="s2">1 error in 0.05s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">CLEAN</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">NODE</span><span class="si">}</span><span class="se">\n</span><span class="s2">1 passed in 0.01s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">CLEAN_PARAM</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.AgError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.InjectionError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"2 passed in 0.01s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">CLEAN_MODULE</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_a</span><span class="se">\n</span><span class="s2">PASSED </span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_b</span><span class="se">\n</span><span class="s2">2 passed in 0.01s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">SKIPPED</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"PASSED </span><span class="si">{</span><span class="n">NODE</span><span class="si">}</span><span class="se">\n</span><span class="s2">SKIPPED [1] </span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">:12: needs ArcPy</span><span class="se">\n</span><span class="s2">1 passed, 1 skipped in 0.01s</span><span class="se">\n</span><span class="s2">"</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The matcher</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="test_a_failed_line_reports_its_node_id">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_a_failed_line_reports_its_node_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_a_failed_line_reports_its_node_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"FAILED|ERROR"</span><span class="p">,</span> <span class="n">NODE</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_a_parametrised_node_id_is_reported_through_its_parameter">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_a_parametrised_node_id_is_reported_through_its_parameter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_a_parametrised_node_id_is_reported_through_its_parameter</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"FAILED"</span><span class="p">,</span> <span class="n">PARAM</span><span class="p">,</span> <span class="n">PARAM_FAILED</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"PASSED"</span><span class="p">,</span> <span class="n">PARAM</span><span class="p">,</span> <span class="n">PARAM_FAILED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_not_found_is_never_a_report_of_the_target">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_not_found_is_never_a_report_of_the_target">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_not_found_is_never_a_report_of_the_target</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">stale</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_this_name_does_not_exist"</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"FAILED|ERROR"</span><span class="p">,</span> <span class="n">stale</span><span class="p">,</span> <span class="n">NOT_FOUND</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_a_module_target_is_reported_by_its_own_error_line_only">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_a_module_target_is_reported_by_its_own_error_line_only">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_a_module_target_is_reported_by_its_own_error_line_only</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"ERROR"</span><span class="p">,</span> <span class="n">T_OPS</span><span class="p">,</span> <span class="n">MODULE_ERROR</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"ERROR"</span><span class="p">,</span> <span class="n">T_OPS</span><span class="p">,</span> <span class="n">MEMBER_ERROR</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"ERROR"</span><span class="p">,</span> <span class="n">T_OPS</span><span class="p">,</span> <span class="n">MEMBER_ERROR</span><span class="p">,</span> <span class="n">members</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_a_prefix_of_another_node_id_does_not_match">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_a_prefix_of_another_node_id_does_not_match">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_a_prefix_of_another_node_id_does_not_match</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">reported</span><span class="p">(</span><span class="s2">"FAILED"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_the_bare"</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The verdict</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="test_verdict_accepts_exit_1_with_every_target_reported">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_verdict_accepts_exit_1_with_every_target_reported">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verdict_accepts_exit_1_with_every_target_reported</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">PARAM</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">PARAM_FAILED</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">T_OPS</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MODULE_ERROR</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_verdict_rejects_a_stale_target_under_exit_4">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_verdict_rejects_a_stale_target_under_exit_4">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verdict_rejects_a_stale_target_under_exit_4</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span>
+        <span class="n">_case</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_this_name_does_not_exist"</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="n">NOT_FOUND</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_verdict_rejects_any_exit_code_but_1">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_verdict_rejects_any_exit_code_but_1">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verdict_rejects_any_exit_code_but_1</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CLEAN</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_verdict_rejects_a_missing_target">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_verdict_rejects_a_missing_target">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verdict_rejects_a_missing_target</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_other"</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="test_verdict_rejects_a_module_target_whose_member_failed_instead">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_verdict_rejects_a_module_target_whose_member_failed_instead">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verdict_rejects_a_module_target_whose_member_failed_instead</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">engine</span><span class="o">.</span><span class="n">verdict</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">T_OPS</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MEMBER_ERROR</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The baseline</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="test_baseline_passes_on_a_clean_run">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_baseline_passes_on_a_clean_run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_baseline_passes_on_a_clean_run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CLEAN</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">PARAM</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CLEAN_PARAM</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">T_OPS</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CLEAN_MODULE</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="test_baseline_rejects_a_skipped_line">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_baseline_rejects_a_skipped_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_baseline_rejects_a_skipped_line</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SKIPPED</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">problem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"SKIPPED"</span> <span class="ow">in</span> <span class="n">problem</span></div>
+
+
+
+<div class="viewcode-block" id="test_baseline_rejects_a_missing_passed_line_and_a_nonzero_exit">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_baseline_rejects_a_missing_passed_line_and_a_nonzero_exit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_baseline_rejects_a_missing_passed_line_and_a_nonzero_exit</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="n">NOT_FOUND</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ONE_FAILED</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">engine</span><span class="o">.</span><span class="n">baseline_problem</span><span class="p">(</span><span class="n">_case</span><span class="p">(</span><span class="n">NODE</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_other"</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CLEAN</span><span class="p">)</span>
+        <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Needles and line endings</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="test_mutate_requires_exactly_one_match_and_appends_on_an_empty_needle">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_mutate_requires_exactly_one_match_and_appends_on_an_empty_needle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_mutate_requires_exactly_one_match_and_appends_on_an_empty_needle</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="s2">"a</span><span class="se">\n</span><span class="s2">b</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),))</span> <span class="o">==</span> <span class="s2">"x</span><span class="se">\n</span><span class="s2">b</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="s2">"a</span><span class="se">\n</span><span class="s2">a</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),))</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="s2">"b</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="p">((</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),))</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="s2">"b</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="p">((</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"tail</span><span class="se">\n</span><span class="s2">"</span><span class="p">),))</span> <span class="o">==</span> <span class="s2">"b</span><span class="se">\n</span><span class="s2">tail</span><span class="se">\n</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="test_a_crlf_file_matches_lf_needles_and_restores_byte_exact">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_a_crlf_file_matches_lf_needles_and_restores_byte_exact">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_a_crlf_file_matches_lf_needles_and_restores_byte_exact</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"sample.py"</span>
+    <span class="n">original</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">b</span><span class="s2">"def guard(x: int) -&gt; int:</span><span class="se">\r\n</span><span class="s2">    if x &lt; 0:</span><span class="se">\r\n</span><span class="s2">        raise ValueError(x)</span><span class="se">\r\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">original</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">read_source</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">"</span><span class="se">\r</span><span class="s2">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span>
+    <span class="n">mutated</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="p">((</span><span class="s2">"    if x &lt; 0:"</span><span class="p">,</span> <span class="s2">"    if False:"</span><span class="p">),))</span>
+    <span class="k">assert</span> <span class="n">mutated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">engine</span><span class="o">.</span><span class="n">write_source</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mutated</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">written</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="sa">b</span><span class="s2">"if False:"</span> <span class="ow">in</span> <span class="n">written</span>
+    <span class="k">assert</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">written</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">b</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="n">original</span></div>
+
+
+
+<div class="viewcode-block" id="test_an_lf_file_stays_lf">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_an_lf_file_stays_lf">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_an_lf_file_stays_lf</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"sample.py"</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="sa">b</span><span class="s2">"a</span><span class="se">\n</span><span class="s2">b</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">read_source</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">engine</span><span class="o">.</span><span class="n">write_source</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">like</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s2">"x</span><span class="se">\n</span><span class="s2">b</span><span class="se">\n</span><span class="s2">"</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The report</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="test_describe_names_the_first_line_that_differs">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_describe_names_the_first_line_that_differs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_describe_names_the_first_line_that_differs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span>
+        <span class="s2">"    if x:</span><span class="se">\n</span><span class="s2">        raise Y("</span><span class="p">,</span> <span class="s2">"    if False:</span><span class="se">\n</span><span class="s2">        raise Y("</span>
+    <span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"`if x:` -&gt; `if False:`"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span>
+        <span class="s2">"    def f():</span><span class="se">\n</span><span class="s2">        raise Y("</span><span class="p">,</span>
+        <span class="s2">"    def f():</span><span class="se">\n</span><span class="s2">        return 1</span><span class="se">\n</span><span class="s2">        raise Y("</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"`raise Y(` -&gt; `return 1`"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">X = 1</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"append 'X = 1' ..."</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"    guard()</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"delete `guard()`"</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"  a</span><span class="se">\n</span><span class="s2">  b"</span><span class="p">,</span> <span class="s2">"  a</span><span class="se">\n</span><span class="s2">  b</span><span class="se">\n</span><span class="s2">  c"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"`a` -&gt; `a`"</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The tables</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="n">COLLECTED</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">NODE</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_a_positional_parameter_is_rejected</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.AgError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PARAM</span><span class="si">}</span><span class="s2">[ag.core.errors.InjectionError]</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"</span><span class="se">\n</span><span class="s2">62 tests collected in 0.03s</span><span class="se">\n</span><span class="s2">"</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="test_uncollected_names_every_target_the_collection_did_not_list">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_uncollected_names_every_target_the_collection_did_not_list">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_uncollected_names_every_target_the_collection_did_not_list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The preflight cannot trust the exit code: a module given as a target makes pytest</span>
+<span class="sd">    exit 0 for a missing node id inside it, so the collected ids are compared instead."""</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="p">(</span><span class="n">NODE</span><span class="p">,</span> <span class="n">PARAM</span><span class="p">,</span> <span class="n">T_OPS</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">uncollected</span><span class="p">(</span><span class="n">present</span><span class="p">,</span> <span class="n">COLLECTED</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span>
+    <span class="n">stale</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_this_name_does_not_exist"</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">uncollected</span><span class="p">((</span><span class="o">*</span><span class="n">present</span><span class="p">,</span> <span class="n">stale</span><span class="p">),</span> <span class="n">COLLECTED</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="n">stale</span><span class="p">]</span>
+    <span class="n">absent_module</span> <span class="o">=</span> <span class="s2">"tests/unit/core/test_handles.py"</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">uncollected</span><span class="p">((</span><span class="n">T_ERR</span><span class="p">,),</span> <span class="n">COLLECTED</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">uncollected</span><span class="p">((</span><span class="n">absent_module</span><span class="p">,),</span> <span class="n">COLLECTED</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="n">absent_module</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">engine</span><span class="o">.</span><span class="n">uncollected</span><span class="p">((</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_a_positional"</span><span class="p">,),</span> <span class="n">COLLECTED</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">T_OPS</span><span class="si">}</span><span class="s2">::test_a_positional"</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="test_every_case_set_has_unique_ids_and_targets">
+<a class="viewcode-back" href="../../../../generated_docs/tests.unit.tools.html#tests.unit.tools.test_break_once.test_every_case_set_has_unique_ids_and_targets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_every_case_set_has_unique_ids_and_targets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">case_set</span> <span class="ow">in</span> <span class="n">engine</span><span class="o">.</span><span class="n">load_sets</span><span class="p">():</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">case</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">case_set</span><span class="o">.</span><span class="n">cases</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">)),</span> <span class="n">case_set</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">tests</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">case_set</span><span class="o">.</span><span class="n">cases</span><span class="p">),</span> <span class="n">case_set</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">assert</span> <span class="n">case_set</span><span class="o">.</span><span class="n">suite</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

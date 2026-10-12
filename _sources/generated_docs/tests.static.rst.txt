@@ -4,6 +4,22 @@ tests.static package
 Submodules
 ----------
 
+tests.static.test\_attr\_raw\_count module
+------------------------------------------
+
+.. automodule:: tests.static.test_attr_raw_count
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.static.test\_import\_contracts module
+-------------------------------------------
+
+.. automodule:: tests.static.test_import_contracts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.static.test\_source\_scans module
 ---------------------------------------
 

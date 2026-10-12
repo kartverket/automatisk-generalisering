@@ -8,6 +8,8 @@ Subpackages
    :maxdepth: 4
 
    tests.unit.core
+   tests.unit.ports
+   tests.unit.tools
 
 Module contents
 ---------------
