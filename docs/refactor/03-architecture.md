@@ -433,7 +433,7 @@ this section and §7 describe it.
 | package | may import | may **not** import | contract |
 |---|---|---|---|
 | `core/` | stdlib only | everything else in `ag` | row 3 |
-| `ports/` | `core.handles`, `core.types`, `core.injection`, `core.errors`, stdlib | any other `core` module; everything above `ports` | row 4; row 5 keeps the ports acyclic (`cartographic_ops` above the other three) |
+| `ports/` | `core.handles`, `core.types`, `core.injection`, `core.errors`, stdlib | any other `core` module; everything above `ports` | row 4; row 5 keeps the ports acyclic: `toolbox` above `cartographic_ops` above the three independent Protocols above `predicates` above the value modules |
 | `adapters/` | `ports`, `core`, `adapters._shared`, `adapters.errors`, **its own vendor library** | another adapter package; anything above `adapters` | rows 6, 7, 8, 16, 17, 18 |
 | `lineage/`, `staging/` | `core`, `ports`, `adapters` | each other; anything above | rows 9, 10 (importable by `runtime` only) |
 | `generalization/` | `core`, `ports`, `observability`, and inside it the layers of row 2 | `adapters`, `staging`, `runtime`, `orchestrator`, `lineage` | rows 2, 11, 12, 13 |

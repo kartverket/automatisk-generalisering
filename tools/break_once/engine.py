@@ -272,7 +272,7 @@ def describe(old: str, new: str) -> str:
     for left, right in zip(before, after, strict=False):
         if left != right:
             return f"`{left.strip()}` -> `{right.strip()}`"
-    return f"`{before[0]}` -> `{after[0]}`"
+    return f"`{before[0].strip()}` -> `{after[0].strip()}`"
 
 
 def run_case(case: Case) -> tuple[bool, str]:

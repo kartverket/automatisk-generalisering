@@ -182,6 +182,24 @@ def test_an_lf_file_stays_lf(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# The report
+# ---------------------------------------------------------------------------
+
+
+def test_describe_names_the_first_line_that_differs() -> None:
+    assert engine.describe(
+        "    if x:\n        raise Y(", "    if False:\n        raise Y("
+    ) == ("`if x:` -> `if False:`")
+    assert engine.describe(
+        "    def f():\n        raise Y(",
+        "    def f():\n        return 1\n        raise Y(",
+    ) == ("`raise Y(` -> `return 1`")
+    assert engine.describe("", "\nX = 1\n") == "append 'X = 1' ..."
+    assert engine.describe("    guard()\n", "") == "delete `guard()`"
+    assert engine.describe("  a\n  b", "  a\n  b\n  c") == "`a` -> `a`"
+
+
+# ---------------------------------------------------------------------------
 # The tables
 # ---------------------------------------------------------------------------
 

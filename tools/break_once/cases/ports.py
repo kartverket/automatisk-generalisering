@@ -17,6 +17,8 @@ T_GEOM = "tests/unit/ports/test_geometry.py"
 T_TABLE = "tests/unit/ports/test_table_values.py"
 T_TOOLBOX = "tests/unit/ports/test_toolbox.py"
 T_RAW = "tests/static/test_attr_raw_count.py"
+T_CONTRACTS = "tests/static/test_import_contracts.py"
+ROW_5 = f"{T_CONTRACTS}::test_contract_is_kept[row-05-port-layers]"
 
 CASES: tuple[Case, ...] = (
     Case(
@@ -245,6 +247,57 @@ CASES: tuple[Case, ...] = (
         tests_in(
             T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
         ),
+    ),
+    Case(
+        "P20",
+        "a bool accepted as an attribute value",
+        PREDICATES,
+        (("    if isinstance(value, bool):", "    if False:"),),
+        tests_in(T_PRED, "test_a_bool_is_refused_because_no_field_type_holds_one"),
+    ),
+    Case(
+        "P21",
+        "the sentinel pickles as a new instance",
+        TOOLBOX,
+        (
+            (
+                "    def __reduce__(self) -> str:\n"
+                '        """Pickles as a reference to the module global, so the singleton survives."""\n'
+                '        return "NOT_INJECTED"\n',
+                "",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
+    ),
+    Case(
+        "P22",
+        "a dunder lookup on the sentinel raises InjectionError",
+        TOOLBOX,
+        (
+            (
+                '        if name.startswith("__") and name.endswith("__"):',
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
+    ),
+    Case(
+        "P23",
+        "row 5: a bottom module imports the layer above (attributes imports predicates)",
+        ATTRIBUTES,
+        (("", "\nimport ag.ports.predicates  # probe\n"),),
+        (ROW_5,),
+    ),
+    Case(
+        "P24",
+        "row 5: two Protocol modules import each other (geometry_ops imports table_ops)",
+        "src/ag/ports/geometry_ops.py",
+        (("", "\nimport ag.ports.table_ops  # probe\n"),),
+        (ROW_5,),
     ),
 )
 

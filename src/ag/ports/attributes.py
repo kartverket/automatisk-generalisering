@@ -25,8 +25,10 @@ AttributeValue: TypeAlias = int | float | str | datetime | None
 
 A `DATE` field holds a date and a time, carried as a naive `datetime` in the workspace's
 own convention, because that is what the engine stores and returns; a date-only value is a
-`datetime` at midnight. The engine's separate date-only and time-only field types are not
-represented, because no pipeline declares one.
+`datetime` at midnight. The engine's date-only, time-only and timestamp-offset field
+types (ArcGIS Pro 3.2 and later) are not represented, because no pipeline declares one; an
+adapter that reads such a field raises `PortContractError` naming the field, rather than
+coerce a `date`, a `time` or an aware `datetime` into this union.
 
 Why: a closed union rather than `object`, because `object` pushes a cast to every read
 site, and a cast asserts something no one checked. With the union a caller that needs an

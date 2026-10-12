@@ -20,8 +20,10 @@ term is, `Or` the mirror. So `~Attr.in_(f, (1,))` excludes the NULL rows and a c
 wants them writes `~Attr.in_(f, ids) | Attr.is_null(f)`. `LIKE` matches with `%` for any
 run of characters and `_` for one, case-sensitively, with no escape character; a pattern
 that needs a literal `%` or `_` goes through `Attr.raw`. A value whose type does not match
-the field's type is a `PortContractError` from the adapter, never an engine coercion. The
-in-memory adapter raises `PortContractError` on `RawAttr` rather than guess at CQL.
+the field's type is a `PortContractError` from the adapter, never an engine coercion; a
+`bool` is refused at construction, since no field type holds one. The in-memory adapter
+raises `PortContractError` on `RawAttr` rather than guess at CQL, so a raw expression,
+including a literal `%` or `_`, runs only under an engine.
 
 Why: a mutable selection is one engine's idiom, not the concept; exposing it would make
 every future adapter emulate that statefulness, and it is lazier to materialise nothing
@@ -123,6 +125,7 @@ class Compare(Predicate):
                 f"Attr.cmp({self.field!r}, {self.op.name}, None): a comparison with NULL "
                 "is never true in SQL. Use Attr.is_null(field), or its negation."
             )
+        _not_a_bool(value=self.value, where=f"Attr.cmp({self.field!r}, ...)")
         if self.op is Comparison.LIKE and not isinstance(self.value, str):
             raise ValueError(
                 f"Attr.cmp({self.field!r}, LIKE, {self.value!r}): LIKE takes a string "
@@ -143,6 +146,8 @@ class IsIn(Predicate):
                 f"Attr.in_({self.field!r}, ...) contains None: NULL is never IN a set. "
                 "Use Attr.is_null(field) for the null rows."
             )
+        for value in self.values:
+            _not_a_bool(value=value, where=f"Attr.in_({self.field!r}, ...)")
 
 
 @dataclass(frozen=True)
@@ -243,6 +248,15 @@ class Or(Predicate):
 @dataclass(frozen=True)
 class Not(Predicate):
     term: Predicate
+
+
+def _not_a_bool(*, value: AttributeValue, where: str) -> None:
+    """No field type holds a boolean; `True` would reach the engine as the integer 1."""
+    if isinstance(value, bool):
+        raise ValueError(
+            f"{where}: {value!r} is a bool and no field type holds one. Compare an "
+            "integer field against 0 or 1, or a text field against its code."
+        )
 
 
 def _at_least_two(*, terms: tuple[Predicate, ...], name: str) -> None:

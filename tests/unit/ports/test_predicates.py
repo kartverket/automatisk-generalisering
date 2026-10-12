@@ -112,6 +112,15 @@ def test_cmp_refuses_a_null_value() -> None:
         Attr.cmp("fartsgrense", Comparison.NE, None)
 
 
+def test_a_bool_is_refused_because_no_field_type_holds_one() -> None:
+    """`bool` is an `int`, so `True` would reach the engine as 1 against an integer field."""
+    with pytest.raises(ValueError, match="no field type holds one"):
+        Attr.cmp("er_ferdig", Comparison.EQ, True)
+    with pytest.raises(ValueError, match="no field type holds one"):
+        Attr.in_("er_ferdig", (1, False))
+    assert Attr.cmp("er_ferdig", Comparison.EQ, 1).value == 1
+
+
 def test_like_takes_a_string_pattern() -> None:
     assert Attr.cmp("vegnummer", Comparison.LIKE, "E%").value == "E%"
     with pytest.raises(ValueError, match="LIKE takes a string pattern"):

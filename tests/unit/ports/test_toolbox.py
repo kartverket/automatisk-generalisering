@@ -37,12 +37,11 @@ def test_the_sentinel_compares_by_identity_and_survives_pickling() -> None:
     instances would raise rather than answer; identity equality keeps hash and equality
     consistent. A copy or a pickle must come back as the same singleton, since the stage
     runner compares against it."""
-    assert NOT_INJECTED == NOT_INJECTED
     assert NOT_INJECTED != Toolbox(object(), object(), object(), object())
-    # The static type is Toolbox; the sentinel's class takes no arguments.
+    # The static type is Toolbox; the sentinel's class takes no arguments. Comparing two
+    # instances is what the inherited equality cannot do without reading a field.
     second_instance = type(NOT_INJECTED)()  # pyright: ignore[reportCallIssue]
     assert second_instance != NOT_INJECTED
-    assert hash(second_instance) != hash(NOT_INJECTED)
     assert pickle.loads(pickle.dumps(NOT_INJECTED)) is NOT_INJECTED
     assert copy.deepcopy(NOT_INJECTED) is NOT_INJECTED
 
