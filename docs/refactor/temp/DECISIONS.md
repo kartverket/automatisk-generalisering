@@ -44,28 +44,13 @@ guidance).
 
 ## A2. Predicates
 
-**A2.1** `Attr` becomes **structured leaves** — `Attr.cmp(field, op, value)`,
-`Attr.in_(field, values)`, `Attr.is_null(field)` — with `Attr.raw(cql)` as a rare, greppable
-escape hatch guarded by a call-site count test.
+**A2.1** moved to ADR-0015 §Decision and the `ports/predicates.py` module docstring
+(2026-10-07, slice 1a). `destination:` ADR-0015.
 
-Rationale: an opaque CQL2 string forces every adapter to write a parser before it can quote
-identifiers correctly (`AddFieldDelimiters` differs by workspace type), and it admits
-expressions no adapter can compile. The template already contains two — `Attr("... in (select
-... from merge_report)")` at `operations/road/__init__.py:678` and `:942` are subqueries against
-a `ScratchHandle`.
-**`Attr.cmp`'s operator set** *(decided 2026-09-21)*: `=`, `<>`, `<`, `<=`, `>`, `>=` and `LIKE`;
-`value` is an `AttributeValue` other than `None`, and a null test goes through `Attr.is_null`,
-because `= NULL` is never true in SQL and no adapter should have to special-case it.
-`destination:` new ADR; amends ADR-0001.
+**A2.2** moved to ADR-0015 §Context and §Decision (2026-10-07). `destination:` ADR-0015.
 
-**A2.2** Three independent needs converged on `Attr.in_`: the predicate design itself, the 39
-`deleteRow()` sites (which become `select(where=~Attr.in_(id, ids))`), and `key.where_in` in the
-work-key API. A fourth arrived later — see A17.7.
-`destination:` same ADR as A2.1.
-
-**A2.3** Known limit: this catches structure and types at import, not wrong field names. Schema
-declarations on handles would catch those. Deferred, and additive to A2.1.
-`destination:` same ADR as A2.1, as a stated non-goal.
+**A2.3** moved to ADR-0015 §Consequences, as the stated non-goal (2026-10-07).
+`destination:` ADR-0015.
 
 ## A3. Graph port
 
@@ -2552,6 +2537,20 @@ it is over every budget on its own: decision 3 is the live one, and the answer t
 to is a partitioned stage (or ingest before `lineage_id`), with parents a partition-size question.
 `destination:` `02-runtime.md` §2.3 for decision 3; `ports/geometry_ops.py` for decision 2; T3.4
 for decision 1.
+
+**B22. Which handles a predicate may name.** Found in the review of slice 1a's port values,
+2026-10-08. `Spatial.relate_to` is a handle inside a value: no `In` annotation sees it, the
+dependency graph derives from `OperationCall.inputs` and `outputs` only, and ADR-0011's
+own-handles check walks those same parameters. An operation body can therefore build
+`Within(SomeStage.roads)` from another stage's class attribute, and the graph and the fan-out
+halo would miss that read. The rule is unstated anywhere in the record. Proposed rule: an
+operation reaches a dataset only through a handle it was handed, an `In` or `Out` parameter
+of its own call or internal scratch from its own scope, and a predicate's `relate_to` must be
+one of those. Proposed enforcement point: the lineage facade (T4.3), which sees every port
+call and its arguments and can match a handle embedded in a predicate against the handles of
+the current call; a static scan of operation bodies for `Class.attribute` handle references
+is the cheaper partial check. Not enforced in slice 1a; `ports/predicates.py` says the check
+does not see the handle.
 
 **B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
 creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template

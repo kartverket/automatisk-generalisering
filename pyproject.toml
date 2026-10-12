@@ -126,6 +126,7 @@ known-first-party = [
     "generalization",
     "input_data",
     "tests",
+    "tools",
 ]
 
 # Strict over the new code only, by path: the legacy packages and tests_legacy/ are outside

@@ -148,6 +148,13 @@ restores the file, and runs the set's suite after the last restore. A needle tha
 matches exactly once, a renamed test, or a target that fails on the clean tree is a harness
 error and nothing is edited.
 
+The engine's own logic (the summary-line matcher, the verdict, the baseline parser, the
+line-ending round trip) is unit-tested in `tests/unit/tools/test_break_once.py` on captured
+pytest output, inside the normal suite; the scenarios that need pytest running and a real
+edit (a renamed target, a baseline failure, a test that fails in isolation, a renamed
+referenced test) are `python -m tools.break_once --self-check`, run by hand when the engine
+changes.
+
 The pre-commit hook `break-once-check` runs the preflight only, `--check`: every needle
 matches and every target collects, with no edit. A renamed test or an edited guard then
 fails on the commit that causes it, not at the next lift. If a wider measure of suite

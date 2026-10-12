@@ -1,0 +1,304 @@
+"""Cases for the port values: `ports/attributes.py`, `ports/geometry.py`,
+`ports/table_ops.py`, `ports/predicates.py`, `ports/toolbox.py`, and the pinned count of
+`Attr.raw` call sites.
+"""
+
+from __future__ import annotations
+
+from ..engine import Case, tests_in
+
+ATTRIBUTES = "src/ag/ports/attributes.py"
+GEOMETRY = "src/ag/ports/geometry.py"
+TABLE = "src/ag/ports/table_ops.py"
+PREDICATES = "src/ag/ports/predicates.py"
+TOOLBOX = "src/ag/ports/toolbox.py"
+T_PRED = "tests/unit/ports/test_predicates.py"
+T_GEOM = "tests/unit/ports/test_geometry.py"
+T_TABLE = "tests/unit/ports/test_table_values.py"
+T_TOOLBOX = "tests/unit/ports/test_toolbox.py"
+T_RAW = "tests/static/test_attr_raw_count.py"
+T_CONTRACTS = "tests/static/test_import_contracts.py"
+ROW_5 = f"{T_CONTRACTS}::test_contract_is_kept[row-05-port-layers]"
+
+CASES: tuple[Case, ...] = (
+    Case(
+        "P1",
+        "TEXT field accepted without a length",
+        ATTRIBUTES,
+        (
+            (
+                "        if self.type is FieldType.TEXT and self.length is None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_text_field_needs_a_length_and_no_other_type_takes_one"
+        ),
+    ),
+    Case(
+        "P2",
+        "non-TEXT field accepted with a length",
+        ATTRIBUTES,
+        (
+            (
+                "        if self.type is not FieldType.TEXT and self.length is not None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_text_field_needs_a_length_and_no_other_type_takes_one"
+        ),
+    ),
+    Case(
+        "P3",
+        "feature class schema accepted without a CRS",
+        TABLE,
+        (
+            (
+                "        if self.data_type is DataType.FEATURE_CLASS and self.geometry_crs is None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_feature_class_schema_needs_a_crs_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P4",
+        "Row without slots",
+        TABLE,
+        (
+            (
+                "@dataclass(frozen=True, slots=True)\nclass Row:",
+                "@dataclass(frozen=True)\nclass Row:",
+            ),
+        ),
+        tests_in(T_TABLE, "test_a_row_is_frozen_and_uses_slots"),
+    ),
+    Case(
+        "P5",
+        "empty geometry accepted",
+        GEOMETRY,
+        (("        if not self.parts:", "        if False:"),),
+        tests_in(T_GEOM, "test_an_empty_geometry_is_refused"),
+    ),
+    Case(
+        "P6",
+        "multi-coordinate point accepted",
+        GEOMETRY,
+        (
+            (
+                "        if self.kind is GeometryKind.POINT and (",
+                "        if False and (",
+            ),
+        ),
+        tests_in(T_GEOM, "test_a_point_is_exactly_one_coordinate"),
+    ),
+    Case(
+        "P7",
+        "comparison with NULL accepted",
+        PREDICATES,
+        (("        if self.value is None:", "        if False:"),),
+        tests_in(T_PRED, "test_cmp_refuses_a_null_value"),
+    ),
+    Case(
+        "P8",
+        "NULL member of an IN set accepted",
+        PREDICATES,
+        (
+            (
+                "        if any(value is None for value in self.values):",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_in_refuses_a_null_member"),
+    ),
+    Case(
+        "P9",
+        "DWITHIN accepted without a distance",
+        PREDICATES,
+        (
+            (
+                "        if needs_distance and self.distance_m is None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_dwithin_carries_its_distance_and_the_others_refuse_one"),
+    ),
+    Case(
+        "P10",
+        "a distance accepted on a non-distance relation",
+        PREDICATES,
+        (
+            (
+                "        if not needs_distance and self.distance_m is not None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_dwithin_carries_its_distance_and_the_others_refuse_one"),
+    ),
+    Case(
+        "P11",
+        "the invert operator simplifies a double negation",
+        PREDICATES,
+        (
+            (
+                "    def __invert__(self) -> Predicate:\n        return Not(self)",
+                "    def __invert__(self) -> Predicate:\n"
+                "        return self.term if isinstance(self, Not) else Not(self)",
+            ),
+        ),
+        tests_in(T_PRED, "test_the_operators_build_a_tree_and_fold_nothing"),
+    ),
+    Case(
+        "P12",
+        "the sentinel reaches a port silently",
+        TOOLBOX,
+        (
+            (
+                "            raise AttributeError(name)\n        raise InjectionError(",
+                "            raise AttributeError(name)\n        return None\n        raise InjectionError(",
+            ),
+        ),
+        tests_in(T_TOOLBOX, "test_the_sentinel_is_a_toolbox_that_refuses_every_port"),
+    ),
+    Case(
+        "P13",
+        "an Attr.raw call site added without touching the pin",
+        PREDICATES,
+        (("", '\n\n_UNPINNED = Attr.raw("1=1")\n'),),
+        tests_in(T_RAW, "test_attr_raw_call_sites_are_pinned"),
+    ),
+    Case(
+        "P14",
+        "a predicate has a truth value",
+        PREDICATES,
+        (
+            (
+                "    def __bool__(self) -> bool:\n"
+                '        """Refuses a truth value: `a and b` would silently return `b`, `not a` False."""\n'
+                "        raise TypeError(",
+                "    def __bool__(self) -> bool:\n"
+                '        """Refuses a truth value: `a and b` would silently return `b`, `not a` False."""\n'
+                "        return True\n"
+                "        raise TypeError(",
+            ),
+        ),
+        tests_in(T_PRED, "test_a_predicate_has_no_truth_value"),
+    ),
+    Case(
+        "P15",
+        "a connective with fewer than two terms accepted",
+        PREDICATES,
+        (("    if len(terms) < 2:", "    if False:"),),
+        tests_in(T_PRED, "test_a_connective_needs_at_least_two_terms"),
+    ),
+    Case(
+        "P16",
+        "LIKE accepted with a non-string value",
+        PREDICATES,
+        (
+            (
+                "        if self.op is Comparison.LIKE and not isinstance(self.value, str):",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_like_takes_a_string_pattern"),
+    ),
+    Case(
+        "P17",
+        "DWITHIN accepted with a zero or negative distance",
+        PREDICATES,
+        (
+            (
+                "        if needs_distance and self.distance_m is not None and self.distance_m <= 0:",
+                "        if False:",
+            ),
+        ),
+        tests_in(T_PRED, "test_dwithin_requires_a_positive_distance"),
+    ),
+    Case(
+        "P18",
+        "a table schema accepted with a CRS",
+        TABLE,
+        (
+            (
+                "        if (\n"
+                "            self.data_type is not DataType.FEATURE_CLASS\n"
+                "            and self.geometry_crs is not None\n"
+                "        ):",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_feature_class_schema_needs_a_crs_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P19",
+        "the sentinel with the dataclass equality",
+        TOOLBOX,
+        (
+            (
+                "    def __eq__(self, other: object) -> bool:\n        return self is other\n",
+                "",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
+    ),
+    Case(
+        "P20",
+        "a bool accepted as an attribute value",
+        PREDICATES,
+        (("    if isinstance(value, bool):", "    if False:"),),
+        tests_in(T_PRED, "test_a_bool_is_refused_because_no_field_type_holds_one"),
+    ),
+    Case(
+        "P21",
+        "the sentinel pickles as a new instance",
+        TOOLBOX,
+        (
+            (
+                "    def __reduce__(self) -> str:\n"
+                '        """Pickles as a reference to the module global, so the singleton survives."""\n'
+                '        return "NOT_INJECTED"\n',
+                "",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
+    ),
+    Case(
+        "P22",
+        "a dunder lookup on the sentinel raises InjectionError",
+        TOOLBOX,
+        (
+            (
+                '        if name.startswith("__") and name.endswith("__"):',
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TOOLBOX, "test_the_sentinel_compares_by_identity_and_survives_pickling"
+        ),
+    ),
+    Case(
+        "P23",
+        "row 5: a bottom module imports the layer above (attributes imports predicates)",
+        ATTRIBUTES,
+        (("", "\nimport ag.ports.predicates  # probe\n"),),
+        (ROW_5,),
+    ),
+    Case(
+        "P24",
+        "row 5: two Protocol modules import each other (geometry_ops imports table_ops)",
+        "src/ag/ports/geometry_ops.py",
+        (("", "\nimport ag.ports.table_ops  # probe\n"),),
+        (ROW_5,),
+    ),
+)
+
+SUITE: tuple[str, ...] = ("tests/unit/ports", "tests/static")
