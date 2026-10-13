@@ -73,7 +73,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Bergen')"
+    AREA_SELECTOR = "navn IN ('Kvitsøy')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000

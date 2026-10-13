@@ -1,5 +1,8 @@
+"""Manual pipeline validation demo; requires configured paths and ArcPy."""
+
 # Libraries
 
+from data_orchestrator_2.fields import FieldUsage
 from data_orchestrator_2.names_paths import ObjectType, Scale
 from data_orchestrator_2.pipelines import get_pipeline
 from data_orchestrator_2.validator import ValidationResult, validate_pipeline
@@ -14,6 +17,8 @@ SCALE = Scale.N100
 
 pipeline = get_pipeline(OBJECTTYPE, SCALE)
 
-validation_results: list[ValidationResult] = validate_pipeline(pipeline)
+validation_results: list[ValidationResult] = validate_pipeline(
+    pipeline, FieldUsage.INPUT
+)
 for result in validation_results:
     print(result)

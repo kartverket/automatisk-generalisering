@@ -12,6 +12,8 @@ from data_orchestrator_2.names_paths import ObjectType, Scale
 
 @dataclass(frozen=True)
 class PipelineDefinition:
+    """Target scale and datasets required for one object-type pipeline."""
+
     object_type: ObjectType
     scale: Scale
     datasets: tuple[DatasetDefinition, ...]
@@ -57,4 +59,5 @@ PIPELINES: dict[tuple[ObjectType, Scale], PipelineDefinition] = {
 
 
 def get_pipeline(object_type: ObjectType, scale: Scale) -> PipelineDefinition:
+    """Look up a pipeline by object type and target scale; raise KeyError if absent."""
     return PIPELINES[(object_type, scale)]

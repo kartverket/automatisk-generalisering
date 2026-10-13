@@ -3,8 +3,7 @@
 from dataclasses import dataclass
 from enum import Flag, auto
 
-from data_orchestrator_2.names_paths import ColumnName as C
-from data_orchestrator_2.names_paths import FieldType
+from data_orchestrator_2.names_paths import ColumnName, FieldType
 
 ######################
 # Classes
@@ -13,6 +12,8 @@ from data_orchestrator_2.names_paths import FieldType
 
 # What should the field be used for?
 class FieldUsage(Flag):
+    """Stages at which a field is expected or retained; values may be combined."""
+
     INPUT = auto()
     PROCESSING = auto()
     OUTPUT = auto()
@@ -21,11 +22,17 @@ class FieldUsage(Flag):
 # Definition of a field, including its name, datatype, and usage.
 @dataclass(frozen=True)
 class FieldDefinition:
-    name: C
+    """Catalog metadata for a field; requiredness is separate from usage."""
+
+    name: ColumnName
     datatype: FieldType
     usage: FieldUsage
     required: bool = True
     system_field: bool = False
+
+    def isUsedFor(self, usage: FieldUsage) -> bool:
+        """Return whether any requested usage flag belongs to this field."""
+        return bool(self.usage & usage)
 
 
 ######################
@@ -35,72 +42,120 @@ class FieldDefinition:
 
 # Field registry, where all defined fields can be stored for easy access.
 class Fields:
-    OBJTYPE = FieldDefinition(
-        name=C.OBJTYPE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    SUBTYPEKODE = FieldDefinition(
-        name=C.SUBTYPEKODE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    TYPEVEG = FieldDefinition(
-        name=C.TYPEVEG, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    VEGKATEGORI = FieldDefinition(
-        name=C.VEGKATEGORI, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    VEGNUMMER = FieldDefinition(
-        name=C.VEGNUMMER, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
-    )
-    VEGSTATUS = FieldDefinition(
-        name=C.VEGSTATUS, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    MEDIUM = FieldDefinition(
-        name=C.MEDIUM, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    MOTORVEGTYPE = FieldDefinition(
-        name=C.MOTORVEGTYPE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    RUTEMERKING = FieldDefinition(
-        name=C.RUTEMERKING, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    VEDLIKEH = FieldDefinition(
-        name=C.VEDLIKEH, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    UTTEGNING = FieldDefinition(
-        name=C.UTTEGNING, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    VEGKLASSE = FieldDefinition(
-        name=C.VEGKLASSE, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
-    )
-    FELTOVERSIKT = FieldDefinition(
-        name=C.FELTOVERSIKT, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    KONNEKTERINGSLENKE = FieldDefinition(
-        name=C.KONNEKTERINGSLENKE, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
-    )
-    SIDEANLEGGSDEL = FieldDefinition(
-        name=C.SIDEANLEGGSDEL, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
-    )
-    KRYSSDEL = FieldDefinition(
-        name=C.KRYSSDEL, datatype=FieldType.DOUBLE, usage=(FieldUsage.INPUT)
+    """Reusable field definitions for dataset catalogs."""
+
+    ADRESSENAVN = FieldDefinition(
+        name=ColumnName.ADRESSENAVN,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
     )
     ADSKILTELOP = FieldDefinition(
-        name=C.ADSKILTELOP, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=ColumnName.ADSKILTELOP,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
     )
     ADSKILTELOPNUMMER = FieldDefinition(
-        name=C.ADSKILTELOPNUMMER, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+        name=ColumnName.ADSKILTELOPNUMMER,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
     )
-    ADRESSENAVN = FieldDefinition(
-        name=C.ADRESSENAVN, datatype=FieldType.TEXT, usage=(FieldUsage.INPUT)
+    ER_KRYSSNINGSPUNKT = FieldDefinition(
+        name=ColumnName.ER_KRYSSNINGSPUNKT,
+        datatype=FieldType.BOOLEAN,
+        usage=FieldUsage.PROCESSING,
+    )
+    FELTOVERSIKT = FieldDefinition(
+        name=ColumnName.FELTOVERSIKT,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    HIERARKI = FieldDefinition(
+        name=ColumnName.HIERARKI, datatype=FieldType.SHORT, usage=FieldUsage.PROCESSING
+    )
+    KONNEKTERINGSLENKE = FieldDefinition(
+        name=ColumnName.KONNEKTERINGSLENKE,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    KRYSSDEL = FieldDefinition(
+        name=ColumnName.KRYSSDEL,
+        datatype=FieldType.DOUBLE,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    MEDIUM = FieldDefinition(
+        name=ColumnName.MEDIUM,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    MOTORVEGTYPE = FieldDefinition(
+        name=ColumnName.MOTORVEGTYPE,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
     )
     OBJECTID = FieldDefinition(
-        name=C.OBJECTID,
+        name=ColumnName.OBJECTID,
         datatype=FieldType.OID,
-        usage=(FieldUsage.INPUT),
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING | FieldUsage.OUTPUT,
         system_field=True,
     )
+    OBJTYPE = FieldDefinition(
+        name=ColumnName.OBJTYPE,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    RUTEMERKING = FieldDefinition(
+        name=ColumnName.RUTEMERKING,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
     SHAPE = FieldDefinition(
-        name=C.SHAPE,
+        name=ColumnName.SHAPE,
         datatype=FieldType.GEOMETRY,
-        usage=(FieldUsage.INPUT),
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING | FieldUsage.OUTPUT,
         system_field=True,
+    )
+    SIDEANLEGGSDEL = FieldDefinition(
+        name=ColumnName.SIDEANLEGGSDEL,
+        datatype=FieldType.DOUBLE,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    SUBTYPEKODE = FieldDefinition(
+        name=ColumnName.SUBTYPEKODE,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    TYPEVEG = FieldDefinition(
+        name=ColumnName.TYPEVEG,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    UTTEGNING = FieldDefinition(
+        name=ColumnName.UTTEGNING,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    VEDLIKEH = FieldDefinition(
+        name=ColumnName.VEDLIKEH,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    VEGKATEGORI = FieldDefinition(
+        name=ColumnName.VEGKATEGORI,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    VEGKLASSE = FieldDefinition(
+        name=ColumnName.VEGKLASSE,
+        datatype=FieldType.DOUBLE,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    VEGNUMMER = FieldDefinition(
+        name=ColumnName.VEGNUMMER,
+        datatype=FieldType.DOUBLE,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
+    )
+    VEGSTATUS = FieldDefinition(
+        name=ColumnName.VEGSTATUS,
+        datatype=FieldType.STRING,
+        usage=FieldUsage.INPUT | FieldUsage.PROCESSING,
     )

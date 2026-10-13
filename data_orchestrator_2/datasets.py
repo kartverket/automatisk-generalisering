@@ -22,9 +22,11 @@ from data_orchestrator_2.names_paths import (
 
 @dataclass(frozen=True)
 class DatasetDefinition:
+    """Dataset schema and path derived from its source scale and object type."""
+
     name: FeatureClassName
-    source_scale: Scale  # TODO: Slette?
-    object_type: ObjectType  # TODO: Slette?
+    source_scale: Scale
+    object_type: ObjectType
     geometry_type: GeometryType
     fields: tuple[FieldDefinition, ...]
     path: Path = field(init=False)
@@ -52,6 +54,7 @@ class DatasetDefinition:
 
     @property
     def field_lookup(self) -> Mapping[str, FieldDefinition]:
+        """Read-only lookup of field definitions by their catalog names."""
         return self._field_lookup
 
     def __str__(self) -> str:
@@ -72,21 +75,16 @@ class DatasetDefinition:
         return self.geometry_type
 
     def getFields(self) -> tuple[ColumnName, ...]:
+        """Return the names of all registered fields."""
         return tuple(f.name for f in self.fields)
 
     def getField(self, field_name: str) -> FieldDefinition:
+        """Return a registered field or raise KeyError if it is unknown."""
         return self.field_lookup[field_name]
 
-    def getInputFields(self) -> tuple[FieldDefinition, ...]:
-        return tuple(field for field in self.fields if field.usage & FieldUsage.INPUT)
-
-    def getProcessingFields(self) -> tuple[FieldDefinition, ...]:
-        return tuple(
-            field for field in self.fields if field.usage & FieldUsage.PROCESSING
-        )
-
-    def getOutputFields(self) -> tuple[FieldDefinition, ...]:
-        return tuple(field for field in self.fields if field.usage & FieldUsage.OUTPUT)
+    def getFieldsFor(self, usage: FieldUsage) -> tuple[FieldDefinition, ...]:
+        """Return fields carrying any of the requested usage flags."""
+        return tuple(field for field in self.fields if field.isUsedFor(usage))
 
     def getPath(self) -> Path:
         return self.path
@@ -98,32 +96,34 @@ class DatasetDefinition:
 
 
 class Datasets:
+    """Named dataset definitions available to pipelines."""
+
     ELVEG_AND_STI = DatasetDefinition(
         name=FeatureClassName.ELVEG_AND_STI,
         source_scale=Scale.RAW_DATA,
         object_type=ObjectType.ROAD,
         geometry_type=GeometryType.POLYLINE,
         fields=(
-            Fields.OBJTYPE,
-            Fields.SUBTYPEKODE,
-            Fields.TYPEVEG,
-            Fields.VEGKATEGORI,
-            Fields.VEGNUMMER,
-            Fields.VEGSTATUS,
-            Fields.MEDIUM,
-            Fields.MOTORVEGTYPE,
-            Fields.RUTEMERKING,
-            Fields.VEDLIKEH,
-            Fields.UTTEGNING,
-            Fields.VEGKLASSE,
-            Fields.FELTOVERSIKT,
-            Fields.KONNEKTERINGSLENKE,
-            Fields.SIDEANLEGGSDEL,
-            Fields.KRYSSDEL,
             Fields.ADSKILTELOP,
             Fields.ADSKILTELOPNUMMER,
             Fields.ADRESSENAVN,
+            Fields.FELTOVERSIKT,
+            Fields.KONNEKTERINGSLENKE,
+            Fields.KRYSSDEL,
+            Fields.MEDIUM,
+            Fields.MOTORVEGTYPE,
             Fields.OBJECTID,
+            Fields.OBJTYPE,
+            Fields.RUTEMERKING,
             Fields.SHAPE,
+            Fields.SIDEANLEGGSDEL,
+            Fields.SUBTYPEKODE,
+            Fields.TYPEVEG,
+            Fields.UTTEGNING,
+            Fields.VEDLIKEH,
+            Fields.VEGKATEGORI,
+            Fields.VEGKLASSE,
+            Fields.VEGNUMMER,
+            Fields.VEGSTATUS,
         ),
     )
