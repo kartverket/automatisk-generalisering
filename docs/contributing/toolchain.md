@@ -32,8 +32,11 @@ pre-commit install
 - `uv sync --extra dev` reads `.python-version`, downloads that Python if the machine has
   none, creates `.venv` and installs the project (editable) plus the `dev` extra at exactly
   the versions in `uv.lock`. It is also the command to run again after a pin changes.
-- Activating is for your own shell, so that `pytest`, `ruff` and the rest resolve to the
-  project's copies when you type them. The hooks do not need it (below).
+- Activating is optional and only for your own shell: it makes `pytest`, `ruff` and the rest
+  resolve to the project's copies when you type them. Nothing else needs it. The hooks run
+  through uv whether a shell is activated or not (below), and scripts that use ArcPy run with
+  the ArcGIS Pro interpreter, never from `.venv` (see
+  [running legacy scripts](#running-legacy-scripts)).
 - `pre-commit install` makes every commit run the hooks.
 
 ## `uv.lock`
@@ -69,43 +72,65 @@ the CI step; the dependency declarations do not change.
 
 ## Two environments on Windows
 
-A developer on Windows keeps two environments and uses each for one purpose.
+A developer on Windows uses two interpreters, each for one purpose.
 
-| environment | created by | Python | for |
-|---|---|---|---|
-| `.venv` in the repository | `uv sync --extra dev` | 3.13, no ArcPy | `src/ag`, every check, every commit |
-| a clone of `arcgispro-py3` | the ArcGIS Pro package manager, or `conda create --clone arcgispro-py3 --name <name>` | the Pro interpreter, with ArcPy | `pytest -m arcpy` and the legacy code |
+| interpreter | comes from | for |
+|---|---|---|
+| `.venv` in the repository | `uv sync --extra dev` | `src/ag`, every check, every commit |
+| the ArcGIS Pro interpreter, the default `arcgispro-py3` environment | the ArcGIS Pro install (`C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3` on the team's machines) | legacy scripts, `tests_legacy/`, scratch scripts |
 
-- In an editor, select `.venv`'s interpreter when working on `src/ag`, `tests/` or `tools/`;
-  select the Pro clone's interpreter when running ArcPy tests or the legacy packages.
-- The Pro clone is managed with pip, not uv: `pip install -e .` there installs the project
-  beside ArcPy, and `pip install pytest==<version>` adds pytest at the version pinned in
-  `pyproject.toml`'s `dev` extra. It does not get the `dev` extra: the checks are never run
-  from the Pro environment, so ruff, pyright, import-linter and pre-commit have no place in
-  it. **Never run `uv sync` in the Pro environment**; it would replace it with a
-  Python that has no ArcPy.
+- Nothing is installed into the Pro environment, by pip or by uv: Esri's package manager
+  treats it as read-only, and a Pro upgrade replaces it. A legacy script needs no install
+  (below), and `tests_legacy/` needs nothing the Pro environment does not already ship
+  ([testing and checks](testing.md)). The one uv command that can write into it is
+  `uv pip install --python <pro python>` without `--target`; do not run it. `uv sync` only
+  ever touches `.venv`, whichever interpreter an editor or a shell has selected.
 - Commits are made from a shell where `uv` is on `PATH`; which interpreter the shell has
   active does not matter, because the hooks run through uv.
+- The environment for `pytest -m arcpy` is open, see B23 in the design record: no test
+  carries the marker yet, and the first ones arrive with the ArcPy adapter. Until then no
+  run needs `ag` or pytest beside ArcPy.
 
-The default `arcgispro-py3` environment is read-only, which is why the clone exists.
+## Running legacy scripts
+
+The legacy packages at the repository root (`generalization/`, `data_orchestrator/`,
+`composition_configs/` and the rest) are not installed into any environment;
+`pyproject.toml` installs only `src/ag`. A script among them runs when four things hold:
+
+| requirement | why |
+|---|---|
+| the ArcGIS Pro interpreter | the scripts import ArcPy, which `.venv` does not have |
+| the repository root on the import path | the scripts import the legacy packages by their top-level names |
+| the repository root as the working directory | `paths.py` reads `.env` from the working directory |
+| a `.env` in the repository root | `paths.py` and the configuration modules require the variables listed in `.env.example` |
+
+Create `.env` once per clone by copying `.env.example` and filling in your own paths, without
+quotes: `paths.py` keeps quote characters as part of the value. `PYTHONPATH` is the clone's
+root. `.env` is ignored by git.
+
+From a terminal in the repository root, run the script as a module, with dots in place of
+slashes and no `.py`. The interpreter path below is the team's usual ArcGIS Pro install; if
+the command is not found, check where ArcGIS Pro is installed on your machine.
+
+```
+C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3\python.exe -m generalization.n100.road.data_preparation_2
+```
+
+`-m` puts the working directory on the import path, so nothing else is needed. Running the
+file by its path puts only the script's own folder there, and the first legacy import fails
+unless `PYTHONPATH` is set to the repository root, as the VS Code terminal opt-in does. For
+VS Code, see [VS Code setup](vscode.md).
 
 ## Editors
 
 An editor formats and analyses with whatever copy of a tool it finds, usually its own
 bundled one or a global install, not the version pinned in `pyproject.toml`. Point it at
 `.venv` so that what it writes on save is what the hooks accept. The same applies to any
-editor; the committed settings cover VS Code.
+editor; the committed settings cover VS Code. Which interpreter runs a script is a separate
+choice (see [running legacy scripts](#running-legacy-scripts)).
 
-**VS Code.** `.vscode/extensions.json` recommends Python, Pylance and Ruff;
-`.vscode/settings.json` makes ruff the formatter for every Python file and formats on save.
-Both files are committed; the rest of `.vscode/` is ignored. Select the interpreter per task:
-`.venv` for `src/ag`, `tests/` and `tools/`; the cloned ArcGIS Pro environment for the legacy
-packages, `tests_legacy/`, scratch scripts and `pytest -m arcpy`. Nothing else is configured
-by hand: type checking, the strict scope and the ArcPy stub come from `pyproject.toml`, which
-Pylance reads. The Ruff extension's `importStrategy` is `fromEnvironment`: it takes ruff from
-the selected interpreter's environment, so it is the pinned one when `.venv` is selected and
-the extension's bundled one under the Pro interpreter; that is harmless, because ruff is
-force-excluded from the legacy scope and does nothing there.
+**VS Code.** The committed `.vscode/` files, the extensions, choosing the interpreter, running
+scripts and the optional terminal setting are in [VS Code setup](vscode.md).
 
 **What you see.** Under `.venv`, `import arcpy` in a legacy file is reported as unresolved and
 gets no completion; switch to the Pro interpreter for that work. A developer with no ArcPy

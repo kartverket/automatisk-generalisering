@@ -53,6 +53,7 @@ where two of them described the same thing and neither declared which was author
 | [0012](decisions/0012-identities-are-declared-centrally.md) | Sources and products are declared once, centrally, as symbols |
 | [0013](decisions/0013-tuning-is-base-plus-one-delta.md) | Tuning is base plus one delta, with no resolution mechanism |
 | [0014](decisions/0014-runtime-injected-parameters.md) | Runtime-injected parameters are recognised by a marker base class |
+| [0015](decisions/0015-attribute-predicates-are-structured-leaves.md) | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |
 
 **0001–0010** were extracted in one pass from design documents written earlier, not argued one at
 a time over months — read them as the reasoning behind a single design, not as a decision log.

@@ -44,28 +44,13 @@ guidance).
 
 ## A2. Predicates
 
-**A2.1** `Attr` becomes **structured leaves** — `Attr.cmp(field, op, value)`,
-`Attr.in_(field, values)`, `Attr.is_null(field)` — with `Attr.raw(cql)` as a rare, greppable
-escape hatch guarded by a call-site count test.
+**A2.1** moved to ADR-0015 §Decision and the `ports/predicates.py` module docstring
+(2026-10-07, slice 1a). `destination:` ADR-0015.
 
-Rationale: an opaque CQL2 string forces every adapter to write a parser before it can quote
-identifiers correctly (`AddFieldDelimiters` differs by workspace type), and it admits
-expressions no adapter can compile. The template already contains two — `Attr("... in (select
-... from merge_report)")` at `operations/road/__init__.py:678` and `:942` are subqueries against
-a `ScratchHandle`.
-**`Attr.cmp`'s operator set** *(decided 2026-09-21)*: `=`, `<>`, `<`, `<=`, `>`, `>=` and `LIKE`;
-`value` is an `AttributeValue` other than `None`, and a null test goes through `Attr.is_null`,
-because `= NULL` is never true in SQL and no adapter should have to special-case it.
-`destination:` new ADR; amends ADR-0001.
+**A2.2** moved to ADR-0015 §Context and §Decision (2026-10-07). `destination:` ADR-0015.
 
-**A2.2** Three independent needs converged on `Attr.in_`: the predicate design itself, the 39
-`deleteRow()` sites (which become `select(where=~Attr.in_(id, ids))`), and `key.where_in` in the
-work-key API. A fourth arrived later — see A17.7.
-`destination:` same ADR as A2.1.
-
-**A2.3** Known limit: this catches structure and types at import, not wrong field names. Schema
-declarations on handles would catch those. Deferred, and additive to A2.1.
-`destination:` same ADR as A2.1, as a stated non-goal.
+**A2.3** moved to ADR-0015 §Consequences, as the stated non-goal (2026-10-07).
+`destination:` ADR-0015.
 
 ## A3. Graph port
 
@@ -2553,8 +2538,48 @@ to is a partitioned stage (or ingest before `lineage_id`), with parents a partit
 `destination:` `02-runtime.md` §2.3 for decision 3; `ports/geometry_ops.py` for decision 2; T3.4
 for decision 1.
 
+**B22. Which handles a predicate may name.** Found in the review of slice 1a's port values,
+2026-10-08. `Spatial.relate_to` is a handle inside a value: no `In` annotation sees it, the
+dependency graph derives from `OperationCall.inputs` and `outputs` only, and ADR-0011's
+own-handles check walks those same parameters. An operation body can therefore build
+`Within(SomeStage.roads)` from another stage's class attribute, and the graph and the fan-out
+halo would miss that read. The rule is unstated anywhere in the record. Proposed rule: an
+operation reaches a dataset only through a handle it was handed, an `In` or `Out` parameter
+of its own call or internal scratch from its own scope, and a predicate's `relate_to` must be
+one of those. Proposed enforcement point: the lineage facade (T4.3), which sees every port
+call and its arguments and can match a handle embedded in a predicate against the handles of
+the current call; a static scan of operation bodies for `Class.attribute` handle references
+is the cheaper partial check. Not enforced in slice 1a; `ports/predicates.py` says the check
+does not see the handle.
+
 **B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
 creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
 and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-item, ADR or port
 method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
 (b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.
+
+**B23. The environment for `pytest -m arcpy`.** Opened 2026-10-09, due with slice 1b, when
+the first `arcpy`-marked tests (the conformance cases and the timing run) land. The run
+needs two things beside ArcPy: `ag` importable, and pytest at the version `pyproject.toml`
+pins. The team runs the default `arcgispro-py3` environment at a non-standard location
+and installs nothing into it; Esri's package manager treats it as read-only and a Pro
+upgrade replaces it. Legacy scripts and `tests_legacy/` need no install, so nothing is
+decided by them. Candidates, each unverified on the team's machines until tried:
+
+- (a) a `venv` created from the Pro interpreter with `--system-site-packages`, then
+  `pip install -e .` and the pinned pytest into it. Pinned, standard editable install,
+  nothing written into the Pro environment, rebuilt in a minute after a Pro upgrade. Unknown:
+  whether ArcPy's native libraries, found from the Pro environment's own directories, load
+  under the venv's redirected `python.exe`.
+- (b) a target folder outside the Pro environment holding the pinned pytest
+  (`uv pip install --target <dir> --python <pro python> pytest==<pinned>`; with `--target`
+  nothing is written into the Pro environment), run with the Pro `python.exe` and
+  `PYTHONPATH=src;<dir>`. Pinned, no venv and so no native-library unknown. Cost: `ag` comes
+  from `PYTHONPATH`, not an install.
+- (c) a clone of the environment with the project and pytest installed: known to work, and
+  the fallback; a multi-gigabyte environment per developer, recreated after every upgrade.
+
+Ruled out: `PYTHONPATH=src` with whatever pytest Pro bundles, because an unpinned pytest
+would run the one test bucket CI never sees. Settled by trying (a) and (b) on one Windows
+machine when the first marked test exists; the answer lands in
+`docs/contributing/toolchain.md` and `testing.md`, which say "open, see B23" until then.

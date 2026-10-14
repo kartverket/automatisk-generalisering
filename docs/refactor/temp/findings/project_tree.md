@@ -471,7 +471,7 @@ One directory, one row. "Expressible" means import-linter can state it without a
 | 2 | layers | inside `ag/generalization/` | `registry` > `pipelines` > `operations` > `helpers` > `tuning \| errors \| sources \| products \| classification_rules` (the bottom five independent of each other) | yes; see the note below the table |
 | 3 | forbidden | `ag/core/` | imports nothing else in `ag` | yes |
 | 4 | forbidden | `ag/ports/` | may import `ag.core.handles`, `ag.core.types`, `ag.core.injection`, `ag.core.errors` and nothing else in `ag` | **yes, because of departure 1**; with handles inside `core/operations.py` it was a convention |
-| 5 | layers | inside `ag/ports/` | `cartographic_ops` above `geometry_ops`, `table_ops`, `graph_ops` (03-architecture §4.3, ports stay acyclic) | yes |
+| 5 | layers | inside `ag/ports/` | `toolbox` above `cartographic_ops` above `geometry_ops | table_ops | graph_ops` (independent of each other) above `predicates` above `geometry | attributes | errors`; `row_shape` and `columns` join the bottom line when they land (03-architecture §4.3, ports stay acyclic; extended in slice 1a, 2026-10-08) | yes |
 | 6 | protected | `ag/adapters/` | importers: `ag.runtime`, `ag.orchestrator` | yes |
 | 7 | independence | `ag/adapters/*` | `arcpy`, `fakes`, `networkx`, `storage`, `cluster` do not import each other; `_shared` and `errors` are importable by all | yes |
 | 8 | forbidden, external | whole tree | `arcpy` imported only under `ag.adapters.arcpy` (widened 2026-09-21, §6.1); `networkx` only by `ag.adapters.networkx.graph_ops`; `shapely`, `boto3`, `minio`, `google` only under `ag.adapters` | yes. The narrower rule, that only `session.py` runs a tool, touches `arcpy.env` or names a vendor exception, is not an import rule; §6.1 says what enforces it |
@@ -680,6 +680,7 @@ first.
 | 6a | `runtime/compose.py` takes port instances, never an adapter name; `runtime/stage_ref.py` is the one import by string; `ag.adapters.fakes` importable by `runtime/local.py` only | §4 |
 | 7 | `lineage/` as a top-level package, with `work_key.py` inside it | absent from 03-architecture §7 because it postdates it; T3.2's "no home" finding |
 | 8 | **all domain code under `ag/generalization/`** (if you choose option B) | §2 |
+| 9 | `ports/attributes.py` holds `FieldName`, `AttributeValue`, `FieldType` and `Field`, below every port; `table_ops.py` keeps `Schema`, `Row` and the Protocol (slice 1a, 2026-10-07) | `predicates.py` names fields and values and `geometry_ops.py` imports it; with those names in `table_ops.py` the chain would break row 5 of §6, which independence checks through indirect imports |
 | — | `tests/conformance/` instead of `tests/contract/`; `tests/support/` added | §4 |
 
 `adapters/arcpy/errors.py` from the planned tree is not created: the errors a caller sees are in
