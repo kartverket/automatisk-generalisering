@@ -1,16 +1,16 @@
 # Libraries
 
 from dataclasses import dataclass
-from enum import Flag, auto
+from enum import Flag, StrEnum, auto
 
-from data_orchestrator_2.names_paths import ColumnName, FieldType
+from data_orchestrator_2.constants.common import FieldType
+from data_orchestrator_2.constants.values import ColumnName
 
 ######################
 # Classes
 ######################
 
 
-# What should the field be used for?
 class FieldUsage(Flag):
     """Stages at which a field is expected or retained; values may be combined."""
 
@@ -19,7 +19,6 @@ class FieldUsage(Flag):
     OUTPUT = auto()
 
 
-# Definition of a field, including its name, datatype, and usage.
 @dataclass(frozen=True)
 class FieldDefinition:
     """Catalog metadata for a field; requiredness is separate from usage."""
@@ -27,8 +26,11 @@ class FieldDefinition:
     name: ColumnName
     datatype: FieldType
     usage: FieldUsage
+
     required: bool = True
     system_field: bool = False
+
+    domain: type[StrEnum] | None = None
 
     def isUsedFor(self, usage: FieldUsage) -> bool:
         """Return whether any requested usage flag belongs to this field."""
@@ -41,7 +43,7 @@ class FieldDefinition:
 
 
 # Field registry, where all defined fields can be stored for easy access.
-class Fields:
+class FieldCatalog:
     """Reusable field definitions for dataset catalogs."""
 
     ADRESSENAVN = FieldDefinition(
@@ -112,6 +114,12 @@ class Fields:
         name=ColumnName.SHAPE,
         datatype=FieldType.GEOMETRY,
         usage=FieldUsage.INPUT | FieldUsage.PROCESSING | FieldUsage.OUTPUT,
+        system_field=True,
+    )
+    SHAPE_LENGTH = FieldDefinition(
+        name=ColumnName.SHAPE_LENGTH,
+        datatype=FieldType.DOUBLE,
+        usage=FieldUsage.PROCESSING | FieldUsage.OUTPUT,
         system_field=True,
     )
     SIDEANLEGGSDEL = FieldDefinition(

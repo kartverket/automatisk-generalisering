@@ -4,18 +4,18 @@ import time
 
 import arcpy
 
-from data_orchestrator_2.datasets import DatasetDefinition
-from data_orchestrator_2.fields import FieldDefinition, FieldUsage
-from data_orchestrator_2.names_paths import ColumnName
+from data_orchestrator_2.constants.values import ColumnName
+from data_orchestrator_2.runtime.dataset import Dataset
+from data_orchestrator_2.schemas.fields import FieldDefinition, FieldUsage
 
 ######################
 # Functionality
 ######################
 
 
-def remove_none_geometry(dataset: DatasetDefinition) -> str:
+def remove_none_geometry(dataset: Dataset) -> None:
     """Delete null-geometry rows and report the number removed."""
-    layer = arcpy.management.MakeFeatureLayer(str(dataset.getPath()), "del_lyr")
+    layer = arcpy.management.MakeFeatureLayer(dataset.path, "del_lyr")
     try:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view=layer,
@@ -27,16 +27,18 @@ def remove_none_geometry(dataset: DatasetDefinition) -> str:
     finally:
         arcpy.management.Delete(layer)
 
-    return f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Removed {removed} rows with None geometry."
+    print(
+        f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Removed {removed} rows with None geometry."
+    )
 
 
-def clean_columns(dataset: DatasetDefinition, usage: FieldUsage) -> str:
+def clean_columns(dataset: Dataset, usage: FieldUsage) -> None:
     """Delete unregistered or unused fields, preserving required and system fields.
 
     Combined usage flags retain fields marked for any requested stage.
     """
-    path = str(dataset.getPath())
-    definitions = {str(field.name).casefold(): field for field in dataset.fields}
+    path = dataset.path
+    definitions = {field.name.casefold(): field for field in dataset.definition.fields}
     actual_fields = arcpy.ListFields(path)
     removed = 0
 
@@ -48,4 +50,12 @@ def clean_columns(dataset: DatasetDefinition, usage: FieldUsage) -> str:
             arcpy.management.DeleteField(path, actual.name)
             removed += 1
 
-    return f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Removed {removed} columns not flagged for {usage}."
+    print(
+        f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Removed {removed} columns not flagged for {usage}."
+    )
+
+
+def prepare_final_dataset(dataset: Dataset) -> None:
+    """Perform final cleanup and preparation of the dataset before use."""
+    remove_none_geometry(dataset)
+    clean_columns(dataset, FieldUsage.OUTPUT)

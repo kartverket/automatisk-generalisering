@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from data_orchestrator_2.datasets import DatasetDefinition, Datasets
-from data_orchestrator_2.names_paths import ObjectType, Scale
+from data_orchestrator_2.constants.common import Scale
+from data_orchestrator_2.constants.featureClasses import FeatureClassName, ObjectType
+from data_orchestrator_2.schemas.datasets import DatasetCatalog, DatasetDefinition
 
 ######################
 # Classes
@@ -16,10 +17,10 @@ class PipelineDefinition:
 
     object_type: ObjectType
     scale: Scale
-    datasets: tuple[DatasetDefinition, ...]
+    datasets: dict[FeatureClassName, DatasetDefinition]
 
     def __str__(self) -> str:
-        dataset_names = ", ".join(ds.name for ds in self.datasets)
+        dataset_names = ", ".join(ds.name.value for ds in self.datasets.values())
 
         return (
             "\nPipelineDefinition("
@@ -29,14 +30,14 @@ class PipelineDefinition:
             "\n)\n"
         )
 
-    def getObjectType(self) -> ObjectType:
-        return self.object_type
+    def getDatasetNames(self) -> tuple[FeatureClassName, ...]:
+        return tuple(self.datasets.keys())
 
-    def getScale(self) -> Scale:
-        return self.scale
+    def getAllDatasets(self) -> tuple[DatasetDefinition, ...]:
+        return tuple(self.datasets.values())
 
-    def getDatasets(self) -> tuple[DatasetDefinition, ...]:
-        return self.datasets
+    def getDataset(self, name: FeatureClassName) -> DatasetDefinition:
+        return self.datasets[name]
 
 
 ######################
@@ -48,7 +49,7 @@ PIPELINES: dict[tuple[ObjectType, Scale], PipelineDefinition] = {
     (ObjectType.ROAD, Scale.N100): PipelineDefinition(
         object_type=ObjectType.ROAD,
         scale=Scale.N100,
-        datasets=(Datasets.ELVEG_AND_STI,),
+        datasets={FeatureClassName.ELVEG_AND_STI: DatasetCatalog.ELVEG_AND_STI},
     ),
 }
 

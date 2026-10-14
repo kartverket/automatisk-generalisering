@@ -7,8 +7,8 @@ from custom_tools.general_tools.validation import (
     fetch_existing_fields,
     has_data,
 )
-from data_orchestrator_2.fields import FieldUsage
-from data_orchestrator_2.pipelines import PipelineDefinition
+from data_orchestrator_2.runtime.pipeline import Pipeline
+from data_orchestrator_2.schemas.fields import FieldUsage
 
 ######################
 # Classes
@@ -65,18 +65,17 @@ class ValidationResult:
 ######################
 
 
-def validate_pipeline(
-    pipeline: PipelineDefinition, usage: FieldUsage
-) -> list[ValidationResult]:
+def validate_pipeline(pipeline: Pipeline, usage: FieldUsage) -> list[ValidationResult]:
     """Inspect every dataset for rows and fields expected at a usage stage.
 
     Missing optional fields are allowed; inspection does not alter the dataset.
-    ArcPy inspection errors propagate to the caller.
+    ArcPy inspection errors are handled by the shared validation helpers.
     """
     results: list[ValidationResult] = []
 
-    for ds in pipeline.getDatasets():
-        validation = ValidationResult(dataset_name=ds.getName(), path=str(ds.getPath()))
+    for ds in pipeline.datasets.values():
+        definition = ds.definition
+        validation = ValidationResult(dataset_name=definition.name.value, path=ds.path)
 
         validation.exists = feature_class_exists(validation.path)
 
@@ -86,7 +85,7 @@ def validate_pipeline(
             current_fields = fetch_existing_fields(validation.path)
 
             expected = {
-                str(field.name).casefold(): field for field in ds.getFieldsFor(usage)
+                field.name.casefold(): field for field in definition.getFieldsFor(usage)
             }
             actual = {field.name.casefold(): field for field in current_fields}
 

@@ -1,26 +1,20 @@
 # Libraries
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
-from data_orchestrator_2.fields import FieldDefinition, Fields, FieldUsage
-from data_orchestrator_2.names_paths import (
-    ColumnName,
-    FeatureClassName,
-    GeometryType,
-    ObjectType,
-    Scale,
-    get_feature_class_full_path,
-)
+from data_orchestrator_2.constants.common import GeometryType, Scale
+from data_orchestrator_2.constants.featureClasses import FeatureClassName, ObjectType
+from data_orchestrator_2.constants.values import ColumnName
+from data_orchestrator_2.schemas.fields import FieldCatalog, FieldDefinition, FieldUsage
 
 ######################
 # Classes
 ######################
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class DatasetDefinition:
     """Dataset schema and path derived from its source scale and object type."""
 
@@ -29,8 +23,7 @@ class DatasetDefinition:
     object_type: ObjectType
     geometry_type: GeometryType
     fields: tuple[FieldDefinition, ...]
-    path: Path = field(init=False)
-    _field_lookup: Mapping[str, FieldDefinition] = field(
+    _field_lookup: Mapping[ColumnName, FieldDefinition] = field(
         init=False, repr=False, compare=False
     )
 
@@ -41,21 +34,7 @@ class DatasetDefinition:
             raise ValueError(f"Dataset {self.name} contains duplicate field names")
 
         object.__setattr__(self, "fields", normalized_fields)
-        object.__setattr__(
-            self,
-            "path",
-            get_feature_class_full_path(
-                scale=self.source_scale,
-                object_type=self.object_type,
-                feature_class_name=self.name,
-            ),
-        )
         object.__setattr__(self, "_field_lookup", MappingProxyType(field_lookup))
-
-    @property
-    def field_lookup(self) -> Mapping[str, FieldDefinition]:
-        """Read-only lookup of field definitions by their catalog names."""
-        return self._field_lookup
 
     def __str__(self) -> str:
         fields = "".join(f"\n\t\t- {f.name}" for f in self.fields)
@@ -63,31 +42,25 @@ class DatasetDefinition:
             "\nDatasetDefinition("
             f"\n\tname={self.name},"
             f"\n\tgeometry_type={self.geometry_type},"
-            f"\n\tpath={self.path},"
             f"\n\tfields ({len(self.fields)}):{fields}"
             "\n)\n"
         )
 
-    def getName(self) -> FeatureClassName:
-        return self.name
-
-    def getGeometryType(self) -> GeometryType:
-        return self.geometry_type
-
-    def getFields(self) -> tuple[ColumnName, ...]:
+    def getFieldNames(self) -> tuple[ColumnName, ...]:
         """Return the names of all registered fields."""
-        return tuple(f.name for f in self.fields)
+        return tuple(field.name for field in self.fields)
 
-    def getField(self, field_name: str) -> FieldDefinition:
+    def getField(self, field_name: ColumnName) -> FieldDefinition:
         """Return a registered field or raise KeyError if it is unknown."""
-        return self.field_lookup[field_name]
+        return self._field_lookup[field_name]
 
     def getFieldsFor(self, usage: FieldUsage) -> tuple[FieldDefinition, ...]:
         """Return fields carrying any of the requested usage flags."""
         return tuple(field for field in self.fields if field.isUsedFor(usage))
 
-    def getPath(self) -> Path:
-        return self.path
+    def hasField(self, field_name: ColumnName) -> bool:
+        """Return True if the dataset contains the specified field."""
+        return field_name in self._field_lookup
 
 
 ######################
@@ -95,7 +68,7 @@ class DatasetDefinition:
 ######################
 
 
-class Datasets:
+class DatasetCatalog:
     """Named dataset definitions available to pipelines."""
 
     ELVEG_AND_STI = DatasetDefinition(
@@ -104,26 +77,27 @@ class Datasets:
         object_type=ObjectType.ROAD,
         geometry_type=GeometryType.POLYLINE,
         fields=(
-            Fields.ADSKILTELOP,
-            Fields.ADSKILTELOPNUMMER,
-            Fields.ADRESSENAVN,
-            Fields.FELTOVERSIKT,
-            Fields.KONNEKTERINGSLENKE,
-            Fields.KRYSSDEL,
-            Fields.MEDIUM,
-            Fields.MOTORVEGTYPE,
-            Fields.OBJECTID,
-            Fields.OBJTYPE,
-            Fields.RUTEMERKING,
-            Fields.SHAPE,
-            Fields.SIDEANLEGGSDEL,
-            Fields.SUBTYPEKODE,
-            Fields.TYPEVEG,
-            Fields.UTTEGNING,
-            Fields.VEDLIKEH,
-            Fields.VEGKATEGORI,
-            Fields.VEGKLASSE,
-            Fields.VEGNUMMER,
-            Fields.VEGSTATUS,
+            FieldCatalog.ADSKILTELOP,
+            FieldCatalog.ADSKILTELOPNUMMER,
+            FieldCatalog.ADRESSENAVN,
+            FieldCatalog.FELTOVERSIKT,
+            FieldCatalog.KONNEKTERINGSLENKE,
+            FieldCatalog.KRYSSDEL,
+            FieldCatalog.MEDIUM,
+            FieldCatalog.MOTORVEGTYPE,
+            FieldCatalog.OBJECTID,
+            FieldCatalog.OBJTYPE,
+            FieldCatalog.RUTEMERKING,
+            FieldCatalog.SHAPE,
+            FieldCatalog.SHAPE_LENGTH,
+            FieldCatalog.SIDEANLEGGSDEL,
+            FieldCatalog.SUBTYPEKODE,
+            FieldCatalog.TYPEVEG,
+            FieldCatalog.UTTEGNING,
+            FieldCatalog.VEDLIKEH,
+            FieldCatalog.VEGKATEGORI,
+            FieldCatalog.VEGKLASSE,
+            FieldCatalog.VEGNUMMER,
+            FieldCatalog.VEGSTATUS,
         ),
     )
