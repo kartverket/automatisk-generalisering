@@ -1135,18 +1135,18 @@ def give_points_score(files: dict):
                 "Ikke motorveg": 3,
                 "Udefinert": 4,
             }
-            m_a = motorvegtype_score_map.get(road_a_m)
-            m_b = motorvegtype_score_map.get(road_b_m)
+            m_a = motorvegtype_score_map.get(road_a_m, 4)
+            m_b = motorvegtype_score_map.get(road_b_m, 4)
             m_sum = m_a + m_b
 
             vegkategori_score_map = {"E": 1, "R": 2, "F": 3, "K": 4, "P": 5, "S": 6}
-            v_a = vegkategori_score_map.get(road_a_v)
-            v_b = vegkategori_score_map.get(road_b_v)
+            v_a = vegkategori_score_map.get(road_a_v, 6)
+            v_b = vegkategori_score_map.get(road_b_v, 6)
             v_sum = v_a + v_b
 
             typeveg_score_map = {"kanalisertVeg": 1, "enkelBilveg": 2}
-            t_a = typeveg_score_map.get(road_a_t)
-            t_b = typeveg_score_map.get(road_b_t)
+            t_a = typeveg_score_map.get(road_a_t, 3)
+            t_b = typeveg_score_map.get(road_b_t, 3)
             t_sum = t_a + t_b
 
             row[3] = m_sum
@@ -2031,8 +2031,8 @@ def make_potential_connection_points_for_groups_without_rampid(
                     vegkategori = data.get("vegkategori")
                     motorvegtype = data.get("motorvegtype")
 
-                    score += motorvegtype_score_map.get(motorvegtype, 0)
-                    score += vegkategori_score_map.get(vegkategori, 0)
+                    score += motorvegtype_score_map.get(motorvegtype, 4)
+                    score += vegkategori_score_map.get(vegkategori, 6)
 
                 score = score / endpoint_count  # Average score for the subgroup
 
