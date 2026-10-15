@@ -27,11 +27,8 @@ def get_feature_class_full_path(
     scale: Scale,
     object_type: ObjectType,
     feature_class_name: FeatureClassName,
-    path_type: type[str] | type[Path] = Path,
-) -> str | Path:
+) -> str:
     """Build a feature class path from its source scale and object type."""
     gdb_path = get_gdb_path(scale, object_type)
     full_path = get_feature_class_path(gdb_path, feature_class_name)
-    if path_type is str:
-        return str(full_path)
-    return full_path
+    return str(full_path)

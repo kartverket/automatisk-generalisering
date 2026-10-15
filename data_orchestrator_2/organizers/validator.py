@@ -1,14 +1,19 @@
-# Libraries
+from __future__ import annotations
 
+# Libraries
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from custom_tools.general_tools.validation import (
     feature_class_exists,
     fetch_existing_fields,
     has_data,
 )
-from data_orchestrator_2.runtime.pipeline import Pipeline
+from data_orchestrator_2.constants.featureClasses import FeatureClassName
 from data_orchestrator_2.schemas.fields import FieldUsage
+
+if TYPE_CHECKING:
+    from data_orchestrator_2.runtime.pipeline import Pipeline
 
 ######################
 # Classes
@@ -19,8 +24,10 @@ from data_orchestrator_2.schemas.fields import FieldUsage
 class ValidationResult:
     """Schema and row checks for one dataset at a requested usage stage."""
 
-    dataset_name: str
+    dataset_name: FeatureClassName
     path: str
+    warning_message: str = ""
+    error_message: str = ""
     exists: bool = False
     has_rows: bool = False
     missing_fields: list[str] = field(default_factory=list)
@@ -59,6 +66,32 @@ class ValidationResult:
     def __bool__(self) -> bool:
         return self.success
 
+    def createWarningMessage(self) -> None:
+        if self.warning:
+            self.warning_message = f"Dataset {self.dataset_name} has extra fields: {', '.join(self.extra_fields)}"
+
+    def createErrorMessage(self) -> None:
+        if not self.success:
+            message_parts = []
+            if not self.exists:
+                message_parts.append("Dataset does not exist.")
+            if not self.has_rows:
+                message_parts.append("Dataset has no rows.")
+            if self.missing_fields:
+                message_parts.append(
+                    f"Missing fields: {', '.join(self.missing_fields)}."
+                )
+            if self.wrong_datatypes:
+                message_parts.append(
+                    f"Wrong datatypes: {', '.join(self.wrong_datatypes)}."
+                )
+
+            message = "\n".join(message_parts)
+
+            self.error_message = (
+                f"Dataset {self.dataset_name} failed validation.\n{message}"
+            )
+
 
 ######################
 # Functionality
@@ -73,9 +106,9 @@ def validate_pipeline(pipeline: Pipeline, usage: FieldUsage) -> list[ValidationR
     """
     results: list[ValidationResult] = []
 
-    for ds in pipeline.datasets.values():
-        definition = ds.definition
-        validation = ValidationResult(dataset_name=definition.name.value, path=ds.path)
+    for dataset in pipeline.datasets.values():
+        definition = dataset.definition
+        validation = ValidationResult(dataset_name=definition.name, path=dataset.path)
 
         validation.exists = feature_class_exists(validation.path)
 
@@ -108,6 +141,9 @@ def validate_pipeline(pipeline: Pipeline, usage: FieldUsage) -> list[ValidationR
                         f"expected={expected[field_name].datatype}, "
                         f"actual={actual[field_name].type}"
                     )
+
+        validation.createWarningMessage()
+        validation.createErrorMessage()
 
         results.append(validation)
 

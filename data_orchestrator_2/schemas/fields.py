@@ -11,6 +11,7 @@ from data_orchestrator_2.constants.values import ColumnName
 ######################
 
 
+# TODO: Usage skal bli i hvert datasett
 class FieldUsage(Flag):
     """Stages at which a field is expected or retained; values may be combined."""
 
