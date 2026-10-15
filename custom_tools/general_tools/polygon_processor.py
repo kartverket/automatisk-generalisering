@@ -14,6 +14,7 @@ from custom_tools.general_tools.custom_arcpy import join_field
 
 
 import logging
+
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -21,6 +22,7 @@ logging.basicConfig(
 
 
 logger = logging.getLogger(__name__)
+
 
 class PolygonProcessor:
     """
@@ -314,7 +316,6 @@ class PolygonProcessor:
         """
         # Add index to the join field in the output feature class
 
-  
         arcpy.management.AddIndex(
             self.output_polygon_feature_class,
             self.origin_id_field,
@@ -327,7 +328,6 @@ class PolygonProcessor:
             in_field=self.index_field_name,
             join_field=self.origin_id_field,
         )
-        
 
     def delete_origin_id_field(self):
         """

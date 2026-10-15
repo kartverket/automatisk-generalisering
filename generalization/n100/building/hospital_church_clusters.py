@@ -17,6 +17,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 import os
 import logging
+
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -24,6 +25,8 @@ logging.basicConfig(
 
 
 logger = logging.getLogger(__name__)
+
+
 # Main function
 @timing_decorator
 def main():
@@ -81,10 +84,6 @@ def hospital_church_selections():
         output_name=Building_N100.hospital_church_clusters___church_points___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
-
-
-    
-
 
 
 # Finding and removing hospital and church clusters

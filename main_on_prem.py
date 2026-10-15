@@ -253,7 +253,7 @@ def main():
 
     if os.environ.get("AREA"):
         object_name = (
-            f"outputs/{args.scale}_{args.obj}_{os.environ.get("AREA")}/output.gdb.zip"
+            f"outputs/{args.scale}_{args.obj}_{os.environ.get('AREA')}/output.gdb.zip"
         )
     else:
         object_name = f"outputs/{args.scale}_{args.obj}/output.gdb.zip"
@@ -267,7 +267,7 @@ def main():
         upload_results_to_scality(
             client=s3,
             bucket_name=bucket_name,
-            local_path=Path(f"/tmp/GIS_Files/ag_outputs/n100/final_outputs.gdb/"),
+            local_path=Path("/tmp/GIS_Files/ag_outputs/n100/final_outputs.gdb/"),
             object_name=f"outputs/{args.scale}_{args.obj}/final_outputs.gdb.zip",
         )
 

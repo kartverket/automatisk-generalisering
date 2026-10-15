@@ -127,9 +127,7 @@ def main(checkpoint: PipelineCheckpoint | None = None) -> None:
         ),
         (
             "removing_overlapping_polygons_and_points",
-            lambda: removing_overlapping_polygons_and_points.main(
-                data_orc=data_orc
-            ),
+            lambda: removing_overlapping_polygons_and_points.main(data_orc=data_orc),
         ),
         ("finalizing_buildings", finalizing_buildings.main),
         ("data_clean_up", data_clean_up.main),

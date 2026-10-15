@@ -18,6 +18,7 @@ from env_setup import environment_setup
 from file_manager.work_file_manager import PartitionWorkFileManager
 
 import logging
+
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -685,7 +686,9 @@ class PartitionIterator:
 
             if self.max_partition_count == previous_partitions:
                 candidate -= int(max_allowed * 0.01)
-                logger.info(f"Stable partition count. Reducing candidate to {candidate}")
+                logger.info(
+                    f"Stable partition count. Reducing candidate to {candidate}"
+                )
                 continue
 
             previous_partitions = self.max_partition_count
@@ -1495,7 +1498,7 @@ class PartitionIterator:
         total_str = str(timedelta(seconds=int(total_runtime)))
         estimate_str = str(timedelta(seconds=int(estimate_remaining)))
 
-        logger.info(f"\n[{now_str}] " f"Runtime: {total_str} | " f"Remaining: {estimate_str}")
+        logger.info(f"\n[{now_str}] Runtime: {total_str} | Remaining: {estimate_str}")
 
     def resolve_injected_io_for_methods(
         self,
@@ -2126,7 +2129,9 @@ class PartitionIterator:
         self.write_documentation(name="input_catalog", dict_data=self.input_catalog)
 
         if self.use_custom_partition_feature:
-            logger.info("\nUsing custom partition feature; skipping partition creation...")
+            logger.info(
+                "\nUsing custom partition feature; skipping partition creation..."
+            )
         else:
             logger.info("\nCreating Cartographic Partitions...")
             self.final_partition_feature_count = (

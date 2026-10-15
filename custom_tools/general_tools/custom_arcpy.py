@@ -414,8 +414,13 @@ def apply_symbology(
         )
 
 
-
-def join_field(in_feature_class: str, join_feature_class: str, in_field: str, join_field: str, fields: list[str] = None):
+def join_field(
+    in_feature_class: str,
+    join_feature_class: str,
+    in_field: str,
+    join_field: str,
+    fields: list[str] = None,
+):
     """
     Replaces arcpy.management.JoinField with a custom implementation because JoinField crashes in arcpy image
 
@@ -427,9 +432,7 @@ def join_field(in_feature_class: str, join_feature_class: str, in_field: str, jo
         fields: The fields from the join table that will be transferred to the input table based on a join between the input table and the join table.
             if None all fields except required fields and fields already in in_feature_class will be joined.
     """
-    output_field_names = {
-        field.name for field in arcpy.ListFields(in_feature_class)
-    }
+    output_field_names = {field.name for field in arcpy.ListFields(in_feature_class)}
     fields_to_join = [
         field
         for field in arcpy.ListFields(join_feature_class)
@@ -452,9 +455,7 @@ def join_field(in_feature_class: str, join_feature_class: str, in_field: str, jo
     source_fields = [in_field] + joined_field_names
     source_values = {
         row[0]: row[1:]
-        for row in arcpy.da.SearchCursor(
-            join_feature_class, source_fields
-        )
+        for row in arcpy.da.SearchCursor(join_feature_class, source_fields)
     }
 
     with arcpy.da.UpdateCursor(
@@ -466,17 +467,18 @@ def join_field(in_feature_class: str, join_feature_class: str, in_field: str, jo
             cursor.updateRow(row)
 
 
-
-def find_point_clusters(input_points: str, output_feature_class: str, search_distance: str):
+def find_point_clusters(
+    input_points: str, output_feature_class: str, search_distance: str
+):
     """
     arcpy.gapro.FindPointClusters does not exist on arcgis server,
     this function replaces it with a custom implementation using available ArcGIS Server tools.
 
     This custom implementation doesnt use a dbscan clustering method like FindPointClusters does.
-    Looking at the input data / results for pipeline building n100 
-    we only need to group hospitals and churches that are closer than 250 meters 
+    Looking at the input data / results for pipeline building n100
+    we only need to group hospitals and churches that are closer than 250 meters
     to get the same results as the original FindPointClusters tool.
-    If in the future we wish to do something similar on a different dataset or with different distance thresholds, 
+    If in the future we wish to do something similar on a different dataset or with different distance thresholds,
     the implementation may need to be adjusted accordingly.
 
     There is a second implementation of this in remove_overlapping overlapping polygons and points,
@@ -486,7 +488,7 @@ def find_point_clusters(input_points: str, output_feature_class: str, search_dis
 
     adds same fields as the original FindPointClusters tool would have added to avoid having to change downstream processes.
     """
-    #creating output fc
+    # creating output fc
     if not arcpy.Exists(output_feature_class):
         path_split = output_feature_class.split(".gdb/")
         out_path = path_split[0] + ".gdb"
@@ -501,7 +503,7 @@ def find_point_clusters(input_points: str, output_feature_class: str, search_dis
         in_features=input_points,
         out_feature_class=output_feature_class,
     )
-    
+
     arcpy.management.AddField(
         in_table=output_feature_class,
         field_name="CLUSTER_ID",
