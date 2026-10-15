@@ -811,7 +811,7 @@ def build_adjacency_with_medium(files: dict, lines, medium_field="medium"):
 
 
 def bfs_all_paths(
-    adjacency: Dict[Any, Iterable[Any]],
+    adjacency: defaultdict | dict,
     start: Any,
     target: Any,
     max_steps: int = 20,
@@ -875,7 +875,7 @@ def bfs_all_paths(
 
 
 def bfs_all_paths_with_prevous_neighbour_rule(
-    adjacency: Dict[Any, Iterable[Any]],
+    adjacency: defaultdict,
     start: Any,
     target: Any,
     max_steps: int = 20,
@@ -961,7 +961,7 @@ def bfs_all_paths_with_prevous_neighbour_rule(
 
 
 def bfs_all_ramps(
-    adjacency: Dict[Any, Iterable[Any]],
+    adjacency: Dict[Any, Iterable[Any]] | defaultdict,
     start: int,
     valid_oids: set,
     max_steps: int = 20,
@@ -1135,18 +1135,18 @@ def give_points_score(files: dict):
                 "Ikke motorveg": 3,
                 "Udefinert": 4,
             }
-            m_a = motorvegtype_score_map.get(road_a_m)
-            m_b = motorvegtype_score_map.get(road_b_m)
+            m_a = motorvegtype_score_map.get(road_a_m, 4)
+            m_b = motorvegtype_score_map.get(road_b_m, 4)
             m_sum = m_a + m_b
 
             vegkategori_score_map = {"E": 1, "R": 2, "F": 3, "K": 4, "P": 5, "S": 6}
-            v_a = vegkategori_score_map.get(road_a_v)
-            v_b = vegkategori_score_map.get(road_b_v)
+            v_a = vegkategori_score_map.get(road_a_v, 6)
+            v_b = vegkategori_score_map.get(road_b_v, 6)
             v_sum = v_a + v_b
 
             typeveg_score_map = {"kanalisertVeg": 1, "enkelBilveg": 2}
-            t_a = typeveg_score_map.get(road_a_t)
-            t_b = typeveg_score_map.get(road_b_t)
+            t_a = typeveg_score_map.get(road_a_t, 3)
+            t_b = typeveg_score_map.get(road_b_t, 3)
             t_sum = t_a + t_b
 
             row[3] = m_sum
@@ -1426,7 +1426,7 @@ def remove_small_roads_from_endpoints(files: dict, min_length: int = 500):
             point_oid = row[0]
             point_geom = row[1]
 
-            road_oid = None
+            road_oid = 0
             for road_id, road_geom in line_geom_dict.items():
                 if not point_geom.disjoint(road_geom):
                     road_oid = road_id
@@ -1527,7 +1527,7 @@ def group_endpoints_not_belonging_to_a_ramp_id(files: dict, endpoints_per_rampid
     endpoint_groups = {}
     key = "ramp_group_key_"
     counter = 0
-    valid_oids = ramp_oid_geom.keys()
+    valid_oids = set(ramp_oid_geom.keys())
 
     endpoint_oids_in_groups = set()
     for endpoints in endpoints_per_rampid.values():
@@ -2031,8 +2031,8 @@ def make_potential_connection_points_for_groups_without_rampid(
                     vegkategori = data.get("vegkategori")
                     motorvegtype = data.get("motorvegtype")
 
-                    score += motorvegtype_score_map.get(motorvegtype, 0)
-                    score += vegkategori_score_map.get(vegkategori, 0)
+                    score += motorvegtype_score_map.get(motorvegtype, 4)
+                    score += vegkategori_score_map.get(vegkategori, 6)
 
                 score = score / endpoint_count  # Average score for the subgroup
 
@@ -2046,6 +2046,7 @@ def make_potential_connection_points_for_groups_without_rampid(
             best_distance = float("inf")
             best_road_oid_final = None
             endpoint_adjacent_roads_final = defaultdict(set)
+            best_connection_point = None
             for subgroup in best_subgroups:
                 (
                     best_road_oid,
@@ -2675,7 +2676,7 @@ def _find_very_short_connection(
     candidate_geom: arcpy.PointGeometry,
     road_oid_geom: dict,
     adjacency: dict,
-    valid_adjacency_oid: dict,
+    valid_adjacency_oid: set,
 ):
     adjacency = _add_potential_points_to_adjacency(
         files=files,
@@ -2962,7 +2963,7 @@ def _add_new_line_to_adjacency(
     valid_adjacency_oid: set,
     line: arcpy.Polyline,
     road_oid_geom: dict,
-    new_line_oid: int,
+    new_line_oid: int | str,
     sr,
 ):
     """

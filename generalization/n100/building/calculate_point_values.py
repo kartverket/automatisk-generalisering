@@ -141,7 +141,8 @@ def find_undefined_nbr_values():
     Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.
     Then reclassify their NBR values and symbol_val values.
     """
-    custom_arcpy.select_attribute_and_make_feature_layer(
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         expression="symbol_val = -99",
         output_name=Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,

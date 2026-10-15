@@ -89,7 +89,7 @@ class ArcGisEnvironmentSetup:
     """
 
     _setup_done_globally = False
-    XY_TOLERANCE = 0.02
+    XY_TOLERANCE = 0.1
     XY_RESOLUTION = 0.01
 
     def __init__(

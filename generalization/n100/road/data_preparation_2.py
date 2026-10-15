@@ -62,6 +62,8 @@ from data_orchestrator.data_names import DataNames as dn
 from composition_configs.logic_config import RoadRampsConfig
 from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
+from typing import Callable
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 if require("SELECT_STUDY_AREA") == "False":
@@ -96,7 +98,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
                 f"{WorkFileManager._build_file_counter}"
             )
 
-    steps: list[tuple[str, object]] = [
+    steps: list[tuple[str, Callable]] = [
         (
             "data_selection_and_validation",
             lambda: data_selection_and_validation(

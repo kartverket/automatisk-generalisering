@@ -27,7 +27,12 @@ PIPELINE_INPUT = {
             dn.TuristHytte_N10,
         ],
         dn.matrikkel: [dn.bygning],
-        dn.railway: [dn.Bane_FKB, dn.Bane_N50, dn.JernbaneStasjon_BaneNor],
+        dn.railway: [
+            dn.Bane_FKB,
+            dn.Bane_N50,
+            dn.JernbaneStasjon_N50,
+            dn.JernbaneStasjon_BaneNor,
+        ],
         dn.road: [dn.elveg_and_sti, dn.vegsperring, dn.VegSti_N50],
     },
     dn.scale_n10: {
@@ -35,7 +40,11 @@ PIPELINE_INPUT = {
         dn.object_arealdekke_flate: {dn.area: [dn.Arealdekke_Test, dn.Fishnet_500m]},
         dn.object_veg_sti: {dn.road: [dn.elveg_and_sti, dn.vegsperring]},
         dn.object_bane: {
-            dn.railway: [dn.Bane_FKB, dn.Bane_N50, dn.JernbaneStasjon_BaneNor]
+            dn.railway: [
+                dn.Bane_FKB,
+                dn.Bane_N50,
+                dn.JernbaneStasjon_BaneNor,
+            ]
         },
         dn.object_ledning: {
             dn.area: [dn.ArealdekkeFlate_N50],
@@ -64,7 +73,7 @@ PIPELINE_INPUT = {
             dn.matrikkel: [dn.bygning],
             dn.railway: [
                 dn.Bane_N50,
-                dn.JernbaneStasjon_BaneNor,
+                dn.JernbaneStasjon_N50,
             ],
             dn.road: [dn.VegSti_N50],
         },
