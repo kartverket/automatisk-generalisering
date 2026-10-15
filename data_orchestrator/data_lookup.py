@@ -31,7 +31,8 @@ PIPELINE_INPUT = {
             dn.Bane_FKB,
             dn.Bane_N50,
             dn.JernbaneStasjon_N50,
-        ],  # endre tilbake til JernbaneStasjon_N50 fra JernbaneStasjon_BaneNor bare for første bygningskjøring
+            dn.JernbaneStasjon_BaneNor,
+        ],
         dn.road: [dn.elveg_and_sti, dn.vegsperring, dn.VegSti_N50],
     },
     dn.scale_n10: {
@@ -42,8 +43,8 @@ PIPELINE_INPUT = {
             dn.railway: [
                 dn.Bane_FKB,
                 dn.Bane_N50,
-                dn.JernbaneStasjon_N50,
-            ]  # endre tilbake til JernbaneStasjon_N50 fra JernbaneStasjon_BaneNor bare for første bygningskjøring
+                dn.JernbaneStasjon_BaneNor,
+            ]
         },
         dn.object_ledning: {
             dn.area: [dn.ArealdekkeFlate_N50],
@@ -72,7 +73,7 @@ PIPELINE_INPUT = {
             dn.matrikkel: [dn.bygning],
             dn.railway: [
                 dn.Bane_N50,
-                dn.JernbaneStasjon_N50,  # endre tilbake til JernbaneStasjon_N50 fra JernbaneStasjon_BaneNor bare for første bygningskjøring
+                dn.JernbaneStasjon_N50,
             ],
             dn.road: [dn.VegSti_N50],
         },
