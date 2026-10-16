@@ -1,15 +1,16 @@
-"""The two members of `types` that carry logic: the scale order and the classification
-lattice.
+"""The three members of `types` that carry logic: the scale order, the classification
+lattice and the data-type spatiality.
 
 What: `Scale.rank` orders the scales finest to coarsest with `RAW` finest, whatever the
-members' text order; `Classification.join` fails closed over every pair of members.
+members' text order; `Classification.join` fails closed over every pair of members;
+`DataType.spatial` answers for every member, stated one by one.
 """
 
 from __future__ import annotations
 
 from itertools import product
 
-from ag.core.types import Classification, Scale
+from ag.core.types import Classification, DataType, Scale
 
 FINEST_TO_COARSEST = (
     Scale.RAW,
@@ -86,3 +87,31 @@ def test_every_classification_permits_its_own_storage() -> None:
     `join` has not been taught about fails here, which is the tripwire."""
     for member in Classification:
         assert member.permits(member), member
+
+
+SPATIAL = (DataType.FEATURE_CLASS, DataType.RASTER)
+NON_SPATIAL = (DataType.TABLE, DataType.SYMBOLOGY)
+
+
+def test_spatial_truth_table() -> None:
+    """Stated member by member, so a new member forces a decision here."""
+    assert DataType.FEATURE_CLASS.spatial
+    assert DataType.RASTER.spatial
+    assert not DataType.TABLE.spatial
+    assert not DataType.SYMBOLOGY.spatial
+    assert len(DataType) == 4
+
+
+def test_every_data_type_answers_spatial() -> None:
+    for member in DataType:
+        assert member.spatial is (member in SPATIAL), member
+        assert member.spatial is not (member in NON_SPATIAL), member
+
+
+def test_the_data_type_literals_are_the_storage_spelling() -> None:
+    assert [member.value for member in DataType] == [
+        "feature_class",
+        "table",
+        "raster",
+        "symbology",
+    ]
