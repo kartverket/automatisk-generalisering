@@ -88,7 +88,7 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 | `types.py` | lift | nothing | 1a, first pull request (the architect's core lift) |
 | `injection.py` | lift | nothing | 1a, first pull request |
 | `operations.py` | lift, then extend | `ScratchHandle` (frozen, `path` `compare=False`, `namespace` in equality) matches A15.3's retained clause and A12.5a's needs exactly. `Direction`/`In`/`Out` exist; add the two markers A12.5a needs (`Mutates` for T2.8's in-place mutators, `ParentsOut` for A11.15) as `Direction` members with aliases, and make `@operation` reject them on an operation signature (an operation parameter is only ever `In` or `Out`). `@operation`, `OperationCall`, `ScratchScope`, `INJECTED` are decided (ADR-0011, ADR-0014) and lift as is. | 1a, first pull request: the split into `handles.py` and `operations.py`, the restamp guard, the internal-handle namespace, the markers, and the pyright-strict restructuring of `@operation` |
-| `pipeline.py` | lift | `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | Task B |
+| `pipeline.py` | lift, plus one guard | `StageInput.__post_init__` rejects a non-spatial object with role PROCESSING (A31.2), with a break-it case (A30); the `context_radius_m` docstring states that operations never see partitions (ADR-0003), so the radius is the one place a stage author reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can challenge. `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | Task B |
 | `data_objects.py` | lift | T7.2 rename (`lineage_roots()` becomes `origin_roots()`) | Task B |
 | `locations.py` | lift, one edit | `StorageRoots.for_environment` hardcodes bucket names; that is deployment configuration and moves to the settings object of §7.1. Path builders stay. | 1c (dump path), 5 (payloads) |
 | `graph.py` | lift | nothing | Task B |
@@ -480,7 +480,8 @@ and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evi
 
 **Contains.**
 - Lifts, each citing its verdict: `core/locations.py` (bucket names out to settings;
-  `core/data_objects.py` and `core/pipeline.py`, which it imports, arrive with Task B);
+  `core/data_objects.py` and `core/pipeline.py`, which it imports, arrive with Task B, the
+  latter with its non-spatial PROCESSING guard and radius docstring, A31.2);
   `staging/workspace.py` with the
   `sidecar` fix; `staging/scratch.py` with the collision check keyed on (call identity, layer)
   per A29 and T2.13, and its contract test: a repeated (trail, leaf) within one bound
@@ -668,8 +669,9 @@ is in the `dissolve` docstring without any XY-tolerance wording (audit §2.10).
   stays.
 - One operation over real data end to end: the fixture `simplify_polygons` and
   `build_displacement_feature` (buffer, merge, dissolve) run on a Windows extract of real building
-  and road data at K = 1, producing outputs, an edge log and the pod-local halves of the A16
-  assertions (which are complete at K = 1 with `D` unpromoted).
+  and road data at K = 1, producing a `StageOutput` from the buildings, a scratch handle from
+  the roads (A31.3), an edge log and the pod-local halves of the A16 assertions (which are
+  complete at K = 1 with `D` unpromoted).
 - **Fan-out and fan-in as signatures only.** `runtime/fan_out.py` and `runtime/fan_in.py` are
   written as typed stubs against the `Stage` lifted in 1c: the functions, their parameters, and
   the dataclasses that cross them (the partition payload manifest, the run metadata carrying K,
@@ -693,7 +695,8 @@ test needs); the ArcPy adapter raises `CapabilityError` when it is requested, un
 answered. The fixture `simplify_polygons` does not request it. **If `simplify` has still not
 merged when 2a and 2b close**, slice 3 runs `build_displacement_feature` alone (`buffer`,
 `merge`, `dissolve`): it is A15.5's worst case, covers `ONE + CARRY`, a two-input `CARRY` merge
-and `GROUP + MINT`, and needs nothing from `CartographicOps`. If `buffer` or `merge` slipped
+and `GROUP + MINT`, and needs nothing from `CartographicOps`. Its result is a scratch handle,
+not a `StageOutput`, unless the test stage declares the roads PROCESSING (A31.3). If `buffer` or `merge` slipped
 too, an operation over `select`, `explode_multipart` and `dissolve`, all landed by 2b, serves,
 at the cost of a less realistic subject.
 
@@ -750,8 +753,10 @@ guide should have covered is a guide bug.
 #### Slice 5: partitioning around the unchanged stage
 
 **Where partitioning belongs and why.** *What follows rests on an inference, not a finding.* The
-template's `Stage` carries `context_radius_m` and `InputRole` on `StageInput`, and the argument
-assumes that is everything partitioning needs from a declaration. That `Stage` has not been
+template's `Stage` carries `context_radius_m`, `InputRole` on each `StageInput` and, through the
+input's object, its `DataType` (spatial or not, A31.1); fan-out's four behaviours follow from
+role and spatiality (A31.2), and the argument assumes that is everything partitioning needs
+from a declaration. No field is added; one construction guard is. That `Stage` has not been
 lifted, and the review records one doubt about it already: it has no partition sizing input,
 and nothing else declares one (`template_review.md` §2). Slice 3 tests the inference by writing
 fan-out's and fan-in's signatures against the drafted `Stage`; if they need something it lacks,
@@ -767,14 +772,19 @@ small. The risk that partitioning is wrong is measured by the legacy track (T1.4
 
 **Contains.**
 - `runtime/fan_out.py`: partition geometry generation lifted from `PartitionIterator`'s
-  optimisation logic (not its iteration), K written to run metadata, payloads per partition and
-  once at the shared key for context (A6.6 applies the ingest map, mints nothing).
+  optimisation logic (not its iteration), K written to run metadata, and the transfer per
+  A31.2: payloads per partition for PROCESSING (with halo overlap) and for spatial CONTEXT
+  (filtered to within `context_radius_m` of any PROCESSING row first, intersecting rows at
+  0 m, then partitioned with the same overlap); once at the shared key for non-spatial CONTEXT;
+  non-spatial PROCESSING already rejected at declaration; rasters per B25 (A6.6 applies the
+  ingest map, mints nothing).
 - `runtime/ingest.py` (T3.4): the three-way copy-or-map rule, the four-column ingest map,
   disjoint raw ranges; cold start as an empty incoming column (A22). B9 decides whether map-only
   is reachable.
 - `orchestrator/dispatch.py` (T3.3): the run-scoped minter counter and dispatch registry.
-- `runtime/fan_in.py`: centroid ownership (A6.1-A6.5) in one shared helper, non-spatial outputs
-  by id, K-way log merge and `DROPPED` promotion (T5.1), completeness assertions (T5.2),
+- `runtime/fan_in.py`: centroid ownership (A6.1-A6.5) in one shared helper, halo copies of
+  PROCESSING rows discarded, non-spatial outputs by id (their rows trace to PROCESSING rows,
+  A31.3), K-way log merge and `DROPPED` promotion (T5.1), completeness assertions (T5.2),
   origin-closure check (T5.3), ownership recomputation (T5.4), all appending here (7.4).
 - T3.7 foreign-id guard at stage entry folded into A13's check, and again at fan-in.
 - `adapters/storage/s3.py`, `gcs.py`; `staging/transfer.py`'s `stage_down`/`stage_up` with pack
@@ -799,9 +809,9 @@ is caught by T3.7(a).
 **Size.** Three to four weeks. The largest slice, and the one with the most decided text to
 implement rather than design.
 
-**Review hard.** Fan-in emits no `DROPPED` for discarded context copies (A6.5); no ownership
-field ever appears in the data (A6.1); the record format carries no own/context flag (A16.1);
-partition pods reach only their own payload.
+**Review hard.** Fan-in emits no `DROPPED` for discarded halo copies (A6.5); no ownership
+field ever appears in the data (A6.1); the record format carries no own/halo-copy flag (A16.1);
+partition pods reach only their own payload and the shared non-spatial payload.
 
 #### Slice 6: migration of the first real stages
 
@@ -900,7 +910,9 @@ restructuring). Task B then lifts the rest it needs, each module citing its verd
 `template_review.md`: `core/data_objects.py`, `pipeline.py`, `graph.py`, `policy.py`,
 `findings.py`, `validation.py`. All six are "keep as is" or "keep with changes" with the changes
 listed, so the lift is mechanical, and none of them is `core/operations.py`, which no hand-off
-touches. Files: `src/ag/core/validation.py`, `tests/unit/core/test_validation.py`, and
+touches. `pipeline.py`'s one change: `StageInput.__post_init__` rejects a non-spatial object
+with role PROCESSING (A31.2), with a break-it case (A30), and the `context_radius_m` docstring
+carries A31.2's radius sentence. Files: `src/ag/core/validation.py`, `tests/unit/core/test_validation.py`, and
 purpose-built minimal fixture stages with portless operations beside the tests, because the
 example pipelines import `ag.ports` and stay inert until 1c. Implement `check_stage_graph_acyclic` (Kahn over
 `graph.derive_stage_dependencies`, report cycle members and the inducing object chain),
@@ -1446,7 +1458,8 @@ step and T0.4 (B9); the lineage query API and edge storage format (T6.1, T6.2); 
 `cartography/` package; any engine adapter beyond ArcPy and the fake; NFS substrate; trail
 elision (`render_trail` errors deliberately); `dissolve_multipart` and an unsplit method (no
 caller until migration reaches them); the displacement declaration (B11); GraphOps
-dataset-awareness (B2 stays open); `StyleOps`; resumability; a per-stage backend override
+dataset-awareness (B2 stays open); `SYMBOLOGY` inputs and how `displace_features` receives one
+(A31.5, B11); resumability; a per-stage backend override
 (the template names the extension point and says not to build it).
 
 ---

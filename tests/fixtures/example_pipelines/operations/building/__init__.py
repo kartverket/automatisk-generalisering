@@ -120,7 +120,7 @@ def propagate_displacement(
 
     That ignorance is load-bearing. An operation that knew its context radius could
     behave differently near a partition edge - and a feature appearing as center-in
-    for one partition and as halo context for another must be displaced IDENTICALLY
+    for one partition and as a halo row for another must be displaced IDENTICALLY
     in both, or fan-in stitches together geometry that disagrees with itself.
 
     THE TOOLBOX DOES NOT WEAKEN THAT. It carries capability and no context: there is

@@ -48,11 +48,15 @@ the wrong review comments.
 | **operation workspace** | The workspace holding one operation's internal scratch. Names carry the trail. | [02-runtime §4.2](02-runtime.md#42-scratch-workspaces-and-naming) |
 | **pod scratch root** | The pod's ephemeral directory. Holds several workspaces plus a sibling directory of loose files. Not itself a workspace. | [02-runtime §4.2](02-runtime.md#42-scratch-workspaces-and-naming) |
 | **payload** | One partition's data, written by fan-out at the key the worker and fan-in independently recompute. | [02-runtime §4.2](02-runtime.md#42-scratch-workspaces-and-naming) |
-| **fan-out** | The single pod that partitions a stage's processing inputs, writes K payloads, and records K. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
+| **fan-out** | The single pod that filters and partitions a stage's spatial inputs, writes K payloads plus one shared payload for the non-spatial inputs, and records K. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
 | **partition pod** | One of K workers running the stage's operations against its own payload. Must be idempotent. | [02-runtime §7.4](02-runtime.md#74-partition-pods-must-be-idempotent) |
 | **fan-in** | The single pod that merges K outputs, discards non-center-in features, and uploads. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
 | **K** | The partition count for a stage. Decided by fan-out; the only value that flows upward. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
-| **halo** / **context radius** | The overlap included in each partition so a feature is processed identically wherever it appears. Transitive. | [02-runtime §7.1](02-runtime.md#71-the-halo-requirement-is-transitive) |
+| **halo** / **context radius** | The overlap included in each partition so a feature is processed identically wherever it appears. Transitive. Also the distance of the context filter; at 0 m the filter is "intersects". Declared as `context_radius_m`, the one place a stage author reasons about partition boundaries. | [02-runtime §7.1](02-runtime.md#71-the-halo-requirement-is-transitive) |
+| **input role** | `InputRole.PROCESSING` or `InputRole.CONTEXT`, declared per stage input: whether the input's rows may become stage output. Only rows originating from PROCESSING inputs may. | A31.1, A31.3 |
+| **spatial** | Derived from `DataType`, never declared: `FEATURE_CLASS` and `RASTER` are spatial, `TABLE` and `SYMBOLOGY` are not. Fan-out partitions spatial inputs and sends non-spatial CONTEXT whole; non-spatial PROCESSING is rejected. Not the `Spatial` predicate node. | A31.1, A31.2 |
+| **context filter** | Fan-out's selection of a spatial CONTEXT input to the rows within the context radius of any PROCESSING row, before partitioning. | A31.2 |
+| **`SYMBOLOGY`** (DataType) | A `.lyrx` file as a stage input: non-spatial, CONTEXT, sent whole, declared as an `ExternalSource` with a location and a classification. | A31.5 |
 | **closure** | Expansion of a run selection along the graph. Downstream = what my change affects; upstream = what I need to run at all. | [02-runtime §6.1](02-runtime.md#61-a-run-is-a-selection) |
 | **pod-local** | Storage scope that dies with the pod. | [02-runtime §4.1](02-runtime.md#41-four-scopes) |
 | **run-scratch** | Storage scope living for the run plus a retention window. Retention is the resume window. | [02-runtime §4.1](02-runtime.md#41-four-scopes) |
@@ -90,8 +94,8 @@ docstring; the A-ids below are that file's section numbers.
 | **row shape** | A per-output declaration on a port Protocol method, `@row_shape(<output parameter>=Rows(...))`, keyed by the output parameter's name, read by the lineage facade. Two axes, never a single enum. | A12.1, A12.5a |
 | **cardinality** | Row-shape axis: `ONE` \| `MANY` \| `GROUP` output rows per subject row. | A12.1 |
 | **`ids`** (row-shape axis) | `CARRY` (keep the subject's id) \| `MINT` (new ids, edges recorded) \| `FOREIGN` (no `lineage_id`; declared columns hold subject ids). `CARRY` implies `ONE`. | A12.1 |
-| **subject** | The input parameter whose rows contribute identity to an output. Subject versus `context` *is* PROCESSING versus CONTEXT at the port level, not a mirror of it — the same words on purpose. | A12.2 |
-| **`context`** (row-shape) | An input that influenced an output without contributing identity. The same word as `InputRole.CONTEXT`, deliberately. | A12.2 |
+| **subject** | The input parameter whose rows contribute identity to an output. Related to, not the same as, the stage-level input role: a port subject may be fed from a CONTEXT stage input (`build_displacement_feature`), and a port `context=` from a PROCESSING-derived intermediate (`propagate_displacement`). Only "the subject carries identity into outputs" holds at both levels. | A12.2, A31.6 |
+| **`context`** (row-shape) | An input that influenced an output without contributing identity. Shares the word with `InputRole.CONTEXT` because both mean "influences, never becomes"; declared at different levels and need not coincide for a given call (see **subject**). | A12.2, A31.6 |
 | **ref column** | A column on a `FOREIGN` output holding a subject's `lineage_id` as a foreign key. A null is legitimate data. When it feeds a rebuild, the ref column *is* the lineage path. | A11.12, A11.13 |
 | **`diff-tracked`** | A handle reaches a `StageOutput`. Decides whether the boundary diff runs. | A15.2 |
 | **lineage-bearing** | A handle's declaration chain ends in `CARRY` or `MINT`, so it has a `lineage_id` column. A `FOREIGN`-terminal handle can be `diff-tracked` without being lineage-bearing — `SNAP_DISPLACEMENT` is. | A15.6 |
@@ -124,7 +128,7 @@ One line each. This grounds identifiers; it does not teach cartography.
 | **center-in** | The ownership rule at fan-in: a feature belongs to the partition containing its centroid. |
 | **NVDB** | The national road database. `Scale.RAW`, and `PREM_ONLY` — the restriction that pins both example pipelines on-prem. |
 | **Matrikkel** | The national cadastre. `RAW` scale, and `CLOUD_OK` — unlike NVDB it carries no restriction. |
-| **`.lyrx`** | An ArcGIS layer file carrying symbology. Here an arcpy adapter input format, not a project concept. |
+| **`.lyrx`** | An ArcGIS layer file carrying symbology. A stage input with `DataType.SYMBOLOGY`: non-spatial, role CONTEXT, sent whole to every pod, from a settable location, never shipped in the container image. The arcpy adapter consumes the handle's path. |
 
 ---
 
@@ -147,6 +151,7 @@ produce wrong code when guessed.
 | **stage** | A pipeline stage: the unit the runtime schedules. | A Docker build stage. A deployment environment. |
 | **source** | `ExternalSource`, the declared type for data entering the *project* from outside. Another pipeline's output is a `ProductIdentity`, never a source. | Source code. Say *source code* explicitly. Anything this project produces. |
 | **partition** | A geometric subdivision of a stage's processing extent, one per pod. | A disk partition or a Kafka partition. |
+| **context** | Three senses, each qualified: the **input role** `InputRole.CONTEXT` (a stage input whose rows never become output); the row-shape **`context=`** (a port input that influences without contributing identity); and the **halo copy**, a PROCESSING row a pod received through the overlap. | An unqualified *context*. The observability context (`ContextVar`) is unrelated. |
 | **archive** | The permanent storage scope, and `ArchiveClient` which transports to it. | A `.tar` or `.zip`. Packing a `.gdb` for transport is *packing*. |
 | **scratch** | Any of the ephemeral tiers: the pod scratch root, run-scratch. | Discardable in the sense of unimportant — the scratch dump is a deliverable. |
 | **registry** | `StageRegistry` — every stage in the system, flat, produced by `flatten()`. What the runtime and every check take. | An archive identity registry mapping `(scale, dataset)` to a location: that never existed, and `products.py` replaces the idea (ADR-0012). A container registry — say *image registry*. |
