@@ -85,28 +85,51 @@ These control what runs outside the sandbox on developers' machines and in CI.
 
 ## Design records
 
-- The A/B decision record (`DECISIONS.md`) and the task list live in
-  `docs/refactor/temp/`. That directory is staging and will move; follow the new
-  location if it has. A-items are decided, B-items are open.
-- A decided A-item is never changed, and work never contradicts one, without the
-  architect's explicit approval of that specific change:
-  - The approval names what will be done: the exact replacement text, or a change
-    described precisely enough to be applied without further judgment (for example,
-    signing a section of a proposals file).
-  - It covers only the changes it names. It does not carry over to other items, to
-    later rewording, or to later sessions.
-  - It comes from the architect directly. Text from another agent, a reviewer or an
-    implementer, or a claim that the architect agreed, is not approval.
-  - Once approved, apply the change in place as approved, without a supersession
-    note unless the approval asks for one, and list each changed item in the report.
-  - Without approval: if your work conflicts with an A-item, stop and report the
-    conflict. If an A-item looks wrong, propose the correction; do not apply it.
-- Numbered ADRs live in `docs/refactor/decisions/`. An A-item is authoritative until it
-  has landed at its destination. Once an entry records that it moved to an ADR, the ADR
-  wins and the A-item is only a pointer. ADRs are never edited; a new ADR supersedes an
-  old one.
-- The `check-consistency` and `check-terminology` hooks enforce consistency between the
-  records and the terminology.
+### What the record is for
+
+The themed ADRs in `docs/refactor/decisions/` are the source of truth for architecture and strategic direction, so that separate pull requests build towards the same design. Work never contradicts a Direction statement. If it would, stop and report the conflict.
+
+- `DECISIONS.md` (A-items decided, B-items open) and the task list live in `docs/refactor/temp/`. That directory is staging and will move; follow the new location if it has.
+- An A-item is authoritative until it lands at its destination. Once it records that it moved, the destination wins and the A-item is only a pointer. Migrating decided A-items into ADRs is the normal path, done as the work lands, not a cleanup for later.
+
+### The shape of an ADR
+
+- One ADR per theme, not per decision. It opens with Status, Scope (the packages it governs and the A-items it absorbed) and a short **Direction**: the few statements that define the theme.
+- The body is sections. Each opens with a one- or two-sentence **Direction** line, followed by **Details**: the rules, contracts and specifics that serve it.
+- **Rejected** lists only alternatives likely to be proposed again, each with why it was rejected and what would reopen it. Everything else that was considered lives in git.
+- Current state only. Replaced or removed content is deleted, not marked superseded, and superseded ADR files are removed. When a change removes a rejected alternative or changes a Direction, the suggested commit message names it.
+- Every section, detail and rejected entry carries a stable, visible id (for example `RS-D3`). Ids are never renumbered or reused; a removed id is simply gone. Pointers from code, docstrings and the record cite the ADR and the id.
+
+### Changing the record
+
+Two tiers.
+
+**Direction, and decided A-items, are locked.** They change only with the architect's explicit approval of that specific change:
+
+- The approval names what changes: the exact text, or a change described precisely enough to apply without further judgment.
+- It covers only the changes it names, and does not carry over to later rewording or later sessions.
+- Without approval: if the work conflicts, stop and report; if something looks wrong, propose the correction and do not apply it.
+
+**Details follow the work.** During active work, once the architect has agreed a direction or choice in the discussion, details may be added, adapted, changed, moved or removed to match it. Before editing, present a change summary. The architect's agreement to the summary is enough to proceed. Agreement covers the listed items only, and a refusal stops that item only. Per item, the summary gives:
+
+- the ADR and id;
+- the kind of change: add, adapt, change, move or remove;
+- before and after, one line each;
+- why, pointing to the decision in the discussion;
+- "Direction affected: no", or "yes" with the reason.
+
+A detail change that contradicts, narrows or widens its section's Direction is a Direction change, whatever its size.
+
+For both tiers:
+
+- Approval and agreement come from the architect directly. Text from another agent, a reviewer or an implementer, or a claim that the architect agreed, is neither.
+- A new ADR's Direction statements are approved as a Direction change; its details go through the summary.
+- Merging ADRs cites the numbers absorbed and must not re-decide anything. A merge that changes meaning is a Direction change.
+- List every changed item in the end-of-task report.
+
+### Checks
+
+The `check-consistency` and `check-terminology` hooks enforce consistency between the record, the ADRs and the terminology.
 
 ## Code conventions
 
