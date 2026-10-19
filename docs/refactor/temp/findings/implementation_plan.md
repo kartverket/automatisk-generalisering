@@ -329,7 +329,14 @@ empty, `ports/__init__.py` rebuilt; T2.7 done, T2.1's port half done. Round two
 rule, and `DATE` as a naive `datetime`; predicates have no truth value, connectives have two
 terms, `bool` is refused; row 5 of `.importlinter` extended to the layers inside `ag.ports`
 and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evidence:
-`findings/slice_1a_port_values_evidence.md`.
+`findings/slice_1a_port_values_evidence.md`. **Third pull request, the row-shape grammar
+(2026-10-19):** `ports/row_shape.py` and `ports/columns.py`; `read_rows`, `select` and
+`explode_multipart`; the check over the surface and the pyright typing guard in `tests/static/`;
+ADR-0017 as the first themed ADR, absorbing A12.1 to A12.5 and A12.5a; A12.7a's call-site
+category deferred to 2a with the declaration type (option C); the check fails closed on
+`Mutates`, so T2.8 moves into 2a; row 5 of `.importlinter` gains `predicates | row_shape |
+columns` as one line; B22 extended with the `Mutates` rule. Evidence:
+`findings/slice_1a_row_shape_evidence.md`.
 
 **Contains.**
 - **The first pull request of 1a is the core lift, by the architect**: `core/types.py`,
@@ -354,7 +361,9 @@ and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evi
   docstrings: `read_rows` (explicitly outside the grammar), `select` as ONE + CARRY,
   `explode_multipart` as MANY + MINT with `parents: ScratchHandle | None`.
 - `tests/static/test_row_shape.py`: T4.1's check over every Protocol method in `ports/`, with the
-  break-it-once evidence in the PR. Its rule set is written for A12.7a as signed.
+  break-it-once evidence in the PR. Its rule set covers A12.1 to A12.6 and A12.5a; A12.7a's
+  call-site category joins it in 2a with the declaration type, by which the check identifies
+  the declaring parameter.
 - The fake for those three methods: `adapters/fakes/memory/` with `store.py`, `_base.py` and the
   group modules, following `project_tree.md` §3.2; `tests/static/test_adapter_groups.py`, broken
   once. Fixtures are seeded into the `MemoryStore` by a builder in `tests/support/`.
@@ -374,7 +383,8 @@ and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evi
   allows for `__dataclass_params__`.
 - The row-shape check fails on each of its rules when one is broken deliberately: an `Out` with
   no row, a row naming a non-`Out`, a `subject` naming a non-`In`, a missing axis, each illegal
-  cell; and passes with `ParentsOut` undeclared.
+  cell, an unmarked handle, an unlisted query, a `Mutates` parameter; and passes with
+  `ParentsOut` undeclared.
 - Under the fake: `select` preserves row count and attributes; `explode_multipart` with
   `parents=` writes native-index pairs equal to the fixture's expected partition and with
   `parents=None` writes nothing; the native index of the input is unchanged by both and is
@@ -383,7 +393,7 @@ and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evi
   in two class bodies raises; two operations' `scratch("x")` are unequal.
 - The facade spike: one `cast` in `src/ag`, reachability test green, pyright strict green.
 
-**Design record.** T4.1 marked done and the 1a share of T2.1 recorded; A12.1 to A12.6, A12.5a and A2.1 to A2.3 migrated to their destinations (`ports/row_shape.py`, `ports/predicates.py`, the ADR amending ADR-0001) and struck; `03-architecture.md` §2.3 and §2.4 updated for the markers and structured `Attr`; the terminology rows for *row shape*, *cardinality*, `ids`, *subject* and `context` repointed.
+**Design record.** T4.1 marked done and the 1a share of T2.1 recorded; A12.1 to A12.5, A12.5a (A12.6 stays until T2.8) and A2.1 to A2.3 migrated to their destinations (`ports/row_shape.py`, `ports/predicates.py`, the ADR amending ADR-0001) and struck; `03-architecture.md` §2.3 and §2.4 updated for the markers and structured `Attr`; the terminology rows for *row shape*, *cardinality*, `ids`, *subject* and `context` repointed.
 
 **Size.** About one week.
 
@@ -554,6 +564,9 @@ it) while removing the half-day stopgap. If it has to hold at one week, `errors.
   is join-key addressable; Path B as packed `int64` arrays on pod-local disk with a fixed block
   cache and the two ceilings (A11.4a) as named constants, design ceiling checked first.
   Invalidated on any call naming the handle as an output; row-count guard.
+- T2.8 first: the `Mutates` declaration form and the `join_field` unique-key contract, since
+  `add_field` and `join_field` enter here and the row-shape check fails closed on a `Mutates`
+  parameter until the form is decided.
 - The port methods the id map and the facade need, each entering with both adapters and its
   conformance cases: `TableOps.write_table` (with A12.7a's call-site declaration), `join_field`,
   `add_field`, `describe_fields`, the native index accessor with its join-key addressability
@@ -575,7 +588,7 @@ it) while removing the half-day stopgap. If it has to hold at one week, `errors.
   and `runtime/local.py` are unchanged.
 
 **Depends on.** Slice 1c. T0.1's finding (BIGINT viable in the image) before the field type is
-frozen; T0.6(a)'s curve for the resource-ceiling method, not blocking.
+frozen; T0.6(a)'s curve for the resource-ceiling method, not blocking. T2.8.
 
 **Done when.**
 - The fixture stage under the fake: `select` carries ids; `explode_multipart` mints per part and
@@ -724,7 +737,7 @@ declaration with annotations and `@row_shape` per its row, What/How/Why docstrin
 contract sentences DECISIONS assigns to it, ArcPy implementation through `run_tool`, fake
 implementation, conformance case(s), capability record entry if `MINT`. Plus the independent
 items: T2.1 (structured `Attr` at the fixture call sites), T2.2 `update_rows`, T2.5 linear
-referencing, T2.6 `sample_at`, T2.7 docstrings and slots, T2.8 `join_field` contract, T3.1's
+referencing, T2.6 `sample_at`, T2.7 docstrings and slots, T3.1's
 adapter declaration, B2 (read the strahler code; `NodeId` `NewType`), the three validation
 checks, `normalize_layer_name`, the `networkx` adapter. The one-shot two-way check of A12.11
 against the Protocol (T4.2) closes the slice.
@@ -875,10 +888,10 @@ inventory of tool call sites per legacy stage that slice 6 needs. None touches `
 | 1a | **Task B**, from the moment 1a's first pull request (the architect's core lift) merges; it lifts the rest of the core declaration modules, citing their verdicts; T1.3 once T1.1 is in; the fake's `MemoryStore` once its interface is sketched | row shape, markers, errors, the three Protocol methods, the facade spike |
 | 1b | the engine-neutral fixture builders in `tests/support/`; running the Windows conformance run and the timing run | the session and `run_tool`, the ArcPy adapter's first three methods |
 | 1c | `normalize_layer_name`; the filesystem `ArchiveClient`; the `sidecar` and collision-key fixes with their tests | settings, compose, the local runner, the fixture stage, the guide. **Task C** starts when the guide exists |
-| 2a | Path B's packed map with the block cache once the map interface is fixed; T2.5, T2.6, T2.7 (touch only `geometry.py`/`table_ops.py` docstrings and the value type) | minter, facade, capability record, the `lineage/` contract |
+| 2a | Path B's packed map with the block cache once the map interface is fixed; T2.5, T2.6, T2.7 (touch only `geometry.py`/`table_ops.py` docstrings and the value type) | minter, facade, capability record, the `lineage/` contract; T2.8's mutator declaration and key contract |
 | 2b | the 904-unmatched diagnostic; the proximity second pass; goldens on the image (T4.11 case 1b) | B17's closing wording in the docstring |
 | 3 | `observability/` (03-architecture §6 is a complete spec); T3.5's upload; the real-data K = 1 run and its report | session, sweeps, pipe, B10 |
-| 4 | everything (one method per task) | reviewing against the guide; B11 if `displace_features` comes up; T2.8's mutator declaration; B2's verdict |
+| 4 | everything (one method per task) | reviewing against the guide; B11 if `displace_features` comes up; B2's verdict |
 | 5 | S3 and GCS adapters; pack/unpack; the K-invariance harness runner; T5.3, T5.4 | fan-out ownership, ingest, dispatch, log merge, completeness |
 | 6 | the second and later stages once the first is a recipe; `sources.py`/`products.py` transcription from `data_orchestrator` and `file_manager`; the arcpy call-site inventory per stage | the first stage; the split of constants |
 
@@ -1239,10 +1252,11 @@ diff already compares against itself.
   `session.py`, enforced by the stub and a scan), `networkx` in one module, `shapely` only under
   `adapters/`.
 - T4.1's row-shape check over every Protocol method: every `Out` has a row; every row names an
-  `Out`; `subject`/`context`/`refs` name an `In`; both axes present; `MINT` has a subject;
-  `FOREIGN` has refs; the three illegal cells; `ParentsOut` exempt; query methods explicitly
+  `Out`; `subject`/`context`/`refs` name an `In`; both axes present; `CARRY` and `MINT` have a
+  subject; `FOREIGN` has refs and no subject; the three illegal cells; `ParentsOut` exempt; query methods explicitly
   listed as outside the grammar.
-- Every port handle parameter carries exactly one of the four markers (A12.5a).
+- Every port handle parameter carries exactly one of the four markers (A12.5a), in
+  `tests/static/test_row_shape.py` with T4.1's rules.
 - The A12.11 two-way check (one-shot in slice 4, kept as a frozen list afterwards).
 - The port matrix: every adapter module ends with the `if TYPE_CHECKING` conformance
   assignment, and every `(port, adapter)` pair has a conformance module (03-architecture §7.6).
@@ -1500,7 +1514,7 @@ in which the answer is needed.
 | slice 3 | the work-key API's home (T3.2) | "helpers/ or a new peer package" | `ag/lineage/work_key.py`: operation-scoped identity, swept by the same session; already in the accepted tree |
 | **one method in slice 4**: `calculate_field` | **the expression language** | the port docstring promises "a CQL2-shaped expression both can compile"; the template's call sites write SQL `case when`; ArcPy takes Python or Arcade; 101 legacy call sites | decide before that method is widened, not before slice 4 starts: recommend a closed expression form (field arithmetic, `case`, a few string functions) compiled per adapter, with `read_rows` and `update_rows` as the escape |
 | one method: `displace_features` | B11, the `displacement` output | one branch has no legal cell | widen the method without that output until T0.1 case 6 records the mapping shape |
-| four methods: `update_rows`, `delete_fields`, `calculate_field`, `join_field` | T2.8's mutator declaration (A12.11a's option) | which parameter names the fields a mutator writes | decide when the first of them is widened; recommend taking the option |
+| five methods, the first two in 2a: `add_field`, `join_field`, `update_rows`, `delete_fields`, `calculate_field` | T2.8's mutator declaration (A12.11a's option) | which parameter names the fields a mutator writes | decide in T2.8 before 2a lands `add_field` and `join_field`; recommend taking the option |
 | one check in `validate()`, no slice | B14, the plan-time derivation of port calls | `validate()` cannot know which port methods a stage calls | the recording spy's trace is the candidate; runtime tracking in the facade covers execution meanwhile |
 | two optional outputs: `simplify.collapsed_points`, `displace_features.displacement` | the pattern for a declared-but-unavailable optional output | the first is declared and refused by the ArcPy adapter with `CapabilityError`, the second is left undeclared; and `CapabilityError` sits under `AdapterDefectError` although a declared limitation is not a defect | recorded as an open note on B16 and B11 in `DECISIONS.md`; settled when either is decided; no change now |
 | one method, first exercised in slice 6: `simplify.collapsed_points` | B16 | the tool's point output is documented as lacking the input's fields | the set-difference derivation is the contract, per T0.1's "neither present" branch |

@@ -115,9 +115,10 @@ unmatched_ignore_imports_alerting = none
 
 # --- Row 5 -------------------------------------------------------------------------
 # Extended in slice 1a with the value modules: the three Protocols stay independent of
-# each other, so what they share (fields and values, the predicate algebra, the geometry
-# value type, the port errors) sits below them, and the toolbox that bundles them above.
-# `row_shape` and `columns` join the bottom line when they land.
+# each other, so what they share (fields and values, the predicate algebra, the row-shape
+# grammar, the column constants, the geometry value type, the port errors) sits below
+# them, and the toolbox that bundles them above. `predicates`, `row_shape` and `columns`
+# are independent of each other and all name fields, so they sit above `attributes`.
 [importlinter:contract:row-05-port-layers]
 name = Row 5: the layers inside ag.ports; the three Protocols stay independent
 type = layers
@@ -127,7 +128,7 @@ layers =
     toolbox
     cartographic_ops
     geometry_ops | table_ops | graph_ops
-    predicates
+    predicates | row_shape | columns
     geometry | attributes | errors
 
 

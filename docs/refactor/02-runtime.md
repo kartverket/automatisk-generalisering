@@ -831,6 +831,12 @@ should be able to say why it is here — the refactor keeps *deleting* checks by
 impossible, and the surviving set should read as a legible list of what the type system cannot
 express rather than as accumulated habit.
 
+**At the port surface**, every `Out` parameter of every port method declares its row shape, and
+a static test over the whole surface enforces the grammar, in CI rather than in `validate()`,
+because it is a property of the Protocols, not of a plan; a wrong `Rows` already fails when the
+Protocol is imported. The grammar and the check's rules are
+[ADR-0017](decisions/0017-row-shape-grammar.md) RS-1 to RS-4.
+
 **Inside a stage** — ScratchHandle level:
 
 1. Every operation declares at least one output. *An operation that consumes and produces

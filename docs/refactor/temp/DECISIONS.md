@@ -853,100 +853,24 @@ method); the lineage module docstring (the facade's use, (c) and (d)).
 
 ## A12. The `@row_shape` grammar
 
-**A12.1** `Rows(cardinality=..., ids=..., subject=... | refs=...)`. Two independent axes rather
-than a single enum, because one+new is a real declarable judgment that a single enum had no cell
-for.
+**A12.1** moved to ADR-0017 RS-1, RS-R1 and RS-R3, and the `ports/row_shape.py` module docstring
+(2026-10-19, slice 1a). `destination:` ADR-0017; `ports/row_shape.py`.
 
-- `cardinality` — rows per subject row: `ONE`, `MANY`, `GROUP`
-- `ids` — `CARRY` (keep the subject's id), `MINT` (new ids, edges recorded), `FOREIGN` (no
-  `lineage_id`; declared columns hold subject ids as foreign keys, so `refs={COL: "subject"}`
-  replaces `subject=`)
+**A12.2** moved to ADR-0017 RS-2 in its corrected form (2026-10-19, slice 1a).
+`destination:` ADR-0017; `ports/row_shape.py`.
 
-> *Renamed.* The second axis was `identity=`. `ProductIdentity` is older and more load-bearing,
-> and an unqualified "identity" in review could mean either. `ids=` says what the axis controls.
+**A12.3** moved to ADR-0017 RS-2 and RS-R2 (2026-10-19, slice 1a). `destination:` ADR-0017;
+`ports/row_shape.py`.
 
-Deliberately not naming a value `TRANSFORM`: that word was an `EdgeKind`, and `EdgeKind` is
-runtime-derived. Reusing it would blur declared against derived.
+**A12.4** moved to ADR-0017 RS-D4 (2026-10-19, slice 1a). `destination:` ADR-0017;
+`ports/row_shape.py`.
 
-| | CARRY | MINT | FOREIGN |
-|---|---|---|---|
-| **ONE** | legal | legal | legal |
-| **MANY** | **illegal** | legal | legal |
-| **GROUP** | **illegal** | legal | **illegal** |
+**A12.5** moved to ADR-0017 RS-4, `02-runtime.md` §8 and `tests/static/test_row_shape.py`
+(2026-10-19, slice 1a), with the subject rule stated for `CARRY` and `MINT` per A12.3.
+`destination:` ADR-0017; `02-runtime.md` §8; `tests/static/test_row_shape.py`.
 
-Three illegal cells, and the CI failure message states the reason:
-
-- `GROUP + CARRY` — many parents, one row; a scalar cannot hold a set. The founding argument for
-  the edge mechanism (A11.1).
-- `GROUP + FOREIGN` — same.
-- `MANY + CARRY` — **primary reason: this is the inheritance model A11.2 rejects.** Five split
-  pieces all keeping id 1 leaves the log unable to express a partial drop. Secondary: the id
-  repeats, breaking the 1:1 field cardinality that is the fan-out alarm (A9.1). *This grammar
-  rule and A11.2 are the same rule stated twice.*
-
-Together: **`CARRY` implies `ONE`.**
-
-Cost, to state at the declaration: `ONE + MINT` emits one edge per row, O(input rows) — the most
-expensive shape in the system, against one edge per group for `GROUP + MINT` and zero for
-`ONE + CARRY`. Not a reason to forbid it, but it should be a deliberate choice with the cost
-stated, or it becomes the default for anything that feels transformative and log volume grows on
-the wrong axis.
-
-> *Superseded (twice).* The grammar was first a single `SHAPE` enum of `PRESERVE / COLLAPSE /
-> SPLIT / NONE`; then `NONE` was dropped and `REFERENCE` and `EXPAND` added; then the whole enum
-> was replaced by these two axes. `REFERENCE` became `ids=FOREIGN` and `EXPAND` became
-> `MANY + FOREIGN`, both folding into the grid rather than remaining special cases.
-
-`destination:` new `ports/row_shape.py` module docstring; new ADR on lineage declaration.
-
-**A12.2** `subject` versus `context` at the port level is related to, not the same as,
-PROCESSING versus CONTEXT at the stage level (A31.6). A port `subject` names the input
-parameter whose rows carry identity into an output; a port `context` names an input that
-influenced the output without contributing identity. `intersection` output rows *are* pieces
-of the roads; the overlay influenced the result without contributing identity. Declaring both
-as subjects would make every admin polygon an ancestor of every road piece. A port `subject`
-may be fed from a CONTEXT stage input (`build_displacement_feature`), and a port `context=`
-from a PROCESSING-derived intermediate (`propagate_displacement`); what holds at both levels
-is that only the subject carries identity into outputs.
-
-> *Renamed.* The second was `reference=`, which collided with `snap(reference=…)` — a dataset
-> being snapped to, semantically close enough to blur. `context=` shares its word with
-> `InputRole.CONTEXT` because both mean "influences, never becomes".
-
-`destination:` `ports/row_shape.py`.
-
-**A12.3** `NONE` is dropped. The template contains no genuine aggregate output — every table
-write is per-feature or per-vertex — so every output declares a subject, and anything that cannot
-must be argued rather than defaulting to an escape hatch. Re-adding the member later is a
-one-line change.
-`destination:` `ports/row_shape.py`.
-
-**A12.4** Per-row behaviour comes from the parents table, not from the declaration: a dissolve
-group with one parent carries the id and emits no edge; only groups with ≥2 mint. Same for
-`MANY`. Methods that are mostly 1:1 in practice cost almost nothing, so no separate shape is
-needed for them. This is runtime behaviour *inside* a cell and is not an argument for legalising
-`GROUP + CARRY`.
-`destination:` `ports/row_shape.py`.
-
-**A12.5** CI check: every output parameter declares both axes; every `MINT` has a subject; every
-`FOREIGN` has refs; the three illegal cells are rejected with their specific reason; every
-subject and reference names a real input parameter. This replaces the type-checker guarantee the
-wrapper approach would have given, and it is what makes forgetting impossible.
-`destination:` `tests/unit/test_row_shape.py`; `02-runtime.md` §8.
-
-**A12.5a Port handle parameters carry a direction.** Port Protocol handle parameters are annotated
-`In` / `Out` from `core.operations`, plus a third marker for in-place mutators (T2.8) and a distinct
-**`ParentsOut`** marker for the parents out-param of A11.15. T4.1's check then rejects: an `Out`
-parameter with no `@row_shape` entry; a `@row_shape` key naming a parameter that is not `Out`; a
-`subject`, `context` or `refs` value naming a parameter that is not `In`. **`ParentsOut` is exempt
-from the first rule**: the parents table is a relation the facade consumes, not a row-shaped
-output, and it never gets a `Rows` declaration. Rejected: a parameter-name convention, and the
-"named by some declaration" rule, both for the reasons in `PROPOSALS-2026-09-14.md` §2.
-
-**Timing: the annotations are written with the ports, in T2.9, not in T4.1.** The ports are about
-to be written; annotating them afterwards means writing every signature twice. T4.1 adds the check
-against annotations that already exist, and breaks it on purpose once. Resolves B12.
-`destination:` `ports/row_shape.py` docstring; `02-runtime.md` §8 with A12.5.
+**A12.5a** moved to ADR-0017 RS-D11, RS-D12 and RS-R5 (2026-10-19, slice 1a). `destination:`
+ADR-0017; `ports/row_shape.py`; `02-runtime.md` §8.
 
 **A12.6** In-place mutators (`add_field`, `calculate_field`, `join_field`, `delete_fields`) have
 no output parameter and need a definition of "output parameter" that covers them. Most are
@@ -2650,7 +2574,12 @@ one of those. Proposed enforcement point: the lineage facade (T4.3), which sees 
 call and its arguments and can match a handle embedded in a predicate against the handles of
 the current call; a static scan of operation bodies for `Class.attribute` handle references
 is the cheaper partial check. Not enforced in slice 1a; `ports/predicates.py` says the check
-does not see the handle.
+does not see the handle. For a domain call through the facade, the same rule covers a
+`Mutates` argument: it must be an `Out` handle of the operation's own call or scratch from its
+own scope, since a mutation of an `In` handle is a write the stage declaration does not show
+and validation rule 2 cannot see. The lineage layer's own writes (T4.5 Path A's map join,
+T3.4's fan-out join, the facade's parents scratch under A11.15) go to the unwrapped port and
+are outside the rule, as T2.8 already scopes the `lineage_id` rejection.
 
 **B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
 creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template

@@ -129,7 +129,7 @@ work but have different lifetimes and different modules.
 | 20b | T3.6 | Lineage retention alongside products | not started |
 | 20c | T3.7 | Foreign-id guard | not started |
 | 21 | T3.2 | Work-key API | not started |
-| 22 | T4.1 | `@row_shape` types and CI check | not started |
+| 22 | T4.1 | `@row_shape` types and CI check | **done** (slice 1a) |
 | 23 | T4.2 | Declare shapes across the port surface | not started |
 | 24 | T4.3 | Generic lineage facade | not started |
 | 25 | T4.5 | Disk-backed id map | not started |
@@ -940,7 +940,7 @@ decision. Two things to weigh if it is taken:
 
 **files touched** `template_code/ag/ports/table_ops.py`.
 
-**depends on** nothing.
+**depends on** nothing. Needed by slice 2a, which lands `add_field` and `join_field`.
 
 **decision refs** A12.6, A12.11a, B4.
 
@@ -1440,7 +1440,10 @@ A9.8, A9.9 → `04-migration.md`.
 
 ## 22. T4.1 — `@row_shape` types and CI check
 
-**status:** not started
+**status:** done — slice 1a, 2026-10-19 (`ports/row_shape.py`, `tests/static/test_row_shape.py`,
+`tests/static/test_row_shape_typing.py`, `tests/unit/ports/test_row_shape.py`, ADR-0017;
+evidence `findings/slice_1a_row_shape_evidence.md`). A12.7a's call-site category joins the check
+in 2a with the declaration type.
 
 **what done means**
 
@@ -1449,9 +1452,15 @@ A9.8, A9.9 → `04-migration.md`.
 - `@row_shape(**outputs: Rows)` attaches declarations to a Protocol method without changing its
   signature, so structural typing still holds and adapters need no decoration.
 - CI check rejects, each with its specific reason in the message: an output parameter with no
-  declaration; either axis missing; a `MINT` with no subject; a `FOREIGN` with no refs; a subject
-  or reference naming a parameter that does not exist; and the three illegal cells —
-  `MANY + CARRY`, `GROUP + CARRY`, `GROUP + FOREIGN`.
+  declaration; either axis missing; a `CARRY` or `MINT` output with no subject (A12.3); a
+  `FOREIGN` with no refs or with a subject (A12.1); a subject or reference naming a parameter
+  that does not exist; and the three illegal cells — `MANY + CARRY`, `GROUP + CARRY`,
+  `GROUP + FOREIGN`.
+- Three rules added in review (ADR-0017 RS-D12): a handle parameter with no direction marker
+  fails, the walk reaching `ScratchHandle` through `Annotated`, unions, tuples and sequences; a
+  method with no `Out` is in an explicit query list or fails, so a query is listed and never
+  inferred from a missing `Out`; a `Mutates` parameter fails closed until T2.8 decides the
+  declaration form.
 - The `MANY + CARRY` message states the primary reason: **this is the inheritance model A11.2
   rejects** — five split pieces all keeping id 1 leaves the log unable to express a partial drop.
   The grammar rule and A11.2 are the same rule stated twice.
@@ -1476,7 +1485,8 @@ with its own message.
 
 **decision refs** A12.1–A12.6, A12.5a.
 
-**doc migration** A12.1–A12.4 → `ports/row_shape.py`; A12.5 → `02-runtime.md` §8.
+**doc migration** A12.1–A12.5 and A12.5a → ADR-0017 and `ports/row_shape.py`; A12.5 also →
+`02-runtime.md` §8.
 
 ---
 

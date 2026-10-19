@@ -220,6 +220,13 @@ pressed, and each maps to a published literature trail for whoever reimplements 
 - **Project enums, never vendor strings or bare booleans.** `end_cap: EndCap`, not
   `flat: bool`.
 - **Keyword-only, explicit units in the name:** `width_m`, `distance_m`, `tolerance_m`.
+- **Every handle parameter carries a direction marker, and every output declares its row
+  shape.** `In`, `Out`, `Mutates` and `ParentsOut` are `Annotated` aliases over `ScratchHandle`
+  from `core/handles.py`; `@row_shape` on the Protocol method declares each `Out` on two axes,
+  cardinality and ids, and names the input its rows derive from. The declaration is read from
+  the Protocol, never from an adapter, and a static test over the surface rejects an undeclared
+  output, an unmarked handle and the illegal cells.
+  [ADR-0017](decisions/0017-row-shape-grammar.md).
 
 ### 2.4 Selection is a predicate value
 
@@ -905,3 +912,4 @@ re-running the stage on failure. Measure once one operator is reimplemented
 | 0014 | Runtime-injected parameters are recognised by a marker base class |
 | 0015 | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |
 | 0016 | Stage inputs have a declared role and a derived spatiality |
+| 0017 | Row shape, the declared grammar of port outputs |
