@@ -75,7 +75,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Bergen')"
+    AREA_SELECTOR = "navn IN ('Oslo', 'Ringerike')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -870,6 +870,7 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
     )
 
     # --- Symbology specs -------------------------------------------------------
+    symbology_resolve_road_roads = data_orc.get_symbology("resolve_road_roads")
     symbology_samferdsel = data_orc.get_symbology("samferdsel")
     symbology_begrensnings_kurve_line = data_orc.get_symbology(
         "begrensnings_kurve_line"
@@ -878,9 +879,9 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=symbology_samferdsel,
+            input_lyrx=symbology_resolve_road_roads,
             grouped_lyrx=True,
-            target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
+            target_layer_name="N100_ResolveRoad_road_symbol",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
