@@ -18,6 +18,8 @@ from ag.ports.attributes import AttributeValue as AttributeValue
 from ag.ports.attributes import Field as Field
 from ag.ports.attributes import FieldName as FieldName
 from ag.ports.attributes import FieldType as FieldType
+from ag.ports.columns import CHILD_ID as CHILD_ID
+from ag.ports.columns import PARENT_ID as PARENT_ID
 from ag.ports.geometry import CRS as CRS
 from ag.ports.geometry import Coordinate as Coordinate
 from ag.ports.geometry import Geometry as Geometry
@@ -45,8 +47,10 @@ from ag.ports.toolbox import NOT_INJECTED as NOT_INJECTED
 from ag.ports.toolbox import Toolbox as Toolbox
 
 __all__ = [
+    "CHILD_ID",
     "CRS",
     "NOT_INJECTED",
+    "PARENT_ID",
     "And",
     "Attr",
     "AttributeLeaf",

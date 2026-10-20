@@ -129,7 +129,7 @@ work but have different lifetimes and different modules.
 | 20b | T3.6 | Lineage retention alongside products | not started |
 | 20c | T3.7 | Foreign-id guard | not started |
 | 21 | T3.2 | Work-key API | not started |
-| 22 | T4.1 | `@row_shape` types and CI check | not started |
+| 22 | T4.1 | `@row_shape` types and CI check | **done** (slice 1a) |
 | 23 | T4.2 | Declare shapes across the port surface | not started |
 | 24 | T4.3 | Generic lineage facade | not started |
 | 25 | T4.5 | Disk-backed id map | not started |
@@ -144,7 +144,7 @@ work but have different lifetimes and different modules.
 | 33b | T4.14 | Dissolve parents track (B17) `[PARALLEL]` | not started |
 | 34 | T5.1 | Fan-in log merge and `DROPPED` promotion | not started |
 | 35 | T5.2 | Completeness assertions | not started |
-| 36 | T5.3 | Origin-closure check and `DISPLACEMENT_FEATURE` fix | not started |
+| 36 | T5.3 | Origin-closure check | not started |
 | 37 | T5.4 | Ownership-assignment verification | not started |
 | 38 | T6.1 | Edge storage format | not started |
 | 39 | T6.2 | Lineage walk API, with boundary-crossing and named degradation | not started |
@@ -261,7 +261,8 @@ up.
    do not spend the afternoon there. The three cartography tools state it in the same words —
    *"This tool does not produce output layers... it alters the geometry of the source feature
    classes of the input layers"* — which is also why `displace_features`' only new artifact is its
-   displacement output.
+   displacement output. Its symbology input is a `SYMBOLOGY` CONTEXT `StageInput`, sent whole and
+   declared with a location (A31.5); where that parameter sits on the port is B11's to settle.
 
    **For the three derived outputs, record whether `lineage_id` is present at all, before its
    type.** A12.11 declares them `ONE + CARRY`, which assumes the tool copies the input's attributes
@@ -867,13 +868,14 @@ geometry — so the omission is not "fixed" later.
 covers `LineZValueTool`'s two-pass shape: collect points, window-load each raster once to the
 bounding box, index in memory. The docstring states why this is a method and not a fifth port —
 the project enriches vector work from raster and generates contours, but never delivers a raster
-product.
+product. The raster reaches the pod as a `RASTER` `StageInput`, tile-clipped to the partition
+plus its halo (A31.4, B25); the window is the payload, not the national raster.
 
 **files touched** `template_code/ag/ports/geometry_ops.py`, `docs/refactor/03-architecture.md` §2.1.
 
 **depends on** nothing.
 
-**decision refs** A5.2, A4.6.
+**decision refs** A5.2, A4.6, A31.4, B25.
 
 **doc migration** A5.2 → `ports/geometry_ops.py` and `03-architecture.md` §2.1.
 
@@ -938,7 +940,7 @@ decision. Two things to weigh if it is taken:
 
 **files touched** `template_code/ag/ports/table_ops.py`.
 
-**depends on** nothing.
+**depends on** nothing. Needed by slice 2a, which lands `add_field` and `join_field`.
 
 **decision refs** A12.6, A12.11a, B4.
 
@@ -1047,6 +1049,11 @@ with its own map.
 same method list this task is already editing, and it had no task at all before — under the
 three-clause completion test it would never have migrated.
 
+**note** `Schema.__post_init__` (`src/ag/ports/table_ops.py:37-51`) keys spatiality on
+`is DataType.FEATURE_CLASS`, which makes `RASTER` geometry-less. When the port surface is next
+touched it uses `DataType.spatial` (A31.1), and rejects `RASTER` and `SYMBOLOGY` outright: rows
+are never written to either.
+
 ---
 
 ## 15. T2.10 — `dissolve(statistics=…)` and the `ranks` fix
@@ -1123,7 +1130,7 @@ legitimate pattern is preserved in the building pipeline at
 
 **depends on** T2.9.
 
-**decision refs** A11.1, A11.15, A12.2, A12.5a, A14.1, B6.
+**decision refs** A11.1, A11.15, A12.2, A12.5a, A14.1, A31.6, B6.
 
 **doc migration** the constants rationale → `ports/geometry_ops.py`. A11.1's parents-versus-log
 distinction → the new ADR on lineage, at T4.6.
@@ -1272,12 +1279,15 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
   run one job per input for I/O parallelism; each draws a **disjoint range** from one run-scoped
   counter, and the range is recorded in the artifact.
 - Fan-out applies the map and still allocates nothing (A6.6 as clarified by A24.1).
+- Fan-out's order (A31.1, A31.2, A31.7): apply the ingest map on the whole input; filter spatial
+  CONTEXT to the halo of the PROCESSING rows (the intersecting rows, at 0 m); partition both
+  roles with overlap; write non-spatial CONTEXT once at the shared key.
 
 **files touched** `template_code/ag/runtime/`, `template_code/ag/staging/`.
 
 **depends on** T0.1, T3.3.
 
-**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6.
+**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7.
 
 **doc migration** A10.6, A10.7, A24, A24.1 → the ADR from T3.3 and `02-runtime.md` §6. A22 →
 `02-runtime.md` §6.1.
@@ -1430,7 +1440,10 @@ A9.8, A9.9 → `04-migration.md`.
 
 ## 22. T4.1 — `@row_shape` types and CI check
 
-**status:** not started
+**status:** done — slice 1a, 2026-10-19 (`ports/row_shape.py`, `tests/static/test_row_shape.py`,
+`tests/static/test_row_shape_typing.py`, `tests/unit/ports/test_row_shape.py`, ADR-0017;
+evidence `findings/slice_1a_row_shape_evidence.md`). A12.7a's call-site category joins the check
+in 2a with the declaration type.
 
 **what done means**
 
@@ -1439,9 +1452,15 @@ A9.8, A9.9 → `04-migration.md`.
 - `@row_shape(**outputs: Rows)` attaches declarations to a Protocol method without changing its
   signature, so structural typing still holds and adapters need no decoration.
 - CI check rejects, each with its specific reason in the message: an output parameter with no
-  declaration; either axis missing; a `MINT` with no subject; a `FOREIGN` with no refs; a subject
-  or reference naming a parameter that does not exist; and the three illegal cells —
-  `MANY + CARRY`, `GROUP + CARRY`, `GROUP + FOREIGN`.
+  declaration; either axis missing; a `CARRY` or `MINT` output with no subject (A12.3); a
+  `FOREIGN` with no refs or with a subject (A12.1); a subject or reference naming a parameter
+  that does not exist; and the three illegal cells — `MANY + CARRY`, `GROUP + CARRY`,
+  `GROUP + FOREIGN`.
+- Three rules added in review (ADR-0017 RS-D12): a handle parameter with no direction marker
+  fails, the walk reaching `ScratchHandle` through `Annotated`, unions, tuples and sequences; a
+  method with no `Out` is in an explicit query list or fails, so a query is listed and never
+  inferred from a missing `Out`; a `Mutates` parameter fails closed until T2.8 decides the
+  declaration form.
 - The `MANY + CARRY` message states the primary reason: **this is the inheritance model A11.2
   rejects** — five split pieces all keeping id 1 leaves the log unable to express a partial drop.
   The grammar rule and A11.2 are the same rule stated twice.
@@ -1466,7 +1485,8 @@ with its own message.
 
 **decision refs** A12.1–A12.6, A12.5a.
 
-**doc migration** A12.1–A12.4 → `ports/row_shape.py`; A12.5 → `02-runtime.md` §8.
+**doc migration** A12.1–A12.5 and A12.5a → ADR-0017 and `ports/row_shape.py`; A12.5 also →
+`02-runtime.md` §8.
 
 ---
 
@@ -1727,14 +1747,14 @@ A plan-time check rejects a `FOREIGN`-terminal handle named as the `subject` of 
 wiring, but plan time does not see the port calls inside operation bodies, where `@row_shape`
 applies. The derivation mechanism is unstated.
 
-**decision refs** A12.9, A15.2, A15.6, B14.
+**decision refs** A12.9, A15.2, A15.6, A31.6, B14, B24.
 
 **doc migration** A15.2, A15.6 → the lineage module docstring and `01-terminology.md`; A12.9 →
 `02-runtime.md` §8.
 
-**note** A15.2's superseded form — "descends from a PROCESSING `StageInput` **and** reaches a
-`StageOutput`" — broke on `DISPLACEMENT_FEATURE`, whose only ancestors are CONTEXT inputs. That
-bug is why A15.6 splits the two properties instead of adding an exemption.
+**note** Under A31.3 every `StageOutput` descends from a PROCESSING `StageInput`, so A15.2 needs
+no PROCESSING clause. A15.6's split stands on `SNAP_DISPLACEMENT`. A static check for A31.3 is
+B24.
 
 ---
 
@@ -1864,7 +1884,9 @@ derives the output by set difference (`simplify.collapsed_points`), the case tes
 `ResolveBuildingConflicts` and `PropagateDisplacement` all alter the source feature class of their
 input. Behind `displace_features` and `propagate_displacement`, a case asserts **the input handle's
 geometry is unchanged after the call**. The adapter must compile them copy-then-edit; otherwise it
-mutates a handle another operation, or a retry of the same one, may read.
+mutates a handle another operation, or a retry of the same one, may read. The `displace_features`
+case also declares the tool's symbology input: a `SYMBOLOGY` CONTEXT `StageInput`, sent whole and
+declared with a location (A31.5); where that parameter sits on the port is B11's to settle.
 
 **Where it runs — not a CI step.** Conformance needs ArcPy and CI has none. It **gates image
 promotion**: run in the freshly built Linux image, triggered by image rebuilds and by changes under
@@ -1881,7 +1903,7 @@ pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a.
+**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5.
 
 **doc migration** none.
 
@@ -1996,6 +2018,17 @@ presence in the job's declared output already witnesses it. Fan-in selection its
 
 **doc migration** A16.1 → `02-runtime.md` §8.
 
+**note** Open gap, recorded, not resolved: the promotion rule `owner(root(d)) == job(d)` has no
+value for a record about an id the job itself minted, in two cases. (i) The displacement blob:
+`root(p_i)` resolves through a `GROUP` mint to several CONTEXT road ids with several owners, and
+the dissolve edge is a `PARENTS_CONSUMED` edge whose `to_ids` no output witnesses, so A16.1's
+"needs no ownership check" argument does not cover it; A20's forward walk from a road assumes the
+edge is in the merged log. (ii) The general case, which rules out "promote every record about a
+job-minted id": pods x and z both `GROUP`-mint over building b, a halo copy in x and owned in z;
+fan-in keeps g_z and discards g_x without an event; promoting x's `PARENTS_CONSUMED` edge would
+record b consumed twice, once into an id that exists nowhere. A16's assertions hold under any
+resolution; what is open is which records of a job's own mints enter the stage log.
+
 ---
 
 ## 35. T5.2 — Completeness assertions
@@ -2030,26 +2063,29 @@ to the pod" layering every other check obeys.
 
 ---
 
-## 36. T5.3 — Origin-closure check and `DISPLACEMENT_FEATURE` fix
+## 36. T5.3 — Origin-closure check
 
 **status:** not started
 
 **what done means** A fan-in check asserts every `from_id` in an edge belongs to an object in the
-output's `origin` closure. `DISPLACEMENT_FEATURE`'s origin is corrected to include `N100_ROAD`
-alongside `NVDB_ROADS` — `build_displacement_feature` consumes `roads_generalized`, and the current
-declaration at `pipelines/building/n100_objects.py:55` omits it.
+output's `origin` closure. The building `DISPLACEMENT` fixture declares `displacement_feature` as
+a scratch handle, not a `StageOutput`: its rows originate from CONTEXT inputs only (A31.3, A17.1).
+The `Derived` at `pipelines/building/n100_objects.py:55` and the `StageOutput` at
+`n100_stages.py:135` are deleted, with the import and the two docstring paragraphs that explain
+them; `displacement_feature = handle()` stays.
 
 **files touched** `template_code/ag/runtime/`,
-`template_code/ag/pipelines/building/n100_objects.py`.
+`tests/fixtures/example_pipelines/pipelines/building/n100_objects.py`,
+`tests/fixtures/example_pipelines/pipelines/building/n100_stages.py`.
 
 **depends on** T5.1.
 
-**decision refs** A16.4, A17.1.
+**decision refs** A16.4, A17.1, A31.3.
 
-**doc migration** A16.4 → `02-runtime.md` §8. A17.1 retires with the fix.
+**doc migration** A16.4 → `02-runtime.md` §8. A17.1 retires with the fixture change.
 
-**note** Legality is safe today — `NVDB_ROADS` is already the strictest term — but the origin is
-factually incomplete, and this check finds it on the first run.
+**note** The fixture change lands ahead of the check, with the input-role correction; the check
+is what remains of this task.
 
 ---
 
@@ -2352,15 +2388,17 @@ than decided, per the constraint on this pass.
    credentials, no data, no ArcPy" stands unchanged. Recorded in A14 and T4.10.
 
 4. **CLOSED — A16's `I` is PROCESSING-only.** Completeness asks whether the stage lost something it
-   was *responsible for*, and a stage is not responsible for reference data.
+   was *responsible for*, and a stage is not responsible for its CONTEXT inputs (A31.3). `T`
+   ranges over the lineage edges, not over `DROPPED` edges.
 
    Verified against the `DISPLACEMENT` stage rather than reasoned about: `buildings` (PROCESSING)
    flows through `simplify_polygons` and `propagate_displacement`, both `ONE + CARRY`, so every
-   building id reaches `O` via `displaced` — assertion (1) holds. `displacement_feature` ids are
-   minted by `build_displacement_feature`'s dissolve, so they are in `to_ids` — assertion (2)
-   holds. The context road ids land in `T` via `from_ids` without ever entering `I`, and are not in
-   `D` because the boundary diff does not call a row dropped when it appears in an emitted edge's
-   `from_ids` — assertion (3) holds.
+   building id reaches `O` via `displaced` — assertion (1) holds, and `O` is `I`, so assertion (2)
+   holds. `build_displacement_feature`'s dissolve mints the parts of `displacement_feature`, a
+   scratch handle, from the CONTEXT road ids: the road ids land in `T` via `from_ids` without ever
+   entering `I`, the part ids are in `to_ids`, and the stage-exit sweep drops the parts. `D` holds
+   at most part ids and `T` holds road ids — assertion (3) holds whether or not those drops are
+   promoted (T5.1).
 
    **That verification surfaced B7**, which is a genuine hole and is not closed: a `Derived`
    `StageInput` can come from a previous run, carrying ids from that run's `minter_id` space.

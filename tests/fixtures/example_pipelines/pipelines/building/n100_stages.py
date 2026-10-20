@@ -21,7 +21,7 @@ puts everything in one file and the declarations are identical.
 from __future__ import annotations
 
 from ag.core.types import DataType, InputRole, ObjectName, Scale
-from example_pipelines.pipelines.building.n100_objects import DISPLACED, DISPLACEMENT_FEATURE, SELECTED
+from example_pipelines.pipelines.building.n100_objects import DISPLACED, SELECTED
 from example_pipelines.operations.building.tuning import n100 as tuning
 from example_pipelines.operations.building import (
     build_displacement_feature,
@@ -132,7 +132,6 @@ DISPLACEMENT = Stage(
     ),
     outputs=(
         StageOutput(obj=DISPLACED, handle=Displacement.displaced),
-        StageOutput(obj=DISPLACEMENT_FEATURE, handle=Displacement.displacement_feature),
     ),
     operations=(
         simplify_polygons(
@@ -170,13 +169,13 @@ named by no StageOutput, so it has no identity, no location, and nothing uploads
 A full round trip saved - and since a .gdb is a directory tree, a saved round trip is
 an archive plus an unarchive, not merely a copy.
 
-DISPLACEMENT_FEATURE IS DIFFERENT, AND THAT IS A DECISION. It is now a real
-StageOutput, so it is uploaded and the objects module's Derived for it is load
-bearing rather than documentation. The alternative - a Derived declared for lineage
-review beside a bare handle doing the actual wiring - was a third state with no
-meaning: nothing uploaded it, warn_unused_handles could not see it, and the lineage
-it documented was not the lineage the runtime used. Either an object crosses a
-boundary and is a Derived, or it does not and is a handle.
+`displacement_feature` IS SCRATCH TOO, FOR A DIFFERENT REASON. It is built from the two
+CONTEXT inputs only, and only rows originating from PROCESSING inputs may become stage
+output. So no StageOutput names it, no Derived exists for it, the stage-exit sweep
+drops its ids, and it is inspected like any intermediate: in the scratch dump, on the
+dump's retention. A displacement feature that later stages must read would be produced
+in a stage where the roads are PROCESSING. Either an object crosses a boundary and is
+a Derived, or it does not and is a handle.
 
 THE COST: context_radius_m=1500 covers the whole chain, not just the worst single
 operation. propagate_displacement works on simplify_polygons' output, so the

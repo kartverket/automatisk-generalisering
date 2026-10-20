@@ -134,7 +134,7 @@ argument: ADR-0002.
 
 `TableOps` separates from `GeometryOps` because it is a different conversation (schema and
 rows, not geometry), because it applies to non-spatial lookup tables — a real case here,
-[02-runtime §2.3](02-runtime.md#23-stages) (context inputs replicated to every pod) — and
+[02-runtime §2.3](02-runtime.md#23-stages) (non-spatial context inputs, sent whole to every pod) — and
 because `GeometryOps.add_field()` reads wrong.
 
 **Ports are `typing.Protocol`, not `ABC`**, so adapters satisfy them structurally and the
@@ -220,6 +220,13 @@ pressed, and each maps to a published literature trail for whoever reimplements 
 - **Project enums, never vendor strings or bare booleans.** `end_cap: EndCap`, not
   `flat: bool`.
 - **Keyword-only, explicit units in the name:** `width_m`, `distance_m`, `tolerance_m`.
+- **Every handle parameter carries a direction marker, and every output declares its row
+  shape.** `In`, `Out`, `Mutates` and `ParentsOut` are `Annotated` aliases over `ScratchHandle`
+  from `core/handles.py`; `@row_shape` on the Protocol method declares each `Out` on two axes,
+  cardinality and ids, and names the input its rows derive from. The declaration is read from
+  the Protocol, never from an adapter, and a static test over the surface rejects an undeclared
+  output, an unmarked handle and the illegal cells.
+  [ADR-0017](decisions/0017-row-shape-grammar.md).
 
 ### 2.4 Selection is a predicate value
 
@@ -778,16 +785,24 @@ reintroducing the scale binding being removed. And the ladder is an object-major
 
 **Decided.**
 
-Symbol dimensions are data, not a port: `LineToBufferSymbologyKwargs` already carries
-`sql_selection_query: dict` plus buffer factors, and `BufferDisplacementKwargs` carries
-`building_symbol_dimension: Dict[int, Tuple[int, int]]`. They become pipeline parameters, or
-an `ExternalSource` context input if cartographers own them (**Q-D**).
+Two different things carry the word ([ADR-0016](decisions/0016-stage-inputs-have-a-role-and-a-spatiality.md)).
 
-`.lyrx` appears only where arcpy's own tools demand it as an input format
-(`ApplySymbologyFromLayer`, `resolve_road_conflicts.py`'s `input_lyrx`/`lyrx_output`).
-Producing one is an implementation detail inside `adapters/arcpy/cartographic_ops.py`, so
-the migration never inherits `.lyrx`. A `StyleOps` port is deferred until there is map
-rendering to produce; its adapters would be lyrx / SLD / QML.
+**Numeric symbol dimensions** are a project-wide Python resource: `LineToBufferSymbologyKwargs`
+already carries `sql_selection_query: dict` plus buffer factors, and `BufferDisplacementKwargs`
+carries `building_symbol_dimension: Dict[int, Tuple[int, int]]`. They reach operations as
+config dataclass fields that vary by pipeline (ADR-0013), never as a stage input. Deriving
+them from `.lyrx` files is possible later and not planned.
+
+**`.lyrx` files** are what arcpy's own tools demand as an input format
+(`ApplySymbologyFromLayer`, `resolve_road_conflicts.py`'s `input_lyrx`). A `.lyrx` is a
+symbology blueprint with no data. It is a stage input with `DataType.SYMBOLOGY`: non-spatial,
+role CONTEXT, sent whole to every pod, declared as an `ExternalSource` with a settable location
+and a classification, and never baked into the container image, because some carry
+attributes that must stay on-prem and one rule for every table and symbology file is more
+consistent than a split by author. The arcpy adapter consumes the handle's path; a `.lyrx` a
+tool writes (`lyrx_output`) is adapter-internal scratch unless a stage declares it. A
+`StyleOps` port is deferred until there is map rendering to produce; its adapters would be
+lyrx / SLD / QML.
 
 ### 7.6 Contract tests
 
@@ -862,8 +877,9 @@ open deliberately: if it wants graph and geometry together, the dataset-aware fo
 rewrite of that one helper and **no operation signature changes**, which is what makes
 deferring cheap rather than evasive.
 
-**Q-D — Who authors symbol dimensions.** Cartographer-authored means an `ExternalSource` with a
-vintage and pinning; developer-authored means pipeline parameters.
+**Q-D — closed.** See [§7.5](#75-symbology) and ADR-0016: `.lyrx` files are `SYMBOLOGY` stage
+inputs from a settable location whoever authors them; numeric symbol dimensions are config
+dataclass fields (ADR-0013).
 
 **Q-E — closed.** See ADR-0008.
 
@@ -895,3 +911,5 @@ re-running the stage on failure. Measure once one operator is reimplemented
 | 0013 | Tuning is base plus one delta, with no resolution mechanism |
 | 0014 | Runtime-injected parameters are recognised by a marker base class |
 | 0015 | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |
+| 0016 | Stage inputs have a declared role and a derived spatiality |
+| 0017 | Row shape, the declared grammar of port outputs |

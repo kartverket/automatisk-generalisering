@@ -13,10 +13,11 @@ becomes part of the contract. ADR-0004.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
+from ag.core.handles import In
 from ag.core.types import DataType
 from ag.ports.attributes import AttributeValue, Field, FieldName
 from ag.ports.geometry import CRS, Geometry
@@ -69,7 +70,22 @@ class Row:
 class TableOps(Protocol):
     """Schema, attributes and bulk row IO.
 
-    Intentionally empty until its first methods land. A Protocol with no members is
-    satisfied by any object, so a toolbox field typed with it gives no structural
-    protection yet; nothing may rely on it for that.
+    Every handle parameter carries a direction marker, and every output declares its row
+    shape on the method; a method that returns values and writes no handle is outside
+    the row-shape grammar and is listed as such by the check over the surface. ADR-0017.
     """
+
+    def read_rows(self, *, input: In, fields: tuple[FieldName, ...]) -> Iterable[Row]:
+        """Every row of `input`, as values, with exactly the named fields.
+
+        How: returns an iterable rather than a sequence, so an adapter may stream and a
+        caller may not index or re-iterate without materialising first; that is the one
+        cursor property worth keeping, since these datasets do not fit in memory twice.
+        `fields` is required: which fields "all of them" means is engine-dependent, and a
+        default can be added later without breaking a caller. `geometry` is read whenever
+        the dataset has one. A query, outside the row-shape grammar: it writes no handle.
+
+        Why: bulk reads carrying `Row` values replace the row loops, so the slowest
+        engine-shaped pattern never becomes part of the contract. ADR-0004.
+        """
+        ...

@@ -48,9 +48,9 @@ have extents and neighbours. Only a stage has extents to partition.
 | tier | reaches object storage | reads/writes data | knows K8s | ArcPy |
 |---|---|---|---|---|
 | orchestrator | run metadata only | **never** | yes | no |
-| fan-out | yes | yes | yes | partition, select |
+| fan-out | yes | yes | yes | context filter, partition with overlap |
 | partition pod | own payload | yes | minimally | the operations |
-| fan-in | yes | yes | yes | append, clip |
+| fan-in | yes | yes | yes | select center-in, append |
 
 **The orchestrator never touches data.** Declarations, graph state, run records, Job specs. No
 feature class passes through it, so no data-residency rule constrains its placement — only
@@ -202,6 +202,7 @@ class Displacement(Handles):                 # one class per stage
     buildings    = handle()
     roads_source = handle()
     simplified   = handle()
+    displacement_feature = handle()          # scratch: built from CONTEXT roads, never output
     displaced    = handle()
 
 DISPLACEMENT = Stage(
@@ -216,7 +217,8 @@ DISPLACEMENT = Stage(
     operations=(
         simplify_polygons(input=Displacement.buildings, output=Displacement.simplified,
                           config=tuning.SIMPLIFY_POLYGONS),
-        propagate_displacement(input=Displacement.simplified, displacement=...,
+        propagate_displacement(input=Displacement.simplified,
+                               displacement=Displacement.displacement_feature,  # scratch
                                output=Displacement.displaced),
     ),
 )
@@ -252,11 +254,45 @@ crossover where splitting a stage is cheaper than widening its halo, and it is m
 list is enough, and the author grouped them deliberately. Correctness of the list is checked
 ([the static checks](#8-validation)), not derived.
 
-**`role` is for fan-out, never for an operation.** Processing inputs are partitioned by extent
-and drive fan-in, where center-in features are kept and the rest discarded. Context inputs are
-selected within `context_radius_m` and not carried into the output. A non-spatial lookup table
-is context in the operative sense — replicated whole to every pod, written **once** at a shared
-key rather than K times.
+**A stage input has a role and a spatiality** ([ADR-0016](decisions/0016-stage-inputs-have-a-role-and-a-spatiality.md)).
+The **input role** is declared per stage input, not per object: `InputRole.PROCESSING` or
+`InputRole.CONTEXT`, answering one question — may this input's rows become stage output? The
+same water layer is PROCESSING in the stage that generalises it and CONTEXT in the stage that
+moves buildings away from it. Whether an input is **spatial** is read from its object's
+`DataType` and never declared: `FEATURE_CLASS` and `RASTER` are spatial, `TABLE` and `SYMBOLOGY`
+are not. `role` is for fan-out, never for an operation.
+
+| | spatial | non-spatial |
+|---|---|---|
+| PROCESSING | partitioned, with halo overlap | rejected at declaration |
+| CONTEXT | context filter, then partitioned with the same overlap | sent whole to every pod, written **once** at a shared key |
+
+- The **context filter** keeps the CONTEXT rows within `context_radius_m` of any PROCESSING row
+  of the stage, before partitioning; at 0 m it keeps the rows that intersect a PROCESSING row.
+  The filter distance is the stage's context radius; there is no second number, because a
+  context set filtered with the wrong radius looks exactly like a correct one.
+- **Overlap** applies to both partitioned roles. A PROCESSING row within the radius of a
+  partition but outside it reaches that partition too, and fan-in discards it; a CONTEXT row
+  within the radius of a partition reaches it.
+- **Non-spatial PROCESSING is rejected** when the `StageInput` is constructed: there is nothing
+  to partition, so the model defines no behaviour for it.
+- **Only rows originating from PROCESSING inputs may become stage outputs**, and stage outputs
+  are the only data that leaves a stage. A CONTEXT row may affect an output and never becomes
+  one: `DISPLACED` carries the buildings' lineage, and the roads are a spatial influence.
+  Scratch intermediates built from CONTEXT rows are legal inside a stage and reach the scratch
+  dump like every other handle. An object derived from CONTEXT rows that a later stage must
+  read is produced in a stage where its source is PROCESSING. Enforced by review until a static
+  check exists.
+- **Rasters** are spatial and take either role; transfer is tile selection or clipping to the
+  partition plus its halo, not row filtering. The mechanism is open until a stage declares one.
+- **Symbology files** (`.lyrx`) are `SYMBOLOGY` inputs: non-spatial, CONTEXT, sent whole,
+  declared as an `ExternalSource` with a location and a classification, never baked into the
+  image. The trade: at a stage declaration a reader must know the data type to see that a
+  table or a symbology file is sent whole, which is why the `InputRole` docstring states both
+  transfers side by side.
+- **The radius is a claim about the logic.** Operations never see partitions (ADR-0003), so
+  `context_radius_m` is the one place a stage author reasons about partition boundaries. A 0 m
+  radius states that nothing in the stage consults a neighbour; a reviewer can challenge it.
 
 ### 2.4 Operations
 
@@ -658,7 +694,8 @@ Plan is a pure function; execute is a loop. That split is the most important str
 decision in the orchestrator: the whole planning layer is testable without infrastructure, and
 CI runs the same validation the orchestrator runs at startup, because it is the same function.
 
-Per stage: fan-out writes K payloads and run metadata **including K**; the Indexed Job runs;
+Per stage: fan-out writes K payloads, one shared payload for the non-spatial inputs, and run
+metadata **including K**; the Indexed Job runs;
 fan-in merges and uploads. **K flows back up by the orchestrator reading fan-out's metadata** —
 metadata, not data. It is the only value that flows upward.
 
@@ -720,8 +757,9 @@ The graph permits running independent stages at once, and the design is ready fo
 
 ### 7.1 The halo requirement is transitive
 
-Fan-out gives each pod a complete dataset plus an overlapping halo. Logic must be deterministic,
-so a feature appearing as center-in in partition A and as halo context in partition B is moved
+Fan-out gives each pod its partition's PROCESSING rows plus those within the halo, and the
+CONTEXT rows within the halo ([§2.3](#23-stages)). Logic must be deterministic, so a feature
+appearing as center-in in partition A and as a halo copy in partition B is moved
 **identically** in both — otherwise fan-in stitches together geometry that disagrees with
 itself.
 
@@ -793,6 +831,12 @@ should be able to say why it is here — the refactor keeps *deleting* checks by
 impossible, and the surviving set should read as a legible list of what the type system cannot
 express rather than as accumulated habit.
 
+**At the port surface**, every `Out` parameter of every port method declares its row shape, and
+a static test over the whole surface enforces the grammar, in CI rather than in `validate()`,
+because it is a property of the Protocols, not of a plan; a wrong `Rows` already fails when the
+Protocol is imported. The grammar and the check's rules are
+[ADR-0017](decisions/0017-row-shape-grammar.md) RS-1 to RS-4.
+
 **Inside a stage** — ScratchHandle level:
 
 1. Every operation declares at least one output. *An operation that consumes and produces
@@ -809,6 +853,8 @@ express rather than as accumulated habit.
    `ScratchHandle.namespace` exist for.*
 6. **(WARNING)** A handle written, read by nothing, and named by no `StageOutput`. *Legal,
    usually dead work.*
+6a. No `StageInput` pairs a non-spatial object with `InputRole.PROCESSING`. *There is nothing
+   to partition ([§2.3](#23-stages)); a construction-time check on `StageInput`.*
 
 **Across stages** — DataObject level:
 
@@ -919,6 +965,3 @@ design.
 - **Who edits stage grouping and parameters** — cartographers or developers. It is
   simultaneously a cartographic artifact and a performance-tuning one, and those may not have
   the same owner.
-- **Symbology.** If `.lyrx` files are authored by cartographers they are archive objects with
-  vintage and pinning; if by developers they belong in the repo and the image. A governance
-  question that decides the technical answer.

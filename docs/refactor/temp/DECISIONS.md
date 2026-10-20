@@ -204,9 +204,10 @@ violates §7.2 — clipping at extent boundaries makes output geometry K-depende
 K=16 diff can never pass.
 `destination:` `02-runtime.md` §7; new ADR on partition ownership.
 
-**A6.2** Preconditions: partitions tile without overlap (validate `custom_partition_feature` for
-this, not just geometry type); a half-open boundary convention; displacement well inside the
-halo.
+**A6.2** Preconditions: the partition polygons tile without overlap (validate
+`custom_partition_feature` for this, not just geometry type), while each pod's payload
+extends past its polygon by `context_radius_m` (A31.2); a half-open boundary convention;
+displacement well inside the halo.
 `destination:` `02-runtime.md` §7.
 
 **A6.3** Selection is **total by construction**: claim if the centroid is in my polygon, *or* if
@@ -219,8 +220,8 @@ can orphan a feature; interior crossings are claimed by the neighbour.
 ownership-of-id against the fan-out assignment.
 `destination:` `02-runtime.md` §7.
 
-**A6.5** Fan-in selection is **not** a `DROPPED` event. The same feature appears in several jobs
-as context; discarding non-owning copies is deduplication of one identity.
+**A6.5** Fan-in selection is **not** a `DROPPED` event. The same PROCESSING feature appears in
+several jobs as a halo copy; discarding non-owning copies is deduplication of one identity.
 `destination:` `02-runtime.md` §7; lineage module docstring.
 
 **A6.6 Fan-out and fan-in mint nothing.** Both only select. This holds only while no
@@ -852,95 +853,24 @@ method); the lineage module docstring (the facade's use, (c) and (d)).
 
 ## A12. The `@row_shape` grammar
 
-**A12.1** `Rows(cardinality=..., ids=..., subject=... | refs=...)`. Two independent axes rather
-than a single enum, because one+new is a real declarable judgment that a single enum had no cell
-for.
+**A12.1** moved to ADR-0017 RS-1, RS-R1 and RS-R3, and the `ports/row_shape.py` module docstring
+(2026-10-19, slice 1a). `destination:` ADR-0017; `ports/row_shape.py`.
 
-- `cardinality` — rows per subject row: `ONE`, `MANY`, `GROUP`
-- `ids` — `CARRY` (keep the subject's id), `MINT` (new ids, edges recorded), `FOREIGN` (no
-  `lineage_id`; declared columns hold subject ids as foreign keys, so `refs={COL: "subject"}`
-  replaces `subject=`)
+**A12.2** moved to ADR-0017 RS-2 in its corrected form (2026-10-19, slice 1a).
+`destination:` ADR-0017; `ports/row_shape.py`.
 
-> *Renamed.* The second axis was `identity=`. `ProductIdentity` is older and more load-bearing,
-> and an unqualified "identity" in review could mean either. `ids=` says what the axis controls.
+**A12.3** moved to ADR-0017 RS-2 and RS-R2 (2026-10-19, slice 1a). `destination:` ADR-0017;
+`ports/row_shape.py`.
 
-Deliberately not naming a value `TRANSFORM`: that word was an `EdgeKind`, and `EdgeKind` is
-runtime-derived. Reusing it would blur declared against derived.
+**A12.4** moved to ADR-0017 RS-D4 (2026-10-19, slice 1a). `destination:` ADR-0017;
+`ports/row_shape.py`.
 
-| | CARRY | MINT | FOREIGN |
-|---|---|---|---|
-| **ONE** | legal | legal | legal |
-| **MANY** | **illegal** | legal | legal |
-| **GROUP** | **illegal** | legal | **illegal** |
+**A12.5** moved to ADR-0017 RS-4, `02-runtime.md` §8 and `tests/static/test_row_shape.py`
+(2026-10-19, slice 1a), with the subject rule stated for `CARRY` and `MINT` per A12.3.
+`destination:` ADR-0017; `02-runtime.md` §8; `tests/static/test_row_shape.py`.
 
-Three illegal cells, and the CI failure message states the reason:
-
-- `GROUP + CARRY` — many parents, one row; a scalar cannot hold a set. The founding argument for
-  the edge mechanism (A11.1).
-- `GROUP + FOREIGN` — same.
-- `MANY + CARRY` — **primary reason: this is the inheritance model A11.2 rejects.** Five split
-  pieces all keeping id 1 leaves the log unable to express a partial drop. Secondary: the id
-  repeats, breaking the 1:1 field cardinality that is the fan-out alarm (A9.1). *This grammar
-  rule and A11.2 are the same rule stated twice.*
-
-Together: **`CARRY` implies `ONE`.**
-
-Cost, to state at the declaration: `ONE + MINT` emits one edge per row, O(input rows) — the most
-expensive shape in the system, against one edge per group for `GROUP + MINT` and zero for
-`ONE + CARRY`. Not a reason to forbid it, but it should be a deliberate choice with the cost
-stated, or it becomes the default for anything that feels transformative and log volume grows on
-the wrong axis.
-
-> *Superseded (twice).* The grammar was first a single `SHAPE` enum of `PRESERVE / COLLAPSE /
-> SPLIT / NONE`; then `NONE` was dropped and `REFERENCE` and `EXPAND` added; then the whole enum
-> was replaced by these two axes. `REFERENCE` became `ids=FOREIGN` and `EXPAND` became
-> `MANY + FOREIGN`, both folding into the grid rather than remaining special cases.
-
-`destination:` new `ports/row_shape.py` module docstring; new ADR on lineage declaration.
-
-**A12.2** `subject` versus `context` **is** PROCESSING versus CONTEXT, not a mirror of it —
-the words are the same on purpose. `intersection` output rows *are* pieces of the roads; the
-overlay influenced the result without contributing identity. Declaring both as subjects would
-make every admin polygon an ancestor of every road piece.
-
-> *Renamed.* The second was `reference=`, which collided with `snap(reference=…)` — a dataset
-> being snapped to, semantically close enough to blur. `context=` also makes the
-> PROCESSING/CONTEXT correspondence literal rather than something the docstring has to explain.
-
-`destination:` `ports/row_shape.py`.
-
-**A12.3** `NONE` is dropped. The template contains no genuine aggregate output — every table
-write is per-feature or per-vertex — so every output declares a subject, and anything that cannot
-must be argued rather than defaulting to an escape hatch. Re-adding the member later is a
-one-line change.
-`destination:` `ports/row_shape.py`.
-
-**A12.4** Per-row behaviour comes from the parents table, not from the declaration: a dissolve
-group with one parent carries the id and emits no edge; only groups with ≥2 mint. Same for
-`MANY`. Methods that are mostly 1:1 in practice cost almost nothing, so no separate shape is
-needed for them. This is runtime behaviour *inside* a cell and is not an argument for legalising
-`GROUP + CARRY`.
-`destination:` `ports/row_shape.py`.
-
-**A12.5** CI check: every output parameter declares both axes; every `MINT` has a subject; every
-`FOREIGN` has refs; the three illegal cells are rejected with their specific reason; every
-subject and reference names a real input parameter. This replaces the type-checker guarantee the
-wrapper approach would have given, and it is what makes forgetting impossible.
-`destination:` `tests/unit/test_row_shape.py`; `02-runtime.md` §8.
-
-**A12.5a Port handle parameters carry a direction.** Port Protocol handle parameters are annotated
-`In` / `Out` from `core.operations`, plus a third marker for in-place mutators (T2.8) and a distinct
-**`ParentsOut`** marker for the parents out-param of A11.15. T4.1's check then rejects: an `Out`
-parameter with no `@row_shape` entry; a `@row_shape` key naming a parameter that is not `Out`; a
-`subject`, `context` or `refs` value naming a parameter that is not `In`. **`ParentsOut` is exempt
-from the first rule**: the parents table is a relation the facade consumes, not a row-shaped
-output, and it never gets a `Rows` declaration. Rejected: a parameter-name convention, and the
-"named by some declaration" rule, both for the reasons in `PROPOSALS-2026-09-14.md` §2.
-
-**Timing: the annotations are written with the ports, in T2.9, not in T4.1.** The ports are about
-to be written; annotating them afterwards means writing every signature twice. T4.1 adds the check
-against annotations that already exist, and breaks it on purpose once. Resolves B12.
-`destination:` `ports/row_shape.py` docstring; `02-runtime.md` §8 with A12.5.
+**A12.5a** moved to ADR-0017 RS-D11, RS-D12 and RS-R5 (2026-10-19, slice 1a). `destination:`
+ADR-0017; `ports/row_shape.py`; `02-runtime.md` §8.
 
 **A12.6** In-place mutators (`add_field`, `calculate_field`, `join_field`, `delete_fields`) have
 no output parameter and need a definition of "output parameter" that covers them. Most are
@@ -1232,18 +1162,12 @@ scope affects one runtime mechanism and never appears in operation bodies.
 `destination:` lineage module docstring.
 
 **A15.2 A handle is `diff-tracked` if it reaches a `StageOutput`.** Derived from the stage
-declaration and the operation wiring, never declared.
+declaration and the operation wiring, never declared. Under A31.3 every `StageOutput` descends
+from a PROCESSING `StageInput`, so the rule needs no PROCESSING clause.
 
 > *Renamed.* This property was "in scope", which collided with `ScratchScope` and left
 > "scoped handle" ambiguous against `lineage-bearing` (A15.6). `diff-tracked` says exactly what
 > follows from it: the boundary diff tracks this handle.
-
-> *Superseded:* "descends from a PROCESSING `StageInput` **and** reaches a `StageOutput`." The
-> `DISPLACEMENT` stage breaks it — `displacement_feature` is a `StageOutput` whose only ancestors
-> are CONTEXT inputs (`roads_source`, `roads_generalized`), so `DISPLACEMENT_FEATURE` would get no
-> lineage ids at all, and A13's input check would then fail whenever another pipeline read it. The
-> cost the PROCESSING clause was buying lands on the In side, not on the diff, which is bounded by
-> Out size either way.
 
 `destination:` lineage module docstring; `02-runtime.md` §8.
 
@@ -1379,8 +1303,8 @@ Consequences: the boundary diff skips non-bearing handles, since there are no id
 completeness ignores them; and A13's input verification applies to **`lineage-bearing`** inputs
 only.
 
-Recorded separately because one word doing two jobs is what produced the `DISPLACEMENT_FEATURE`
-bug that killed the PROCESSING clause (A15.2).
+Recorded separately because one word doing two jobs would make `SNAP_DISPLACEMENT` look like
+an exemption instead of a legal case.
 `destination:` lineage module docstring; `01-terminology.md`.
 
 **A15.7 Time budgets for lineage overhead.** Measured as **time added over the bare tool** on the
@@ -1414,16 +1338,22 @@ D  = ⋃ from_ids over promoted DROPPED edges
 ```
 
 **`I` is PROCESSING-only.** Completeness asks whether the stage lost something it was
-*responsible for*, and a stage is not responsible for reference data. Note this is a different
-question from A15.2's `diff-tracked`, which deliberately dropped its PROCESSING clause — that
-property decides whether a handle gets ids at all; this one decides what must be accounted for.
+*responsible for*, and a stage is not responsible for its CONTEXT inputs (A31.3). Note this is
+a different question from A15.2's `diff-tracked`, which decides whether a handle gets ids at
+all; this one decides what must be accounted for. `T` ranges over the lineage edges
+(`PARENTS_CONSUMED`, `PARENTS_KEPT`, `CREATED`), not over `DROPPED` edges: a promoted drop is a
+`from_id` of its own `DROPPED` edge and is not in `O`, so the other reading would put it in
+both `T` and `D` and (3) could never hold.
 
-Verified against the `DISPLACEMENT` stage rather than reasoned about. `buildings` (PROCESSING)
-flows through `simplify_polygons` and `propagate_displacement`, both `ONE + CARRY`, so every
-building id reaches `O` via `displaced` — (1) holds. `displacement_feature` ids are minted by
-`build_displacement_feature`'s dissolve, so they are in `to_ids` — (2) holds. Context road ids
-land in `T` via `from_ids` without ever entering `I`, and are not in `D` because the boundary diff
-does not call a row dropped when it appears in an emitted edge's `from_ids` — (3) holds.
+Verified against the `DISPLACEMENT` stage rather than reasoned about. `buildings`
+(PROCESSING) flows through `simplify_polygons` and `propagate_displacement`, both
+`ONE + CARRY`, so every building id reaches `O` via `displaced` — (1) holds, and `O` is `I`, so
+(2) holds. `build_displacement_feature`'s dissolve mints the parts of `displacement_feature`,
+a scratch handle, from the CONTEXT road ids: the road ids land in `T` via `from_ids` without
+ever entering `I`, and the part ids are in `to_ids`. `propagate_displacement` reads the parts
+as `context`, so they enter no further lineage edge, and the stage-exit sweep emits `DROPPED`
+for each part (A16.2). `D` holds at most part ids and `T` holds road ids, so (3) holds whether
+or not those drops are promoted (T5.1).
 
 `PARENTS_KEPT` contributes nothing to completeness by construction, since its parents are in `O` and
 therefore excluded from `T`. `CREATED` contributes nothing because its `from_ids` is empty.
@@ -1437,10 +1367,11 @@ D = { d ∈ ⋃_jobs D_job : owner(root(d)) == job(d) }
 `root(d)` resolves back through that job's own log to a raw id; `owner` is the fan-out assignment.
 `PARENTS_CONSUMED` and `PARENTS_KEPT` need no ownership check — the resulting id's presence in the job's
 declared output already witnesses it, because the partition machinery filtered outputs to owned
-features. **This is why the record format must not carry an own/context flag: the writer cannot
-know it.** It also removes the deduplication problem — a feature dropped as context in job x and
-kept as own in job z produces one record in the stage log, from z's output, and x's record is
-simply not promoted.
+features. **This is why the record format must not carry an own/halo-copy flag: the writer
+cannot know it.** It also removes the deduplication problem — a feature dropped as a halo copy
+in job x and kept as own in job z produces one record in the stage log, from z's output, and
+x's record is simply not promoted. A halo copy is a PROCESSING row a pod received through the
+overlap (A31.2). How a record about an id the job itself minted is promoted is open (T5.1).
 
 **A16.2** A **stage-exit sweep** is needed in addition to the per-operation sweep, emitting
 `DROPPED` for ids terminating in handles that no `StageOutput` names. `simplify`'s
@@ -1460,10 +1391,11 @@ is computed from it.
 
 ## A17. Defects found in the template
 
-**A17.1** `DISPLACEMENT_FEATURE = Derived("displacement_feature", origin=(NVDB_ROADS,))`
-(`pipelines/building/n100_objects.py:55`), but `build_displacement_feature` also consumes
-`roads_generalized`, which is `N100_ROAD`. The origin is factually incomplete. Legality is safe —
-`NVDB_ROADS` is already the strictest term — but A16.4 would flag it on the first run.
+**A17.1** `DISPLACEMENT_FEATURE` is declared as a `Derived` and wired as a `StageOutput`
+(`pipelines/building/n100_objects.py:55`, `n100_stages.py:135`), but every row of it
+originates from CONTEXT inputs (`roads_source`, `roads_generalized`), which A31.3 forbids. It
+is a scratch handle: the `Derived` and the `StageOutput` are deleted (T5.3). Nothing reads it
+and the pipeline does not publish it.
 
 **A17.2** `resolve_ramps` is **inverted**, not merely simplified. It selects `is_ramp = 1`,
 collapses, and writes only that to `output_lines`, so every non-ramp road vanishes — and since
@@ -1905,6 +1837,97 @@ checkable; scoping the cases to guards is what keeps the tables small enough to 
 > *Landed 2026-10-07* in `tools/break_once/`, `.pre-commit-config.yaml` and
 > `docs/contributing/testing.md`. The page is the authority.
 
+## A31. Stage inputs: role and spatiality
+
+*Decided 2026-10-12; signed 2026-10-16 as proposed in `PROPOSALS-2026-10-14.md` §1.* A stage
+input has two independent properties.
+
+**A31.1 The input role is declared; spatiality is derived.** `StageInput.role` is
+`InputRole.PROCESSING` or `InputRole.CONTEXT` and answers one question: may this input's rows
+become stage output? Roles belong to the stage input, not to the object. The same water
+layer is PROCESSING in the stage that generalises it and CONTEXT in the stage that moves
+buildings away from it. Whether an input is spatial is read from its object's `DataType` and
+is never declared: `FEATURE_CLASS` and `RASTER` are spatial; `TABLE` and `SYMBOLOGY` are
+not. `DataType` has the member `SYMBOLOGY` and a `spatial` property. Declarations of mostly
+spatial data pay nothing for the second axis.
+
+**A31.2 Fan-out's transfer follows from both properties.**
+
+| | spatial | non-spatial |
+|---|---|---|
+| PROCESSING | partitioned, with halo overlap | rejected at declaration |
+| CONTEXT | context filter, then partitioned with the same overlap | sent whole to every pod, written once at a shared key |
+
+- The **context filter** keeps the CONTEXT rows within `context_radius_m` of any PROCESSING
+  row of the stage, before partitioning; at 0 m it keeps the rows that intersect a PROCESSING
+  row. The filter distance is the stage's context radius; there is no second number. Reason:
+  an upstream radius computed ahead of time adds complexity for little gain and fails
+  silently, since a context set filtered with the wrong radius looks exactly like a correct
+  one.
+- **Overlap** applies to both partitioned roles. A PROCESSING row within the radius of a
+  partition but outside it reaches that partition too, and fan-in discards it (A6.1). A
+  CONTEXT row within the radius of a partition reaches it; at 0 m, the rows intersecting the
+  partition do.
+- **Non-spatial PROCESSING is rejected** when the `StageInput` is constructed. There is nothing
+  to partition, so the model defines no behaviour for it; the guard fails closed. It is a
+  construction-time check in `core/pipeline.py` with a break-it case (A30), recorded in the
+  plan for the Task B lift.
+- **The radius is a claim about the logic.** Operations never see partitions (ADR-0003), so
+  `context_radius_m` is the one place a stage author reasons about partition boundaries. A
+  0 m radius states that nothing in the stage consults a neighbour. The model does not guard
+  it; a reviewer can challenge it.
+
+**A31.3 Only rows originating from PROCESSING inputs may become stage outputs.** Stage
+outputs are the only data that leaves a stage. A CONTEXT row may affect an output and never
+becomes one: buildings moved away from water carry the buildings' lineage, and the water is
+a spatial influence. Scratch intermediates built from CONTEXT rows are legal inside a stage;
+they reach the scratch dump like every other handle (02-runtime §4.3) and nothing reads them
+as an input. An object derived from CONTEXT rows that a later stage must read (a water
+buffer, a displacement feature) is produced in a stage where its source is PROCESSING.
+Enforced by review of the stage declarations only, until B24 resolves. The fixtures under
+`tests/fixtures/example_pipelines/` are examples of the rule, not an enforcement of it.
+
+**A31.4 Rasters are spatial** and take either role. Transfer is tile selection or clipping to
+the partition plus its halo, not row filtering. The project produces no raster products;
+raster use is value extraction (A5.2). The mechanism is open (B25) until a stage declares a
+`RASTER` input.
+
+**A31.5 Symbology files are non-spatial CONTEXT inputs.** A `.lyrx` file is a symbology
+blueprint with no data, consumed by arcpy tools such as `ResolveRoadConflicts`. It is declared
+as an `ExternalSource` with `data_type=DataType.SYMBOLOGY`, a settable location and a
+classification, and reaches every pod whole. All tables and all symbology files are stage
+inputs with a settable storage location, never baked into the container image. Reason: some
+carry attributes that must stay on-prem, and one rule for all of them is more consistent
+than a split by author. The member is `SYMBOLOGY`, not a generic `FILE`, so the next file kind
+gets its own decision. Numeric symbol dimensions (`building_symbol_dimension`, buffer
+factors) are a different thing: a project-wide Python resource that reaches operations as
+config dataclass fields varying by pipeline (ADR-0013), never a stage input. Deriving them
+from `.lyrx` files is possible later and not planned. This settles 03-architecture §7.5 and
+Q-D for both.
+
+**A31.6 Port-level `subject`/`context` relate to the stage roles; they are not the same
+thing.** The row-shape grammar (A12) declares, per port method, which input parameter's
+rows carry identity into an output. The stage roles declare, per stage input, which rows may
+become stage output. A port `subject` may be fed from a CONTEXT stage input
+(`build_displacement_feature` buffers CONTEXT roads into a scratch blob); a port `context=`
+may be fed from a PROCESSING-derived intermediate (`propagate_displacement` reads the blob as
+`context` and the simplified buildings as `subject`). What holds at both levels: only the
+subject carries identity into outputs, and a context influences without contributing
+identity. The word `context` is shared on purpose for that reason, and for no other.
+
+**A31.7 Rejected.** A third role for the non-spatial case (`REFERENCE`, `SHARED` or
+`NON_SPATIAL`): it duplicates what `DataType` already says, mixes two questions in one enum,
+and each candidate word collides with an existing use (`reference` is a port parameter,
+`shared` is ordinary prose). A generic `FILE` data type: invites opaque inputs. The trade
+accepted: at a stage declaration a reader must know the data type to see that a table is
+sent whole, so the `InputRole.CONTEXT` docstring and 02-runtime §2.3 state both transfers
+side by side.
+
+`destination:` `02-runtime.md` §2.3 (A31.1, A31.2, A31.3, A31.7), §7.1 (overlap), §8 (the
+guard); `03-architecture.md` §7.5 (A31.5); `core/types.py` (`InputRole` and `DataType`
+docstrings); `core/pipeline.py` guard (Task B); `01-terminology.md`; the ADR of section 8 if
+written.
+
 ---
 
 # B. Open
@@ -2073,8 +2096,9 @@ supplying it.
 - `ConflictResolution.final` is `ROAD`, published as `N100_ROAD` (A17.1), and `N100_ROAD` is a
   CONTEXT `StageInput` to the building pipeline's `DISPLACEMENT` in the **same run**
   (`pipelines/building/n100_stages.py:128-132`).
-- A16's `DISPLACEMENT` verification rests on exactly that column: *"Context road ids land in `T`
-  via `from_ids` without ever entering `I`"*. Those ids come from the column the mapping drops.
+- The CONTEXT road ids enter the building stage's log as `from_ids` of
+  `build_displacement_feature`'s dissolve edge (A15.5), which is A20's forward branch. The walk
+  from a road into the building pipeline depends on the column the mapping drops.
 
 **What this forces and what it does not.** It forces the **in-run stage output to carry
 `lineage_id`**. Moving mapping to a publish step is the natural way to get there, not the only
@@ -2550,7 +2574,12 @@ one of those. Proposed enforcement point: the lineage facade (T4.3), which sees 
 call and its arguments and can match a handle embedded in a predicate against the handles of
 the current call; a static scan of operation bodies for `Class.attribute` handle references
 is the cheaper partial check. Not enforced in slice 1a; `ports/predicates.py` says the check
-does not see the handle.
+does not see the handle. For a domain call through the facade, the same rule covers a
+`Mutates` argument: it must be an `Out` handle of the operation's own call or scratch from its
+own scope, since a mutation of an `In` handle is a write the stage declaration does not show
+and validation rule 2 cannot see. The lineage layer's own writes (T4.5 Path A's map join,
+T3.4's fan-out join, the facade's parents scratch under A11.15) go to the unwrapped port and
+are outside the rule, as T2.8 already scopes the `lineage_id` rejection.
 
 **B21 — RESOLVED 2026-09-21, option (a), into A5.7.** The question, kept for the record: who
 creates a workspace. `ScratchFileManager.create_workspaces` was unimplemented in the template
@@ -2583,3 +2612,23 @@ Ruled out: `PYTHONPATH=src` with whatever pytest Pro bundles, because an unpinne
 would run the one test bucket CI never sees. Settled by trying (a) and (b) on one Windows
 machine when the first marked test exists; the answer lands in
 `docs/contributing/toolchain.md` and `testing.md`, which say "open, see B23" until then.
+
+**B24. Can A31.3 be checked at plan time?** Opened 2026-10-14 with A31. Not today.
+`OperationCall` records only undifferentiated `In` and `Out` handles
+(`src/ag/core/operations.py`); the row-shape `subject`/`context` lives on port methods, which
+plan time never sees (B14). A static check needs an operation-level subject marker: `Out`
+metadata naming the `In` parameter whose rows carry identity into it, carried by the same
+`Annotated` mechanism as the direction markers, which touches `core/operations.py`. With it, a
+validation walk from each `StageOutput` back through subject edges to a `StageInput` requires
+`PROCESSING` at the end, with a break-it case (A30). A weak proxy is available earlier: every
+root in a `StageOutput`'s `origin` reachable through a PROCESSING `StageInput` chain. Not part
+of A31; A31.3 is enforced by review until this resolves.
+`destination:` `02-runtime.md` §8 when resolved.
+
+**B25. How a `RASTER` input reaches a pod.** Opened 2026-10-14 with A31.4. Tile selection or
+clipping, to the partition plus its halo, for both roles. Legacy precedent is
+`find_rasters_for_vector_extent` (`custom_tools/general_tools/geometry_tools.py:1600`, used by
+`generalization/n100/river/fix_river_topology_gaps.py`), which selects the tiles intersecting
+the processing extent and has no overlap. Due when a stage declares a `RASTER` input, which
+`sample_at` (T2.6, A5.2) will be the first to need.
+`destination:` `02-runtime.md` §2.3 when resolved.

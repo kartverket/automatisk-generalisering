@@ -50,20 +50,13 @@ question "what dataset is this?" should answer.
 Legality is a different question with a different answer. DISPLACED is PREM_ONLY
 despite this CLOUD_OK origin, because restricted data reached the stage that produced
 it - see policy.classification_of, which walks the stage wiring rather than origin.
-"""
 
-DISPLACEMENT_FEATURE = Derived("displacement_feature", origin=(NVDB_ROADS,))
-"""A GENUINELY NEW OBJECT, not a modified Road.
-
-This is the case that makes `origin` mean "what dataset this is" rather than "what
-it is a version of". It is road-derived data, so its origin is NVDB_ROADS.
-
-RESOLVED SINCE THE LAST DRAFT: it is declared here AND wired as a real StageOutput in
-stages.py, rather than existing only as documentation beside a bare ScratchHandle.
-The open question was whether intermediates that never cross a stage boundary should
-appear in an objects file at all, and the answer is no - either an object crosses a
-boundary and is a Derived, or it does not and is a handle. A Derived that nothing
-uploads is a third state with no meaning, and warn_unused_handles cannot see it.
+THE DISPLACEMENT FEATURE HAS NO DERIVED. The displacement stage buffers and dissolves
+its CONTEXT roads into a blob that propagate_displacement reads; every row of that blob
+originates from CONTEXT inputs, and only rows originating from PROCESSING inputs may
+become stage output. So it is a scratch handle in stages.py, crosses no boundary, and
+has no origin to declare. Either an object crosses a boundary and is a Derived, or it
+does not and is a handle; this one does not.
 """
 
 ADDRESSED_BUILDINGS = Derived(

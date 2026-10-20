@@ -54,6 +54,8 @@ where two of them described the same thing and neither declared which was author
 | [0013](decisions/0013-tuning-is-base-plus-one-delta.md) | Tuning is base plus one delta, with no resolution mechanism |
 | [0014](decisions/0014-runtime-injected-parameters.md) | Runtime-injected parameters are recognised by a marker base class |
 | [0015](decisions/0015-attribute-predicates-are-structured-leaves.md) | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |
+| [0016](decisions/0016-stage-inputs-have-a-role-and-a-spatiality.md) | Stage inputs have a declared role and a derived spatiality |
+| [0017](decisions/0017-row-shape-grammar.md) | Row shape, the declared grammar of port outputs; the first themed ADR with stable ids |
 
 **0001–0010** were extracted in one pass from design documents written earlier, not argued one at
 a time over months — read them as the reasoning behind a single design, not as a decision log.

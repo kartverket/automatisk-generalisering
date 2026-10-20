@@ -31,7 +31,9 @@ Two independent arguments reach this, and neither depends on hop 2.
 
 - **B9(d)** forces the **in-run** stage output to carry `lineage_id`. `N100_ROAD` is a CONTEXT
   input to building `DISPLACEMENT` in the same run (`pipelines/building/n100_stages.py:128-132`),
-  and A16's verification of that stage reads the column.
+  and its ids enter that stage's log as `from_ids` of `build_displacement_feature`'s dissolve
+  edge (A15.5), which is A20's forward branch; the walk from a road into the building pipeline
+  reads the column.
 - **`n100_stages.py:161` together with A22** (the docstring opens at :158, which is what B7 and
   B9 cite; the quoted sentence is at :161) forces the **archive** to match the in-run output.
   One `StageInput` pins to the stage output in-run and to the archive otherwise (§6.2). If the two
