@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.static.test_row_shape_typing &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tests.static.test_row_shape_typing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tests.static.test_row_shape_typing</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The decorator keeps the Protocol's structural type: ADR-0017 RS-3, under pyright.</span>
+
+<span class="sd">What: pyright, run on a fixture this test writes, accepts a class that conforms to a</span>
+<span class="sd">Protocol whose method carries `@row_shape` and refuses one that does not, reporting</span>
+<span class="sd">exactly the non-conforming assignment.</span>
+
+<span class="sd">How: the fixture is written to a temporary directory, so the deliberate non-conformer is</span>
+<span class="sd">never inside the pyright hook's include list, and it imports the real decorator through</span>
+<span class="sd">the installed package. The project configuration and the repository root are passed</span>
+<span class="sd">explicitly, so the result does not depend on where pytest was started. Evidenced like an</span>
+<span class="sd">import contract: a case in `tools/break_once/cases/` erases the decorator's type</span>
+<span class="sd">variables and this test must then fail.</span>
+
+<span class="sd">Why: a decorator that erases the method's type makes every assignment to the Protocol</span>
+<span class="sd">type-check. Strict mode cannot show that, because an erased type is a declared `Any`,</span>
+<span class="sd">not an unknown, so the only evidence is a non-conformer pyright still refuses.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">PROJECT</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"pyproject.toml"</span>
+
+<span class="n">FIXTURE</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
+<span class="s2">from __future__ import annotations</span>
+
+<span class="s2">from typing import Protocol</span>
+
+<span class="s2">from ag.core.handles import In, Out</span>
+<span class="s2">from ag.ports.row_shape import Cardinality, Ids, Rows, row_shape</span>
+
+
+<span class="s2">class Ops(Protocol):</span>
+<span class="s2">    @row_shape(output=Rows(Cardinality.ONE, Ids.CARRY, subject="input"))</span>
+<span class="s2">    def copy(self, *, input: In, output: Out) -&gt; None: ...</span>
+
+
+<span class="s2">class Conforming:</span>
+<span class="s2">    def copy(self, *, input: In, output: Out) -&gt; None: ...</span>
+
+
+<span class="s2">class NotConforming:</span>
+<span class="s2">    def copy(self, *, input: In) -&gt; None: ...</span>
+
+
+<span class="s2">accepted: Ops = Conforming()</span>
+<span class="s2">refused: Ops = NotConforming()</span>
+<span class="s2">"""</span>
+<span class="n">REFUSED_LINE</span> <span class="o">=</span> <span class="n">FIXTURE</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"refused: Ops = NotConforming()"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<div class="viewcode-block" id="diagnostics">
+<a class="viewcode-back" href="../../../generated_docs/tests.static.html#tests.static.test_row_shape_typing.diagnostics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diagnostics</span><span class="p">(</span><span class="n">fixture</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""(rule, 1-based line) for every diagnostic pyright reports on `fixture`."""</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span>
+            <span class="s2">"-m"</span><span class="p">,</span>
+            <span class="s2">"pyright"</span><span class="p">,</span>
+            <span class="s2">"--project"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">PROJECT</span><span class="p">),</span>
+            <span class="s2">"--outputjson"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">fixture</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">cwd</span><span class="o">=</span><span class="n">ROOT</span><span class="p">,</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">report</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">"rule"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">"range"</span><span class="p">][</span><span class="s2">"start"</span><span class="p">][</span><span class="s2">"line"</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">"generalDiagnostics"</span><span class="p">]</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="test_the_decorated_protocol_still_refuses_a_non_conformer">
+<a class="viewcode-back" href="../../../generated_docs/tests.static.html#tests.static.test_row_shape_typing.test_the_decorated_protocol_still_refuses_a_non_conformer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_the_decorated_protocol_still_refuses_a_non_conformer</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">fixture</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"fixture.py"</span>
+    <span class="n">fixture</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">FIXTURE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">diagnostics</span><span class="p">(</span><span class="n">fixture</span><span class="p">)</span> <span class="o">==</span> <span class="p">[(</span><span class="s2">"reportAssignmentType"</span><span class="p">,</span> <span class="n">REFUSED_LINE</span><span class="p">)],</span> <span class="p">(</span>
+        <span class="s2">"pyright must refuse exactly the non-conforming assignment and accept the "</span>
+        <span class="s2">"conforming one; anything else means the decorator changed the method's type"</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

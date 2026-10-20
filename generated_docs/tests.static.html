@@ -123,6 +123,36 @@
 <section id="tests-static-test-import-contracts-module">
 <h2>tests.static.test_import_contracts module<a class="headerlink" href="#tests-static-test-import-contracts-module" title="Link to this heading"></a></h2>
 </section>
+<section id="tests-static-test-row-shape-module">
+<h2>tests.static.test_row_shape module<a class="headerlink" href="#tests-static-test-row-shape-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.static.test_row_shape_typing">
+<span id="tests-static-test-row-shape-typing-module"></span><h2>tests.static.test_row_shape_typing module<a class="headerlink" href="#module-tests.static.test_row_shape_typing" title="Link to this heading"></a></h2>
+<p>The decorator keeps the Protocol’s structural type: ADR-0017 RS-3, under pyright.</p>
+<p>What: pyright, run on a fixture this test writes, accepts a class that conforms to a
+Protocol whose method carries <cite>&#64;row_shape</cite> and refuses one that does not, reporting
+exactly the non-conforming assignment.</p>
+<p>How: the fixture is written to a temporary directory, so the deliberate non-conformer is
+never inside the pyright hook’s include list, and it imports the real decorator through
+the installed package. The project configuration and the repository root are passed
+explicitly, so the result does not depend on where pytest was started. Evidenced like an
+import contract: a case in <cite>tools/break_once/cases/</cite> erases the decorator’s type
+variables and this test must then fail.</p>
+<p>Why: a decorator that erases the method’s type makes every assignment to the Protocol
+type-check. Strict mode cannot show that, because an erased type is a declared <cite>Any</cite>,
+not an unknown, so the only evidence is a non-conformer pyright still refuses.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.static.test_row_shape_typing.diagnostics">
+<span class="sig-prename descclassname"><span class="pre">tests.static.test_row_shape_typing.</span></span><span class="sig-name descname"><span class="pre">diagnostics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixture</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/tests/static/test_row_shape_typing.html#diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.static.test_row_shape_typing.diagnostics" title="Link to this definition"></a></dt>
+<dd><p>(rule, 1-based line) for every diagnostic pyright reports on <cite>fixture</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.static.test_row_shape_typing.test_the_decorated_protocol_still_refuses_a_non_conformer">
+<span class="sig-prename descclassname"><span class="pre">tests.static.test_row_shape_typing.</span></span><span class="sig-name descname"><span class="pre">test_the_decorated_protocol_still_refuses_a_non_conformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmp_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/tests/static/test_row_shape_typing.html#test_the_decorated_protocol_still_refuses_a_non_conformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.static.test_row_shape_typing.test_the_decorated_protocol_still_refuses_a_non_conformer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="tests-static-test-source-scans-module">
 <h2>tests.static.test_source_scans module<a class="headerlink" href="#tests-static-test-source-scans-module" title="Link to this heading"></a></h2>
 </section>

@@ -20,6 +20,14 @@ tests.unit.ports.test\_predicates module
    :show-inheritance:
    :undoc-members:
 
+tests.unit.ports.test\_row\_shape module
+----------------------------------------
+
+.. automodule:: tests.unit.ports.test_row_shape
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.unit.ports.test\_table\_values module
 -------------------------------------------
 

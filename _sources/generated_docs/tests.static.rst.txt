@@ -20,6 +20,22 @@ tests.static.test\_import\_contracts module
    :show-inheritance:
    :undoc-members:
 
+tests.static.test\_row\_shape module
+------------------------------------
+
+.. automodule:: tests.static.test_row_shape
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.static.test\_row\_shape\_typing module
+--------------------------------------------
+
+.. automodule:: tests.static.test_row_shape_typing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.static.test\_source\_scans module
 ---------------------------------------
 
