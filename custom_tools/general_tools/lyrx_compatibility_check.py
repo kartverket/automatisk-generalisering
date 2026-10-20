@@ -25,6 +25,15 @@ class LyrxCompatibilityChecker:
     """
     Check each input feature against selected .lyrx definition queries and renderer.
 
+    This class loops through each selected layer in the .lyrx file and checks if every row in the input feature class or layer will be symbolized.
+    Note:
+        This class does not raise an error if some features do not get symbolized; it only prints a warning.
+        This class does not modify the input feature class or layer; it only checks for compatibility with the .lyrx file.
+
+    Raises:
+        ValueError: If it discoveres something wrong with chosen layerdefinitions in the .lyrx file.
+
+
     Fill in exactly one of layer name or data source to be used to select the appropriate layers from the .lyrx file.
     If lyrx file is only one layerDefinition both dataset and layer_name can be left empty.
 
@@ -105,20 +114,18 @@ class LyrxCompatibilityChecker:
         feature_class_fields_type_map = {
             f.name: f.type for f in arcpy.ListFields(copied_features_layer)
         }
-
         fields = renderer.get("fields", [])
         groups = renderer.get("groups", [])
 
         if not fields or not groups:
-            logger.warning("Renderer is missing fields or groups.\n")
-            return False
+            raise ValueError("Renderer is missing fields or groups.\n")
 
+        # iterates through each cim unique value in the renderer and removes matching features from the copied layer
         for group in groups:
             if group.get("type") == "CIMUniqueValueGroup":
                 classes = group.get("classes", [])
                 if not classes:
-                    logger.warning("Group is missing classes.\n")
-                    return False
+                    raise ValueError("Group is missing classes.\n")
 
                 for cls in classes:
                     values = cls.get("values", [])
@@ -132,16 +139,14 @@ class LyrxCompatibilityChecker:
                             fieldValues = value.get("fieldValues", [])
 
                             if not fieldValues:
-                                logger.warning(
+                                raise ValueError(
                                     "CIMUniqueValue is missing fieldValues.\n"
                                 )
-                                return False
 
                             if not len(fieldValues) == len(fields):
-                                logger.warning(
+                                raise ValueError(
                                     "Number of fieldValues does not match number of fields.\n"
                                 )
-                                return False
 
                             # logger.info(
                             #    "fields: %s", fields
@@ -193,7 +198,7 @@ class LyrxCompatibilityChecker:
             return True
 
     def check_compatibility(self) -> bool:
-        """Return True if each input row matches a selected layer's definition expression and renderer"""
+        """Makes a copy of input feature class or layer and checks compatibility with selected layers in the .lyrx file by deleting rows that get symbolized from copy feature class or layer. Prints the result of the compatibility check."""
         logger.info(
             "Starting compatibility check for feature class or layer: %s",
             self.feature_class_or_layer,
