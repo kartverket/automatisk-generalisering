@@ -300,6 +300,151 @@ the split argument, AR-D5, AR-D6, AR-D12, Direction 3), 03 §4.1 (adapter choice
 | A4.2 | `updateRow` sites are the real constraint; `CalculateField` covers the expression-only case; side table plus `join_field` costs a full write plus a join | A4.2 | Dir 4; rejected (side table plus join) | reopen: NEW |
 | A4.3 | `update_rows(input, key, fields, rows)`: bulk, keyed, no iteration protocol, writes M changed rows, must allow `Row.geometry`, requires a stable key which `lineage_id` provides | A4.3 | detail | contract |
 
+### 3.4 Approved text for ADR-0019 (pass 2, 2026-10-21)
+
+Status, Scope, Direction 1 to 4 and the section lines are approved as exact text (Direction 1
+and PC-1 in the architect's revised form). Details are agreed as listed, including PC-D4, PC-D7
+and PC-D24. This is the text pass 4 writes.
+
+**Status:** Accepted, <cut-over date>.
+
+**Scope:** The values and method contracts of `ag/ports/`: handles at the boundary,
+`ports/predicates.py`, `ports/attributes.py`, `ports/geometry.py`, and row IO on `TableOps`.
+Absorbs A2.1, A2.2 and A2.3; A4.1, A4.2 and A4.3 land here. The method contracts for parents
+capability and single-part dissolve (A14.1, A18) join when they migrate. Row shape is
+ADR-0017.
+
+**Direction.**
+
+1. A port method that takes a dataset takes it as a `ScratchHandle`. `DataObject` never
+   appears in `ports/`, so an adapter sees no identity, classification or location of a
+   dataset and cannot branch on them.
+2. Selection is an immutable predicate value with a closed algebra. No mutable selection
+   crosses a port, and a predicate materialises nothing until it is applied.
+3. Attribute predicates are a closed set of structured leaves, evaluated in three values as
+   SQL does. A raw expression is a counted escape hatch.
+4. No cursor crosses a port. Rows are read, written and updated in bulk, an update keyed on a
+   stable id; expression updates are declarative; `Geometry` is an immutable value type.
+
+**PC-1 Handles at the boundary.** Direction: Port signatures name a dataset by
+`ScratchHandle`, the operation's view of data, never by `DataObject`, the planner's.
+
+- **PC-D1** `DataObject` (`ExternalSource`, `ProductIdentity`, `Derived`) is what a stage
+  declares; the dependency graph, classification and pinning are computed over it.
+  `ScratchHandle` is what an operation receives: a named slot in the pod scratch root, with no
+  identity and no location.
+- **PC-D2** An operation sees no URI, no client, no partition index and no context radius, and
+  the rule extends unchanged to adapters. An adapter resolves no location and sees no
+  classification; classification is computed at plan time.
+- **PC-D3** `ports/` imports only the `core` modules that `.importlinter` row 4 allows, and
+  never `core.pipeline`.
+- **PC-D4** Port parameters are keyword-only, with the unit in the name (`width_m`,
+  `tolerance_m`). Options are project enums, never vendor strings or bare booleans.
+
+**PC-2 Selection as a predicate.** Direction: A selection is an immutable predicate: adding
+to, removing from and subsetting a selection are disjunction, conjunction with a negation, and
+conjunction, never a held selection.
+
+- **PC-D5** `GeometryOps` exposes `select(input, where, output)` and
+  `count(input, where) -> int`.
+- **PC-D6** `Predicate` is an immutable algebra: the attribute leaves of PC-3, `Spatial`,
+  `And`, `Or` and `Not`, built with `&`, `|` and `~`.
+- **PC-D7** `Spatial(relate_to, relation, distance_m)` names a handle as a value; `Relation`
+  carries the CQL2 relation names, and `DWithin` and `Intersects` are constructors over it.
+  Which handles a predicate may name is open.
+- **PC-D8** The tree maps onto OGC CQL2 and onto a `WHERE` clause in a SQL adapter.
+- **PC-D9** An adapter whose engine inverts only at a leaf pushes negation to the leaves by
+  De Morgan inside the adapter; its internal negated node never crosses the port.
+
+**PC-3 Attribute leaves.** Direction: The attribute leaf is a closed set of structured nodes
+built through constructors on a namespace, not a type, and the raw escape hatch is counted.
+
+- **PC-D10** `Attr` is a namespace, not a type, with four constructors: `cmp`, `in_`,
+  `is_null` and `raw`.
+- **PC-D11** `Attr.cmp(field, op, value)`: `op` is one of `=`, `<>`, `<`, `<=`, `>`, `>=` and
+  `LIKE`; `value` is an attribute value other than `None`. A comparison with NULL is refused
+  at construction and goes through `Attr.is_null`.
+- **PC-D12** `Attr.in_(field, values)`: the values are kept as a tuple, `None` is refused, and
+  the empty set is legitimate and matches no row.
+- **PC-D13** `Attr.is_null(field)`: `field IS NULL`.
+- **PC-D14** `Attr.raw(cql)`: a CQL2 text expression compiled as written. A static test pins
+  the count of call sites in the package, so adding one is a deliberate edit to that test.
+- **PC-D15** Every adapter evaluates a predicate in three values: TRUE, FALSE or UNKNOWN per
+  row, and `select` keeps the rows where it is TRUE. `Compare` and a non-empty `IsIn` are
+  UNKNOWN when the field is NULL; the empty `IsIn` is FALSE for every row; `IsNull` is never
+  UNKNOWN; `Spatial` is UNKNOWN for a row with a null geometry; `Not` of UNKNOWN is UNKNOWN;
+  `And` is FALSE if any term is FALSE and otherwise UNKNOWN if any term is; `Or` is the
+  mirror. `~Attr.in_(f, ids)` excludes the NULL rows; a caller that wants them writes
+  `~Attr.in_(f, ids) | Attr.is_null(f)`.
+- **PC-D16** `LIKE` takes a string pattern, `%` for any run of characters and `_` for one,
+  matched case-sensitively with no escape character; a literal `%` or `_` goes through
+  `Attr.raw`.
+- **PC-D17** A value whose type does not match the field's type is a `PortContractError`
+  raised by the adapter, so an engine's coercion and a Python comparison can never disagree.
+- **PC-D18** A predicate has no truth value in Python: `and`, `or` and `not` raise. A
+  connective has at least two terms.
+- **PC-D19** The leaves are frozen dataclasses `Compare`, `IsIn`, `IsNull` and `RawAttr`, so
+  an adapter pattern-matches them exhaustively, and a type alias names the closed set. The
+  algebra lives in `ports/predicates.py` beside the column vocabulary, because two ports take
+  predicates and a Protocol file stays the contract.
+- **PC-D20** An adapter compiles four leaf shapes plus the raw string, quoting identifiers for
+  its workspace type; it never parses. The in-memory adapter evaluates the three-valued rule
+  in Python and raises `PortContractError` on `RawAttr`.
+- **PC-D21** Structure and value types are checked when a leaf is built, at import for a
+  declaration module. A wrong field name is not: that needs schema declarations on handles, a
+  stated non-goal.
+
+**PC-4 Rows without a cursor.** Direction: Expression updates are declared, rows move in
+bulk, and a bulk update is keyed on a stable id and may carry geometry.
+
+- **PC-D22** `TableOps` has no cursor. `calculate_field(input, field, expression)` declares an
+  expression update; `read_rows(input, fields) -> Iterable[Row]` reads in bulk;
+  `write_rows(output, schema, rows)` writes in bulk; `update_rows(input, key, fields, rows)`
+  writes back rows computed in Python, keyed on a stable id, with no iteration protocol,
+  writing the changed rows and not every row, and may carry `Row.geometry`. The key must be
+  stable; `lineage_id` provides one.
+- **PC-D23** There is no delete method. Deletion is `select` with a negated membership
+  predicate.
+- **PC-D24** The bulk mapping: a search cursor becomes `read_rows`; an insert cursor becomes
+  `write_rows`; an update cursor becomes `calculate_field` where an expression suffices and
+  `update_rows` where values are computed in Python.
+- **PC-D25** `ports/geometry.py` defines an immutable `Geometry` value type: geometry kind,
+  coordinate sequence, CRS. `read_rows` yields it and `write_rows` accepts it. Domain code
+  manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy geometry and
+  convert at the boundary.
+
+**Rejected candidates for pass 3** (each once): PC-R1 `any()` on the port (reopen given: a
+backend that short-circuits); PC-R2 a mutable selection handle at the port; PC-R3 a text
+expression as the only attribute leaf; PC-R4 a cursor or row iterator in the port; PC-R5 a side
+table plus a join for computed updates.
+
+**Design-document passages absorbed by this theme**, replaced at the cut-over by a pointer to
+the ADR id: 03 §2.3 (contract shape: the `ScratchHandle` bullet, the enum rule and the keyword
+rule, PC-D1, PC-D4), 03 §2.4 (selection is a predicate value, `count` and `any()`, the leaf
+shapes, PC-D5 to PC-D9), 03 §2.5 (shapely under `Geometry`, PC-D25), 03 §3.1 (no cursor and
+the mapping table, PC-D22, PC-D24), 03 §3.2 (the `Geometry` value type, PC-D25), 02 §2.4 (the
+operation sees no URI, client, partition index or radius, PC-D2).
+
+### 3.5 Inherited errors found in the remaining themes (checked against `src/` on 2026-10-21)
+
+Sentences true when the old ADR was written and false for the design as it stands. Each is a
+detail correction unless marked otherwise; the corrected wording is used in the pass 2 text.
+
+| theme | old sentence | evidence | correction |
+|---|---|---|---|
+| OP | 0011: `@operation` returns `Callable[P, OperationCall]` | `src/ag/core/operations.py:116-147`: it returns an `OperationDeclaration[P]`, a class whose `__call__` has the function's parameter list and returns an `OperationCall`; `signature.bind` runs in `__call__`, at the declaration site | detail: OP-D2 states the class; the `P` argument of 0014 (a sentinel default is forced because the declaration site shares the parameter list) still holds |
+| OP | 0011: direction is carried by `In` / `Out` annotations; 0014's kinds table likewise | `src/ag/core/handles.py:4`: four markers, `In`, `Out`, `Mutates`, `ParentsOut`; ADR-0017 RS-D11 | detail: the handle markers are four; every handle parameter carries exactly one |
+| OP | 0011: three mechanisms, all in `core/operations.py` | `ScratchHandle`, the markers, `ScratchScope` and `INJECTED` are in `core/handles.py`; `Injected` in `core/injection.py`; `@operation` and `OperationCall` in `core/operations.py` | detail: modules named as they are |
+| OP | 0011: `wants_scratch` from the presence of a `ScratchScope` parameter | `operations.py:93`: a property over the injected mapping | detail: already the 0014 form |
+| OP | 0014: `Toolbox`'s four fields are typed by the six port Protocols | `ports/toolbox.py:3`: the four processing ports; `ArchiveClient` and `ClusterClient` are not in it | Rejected wording only (OP-R4) |
+| OP, document | 04-migration line 50: road-specific values to `pipelines/road/tuning/n100.py` | 0013 and the fixture layout: `operations/road/tuning/n100.py` | not an ADR error; 04-migration corrected at the cut-over (checklist) |
+| ST | none false. 0012 and 0016 name `core/pipeline.py`, `data_objects`, `locations.py`, `policy` and `check_stage_tags_match_pipeline`, none lifted | all present in `template_code/ag/core/` and in the planned tree (03 §5); the fixture's `StageInput(obj=, handle=, role=)` matches 0012 | the ADR states the design; no correction |
+
+The Architecture and Port contract themes were checked the same way on approval: the three-port
+count (AR-D5), the import list (PC-D3), the `DataObject` enumeration (PC-D1) and
+"every port method takes `ScratchHandle`" (Direction 1) were the inherited errors there, and
+are corrected in the approved text.
+
 ## 4. Theme OP: Operations
 
 ### 4.1 Draft top-level Direction
@@ -542,8 +687,10 @@ A12.5a) are unaffected.
    2026-10-20 draft, revised for the README's provenance rule).
 8a. Design-document passages absorbed by an ADR are replaced by a pointer to the ADR id; the
    document keeps only explanation that is not a rule (arch 2026-10-21). Per theme: AR: 03 §2,
-   §4.1, §4.3, §4.5. PC, OP, ST, RS: listed in their approved-text sections as each theme is
-   approved.
+   §4.1, §4.3, §4.5. PC: 03 §2.3, §2.4, §2.5, §3.1, §3.2; 02 §2.4. OP, ST, RS: listed in
+   their approved-text sections as each theme is approved.
+8b. 04-migration.md line 50: `pipelines/road/tuning/n100.py` becomes
+   `operations/road/tuning/n100.py`, the decided layout (section 3.5).
 9. The citation test, `tests/static/test_adr_citations.py`, if adopted: every `ADR-\d{4}`
    under `src/`, `tests/` and `docs/` resolves to a file in `docs/decisions/`; every id after
    it exists in that ADR; no retired number appears outside `docs/decisions/README.md` and
