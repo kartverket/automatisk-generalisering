@@ -76,6 +76,14 @@ custom\_tools.general\_tools.line\_topology module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.lyrx\_compatibility\_check module
+--------------------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.lyrx_compatibility_check
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.param\_utils module
 ------------------------------------------------
 
