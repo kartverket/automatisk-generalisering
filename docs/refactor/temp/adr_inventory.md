@@ -115,6 +115,131 @@ Work order for pass 2: AR, PC, OP, ST, then RS.
   composition root and never in operation code, is **not decided**. Recorded here as an open
   idea (arch 2026-10-21). If it is ever decided, it is an AR-2 or OP-3 detail.
 
+### 2.5 Approved text for ADR-0018 (pass 2, 2026-10-21)
+
+Status, Scope, Direction 1 to 5 and the section lines are approved as exact text. Details are
+agreed as listed. This is the text pass 4 writes.
+
+**Status:** Accepted, <cut-over date>.
+
+**Scope:** `ag/ports/` as a package, `ag/adapters/`, `ag/generalization/helpers/`,
+`ag/observability/`, the composition roots in `ag/runtime/` and `ag/orchestrator/`,
+`.importlinter`, and the conformance matrix in `tests/static/`. No A-items.
+
+**Direction.**
+
+1. Ports, adapters, composition roots, contract tests and fakes are adopted from
+   ports-and-adapters. The store-oriented and application-oriented patterns of that literature
+   are not: this is batch geoprocessing with one sequential executor, no requests and no
+   transactional store.
+2. A port is a capability the core calls out through, defined by the conversation it carries
+   and not by a library. An adapter is per vendor, which adapter serves a port is chosen per
+   port at the composition root, and a port's implementation may call other ports. A
+   capability outside the geoprocessing seam, such as graph algorithms over abstract topology,
+   is its own port.
+3. The geoprocessing seam is split by kind of operation: primitive dataset operations, with
+   schema and row work, on one side, and named generalization operators on the other.
+   Primitive operations have near one-to-one equivalents in other engines; generalization
+   operators have none and cost hundreds to thousands of lines each, so one port would block
+   any non-arcpy adapter until every operator was rewritten. A generalization port may be
+   built on the primitive ports, never the reverse.
+4. Every port is a `typing.Protocol`. Conformance is structural and asserted statically; an
+   adapter never inherits from a port.
+5. A port exists only for a distinct external capability with a foreseeable second
+   implementation. Logging and helpers are not ports.
+
+**AR-1 What is adopted, and on what grounds.** Direction: Adopted decisions rest on
+domain-specific grounds, not textbook ones, and are revisited on those grounds.
+
+- **AR-D1** Ports are split by migration path and measured call-site frequency, not by "one
+  reason to change". A port's boundary follows what the engines provide, not an application
+  use case.
+- **AR-D2** Ports are coarse. Interface segregation applies when clients depend on different
+  subsets; here every operation may use any method of a port, and all adapters are
+  constructed together. A large, implementation-oriented Protocol is the shape PEP 544
+  cautions against; it is accepted knowingly. Whether the generalization port splits per
+  operator is Q-B, settled by measurement once one operator is reimplemented.
+- **AR-D3** Fakes over mocks: the real dependency is licensed, Windows-adjacent and slow.
+- **AR-D4** The driving side is the orchestrator's CLI, the pod entry points and
+  `tests/invariance/`; it sits outside the `core → ports → adapters` layering as the adapters
+  on the driving side, and a composition root is where the two sides meet.
+  `tests/invariance/` is a driving adapter, which is why one pipeline runs at K=4 under the
+  harness and at K=16 under Kubernetes with no special-casing.
+
+**AR-2 Ports and adapters.** Direction: A port is a conversation the core has with an engine;
+the composition root decides, per port, which adapter carries it.
+
+- **AR-D5** The ports: `GeometryOps` (operations on spatial datasets), `TableOps` (schema,
+  attributes and bulk row IO), `CartographicOps` (named generalization operators), `GraphOps`
+  (graph algorithms over abstract topology), `ArchiveClient` (object storage transport),
+  `ClusterClient` (Kubernetes job lifecycle).
+- **AR-D6** `TableOps` is separate from `GeometryOps`: a different conversation, schema and
+  rows rather than geometry; it applies to non-spatial tables; and `GeometryOps.add_field()`
+  reads wrong.
+- **AR-D7** Whether `GraphOps` takes datasets or pure values is Q-C, open. The dataset-aware
+  form changes no operation signature, so deciding is deferred until the code that turns on
+  it is read.
+- **AR-D8** Migration order: `TableOps` first, then `GeometryOps`, then generalization
+  operators one at a time, each written against the other ports rather than a new library, so
+  the arcpy `CartographicOps` adapter shrinks method by method.
+- **AR-D9** `CartographicOps` may use `GeometryOps`, `TableOps` and `GraphOps`; those three
+  never use `CartographicOps`. The ports stay acyclic, linted. An adapter that consumes other
+  ports is a client of their contracts, not of their implementations, and the composition
+  root wires it.
+- **AR-D10** An implementation that adapts nothing is not an adapter. A generalization
+  operator written on the primitive ports is domain logic that satisfies `CartographicOps`
+  and lives in a top-level `cartography/`, so `adapters/` means "wraps somebody else's
+  library", and the port names no arcpy concept.
+- **AR-D11** Only `runtime/` and `orchestrator/` choose which adapter to instantiate.
+  `runtime/compose.py` takes port instances, never an adapter name, and the fake is imported
+  by `runtime/local.py` alone.
+- **AR-D12** Port vocabulary comes from OGC CQL2, OGC Simple Features and the ICA
+  generalization operator taxonomy, never from arcpy's spelling. A port modelled on arcpy
+  would pass every test today and be worthless on the day it is needed.
+- **AR-D13** An operation that needs several ports receives them as one `Toolbox`
+  (ADR-0020 OP-3).
+
+**AR-3 Ports are Protocols.** Direction: Conformance is structural, asserted statically and
+never by inheritance, so the dependency arrow points one way.
+
+- **AR-D14** Conformance is asserted by an `if TYPE_CHECKING:` assignment at the bottom of
+  each adapter module, and by one adapter × port matrix in `tests/static/` that covers the
+  fakes.
+- **AR-D15** There is no runtime enforcement: `@runtime_checkable` with `isinstance` checks
+  method names only, not signatures.
+- **AR-D16** Third-party clients and plain dataclass test doubles satisfy a Protocol with no
+  wrapper.
+
+**AR-4 Packages that are not ports.** Direction: Observability and helpers are ordinary
+packages: logging has no vendor to adapt and no second implementation, and helpers compose
+port calls without being scheduled.
+
+- **AR-D17** There is no log port. `observability/` imports stdlib `logging` and `core.types`
+  only. Every package may import it except `core/`, which stays side-effect free.
+- **AR-D18** Archived logs are transported by `ArchiveClient`. The JSONL record schema is the
+  contract; changing it breaks the merge in `orchestrator/`.
+- **AR-D19** Context fields travel in a `ContextVar` set by a logging filter, not as a
+  parameter. It is the one place ambient passing is accepted, because the context carries no
+  capability (ADR-0020 OP-3).
+- **AR-D20** Reusable, object-agnostic, scale-agnostic functions that compose port calls live
+  in `generalization/helpers/`, one module per subject: `lines`, `polygons`, `points`,
+  `topology`, `attributes`, `extents`. They are called only from inside operations, never
+  named in a stage and never scheduled.
+- **AR-D21** Membership is mechanical: a helper is not decorated with `@operation`. The
+  subject axis is declared, not emergent.
+
+**Rejected candidates for pass 3** (each once; reopen conditions in pass 3): AR-R1 Repository
+and Unit of Work; AR-R2 DDD entities and aggregates; AR-R3 a service layer above operations;
+AR-R4 message bus, domain events, CQRS; AR-R5 a formal primary port; AR-R6 `ABC` ports; AR-R7
+a log port (reopen given: a log transport stdlib handlers cannot reach); AR-R8 `tools/`,
+`toolkit/`; AR-R9 `composites/`. `operations/shared/` is a reservation (02 §6.1), not a
+rejection; pass 3 decides whether it is an AR-4 detail instead.
+
+**Design-document passages absorbed by this theme**, replaced at the cut-over by a pointer to
+the ADR id, the document keeping only explanation that is not a rule: 03 §2 (the port table and
+the split argument, AR-D5, AR-D6, AR-D12, Direction 3), 03 §4.1 (adapter choice, AR-D11), 03
+§4.3 (port layering and thick adapters, AR-D9, AR-D10), 03 §4.5 (the driving side, AR-D4).
+
 ## 3. Theme PC: Port contract
 
 ### 3.1 Draft top-level Direction
@@ -415,6 +540,10 @@ A12.5a) are unaffected.
    Sources list go; convention bullets on numbers and paths stay; recommended action 6 struck.
 8. `implementation_plan.md` §4.2, §4.4, §4.6, §4.8: the exact text approved in pass 2 (the
    2026-10-20 draft, revised for the README's provenance rule).
+8a. Design-document passages absorbed by an ADR are replaced by a pointer to the ADR id; the
+   document keeps only explanation that is not a rule (arch 2026-10-21). Per theme: AR: 03 §2,
+   §4.1, §4.3, §4.5. PC, OP, ST, RS: listed in their approved-text sections as each theme is
+   approved.
 9. The citation test, `tests/static/test_adr_citations.py`, if adopted: every `ADR-\d{4}`
    under `src/`, `tests/` and `docs/` resolves to a file in `docs/decisions/`; every id after
    it exists in that ADR; no retired number appears outside `docs/decisions/README.md` and
