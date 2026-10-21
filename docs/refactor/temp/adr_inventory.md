@@ -528,6 +528,153 @@ are corrected in the approved text.
 | 0013 | `dump_tuning.py` prints the resolved result as a read | §Consequences | drop | not lifted; dropped (arch 2026-10-21) |
 | 0013 | Loose keyword tuning rejected | §Context | drop | not a plausible re-proposal (proposal; pass 3) |
 
+### 4.4 Approved text for ADR-0020 (pass 2, 2026-10-21)
+
+Status, Scope, Direction 1 to 5 and the section lines are approved as exact text. Details are
+agreed as listed, with OP-D3 and OP-D17 in the architect's revised form. `Toolbox` stays in
+OP-D19: the decision is one explicit, frozen bundle assembled at the composition root, not the
+class name. This is the text pass 4 writes.
+
+**Status:** Accepted, <cut-over date>.
+
+**Scope:** `ag/core/operations.py`, `ag/core/handles.py`, `ag/core/injection.py`,
+`ag/ports/toolbox.py`, the operation config classes and the tuning modules. No A-items; A1.3
+lands here.
+
+**Direction.**
+
+1. An operation's declaration is its signature. The operation decorator reads the name, the
+   handle directions and the parameter kinds from it at import, and nothing is restated as a
+   string.
+2. An identifier the program must match is a symbol. A value that names something outside the
+   program stays a literal.
+3. The runtime supplies the parameters a declaration site must not. They are recognised by a
+   marker base class, never by name, and each carries a sentinel default.
+4. Ports reach an operation as one explicit, frozen bundle assembled at the composition root.
+   A helper receives it explicitly, as a parameter or through a constructor, never ambiently.
+5. Tuning is one frozen config dataclass per operation, valued as a base plus exactly one
+   scale delta, with no resolution mechanism and no scale in the config.
+
+**OP-1 The declaration is the signature.** Direction: The decorator type-checks the
+declaration site against the real signature and classifies every parameter at decoration; a
+declared handle takes its name and namespace from the class attribute it is bound to.
+
+- **OP-D1** The test: could a different string literal ever be correct here, given the rest
+  of the code? If no, it is an identifier and must be a symbol. If yes, it names something
+  outside the program and stays a literal.
+- **OP-D2** `@operation` returns an `OperationDeclaration[P]`. Calling it with the declared
+  keywords at a declaration site binds handles and a config and returns an `OperationCall`.
+  Its parameter list is the function's, so the declaration site is type-checked against the
+  real signature and go-to-definition lands on the implementation; the name is
+  `fn.__name__`; `signature.bind` runs at the declaration site, when the pipeline module is
+  imported.
+- **OP-D3** An operation's handle parameters are `In` or `Out`, written with the signature,
+  as `Annotated` aliases over `ScratchHandle` in `core/handles.py`. `Mutates` and
+  `ParentsOut` belong to port methods (ADR-0017 RS-D11) and are rejected on an operation.
+- **OP-D4** `ScratchHandle.__set_name__` gives a declared handle its `name` and `namespace`
+  from the class attribute it is bound to. It fires in any class body, so a stage file that
+  omits the `Handles` base still gets correct handles; `Handles` is a readability marker
+  nothing depends on.
+- **OP-D5** Internal scratch names stay literals: `scratch("dissolved")` names nothing a
+  consumer must match.
+- **OP-D6** `Derived("...")` stays a literal: declared once, `eq=False`, no consumer must
+  match it. Pipeline-wide uniqueness is a check, not a naming mechanism; a symbol would let a
+  rename move a live object's run-scratch location and invalidate the resume window.
+- **OP-D7** Failures move to import: a misspelled keyword, a missing argument, a non-handle
+  passed to a handle parameter, an undeclared handle, a non-frozen config and an injected
+  argument passed by hand are `TypeError` while the pipeline module is imported, in CI or at
+  orchestrator startup.
+- **OP-D8** `namespace` participates in handle equality, so `Stage.handles` plus the
+  own-handles check catch a handle borrowed from another stage.
+- **OP-D9** Introspection happens once, at import. The entry point receives an
+  `OperationCall` with plain mappings and dispatches by splat, inspecting nothing.
+
+**OP-2 Injected parameters.** Direction: A marker base class in the core, inherited by the
+injected types, lets the decorator recognise what the runtime supplies without the core naming
+anything in the ports package.
+
+- **OP-D10** Parameter kinds: handle parameters by their markers; `config` by the parameter
+  name, because a config's type differs per operation and the name is the only handle
+  available; injected kinds by subclassing `Injected`; anything else is rejected at
+  decoration.
+- **OP-D11** `core/injection.py` is stdlib-only and holds `Injected`. `ScratchScope` in
+  `core/handles.py` and `Toolbox` in `ports/toolbox.py` inherit it; the arrow is
+  `ports → core`, and the core-is-pure contract is unchanged.
+- **OP-D12** The decorator classifies with `isinstance(hint, type) and issubclass(hint,
+  Injected)`. The guard is load-bearing: the handle markers resolve to `Annotated[...]`,
+  which is not a type.
+- **OP-D13** Each injected type supplies a sentinel default, `INJECTED` for `ScratchScope`
+  and `NOT_INJECTED` for `Toolbox`, and passing one at a declaration site is rejected. The
+  default is forced because the declaration site shares the function's parameter list;
+  without it every declaration site is a type error for omitting an argument it must not
+  supply.
+- **OP-D14** `NOT_INJECTED` is one `cast` over one object whose `__getattr__` raises, naming
+  the port that was reached.
+- **OP-D15** `OperationCall.injected: Mapping[type[Injected], ParamName]`, read at
+  decoration. The core never names `Toolbox`; adding a kind changes nothing in the core; the
+  parameter name is not load-bearing.
+- **OP-D16** `wants_scratch` is a property over the mapping. There is no `wants_toolbox`.
+- **OP-D17** Rejected at decoration: two parameters of one injected kind, the bare `Injected`
+  base as an annotation, and a union containing an injected kind. (Source: the `@operation`
+  contract in `core/operations.py`.)
+- **OP-D18** `NOT_INJECTED` is re-exported from `ports/__init__.py` with the operation-facing
+  vocabulary.
+
+**OP-3 The toolbox.** Direction: A frozen bundle of the ports is assembled at the composition
+root and passed explicitly to every operation; a helper receives it explicitly, as a parameter
+or through a constructor, never ambiently.
+
+- **OP-D19** `Toolbox` is the bundle: `geometry`, `table`, `cartographic` and `graph`, the
+  four processing ports, as one frozen value assembled once by the pod entry point.
+- **OP-D20** `Toolbox` and `ScratchScope` are passed the same way, explicitly, and derived
+  downward into helpers.
+- **OP-D21** A large tool binds `tb` and `scratch` once in a plain class constructor rather
+  than threading them through many signatures: constructor injection, not ambient state.
+- **OP-D22** Tests stay stateless: a fake `Toolbox` is constructed and passed, with no global
+  to set or reset.
+- **OP-D23** The observability context (ADR-0018 AR-D19) travels in a `ContextVar`. It
+  carries no capability, so it is not a second dependency-passing style.
+
+**OP-4 Config and tuning.** Direction: Config fields live beside the operation because they
+change with it; values live in tuning modules because they change per scale; base plus exactly
+one delta, read, not resolved.
+
+- **OP-D24** One frozen config dataclass per operation, passed as the parameter named
+  `config`, enforced at decoration.
+- **OP-D25** Layout: the config classes beside the operations in `operations/<object>/`;
+  `operations/<object>/tuning/__init__.py` holds the base configs with every field stated
+  once; `tuning/<scale>.py` one `replace` delta each; `tuning/scale/<scale>.py` cartographic
+  constants shared across objects.
+- **OP-D26** No resolution mechanism: nothing walks object defaults, then scale defaults,
+  then overrides. Sharing happens because a line of code references a constant.
+- **OP-D27** Base plus exactly one delta: object base, then scale delta, and that is the end.
+  Wanting a third layer is a signal to promote a value to a named constant in `tuning/scale/`.
+- **OP-D28** No defaults on config dataclass fields. Every field is stated in the base; a
+  scale is a `replace` diff.
+- **OP-D29** Scale constants are named after the cartographic concept
+  (`MINIMUM_VISIBLE_LENGTH_M`), never the consuming parameter.
+- **OP-D30** No `scale` field in any config. The scale selects which config and is never in
+  it, so an operation cannot branch on it and one function serves every scale.
+- **OP-D31** `OperationCall.parameters` is uniformly `{"config": ...}` or empty, so a run
+  manifest gets a JSON-able tuning record from `dataclasses.asdict`.
+- **OP-D32** `__post_init__` is where a constraint on a value goes. A stage cannot check that
+  a tolerance is positive; a config can.
+- **OP-D33** A sub-config shared across operations earns nesting, kept to one level. Declared
+  once per scale and referenced from both configs, disagreement is unrepresentable.
+- **OP-D34** A config unchanged at a scale is re-exported, not omitted. A `None` placeholder
+  is a trap.
+
+**Rejected candidates for pass 3** (each once): OP-R1 a composition dataclass for an
+operation's IO (reopen given: substitutability per scale); OP-R2 classifying injected
+parameters by name; OP-R3 moving the bundle into the core; OP-R4 `Toolbox | None = None`;
+OP-R5 a module-level bundle singleton (reopen given: the parameter proving worse once real
+operations exist); OP-R6 a layered resolution mechanism for tuning.
+
+**Design-document passages absorbed by this theme**, replaced at the cut-over by a pointer to
+the ADR id: 03 §4.4 (how ports reach the code, OP-D19, OP-D20, OP-D23); 02 §2.4 (operations,
+OP-D20, OP-D24); 02 §2.7 (tuning, OP-D25 to OP-D34). 02 §2.4 and §2.7 are split into rule and
+explanation line by line before the cut-over.
+
 ## 5. Theme ST: Stages
 
 ### 5.1 Draft top-level Direction
@@ -588,6 +735,153 @@ are corrected in the approved text.
 | 0009 | Escape hatch: promote an operator approaching its stage's re-run cost to its own stage; Q-G measures | §Consequences | detail | |
 | 0009 | Resilience budget: `podFailurePolicy`, `terminationGracePeriodSeconds`, `safe-to-evict: "false"`, memory and ephemeral-storage limits | §Consequences | detail | constrains the job spec |
 | 0009 | Recorded so the reason is not re-derived | §Consequences | drop | |
+
+### 5.4 Approved text for ADR-0021 (pass 2, 2026-10-21)
+
+Status, Scope, Direction 1 to 4 and the section lines are approved as exact text; Direction 2,
+Direction 3, ST-2, ST-D11, ST-D16 and ST-D21 in the architect's revised form. ST-D25 (the
+Kubernetes settings) is removed: deployment configuration, carried by 03 §8. The id ST-D25 is
+not used. This is the text pass 4 writes.
+
+**Status:** Accepted, <cut-over date>.
+
+**Scope:** `ag/core/pipeline.py`, `ag/generalization/sources.py`,
+`ag/generalization/products.py`, `ag/core/locations.py`, and the stage-level model that
+fan-out, fan-in and resume implement. Absorbs A31.1 to A31.7. Partition ownership (A6, A7, A8)
+joins when it migrates.
+
+**Direction.**
+
+1. Every external source and every product is declared once, centrally, as a symbol, and both
+   sides of a publication reference the symbol. The legality of what we produce is computed
+   over the wiring, never declared on the product.
+2. A stage input declares a role, which tells fan-out how that source is treated, and has a
+   spatiality read from its object's data type, never declared.
+3. Only PROCESSING inputs can become stage outputs, though they need not. A CONTEXT input
+   serves only as context for the PROCESSING inputs and never becomes an output.
+4. The stage is the resume granularity. The design neither plans for nor depends on intra-pod
+   checkpoints.
+
+(Direction 2 is the architect's text of 2026-10-21; the variant adding "and whether it may
+become stage output" was offered and not chosen unless the architect says so.) The role names
+stay in Direction under the naming exception: defined terms, the word "context" chosen on
+purpose (A31.6), alternatives rejected by name (A31.7).
+
+**ST-1 Sources and products.** Direction: External sources and products are each declared in
+one leaf module as symbols, an external source with its classification required and a product
+carrying none; pipelines import those leaves and never each other.
+
+- **ST-D1** `sources.py` holds every `ExternalSource` in the project; `classification` is
+  required, with no default; `eq=False`. A new restricted source is a `TypeError` at import
+  until its legality is stated, and appears as a diff in the one file that shows everything
+  entering the project under what restriction.
+- **ST-D2** `products.py` holds every `ProductIdentity`: scale, dataset and location;
+  `eq=False`; no `classification` field.
+- **ST-D3** Both sides of a publication reference the symbol:
+  `Publish(obj=..., identity=..., reclassify_to=...)` and `StageInput(obj=<the identity>,
+  ...)`. `.importlinter` keeps both modules leaves that import only the core.
+- **ST-D4** `identity_producer` and `check_no_self_read` are lookups keyed on the object, so
+  find-references on a symbol answers who produces it and who reads it.
+- **ST-D5** The legality of something we produce is computed over the stage wiring that
+  produced it. The one human assertion that generalization removed a restriction lives on
+  `reclassify_to`, at one auditable point.
+- **ST-D6** `policy.classification_of` resolves a published `ProductIdentity` to the
+  producing stage's computation with `reclassify_to` applied. An identity nothing here
+  publishes falls back to rules and fails closed.
+- **ST-D7** No pipeline imports another pipeline. Pipelines import the leaves.
+- **ST-D8** `locations.py` owns environment prefixing: the remote-path builders
+  (`scratch_location`, `scratch_dump_location`, `payload_location` and the archive location)
+  live there.
+- **ST-D9** `Scale` and `ObjectName` are `StrEnum`, so a member renders as its value in a
+  path builder; `RAW` is `Scale.RAW`. `ObjectName` is closed, so adding an object edits a
+  shared module.
+- **ST-D10** `scale` and `object_name` are repeated on every `Stage`. A plan-time check
+  confirms they agree with the pipeline, since the `Stage` is constructed before the
+  `Pipeline`.
+
+**ST-2 Stage inputs: role and spatiality.** Direction: The role is declared per stage input
+and belongs to it, not to the object; spatiality is read from the object's data type;
+fan-out's treatment of a source follows from both and from the context radius, and from
+nothing else.
+
+- **ST-D11** PROCESSING: the stage acts on the whole source. Fan-out applies no filter; every
+  row is processed in its partition, with the context around the partition. CONTEXT: the
+  source matters only as context for the PROCESSING inputs. Fan-out filters a spatial CONTEXT
+  input to the context radius around the PROCESSING rows and sends a non-spatial one whole.
+  The role belongs to the stage input, not to the object: the same water layer is PROCESSING
+  in the stage that generalises it and CONTEXT in the stage that moves buildings away from
+  it.
+- **ST-D12** `FEATURE_CLASS` and `RASTER` are spatial; `TABLE` and `SYMBOLOGY` are not.
+  `DataType.spatial` says so, and no module re-derives it.
+- **ST-D13** Transfer: spatial PROCESSING is partitioned with halo overlap; spatial CONTEXT is
+  context-filtered, then partitioned with the same overlap; non-spatial PROCESSING is
+  rejected at declaration; non-spatial CONTEXT is sent whole to every pod, written once at a
+  shared key.
+- **ST-D14** The context filter keeps CONTEXT rows within the stage's context radius of any
+  PROCESSING row, before partitioning; at 0 m, the rows that intersect one. The filter
+  distance is the radius, with no second number. Overlap applies to both partitioned roles: a
+  PROCESSING row within the radius of a partition but outside it reaches that partition too
+  and fan-in discards it; a CONTEXT row within the radius reaches it.
+- **ST-D15** Non-spatial PROCESSING is rejected when the `StageInput` is constructed, with a
+  break-it case. There is no other guard: 0 m with spatial context is legal.
+- **ST-D16** A stage output derives only from PROCESSING inputs: every output row originates
+  from a PROCESSING input. Values taken from a CONTEXT input (an attribute joined from a
+  table, a value sampled from a raster, symbology a tool applies) may shape or annotate those
+  rows. A row that originates from a CONTEXT input never becomes output, whether or not
+  PROCESSING rows are mixed in. Found in review until a static check exists; the check needs
+  an operation-level subject marker, which is open. Scratch intermediates built from a
+  CONTEXT input are legal inside a stage and reach the scratch dump. An object built from a
+  CONTEXT input that a later stage must read is produced in a stage where its source is
+  PROCESSING.
+- **ST-D17** The context radius is a claim about the logic. Operations never see partitions
+  (ADR-0019 PC-D2), so the radius is the one place a stage author reasons about partition
+  boundaries; 0 m states that nothing in the stage consults a neighbour, and the model does
+  not guard it.
+- **ST-D18** Rasters are spatial and take either role; transfer is tile selection or clipping
+  to the partition plus its halo, not row filtering. The mechanism is open until a stage
+  declares a raster input.
+- **ST-D19** Symbology files are non-spatial CONTEXT inputs: an `ExternalSource` with
+  `data_type=DataType.SYMBOLOGY`, a settable location and a classification, reaching every
+  pod whole. Every table and every symbology file is a stage input with a settable storage
+  location, never baked into the container image. The member is `SYMBOLOGY`, not a generic
+  `FILE`, so the next file kind gets its own decision.
+- **ST-D20** Numeric symbol dimensions are a project-wide Python resource that reaches
+  operations as config fields varying by pipeline (ADR-0020 OP-4), never a stage input.
+- **ST-D21** The port-level subject and context of the row-shape grammar relate to the roles
+  and are not the same thing (ADR-0017 RS-2). The grammar declares, per port method, which
+  input's rows carry identity into an output; the roles declare, per stage input, whether a
+  source may become stage output. At both levels, only the subject carries identity into
+  outputs, and a context influences without contributing identity.
+- **ST-D22** `DataType` has four members and a `spatial` property; `InputRole` has two
+  members and a docstring stating the rule and the four transfers. Fan-out reads three
+  declared facts, the role, the radius and the object's data type, and nothing else; fan-in
+  keeps non-spatial outputs by id ownership. A `PREM_ONLY` classification on a table or
+  symbology file pins the stage on-prem like any other input.
+
+**ST-3 Resume.** Direction: A pod lost mid-stage restarts the stage, and the resilience budget
+goes into not losing pods.
+
+- **ST-D23** The stage workspace is pod-local. `--invalidate-from <stage>` is the only resume
+  mechanism; a pod lost to OOMKill, eviction or node maintenance restarts from the beginning
+  of its stage.
+- **ST-D24** An operator whose runtime approaches its stage's total re-run cost is promoted
+  to its own stage: a declaration change, not an architecture change. Whether the trade pays
+  is Q-G, measurable once one operator is reimplemented.
+
+**Rejected candidates for pass 3** (each once): ST-R1 each pipeline declaring its own sources,
+linked by value equality; ST-R2 a `classification` field on a product identity; ST-R3 deriving
+the role from the data; ST-R4 a third role for the non-spatial case; ST-R5 a generic `FILE`
+data type; ST-R6 intra-pod resume (reopen given, section 5.3).
+
+**Design-document passages absorbed by this theme**, split into rule and explanation line by
+line before the cut-over: 02 §2.2 (ST-D1 to ST-D3), 02 §2.3 (ST-D11 to ST-D22), 02 §7 where
+it states transfer rules, 03 §4.1 (the leaves paragraph, ST-D3, ST-D7), 03 §7.5 (ST-D19,
+ST-D20), 03 §9 (the Q-D closure).
+
+**A31 at the cut-over:** its strike lines as one approval request with exact text, landing
+A31.1 to A31.7 at ST ids; the terminology rows citing A31.1 to A31.6 (input role, spatial,
+context filter, `SYMBOLOGY`, subject, `context`) repointed to ST and RS ids; the "input role"
+row reworded at source level to match Direction 2 and 3.
 
 ## 6. Theme RS: ADR-0017, revised last
 
@@ -687,8 +981,13 @@ A12.5a) are unaffected.
    2026-10-20 draft, revised for the README's provenance rule).
 8a. Design-document passages absorbed by an ADR are replaced by a pointer to the ADR id; the
    document keeps only explanation that is not a rule (arch 2026-10-21). Per theme: AR: 03 §2,
-   §4.1, §4.3, §4.5. PC: 03 §2.3, §2.4, §2.5, §3.1, §3.2; 02 §2.4. OP, ST, RS: listed in
-   their approved-text sections as each theme is approved.
+   §4.1, §4.3, §4.5. PC: 03 §2.3, §2.4, §2.5, §3.1, §3.2; 02 §2.4. OP: 03 §4.4; 02 §2.4,
+   §2.7, the two 02 sections split into rule and explanation line by line before the
+   cut-over. ST: 02 §2.2, §2.3, §7 (transfer rules only); 03 §4.1 (leaves), §7.5, §9 (Q-D).
+   RS: listed in its approved-text section.
+8c. A31: strike lines for A31.1 to A31.7 as one approval request with exact text; terminology
+   rows citing A31.1 to A31.6 repointed to ST and RS ids; the "input role" row reworded at
+   source level (section 5.4).
 8b. 04-migration.md line 50: `pipelines/road/tuning/n100.py` becomes
    `operations/road/tuning/n100.py`, the decided layout (section 3.5).
 9. The citation test, `tests/static/test_adr_citations.py`, if adopted: every `ADR-\d{4}`
