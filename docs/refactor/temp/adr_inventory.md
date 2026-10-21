@@ -762,8 +762,8 @@ joins when it migrates.
 4. The stage is the resume granularity. The design neither plans for nor depends on intra-pod
    checkpoints.
 
-(Direction 2 is the architect's text of 2026-10-21; the variant adding "and whether it may
-become stage output" was offered and not chosen unless the architect says so.) The role names
+(Direction 2 is the architect's text; the variant adding "and whether it may become stage
+output" was offered and not chosen, confirmed 2026-10-21.) The role names
 stay in Direction under the naming exception: defined terms, the word "context" chosen on
 purpose (A31.6), alternatives rejected by name (A31.7).
 
@@ -884,6 +884,15 @@ context filter, `SYMBOLOGY`, subject, `context`) repointed to ST and RS ids; the
 row reworded at source level to match Direction 2 and 3.
 
 ## 6. Theme RS: ADR-0017, revised last
+
+**Approved 2026-10-21.** The change summary of pass 2 is agreed; the Direction 3 citation change
+is approved as exact text: "This relates to, and is not the same as, the stage-level input
+roles of ADR-0021 ST-2." Changes at the cut-over: Status "Accepted, 2026-10-19"; Scope reworded
+by subject (A12.7a, A12.6 named, no slice or task id); Related line to ADR-0018 AR-3, ADR-0020
+OP-1, ADR-0021 ST-2; RS-D7 cites ADR-0021 ST-D21; RS-D10 drops "(A11.11)"; RS-D13 ends "open
+until the in-place mutators join"; RS-D15 drops "(A12.7a)"; file moves to
+`docs/decisions/0017-row-shape-grammar.md`. Everything else unchanged.
+
 
 Direction and details unchanged in substance. Format changes to match the others, all as a
 pass 2 change summary:
@@ -1011,3 +1020,37 @@ A12.5a) are unaffected.
 | `src/ag/` | 13 | 31 |
 | `tests/` | 3 | 4 |
 | `docs/presentations/` (untracked) | 1 | 6 |
+
+## 12. Pass 3 proposal: the Rejected entries (2026-10-21, for the architect's decision)
+
+Reopen conditions marked NEW are new text and need approval. "Given" means the condition is in
+the source or already approved.
+
+| group | id | entry | why rejected | reopen | judgement |
+|---|---|---|---|---|---|
+| keep | AR-R1 | Repository and Unit of Work | no transactional aggregate store; the geodatabase is the store, the pod the unit of work | NEW: a transactional store behind a port | the pattern every reader of the textbook proposes first |
+| merge | AR-R2+R3+R4 | the application-layer patterns: entities and aggregates, a service layer above operations, a message bus with domain events and CQRS | feature classes on disk are not object graphs; operations are the use cases; one sequential executor and one writer per object | NEW: concurrency within a pod or a second writer per object; nothing reopens entities | each alone is unlikely; together they are the textbook's second question |
+| keep | AR-R5 | a formal primary port | one driving actor, no plan for a second; a Protocol around one caller is ceremony | NEW: a second actor driving the core | likely once the harness and the CLI both exist |
+| keep | AR-R6 | `ABC` ports | the adapter must subclass the port, so the arrow points both ways; one inherited interface grows past its callers | NEW: nothing | the first thing a newcomer reaches for |
+| keep | AR-R7 | a log port | fails the port test on every clause | given: a log transport stdlib handlers cannot reach | settled by the architect |
+| merge | AR-R8+R9 | other names for the helpers package: `tools/`, `toolkit/`, `composites/` | "tool" is retired and collides with port methods and arcpy tools; "composite" is multipart-geometry vocabulary | NEW: nothing | plausible from anyone used to `custom_tools/`; one entry suffices |
+| to details | AR-R10 | `operations/shared/` | not a rejection: 02 §6.1 reserves it for operations shared between objects, and `src/ag/generalization/operations/shared/` exists | none | becomes AR-D22: "`operations/shared/` holds operations shared between objects; it is not a helpers package" (add, needs agreement) |
+| keep | PC-R1 | `any()` on the port | pays only where a backend short-circuits; `count(...) > 0` covers the case | given: a backend that short-circuits (SQL `EXISTS`, `LIMIT 1`) | the obvious convenience method |
+| keep | PC-R2 | a mutable selection handle | arcpy's idiom, not the concept; every adapter would emulate its statefulness | NEW: nothing | likely under migration pressure from the make-layer sites |
+| keep | PC-R3 | a text expression as the only attribute leaf | every adapter must parse to quote identifiers; admits uncompilable expressions | NEW: nothing | plausible once `Attr.raw` exists ("why not strings everywhere") |
+| keep | PC-R4 | a cursor or row iterator in the port | vectorized engines; the slowest arcpy pattern in the contract guarantees a bad second adapter | NEW: nothing | likely from the cursor sites |
+| keep | PC-R5 | a side table plus a join for computed updates | more portable, but a full write plus a join where there was one in-place pass | NEW: an engine with no keyed bulk update | plausible when a second adapter is written |
+| keep | OP-R1 | a composition dataclass for an operation's IO | position is an unnamed identifier; three levels of nesting; the config half is adopted | given: operations needing to be substitutable per scale | "make operations classes" recurs |
+| merge | OP-R2+R3 | alternatives to the marker base class: classifying injected parameters by name; moving the bundle into the core | the `config` precedent does not transfer; the bundle's fields are typed by the port Protocols, so the ports follow it into the core | NEW: nothing | both are the cheap fixes someone proposes on meeting the import cycle |
+| keep | OP-R4 | `Toolbox \| None = None` as the default | does not avoid the default; every port access becomes an optional-member error unless every operation asserts | NEW: nothing | the pythonic reflex; 0014 wrote it down for that reason |
+| keep | OP-R5 | a module-level bundle singleton | prevents two pipelines with different adapters in one process; hides the dependency | given: the parameter proving worse once real operations exist | likely from anyone tired of threading `tb` |
+| keep | OP-R6 | a layered tuning resolver | sharing becomes a lookup nobody can read; the resolved value stops being a read | NEW: nothing | every config system grows one |
+| keep | ST-R1 | per-pipeline source declarations linked by value equality | an omitted classification compared equal and scheduled restricted data into the cloud; a product's location was written by whoever read it | NEW: nothing | "pipelines should be independent" is a natural proposal |
+| keep | ST-R2 | a classification field on a product identity | a second, unreviewed home for the judgement on `reclassify_to`; the two drift | NEW: nothing | the obvious shortcut |
+| merge | ST-R3+R4 | alternatives to two declared roles: deriving the role from the data; a third role for the non-spatial case | the same object takes both roles in different stages; a third role duplicates the data type, mixes two questions and collides with existing words | NEW: nothing | both arise from "a table is obviously context" |
+| keep | ST-R5 | a generic `FILE` data type | invites opaque inputs | NEW: nothing | likely when the next file kind arrives |
+| keep | ST-R6 | intra-pod resume | pod-local workspace; roughly 2K transfers plus a merge per stage, the cost grouping exists to avoid | given: a stage whose re-run cost makes a checkpoint pay after promotion has been tried; the mint counter becomes checkpoint state | the obvious question with a non-obvious answer |
+| keep | RS-R1 to RS-R6 | as in ADR-0017 | as in ADR-0017 | given, all six | each is the obvious first proposal in its section; RS-R4 and RS-R5 are implementation shortcuts that recur |
+
+No entry is dropped outright: AR-R10 moves to Details, and the merges reduce 29 candidates to 22
+entries.
