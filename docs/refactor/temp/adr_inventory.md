@@ -978,7 +978,7 @@ A12.5a) are unaffected.
    (three); findings (`project_tree.md`, `slice_0_contract_evidence.md`,
    `slice_1a_row_shape_evidence.md`, `template_review.md`, `implementation_plan.md`);
    `template_code/` (README and the eleven modules, numbers only, reference code);
-   01-terminology rows 94 to 98, 157, 176, 177; 02-runtime 153, 257, 293, 324, 383, 838;
+   docs/terminology.md rows 94 to 98, 157, 176, 177; 02-runtime 153, 257, 293, 324, 383, 838;
    03-architecture (22 citations, including the §9 Q-A, Q-D, Q-E closures); 04-migration
    (four); `docs/refactor/README.md`; the thirteen files under `src/` and `tests/`.
    `docs/presentations/scaling-plan-board.md` is untracked and belongs to the maintainer; its

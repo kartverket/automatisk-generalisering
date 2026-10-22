@@ -22,7 +22,7 @@ context compaction or a three-month gap.
    `03-architecture.md`, or the validation vocabulary;
 2. been struck in DECISIONS.md with a pointer to where it landed — do not leave a copy in both
    places, because two copies diverge; **and**
-3. had **every `01-terminology.md` entry citing it repointed to that destination.**
+3. had **every `docs/terminology.md` entry citing it repointed to that destination.**
 
 Step 3 is not housekeeping. The glossary's authority column cites A-ids, and those A-ids live only
 here — so without it the citations decay silently as temp empties, and the completion test would
@@ -40,7 +40,7 @@ addition in A9.10.
 2. every A-item has landed at its `destination:`, whether it rode on a task or not; **and**
 3. every B-item is either resolved into an A-item or promoted into a real document as a stated
    open question; **and**
-4. **no `01-terminology.md` entry cites an A-id any more** — every authority column points at a
+4. **no `docs/terminology.md` entry cites an A-id any more** — every authority column points at a
    real document. Without this clause the test passes precisely when the glossary's citations all
    become dead references.
 
@@ -1224,7 +1224,7 @@ form instead. An adapter declares which it provides.
 **decision refs** A9.1, A9.2.
 
 **doc migration** A9.2 → `ports/table_ops.py`. A9.1's table → the new ADR on identity and
-`01-terminology.md`.
+`docs/terminology.md`.
 
 ---
 
@@ -1751,7 +1751,7 @@ applies. The derivation mechanism is unstated.
 
 **decision refs** A12.9, A15.2, A15.6, A31.6, B14, B24.
 
-**doc migration** A15.2, A15.6 → the lineage module docstring and `01-terminology.md`; A12.9 →
+**doc migration** A15.2, A15.6 → the lineage module docstring and `docs/terminology.md`; A12.9 →
 `02-runtime.md` §8.
 
 **note** Under A31.3 every `StageOutput` descends from a PROCESSING `StageInput`, so A15.2 needs
@@ -2208,7 +2208,7 @@ exists so the completion test stays mechanical.
 
 ## 41. T7.2 — `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]`
 
-**status:** done — slice 0, 2026-09-22, inside `template_code/` and in `01-terminology.md` and
+**status:** done — slice 0, 2026-09-22, inside `template_code/` and in `docs/terminology.md` and
 `02-runtime.md` §2.2. `tools/run_example.py` prints the same derivation as before the rename.
 B8 resolved.
 
@@ -2220,14 +2220,14 @@ is consistently "origin".
 **files touched** `template_code/ag/core/data_objects.py:147` (the `TypeAlias`) and `:185`,
 `:196`; `template_code/ag/core/locations.py:47`, `:87`;
 `template_code/ag/core/policy.py:54`, `:98`, `:105`;
-`template_code/ag/core/validation.py:53`, `:443`; `docs/refactor/01-terminology.md`;
+`template_code/ag/core/validation.py:53`, `:443`; `docs/terminology.md`;
 `docs/refactor/02-runtime.md` §2.2.
 
 **depends on** nothing.
 
 **decision refs** B8.
 
-**doc migration** resolves B8; updates the `01-terminology.md` entry.
+**doc migration** resolves B8; updates the `docs/terminology.md` entry.
 
 **why it is independent** This touches existing, working code for a naming reason only. It has no
 lineage dependency and can be done by anyone at any point — but it should be done *before* the
@@ -2381,7 +2381,7 @@ than decided, per the constraint on this pass.
    (B3). The lineage query module does not exist, so A20's home is provisional.
 
 2. **T1.3 and T4.11 have no test directory.** `tests/invariance/` is named in
-   `01-terminology.md` as a driving adapter but does not exist, and there is no adapter conformance
+   `docs/terminology.md` as a driving adapter but does not exist, and there is no adapter conformance
    path. Someone has to choose.
 
 3. **CLOSED — A14's capability check and the no-arcpy rule.** No exemption is needed. The probe
@@ -2406,7 +2406,7 @@ than decided, per the constraint on this pass.
    `StageInput` can come from a previous run, carrying ids from that run's `minter_id` space.
 
 5. **"Registry" is now overloaded three ways.** `StageRegistry` (existing), the dispatch registry
-   (A10.3), and the work-key registry (A9.5). Ruled **keep, qualified** — `01-terminology.md` §2
+   (A10.3), and the work-key registry (A9.5). Ruled **keep, qualified** — `docs/terminology.md` §2
    carries the collision entry and every use names which registry it means.
 
 6. **T3.2's module has no home.** The work-key API is not a port, not an operation and not a

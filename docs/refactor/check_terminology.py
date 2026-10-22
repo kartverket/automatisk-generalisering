@@ -4,7 +4,7 @@
 Run:  python3 docs/refactor/check_terminology.py
 Exits non-zero on failure, so it can go into CI unchanged.
 
-`01-terminology.md` says of itself: "Where a definition and a design document disagree,
+`docs/terminology.md` says of itself: "Where a definition and a design document disagree,
 the authoritative document listed in the entry wins and this file is the bug." Nothing
 enforced that. These two checks do:
 
@@ -40,7 +40,7 @@ import sys
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parent
-TERMS_PATH = DOCS / "01-terminology.md"
+TERMS_PATH = DOCS.parent / "terminology.md"
 TERMS = TERMS_PATH.read_text(encoding="utf-8")
 
 # Headwords whose wording legitimately differs from the prose they cite.
@@ -96,9 +96,11 @@ rows = re.findall(r"^\| \*\*`?(.+?)`?\*\*([^|]*)\|([^|]+)\|\s*(.*?)\s*\|$", TERM
 anchor_cache: dict[str, set[str]] = {}
 broken: list[str] = []
 for name, _, _, authority in rows:
-    for target, anchor in re.findall(r"\]\(([0-9a-z-]+\.md)#([a-z0-9-]+)\)", authority):
+    for target, anchor in re.findall(
+        r"\]\(((?:[0-9a-z-]+/)*[0-9a-z-]+\.md)#([a-z0-9-]+)\)", authority
+    ):
         if target not in anchor_cache:
-            anchor_cache[target] = anchors_of(DOCS / target)
+            anchor_cache[target] = anchors_of(TERMS_PATH.parent / target)
         if not anchor_cache[target]:
             broken.append(f"{name}: {target} does not exist")
         elif anchor not in anchor_cache[target]:
@@ -116,13 +118,13 @@ for name, _, _, authority in rows:
     key = name.split(" (")[0].strip().strip("`")
     if key in HEADWORD_VARIANCE:
         continue
-    targets = set(re.findall(r"\]\(([0-9a-z-]+\.md)#", authority))
+    targets = set(re.findall(r"\]\(((?:[0-9a-z-]+/)*[0-9a-z-]+\.md)#", authority))
     if not targets:
         continue  # A-id citations are temp/'s problem until migration completes
     hay = ""
     for target in targets:
         if target not in doc_cache:
-            p = DOCS / target
+            p = TERMS_PATH.parent / target
             doc_cache[target] = p.read_text(encoding="utf-8") if p.exists() else ""
         hay += doc_cache[target]
     squashed_hay = re.sub(r"[\s_\-]", "", hay).lower()

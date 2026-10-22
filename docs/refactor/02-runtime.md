@@ -7,7 +7,7 @@ placement, run selection, partition correctness, validation, invariants.
 
 **Does not own:** how the code is structured — packages, ports, adapters, import direction,
 failure handling and observability are [03-architecture](03-architecture.md); vocabulary is
-[01-terminology](01-terminology.md); what changes in the current codebase is
+[terminology](../terminology.md); what changes in the current codebase is
 [04-migration](04-migration.md).
 
 **Graduates when:** `src/ag/core/` and `src/ag/runtime/` exist and a stage runs end to end on

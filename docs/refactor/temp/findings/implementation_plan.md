@@ -8,7 +8,7 @@ adapter with a stub as the guard; the design record stays under `docs/refactor/`
 slice 5; §8.0 decided and recorded in DECISIONS.md). Not a decision record. Where this plan proposes something the
 decisions do not cover it says so and §8 lists it; it does not re-open a settled A-item.
 
-**Inputs read:** `temp/DECISIONS.md`, `temp/TASKS.md`, `01-terminology.md`,
+**Inputs read:** `temp/DECISIONS.md`, `temp/TASKS.md`, `docs/terminology.md`,
 `findings/lineage_conclusion.md`, `findings/lineage_seam_readiness.md`,
 `findings/n1_correspondence.md`, `findings/PATCH-2026-09-17.patch`, `template_code/` in full,
 `02-runtime.md`, `03-architecture.md`, `04-migration.md`, `README.md`, the 14 ADRs, the current
@@ -17,7 +17,7 @@ decisions do not cover it says so and §8 lists it; it does not re-open a settle
 
 **Patch status.** `PATCH-2026-09-17.patch` is **not applied**: `git apply --check` succeeds
 forward and fails in reverse, and none of A9.11, A9.12, A11.15, A12.5a, A14.1, A15.7, B17-B20,
-T4.14, T7.5 is present in `DECISIONS.md`, `TASKS.md` or `01-terminology.md`. This plan assumes
+T4.14, T7.5 is present in `DECISIONS.md`, `TASKS.md` or `docs/terminology.md`. This plan assumes
 it is applied before slice 1 starts (slice 0 does it). **A12.7a** (call-site ids declaration on writes) was signed on 2026-09-21 and is in DECISIONS.md,
 as are A5.7 (workspace creation), `Attr.cmp`'s operator set under A2.1, and A26 (the Python
 target); each was placed so that the patch still applies. **B9** (PROPOSALS §1, archive carries
@@ -36,7 +36,7 @@ in this plan follow it.
 lower constraint exists: the project follows its runtimes upward and the target is the lowest
 Python minor version across the supported runtimes (§4.7). Nothing is in production yet.
 
-**Vocabulary** per `01-terminology.md`: port method, operation, stage, workspace, pod scratch
+**Vocabulary** per `docs/terminology.md`: port method, operation, stage, workspace, pod scratch
 root, parents, lineage-bearing, diff-tracked, combining rule. "Fake adapter" below means the
 in-memory implementation of a port; "spy" means the existing recording toolbox.
 
@@ -224,7 +224,7 @@ Kept: the slice boundaries 0 to 6 and the order. Changed, with reasons:
 record for this change and stays where it is while the pass runs (§4.8). In the same pull
 requests as the code, each slice updates: the status of the tasks it closes in `TASKS.md`; the
 A-items it lands, struck in `DECISIONS.md` with a pointer to where they landed, per the migration
-protocol, with the `01-terminology.md` entries that cite them repointed; and the sections of
+protocol, with the `docs/terminology.md` entries that cite them repointed; and the sections of
 `02-runtime.md` and `03-architecture.md` its code makes true or proves wrong. A slice whose code
 is merged and whose record is not updated is not done. Each slice below names its share.
 
@@ -295,7 +295,7 @@ contracts has been shown failing once; the examples are moved and inert; T7.2 is
 `run_example.py` prints the same derivation as before; T0.1 and T0.6(a) are running or scheduled
 with an owner.
 
-**Design record.** `DECISIONS.md`, `TASKS.md` and `01-terminology.md` carry the applied patch; T7.2 and T7.4 are marked done in `TASKS.md` and B8 is resolved; `03-architecture.md` §7 shows the accepted tree and §4.1, §4.2 the eighteen contracts, with `.importlinter` named as authoritative; A26's destination exists.
+**Design record.** `DECISIONS.md`, `TASKS.md` and `docs/terminology.md` carry the applied patch; T7.2 and T7.4 are marked done in `TASKS.md` and B8 is resolved; `03-architecture.md` §7 shows the accepted tree and §4.1, §4.2 the eighteen contracts, with `.importlinter` named as authoritative; A26's destination exists.
 
 **Size.** 2 to 3 days of the architect. It shrank because the pyright-strict fallout moved to
 the PRs that lift code.
@@ -980,7 +980,7 @@ needs it.
 
 | document | covers | created / updated in |
 |---|---|---|
-| `docs/refactor/` as a whole: `01-terminology.md`, `02-runtime.md`, `03-architecture.md`, `temp/DECISIONS.md`, `temp/TASKS.md` | **the working design record for this change**; stays where it is and is updated in place, in the same pull requests as the code (§2.2) | every slice; moves once, at the end of slice 5 (§4.8) |
+| `docs/refactor/` as a whole: `02-runtime.md`, `03-architecture.md`, `temp/DECISIONS.md`, `temp/TASKS.md` | **the working design record for this change**; stays where it is and is updated in place, in the same pull requests as the code (§2.2) | every slice; moves once, at the end of slice 5 (§4.8) |
 | `docs/README.md` | index: `setup/`, `contributing/`, `developer_reference/`, each with its status; gains `architecture/` and `terminology.md` at the move, `decisions/` since 2026-10-22. It never indexes `refactor/`: nothing outside `docs/refactor/` references the design record unless tooling needs the path to run | 0, 5 |
 | `docs/architecture/errors.md` | the taxonomy of §6, the raise/warn/log rules, what every error carries | 1a (with the error modules), completed 1c |
 | `docs/architecture/lineage.md` | short: the seam in one page (parents at the port, ids above it, edges at the boundary), pointing at the ADRs and the `lineage/` docstrings | 3 |
@@ -990,7 +990,7 @@ needs it.
 | `docs/contributing/testing.md` | the layers of §5, markers, what runs where (the four buckets from the platform decision) | 0, updated 1c and 5 |
 | `docs/contributing/writing-an-operation.md` | operation authoring: In/Out, config, scratch, ports only, `mint(parents=)`, ref columns, what not to do | 3 |
 | `docs/contributing/migrating-a-stage.md` | the recipe, written from slice 6's first stage | 6 |
-| after the move: `docs/terminology.md`, `docs/architecture/runtime.md`, `docs/architecture/structure.md` | the same documents, settled (§4.8) | end of 5 |
+| after the move: `docs/architecture/runtime.md`, `docs/architecture/structure.md` | the same documents, settled (§4.8) | end of 5 |
 | `docs/refactor/04-migration.md` | stays until the migration completes; gains the per-stage inventory and status table | 6 |
 
 The split is by what a document describes. **A document describing landed code is created under
@@ -1003,12 +1003,12 @@ Package docstrings remain the home for what DECISIONS assigns to them (`adapters
 package docstring for A14.1 and B17, the lineage module docstring for A11.x, `ports/*.py` for the
 contract facts). Documents point at docstrings; they do not repeat them.
 
-### 4.3 How `01-terminology.md` becomes the real terminology document
+### 4.3 How `docs/terminology.md` becomes the real terminology document
 
-- **Stays at `docs/refactor/01-terminology.md` while the pass runs**, updated in place: each
+- **Stays at `docs/terminology.md`, where it moved on 2026-10-22, while the pass runs**, updated in place: each
   slice repoints the authority column of the entries whose A-items it lands (step 3 of the
-  migration protocol) and adds the terms it introduces. **Moves** to `docs/terminology.md` once,
-  with the other design documents, at the end of slice 5 (§4.8). The three tables move whole. The collisions table (§2) is the part with the
+  migration protocol) and adds the terms it introduces. Its checker moves once, with the other
+  design documents, at the end of slice 5 (§4.8). The three tables move whole. The collisions table (§2) is the part with the
   most value for an AI reader and stays verbatim. The retired table (§3) stays; entries whose old
   word never reached code (`origin_id`, `correspondence`, the old row-shape enums) move to a
   short "never existed" note at the bottom so the table reads as what to avoid, not history.
@@ -1063,7 +1063,7 @@ its first use and the review of Task C is the review of the guide.
 | item | fate | when |
 |---|---|---|
 | `template_code/` | stays as the source for lifts; T7.2 is applied inside it in slice 0; the examples leave for `tests/fixtures/` in slice 0; deleted when its last module has been lifted or dropped | during 4 |
-| `01-terminology.md` | stays, updated in place; moves to `docs/terminology.md` at the move (§4.8) | end of 5 |
+| `docs/terminology.md` | moved from `docs/refactor/01-terminology.md` on 2026-10-22 | done |
 | `02-runtime.md`, `03-architecture.md` | stay, updated in place by every slice (§2.2); move to `docs/architecture/` at the move. No per-section status markers: nothing moves before its content has landed | end of 5 |
 | `04-migration.md` | stays; deleted on completion as it says | 6+ |
 | `README.md` | stays; its "recommended actions" are struck as slice 0 performs them; becomes `docs/architecture/README.md` at the move | end of 5 |
@@ -1116,12 +1116,14 @@ edits:**
 
 | from | to |
 |---|---|
-| `docs/refactor/01-terminology.md`, `check_terminology.py` | `docs/terminology.md`, `docs/check_terminology.py` |
+| `docs/refactor/check_terminology.py` | `docs/check_terminology.py` |
 | `docs/refactor/02-runtime.md`, `03-architecture.md`, `README.md` | `docs/architecture/runtime.md`, `structure.md`, `README.md` |
 | `docs/refactor/temp/check_consistency.py` | deleted; its A-id checks have nothing left to check |
 | `docs/refactor/temp/findings/` | `docs/decisions/evidence/` |
 
-The ADRs moved to `docs/decisions/` on 2026-10-22 with the consolidation into themed ADRs.
+The ADRs moved to `docs/decisions/` on 2026-10-22 with the consolidation into themed ADRs, and
+the terminology to `docs/terminology.md` the same day; its checker stays where it is until
+the conversion below.
 `TASKS.md` and `04-migration.md` stay under `docs/refactor/` until their work is done; both are
 disposable by their own terms.
 
@@ -1141,7 +1143,7 @@ disposable by their own terms.
   terminology test rewrites nothing: the authority column's `file.md#anchor` citations are
   retargeted in the documents by the move itself, and the test proves every one resolves.
 - Citation paths: `temp/DECISIONS.md`, `temp/findings/...`, `02-runtime.md`, `03-architecture.md`,
-  `01-terminology.md` as they appear in the documents themselves (their
+  `docs/terminology.md` as they appear in the documents themselves (their
   links to each other), in `TASKS.md`'s `destination` and `doc migration` lines, in module and
   package docstrings under `src/ag`, in the contributor guides, in the CI workflow and
   pre-commit steps that run the two checkers, and in `.claude/settings.local.json`'s allowlist.

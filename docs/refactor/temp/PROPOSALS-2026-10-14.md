@@ -143,7 +143,7 @@ side by side.
 
 `destination:` `02-runtime.md` §2.3 (A31.1, A31.2, A31.3, A31.7), §7.1 (overlap), §8 (the
 guard); `03-architecture.md` §7.5 (A31.5); `core/types.py` (`InputRole` and `DataType`
-docstrings); `core/pipeline.py` guard (Task B); `01-terminology.md`; the ADR of section 8 if
+docstrings); `core/pipeline.py` guard (Task B); `docs/terminology.md`; the ADR of section 8 if
 written.
 
 **Hook consequence.** `check_consistency` requires every `A31.x` to be cited by id in a
@@ -497,7 +497,7 @@ is drafted then. Template code is not edited; the plan lines that govern a lift 
   stage inputs; numeric symbol dimensions are config dataclass fields per ADR-0020 OP-4, never a
   stage input. `:865-866` (Q-D): closed. `:135-138`: "(non-spatial context inputs, sent whole
   to every pod)".
-- `01-terminology.md`: row 93 (**subject**) and 94 (**context (row-shape)**) rewritten to
+- `docs/terminology.md`: row 93 (**subject**) and 94 (**context (row-shape)**) rewritten to
   "related, not identical" with the two counter-examples, citing A12.2 and A31.6. Row 127
   (**.lyrx**): a `SYMBOLOGY` stage input, non-spatial CONTEXT, sent whole, from a settable
   location, never in the image. Row 51 (**fan-out**): filters and partitions the spatial

@@ -12,7 +12,7 @@ named log or a findings section that quotes one. **Inferred**: a conclusion draw
 numbers, with the reasoning stated. **Decided**: a rule someone chose, cited to its item. An
 inference is never written as a measurement.
 
-**Vocabulary** follows `01-terminology.md`: *parents* (which input rows produced an output row),
+**Vocabulary** follows `docs/terminology.md`: *parents* (which input rows produced an output row),
 *row shape* (the per-output declaration `@row_shape(<output>=Rows(cardinality, ids, subject))`),
 *lineage-bearing* (a handle whose declaration chain ends in `CARRY` or `MINT`), *combining rule*
 (`dissolve(statistics=…)`), *mint* (allocate a `lineage_id` and record an edge). The word

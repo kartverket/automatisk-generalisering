@@ -8,7 +8,7 @@ the source tree.
 
 **Does not own:** how the system executes — declarations, derivation, storage scopes, legality,
 partition correctness and validation are [02-runtime](02-runtime.md); vocabulary is
-[01-terminology](01-terminology.md); what changes in the current codebase is
+[terminology](../terminology.md); what changes in the current codebase is
 [04-migration](04-migration.md).
 
 **Graduates when:** `.importlinter` exists and passes in CI, and at least one port has an
