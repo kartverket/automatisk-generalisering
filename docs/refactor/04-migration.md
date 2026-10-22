@@ -43,13 +43,13 @@ become an ADR.
 |---|---|
 | `paths.py`, `GIS_FILES_ROOT`, `env_setup/project_layout.py` | gone. Layout is not a concept when storage is not a tree. |
 | `file_manager/**` (15 modules; `file_manager_buildings.py` alone declares ~187 files) | gone. Declared handles are per-stage symbols; intermediates get no entry at all. |
-| `data_orchestrator/**` — `PIPELINE_INPUT`, `data_validator`, `FolderSpec`, `find_gdb` | gone. External inputs are `ExternalSource` declarations in `sources.py`; other pipelines' products are `ProductIdentity` in `products.py`. ADR-0012. |
+| `data_orchestrator/**` — `PIPELINE_INPUT`, `data_validator`, `FolderSpec`, `find_gdb` | gone. External inputs are `ExternalSource` declarations in `sources.py`; other pipelines' products are `ProductIdentity` in `products.py`. ADR-0021 ST-1. |
 | `BaseFileManager` / `ProjectLayout(GIS_FILES_ROOT.parent)` | gone. Same reason. |
 | `WorkFileManager._modify_path`, `_session_prefix`, `_global_counter` | gone. Scratch paths carry no scale and no project layout; names need only be unique within a pod. |
 | `PartitionIterator`'s object/tag two-level key | collapses to a single name. |
-| `constants/n100_constants.py` | splits by what each value *is*: cartographic facts about the map to `tuning/scale/n100.py`, road-specific values to `pipelines/road/tuning/n100.py` as a `replace` delta. ADR-0013. |
+| `constants/n100_constants.py` | splits by what each value *is*: cartographic facts about the map to `tuning/scale/n100.py`, road-specific values to `operations/road/tuning/n100.py` as a `replace` delta. ADR-0020 OP-4. |
 | `composition_configs/core_config.py` | the enums that name a real runtime distinction survive in `core/types.py`; `WorkFileConfig` and the partition IO/run configs dissolve into `Stage` fields and `ScratchFileManager`. |
-| `composition_configs/logic_config.py` (728 lines) | dissolves into port signatures and one frozen config dataclass per operation, declared beside the operation and valued in the tuning modules. The `*Kwargs` classes are the right shape already; what changes is that IO and plumbing come out, leaving only what is tuned. ADR-0013. |
+| `composition_configs/logic_config.py` (728 lines) | dissolves into port signatures and one frozen config dataclass per operation, declared beside the operation and valued in the tuning modules. The `*Kwargs` classes are the right shape already; what changes is that IO and plumbing come out, leaving only what is tuned. ADR-0020 OP-4. |
 | `temp_skip_folder/core/infrastructure/archive/` | six-method `ArchiveClient` ABC → two-method Protocol; three clients → `adapters/storage/`. |
 | `env_setup/environment_setup.py` | arcpy env config → `adapters/arcpy/session.py`. |
 
@@ -120,13 +120,20 @@ can be regenerated rather than trusted.
 | **tool call sites, total** | **2801** | sum of the two above |
 | cartography toolbox, both forms | 78 across 16 distinct tools (ThinRoadNetwork 21, MergeDividedRoads 9, CollapseHydroPolygon 8, …) | `rg -o --no-filename "arcpy\.cartography\.[A-Za-z_]+\|arcpy\.[A-Za-z]+_cartography\b" -g '*.py' . \| sort \| uniq -c \| sort -rn` |
 | cursor call sites | 483 (no legacy `arcpy.SearchCursor` form present) | `rg -o --no-filename "arcpy\.da\.(Search\|Update\|Insert)Cursor" -g '*.py' . \| wc -l` |
+| `SearchCursor` constructions (become `read_rows`) | 329 | `rg -o --no-filename "arcpy\.da\.SearchCursor" -g '*.py' . \| wc -l` |
+| `insertRow` calls (become `write_rows`) | 85 | `rg -o --no-filename "\.insertRow\(" -g '*.py' . \| wc -l` |
+| `deleteRow` calls (become `select` with a negated predicate) | 39 | `rg -o --no-filename "\.deleteRow\(" -g '*.py' . \| wc -l` |
+| `updateRow` calls (become `update_rows`) | 92 | `rg -o --no-filename "\.updateRow\(" -g '*.py' . \| wc -l` |
+| `CalculateField` calls, both forms (stay `calculate_field`) | 97 | `rg -o --no-filename "arcpy\.management\.CalculateField\b\|arcpy\.CalculateField_management\b" -g '*.py' . \| wc -l` |
 | make-layer/select triple | 616 (modern 567 + legacy 49) | `rg -o --no-filename "arcpy\.management\.(MakeFeatureLayer\|SelectLayerByLocation\|SelectLayerByAttribute)\|arcpy\.(MakeFeatureLayer\|SelectLayerByLocation\|SelectLayerByAttribute)_management" -g '*.py' . \| wc -l` |
 | `CopyFeatures` (materialisation, counted separately) | 282 (modern 266 + legacy 16) | `rg -o --no-filename "arcpy\.management\.CopyFeatures\|arcpy\.CopyFeatures_management" -g '*.py' . \| wc -l` |
 | files importing arcpy | 113 of 257 `.py` | `rg -l "^\s*import arcpy" -g '*.py' . \| wc -l` |
 | `line_topology.py` | 6581 lines | `wc -l custom_tools/general_tools/line_topology.py` |
 
 Use `rg -o … | wc -l` rather than `rg -c`: `-c` counts matching *lines*, which undercounts
-lines holding more than one call.
+lines holding more than one call. The per-method rows count cursor method calls and
+`SearchCursor` constructions, not cursor constructions as a whole, so they do not sum to the
+483; the mapping they measure is ADR-0019 PC-D24.
 
 The cartography share — 78 of 2801 tool call sites, 2.8% — is the basis for the three-port
 split in [03-architecture §2.1](03-architecture.md#21-the-six). It is a call-site count in
@@ -134,5 +141,5 @@ this repository, not a claim about arcpy's surface area.
 
 The make-layer/select triple and `CopyFeatures` are listed separately because they are
 different concerns: the triple is the selection idiom that
-[ADR-0001](decisions/0001-selection-is-a-predicate-value.md) replaces, while `CopyFeatures`
+ADR-0019 PC-2 replaces, while `CopyFeatures`
 is materialisation and survives as `select`'s output write.

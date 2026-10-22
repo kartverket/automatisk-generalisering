@@ -34,23 +34,17 @@ undecorated helpers. A file like `generalization/n100/road/ramps.py` maps to **o
 `@operation` plus roughly twenty helpers.
 `destination:` `02-runtime.md` §2.4.
 
-**A1.3** `Toolbox` stays an explicit parameter. A module-level singleton was considered and
-rejected: it would prevent two pipelines running different adapters in one process, which is
-exactly the incremental-port path. For a large tool, bind `tb` and `scratch` once in a plain
-class constructor rather than threading them through forty signatures — constructor injection,
-not ambient state.
-`destination:` ADR-0008 (amend with the incremental-port argument and the constructor-injection
-guidance).
+**A1.3** moved to ADR-0020 OP-D21 and OP-R5 (2026-10-21). `destination:` ADR-0020.
 
 ## A2. Predicates
 
-**A2.1** moved to ADR-0015 §Decision and the `ports/predicates.py` module docstring
-(2026-10-07, slice 1a). `destination:` ADR-0015.
+**A2.1** moved to ADR-0019 PC-3 and the `ports/predicates.py` module docstring
+(2026-10-07, slice 1a). `destination:` ADR-0019.
 
-**A2.2** moved to ADR-0015 §Context and §Decision (2026-10-07). `destination:` ADR-0015.
+**A2.2** moved to ADR-0019 PC-3 (2026-10-07). `destination:` ADR-0019.
 
-**A2.3** moved to ADR-0015 §Consequences, as the stated non-goal (2026-10-07).
-`destination:` ADR-0015.
+**A2.3** moved to ADR-0019 PC-D21, as the stated non-goal (2026-10-07).
+`destination:` ADR-0019.
 
 ## A3. Graph port
 
@@ -67,21 +61,14 @@ code, or someone will "fix" the inconsistency.
 
 ## A4. Row IO
 
-**A4.1** Bulk read/write replaces cursors. 308 `SearchCursor` → `read_rows`; 80 `insertRow` →
-`write_rows`; 39 `deleteRow` → `select` with a negated predicate.
-`destination:` ADR-0004 (amend with the counts).
+**A4.1** moved to ADR-0019 PC-D22, PC-D23 and PC-D24, and 04-migration.md Appendix A
+(2026-10-21). `destination:` ADR-0019; 04-migration.md Appendix A.
 
-**A4.2** The **90 `updateRow` sites are the only real constraint** — read, compute in Python,
-write back. The 101 `CalculateField` sites already cover the expression-only case. The
-side-table-plus-`join_field` answer is more portable but costs a full write plus a join where
-there was one in-place pass.
-`destination:` ADR-0004.
+**A4.2** moved to ADR-0019 PC-D22 and PC-R5, and 04-migration.md Appendix A (2026-10-21).
+`destination:` ADR-0019; 04-migration.md Appendix A.
 
-**A4.3** Add `update_rows(input, key, fields, rows)` — bulk, keyed, no iteration protocol, so it
-does not reintroduce what ADR-0004 removed. Writes M changed rows, not N. Must allow
-`Row.geometry` so snap and displace are covered. Requires a stable key, which `lineage_id`
-provides.
-`destination:` `ports/table_ops.py` docstring; ADR-0004 amendment.
+**A4.3** moved to ADR-0019 PC-D22 (2026-10-21); the `ports/table_ops.py` docstring follows
+with the method. `destination:` ADR-0019; `ports/table_ops.py` docstring.
 
 **A4.4** `Row` gets `slots=True`. Note this is *not* where the memory is:
 `custom_tools/general_tools/line_topology.py:1233-1235` caches whole polylines, and
@@ -516,10 +503,8 @@ storage — otherwise a dead attempt's records collide with the retry's. Live pr
 goes to a separate diagnostic channel fan-in never reads.
 `destination:` same ADR as A10.1; `02-runtime.md` §7.4.
 
-**A10.5** Midpoint restart persists the counter high-water mark in the checkpoint and continues
-from *n+1*. Minter id is stable per logical job; the counter is checkpoint state. A job exceeding
-2³²−1 mints must fail loudly rather than wrap into another minter's space.
-`destination:` same ADR as A10.1; ADR-0009.
+**A10.5** Minter id is stable per logical job. A job exceeding 2³²−1 mints fails loudly rather
+than wrapping into another minter's space. `destination:` same ADR as A10.1.
 
 **A10.6 Ingest is a distinct, copying step**, run-scoped, before any stage executes.
 
@@ -1789,7 +1774,7 @@ tree, which had silently excluded `src/ag/generalization/` from formatting and l
 
 *Decided 2026-10-05, during the core lift of slice 1a.* **An operation's call in a stage is
 identified by its call identity, not by the operation's short name.** Call identity is the
-stage, the operation's short name (`fn.__name__`, ADR-0011) and an ordinal on repeats in
+stage, the operation's short name (`fn.__name__`, ADR-0020 OP-D2) and an ordinal on repeats in
 declaration order, the first call unnumbered and the second `_2`, the same rule
 `ScratchScope.child()` applies to repeated labels. The scratch scope's namespace and the
 rendered operation workspace both derive from call identity, never from the short name
@@ -1842,91 +1827,24 @@ checkable; scoping the cases to guards is what keeps the tables small enough to 
 *Decided 2026-10-12; signed 2026-10-16 as proposed in `PROPOSALS-2026-10-14.md` §1.* A stage
 input has two independent properties.
 
-**A31.1 The input role is declared; spatiality is derived.** `StageInput.role` is
-`InputRole.PROCESSING` or `InputRole.CONTEXT` and answers one question: may this input's rows
-become stage output? Roles belong to the stage input, not to the object. The same water
-layer is PROCESSING in the stage that generalises it and CONTEXT in the stage that moves
-buildings away from it. Whether an input is spatial is read from its object's `DataType` and
-is never declared: `FEATURE_CLASS` and `RASTER` are spatial; `TABLE` and `SYMBOLOGY` are
-not. `DataType` has the member `SYMBOLOGY` and a `spatial` property. Declarations of mostly
-spatial data pay nothing for the second axis.
+**A31.1** moved to ADR-0021 Direction 2, ST-D11 and ST-D12 (2026-10-21).
 
-**A31.2 Fan-out's transfer follows from both properties.**
+**A31.2** moved to ADR-0021 ST-D13, ST-D14, ST-D15 and ST-D17 (2026-10-21); the
+`core/pipeline.py` guard follows its lift.
 
-| | spatial | non-spatial |
-|---|---|---|
-| PROCESSING | partitioned, with halo overlap | rejected at declaration |
-| CONTEXT | context filter, then partitioned with the same overlap | sent whole to every pod, written once at a shared key |
+**A31.3** moved to ADR-0021 Direction 3 and ST-D16 (2026-10-21).
 
-- The **context filter** keeps the CONTEXT rows within `context_radius_m` of any PROCESSING
-  row of the stage, before partitioning; at 0 m it keeps the rows that intersect a PROCESSING
-  row. The filter distance is the stage's context radius; there is no second number. Reason:
-  an upstream radius computed ahead of time adds complexity for little gain and fails
-  silently, since a context set filtered with the wrong radius looks exactly like a correct
-  one.
-- **Overlap** applies to both partitioned roles. A PROCESSING row within the radius of a
-  partition but outside it reaches that partition too, and fan-in discards it (A6.1). A
-  CONTEXT row within the radius of a partition reaches it; at 0 m, the rows intersecting the
-  partition do.
-- **Non-spatial PROCESSING is rejected** when the `StageInput` is constructed. There is nothing
-  to partition, so the model defines no behaviour for it; the guard fails closed. It is a
-  construction-time check in `core/pipeline.py` with a break-it case (A30), recorded in the
-  plan for the Task B lift.
-- **The radius is a claim about the logic.** Operations never see partitions (ADR-0003), so
-  `context_radius_m` is the one place a stage author reasons about partition boundaries. A
-  0 m radius states that nothing in the stage consults a neighbour. The model does not guard
-  it; a reviewer can challenge it.
+**A31.4** moved to ADR-0021 ST-D18 (2026-10-21).
 
-**A31.3 Only rows originating from PROCESSING inputs may become stage outputs.** Stage
-outputs are the only data that leaves a stage. A CONTEXT row may affect an output and never
-becomes one: buildings moved away from water carry the buildings' lineage, and the water is
-a spatial influence. Scratch intermediates built from CONTEXT rows are legal inside a stage;
-they reach the scratch dump like every other handle (02-runtime §4.3) and nothing reads them
-as an input. An object derived from CONTEXT rows that a later stage must read (a water
-buffer, a displacement feature) is produced in a stage where its source is PROCESSING.
-Enforced by review of the stage declarations only, until B24 resolves. The fixtures under
-`tests/fixtures/example_pipelines/` are examples of the rule, not an enforcement of it.
+**A31.5** moved to ADR-0021 ST-D19 and ST-D20 (2026-10-21).
 
-**A31.4 Rasters are spatial** and take either role. Transfer is tile selection or clipping to
-the partition plus its halo, not row filtering. The project produces no raster products;
-raster use is value extraction (A5.2). The mechanism is open (B25) until a stage declares a
-`RASTER` input.
+**A31.6** moved to ADR-0021 ST-D21 and ADR-0017 RS-D7 (2026-10-21).
 
-**A31.5 Symbology files are non-spatial CONTEXT inputs.** A `.lyrx` file is a symbology
-blueprint with no data, consumed by arcpy tools such as `ResolveRoadConflicts`. It is declared
-as an `ExternalSource` with `data_type=DataType.SYMBOLOGY`, a settable location and a
-classification, and reaches every pod whole. All tables and all symbology files are stage
-inputs with a settable storage location, never baked into the container image. Reason: some
-carry attributes that must stay on-prem, and one rule for all of them is more consistent
-than a split by author. The member is `SYMBOLOGY`, not a generic `FILE`, so the next file kind
-gets its own decision. Numeric symbol dimensions (`building_symbol_dimension`, buffer
-factors) are a different thing: a project-wide Python resource that reaches operations as
-config dataclass fields varying by pipeline (ADR-0013), never a stage input. Deriving them
-from `.lyrx` files is possible later and not planned. This settles 03-architecture §7.5 and
-Q-D for both.
+**A31.7** moved to ADR-0021 ST-R3, ST-R5 and ST-D22 (2026-10-21).
 
-**A31.6 Port-level `subject`/`context` relate to the stage roles; they are not the same
-thing.** The row-shape grammar (A12) declares, per port method, which input parameter's
-rows carry identity into an output. The stage roles declare, per stage input, which rows may
-become stage output. A port `subject` may be fed from a CONTEXT stage input
-(`build_displacement_feature` buffers CONTEXT roads into a scratch blob); a port `context=`
-may be fed from a PROCESSING-derived intermediate (`propagate_displacement` reads the blob as
-`context` and the simplified buildings as `subject`). What holds at both levels: only the
-subject carries identity into outputs, and a context influences without contributing
-identity. The word `context` is shared on purpose for that reason, and for no other.
-
-**A31.7 Rejected.** A third role for the non-spatial case (`REFERENCE`, `SHARED` or
-`NON_SPATIAL`): it duplicates what `DataType` already says, mixes two questions in one enum,
-and each candidate word collides with an existing use (`reference` is a port parameter,
-`shared` is ordinary prose). A generic `FILE` data type: invites opaque inputs. The trade
-accepted: at a stage declaration a reader must know the data type to see that a table is
-sent whole, so the `InputRole.CONTEXT` docstring and 02-runtime §2.3 state both transfers
-side by side.
-
-`destination:` `02-runtime.md` §2.3 (A31.1, A31.2, A31.3, A31.7), §7.1 (overlap), §8 (the
-guard); `03-architecture.md` §7.5 (A31.5); `core/types.py` (`InputRole` and `DataType`
-docstrings); `core/pipeline.py` guard (Task B); `01-terminology.md`; the ADR of section 8 if
-written.
+`destination:` ADR-0021; `02-runtime.md` §2.3 and `03-architecture.md` §7.5 as pointers;
+`core/types.py` (`InputRole` and `DataType` docstrings); `core/pipeline.py` guard (Task B);
+`01-terminology.md`.
 
 ---
 
@@ -2564,7 +2482,7 @@ for decision 1.
 
 **B22. Which handles a predicate may name.** Found in the review of slice 1a's port values,
 2026-10-08. `Spatial.relate_to` is a handle inside a value: no `In` annotation sees it, the
-dependency graph derives from `OperationCall.inputs` and `outputs` only, and ADR-0011's
+dependency graph derives from `OperationCall.inputs` and `outputs` only, and ADR-0020 OP-D8's
 own-handles check walks those same parameters. An operation body can therefore build
 `Within(SomeStage.roads)` from another stage's class attribute, and the graph and the fan-out
 halo would miss that read. The rule is unstated anywhere in the record. Proposed rule: an

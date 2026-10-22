@@ -6,7 +6,7 @@ silently.
 THE FAILURE THIS FILE EXISTS FOR
 
 `@operation` classifies a runtime-injected parameter with
-`isinstance(hint, type) and issubclass(hint, Injected)` (ADR-0014). Under
+`isinstance(hint, type) and issubclass(hint, Injected)` (ADR-0020 OP-2). Under
 `from __future__ import annotations` - which EVERY module in this package uses -
 annotations are strings at runtime. If the classifier ever saw the raw
 `__annotations__` instead of `get_type_hints()` output, `hint` would be the string
@@ -81,7 +81,7 @@ def test_a_string_annotation_still_classifies_as_injected() -> None:
     """`get_type_hints` resolves `"Toolbox"` against the OPERATION MODULE's globals -
     this module, which imports it - so the classifier receives a class object and
     `issubclass` works. `core/` never needs the name, which is the whole point of the
-    marker base (ADR-0014).
+    marker base (ADR-0020 OP-2).
 
     Without `get_type_hints`, `isinstance("Toolbox", type)` is False and `tb` is
     misclassified with no error raised anywhere.

@@ -8,7 +8,7 @@ Why: a separate port from geometry because schema and rows are a different conve
 because it applies to non-spatial lookup tables, which are a real case here, and because
 `GeometryOps.add_field()` reads wrong. No cursor crosses the port: bulk reads and writes
 carrying `Row` values replace the row loops, so the slowest engine-shaped pattern never
-becomes part of the contract. ADR-0004.
+becomes part of the contract. ADR-0019 PC-4.
 """
 
 from __future__ import annotations
@@ -86,6 +86,6 @@ class TableOps(Protocol):
         the dataset has one. A query, outside the row-shape grammar: it writes no handle.
 
         Why: bulk reads carrying `Row` values replace the row loops, so the slowest
-        engine-shaped pattern never becomes part of the contract. ADR-0004.
+        engine-shaped pattern never becomes part of the contract. ADR-0019 PC-D22.
         """
         ...

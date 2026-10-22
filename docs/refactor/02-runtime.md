@@ -93,17 +93,13 @@ partition id, and the Job reaching `completions` **is** the fan-in barrier.
 | **DataObject** | a stage | identity, origin, legality, remote location | the dependency graph, classification, pinning |
 | **ScratchHandle** | the stage module, as a class attribute | a name, a namespace, a data type, and at runtime a path | wiring operations to each other |
 
-`DataObject` is `ExternalSource | ProductIdentity | Derived`. An operation *receives* a
-`ScratchHandle`; it does not declare one. **`namespace` is part of handle equality**, so
-`Network.ranks` and `ConflictResolution.ranks` are different values rather than merely different
-symbols — without it, any structure keyed by handle across stages conflates them.
+The two vocabularies: ADR-0019 Direction 1, PC-D1, PC-D2. Handle equality: ADR-0020 OP-D8.
 
 They cannot be confused because they are different types, and `StageInput` is the only place
 one is bound to the other.
 
-**An operation only ever sees ScratchHandles.** Never a DataObject, never a URI, never a client,
-never a partition index, never a context radius. An operation runs a fixed sequence of GP tools
-against whatever it is handed. That ignorance is what lets it run on a laptop against a
+An operation runs a fixed sequence of GP tools against whatever it is handed (ADR-0019
+PC-D2). That ignorance is what lets it run on a laptop against a
 directory of gdbs with no credentials and no cluster — and it is load-bearing for correctness,
 because an operation that knew its halo could behave differently near a partition edge.
 
@@ -131,31 +127,14 @@ DISPLACED = Derived("displaced_polygons", origin=(N50_BUILDING_POLYGONS,))
 publishes = (Publish(obj=DISPLACED, identity=N100_BUILDING_POLYGONS),)
 ```
 
-**ExternalSource** — data entering the *project* from outside it. **`classification` is
-required**, not optional. **Declared once, for the whole project.**
-
-**ProductIdentity** — something a pipeline publishes and other pipelines read. Carries its own
-location, so a product has a destination whether or not anything consumes it. **Carries no
-classification**: the legality of something we produce is computed over the wiring that produced
-it, and the single human assertion lives on `reclassify_to`. A field here would be a second,
-unreviewed home for that judgement.
+Sources and products: ADR-0021 Direction 1, ST-1, ST-D1 to ST-D3, ST-D5, ST-R1, ST-R2.
 
 **Derived** — produced by a stage. **Has no `location` parameter**, so a derived object cannot
 carry one; "a new identity declares its location, an existing one inherits it" is enforced by
 construction rather than by a check.
 
-**All three have identity equality (`eq=False`).** They are symbols. This replaces value
-equality on `(scale, dataset)`, which linked independently written declarations across
-pipelines — and did so with `location`, `classification` and `data_type` all excluded from the
-comparison, so a second declaration that *omitted* a restriction compared equal to one that
-stated it, and the omitting pipeline computed `CLOUD_OK` for restricted data with no error
-anywhere. One declaration site removes the disagreement; a required `classification` removes the
-omission. ADR-0012.
-
-**Publish** — promotes a Derived to a `ProductIdentity` at the pipeline boundary. Not derivable
-— which outputs are products external consumers depend on is a human decision. Both sides
-reference the same symbol, so the producer and its consumers are linked by go-to-definition
-rather than by a string match.
+**Publish** is declared, not derived: which outputs are products external consumers depend on
+is a human decision.
 
 **`origin` names origin roots only (`OriginRoot`: an `ExternalSource` or a `ProductIdentity`),
 and it means object-level lineage — not influence.** It answers "what dataset is this,
@@ -171,27 +150,9 @@ already stated by the operation wiring.
 uploaded, is invisible to `warn_unused_handles`, and documents an origin the runtime does not
 use.
 
-**Identifiers are symbols; values stay literals.**
-
-**The test:** could a different string literal ever be correct here, given the rest of the code?
-If no — only one is ever right and the system misbehaves when it differs — it is an *identifier*
-and must be a symbol. If yes — it names something outside the program — it is a *value* and
-stays a literal.
-
-Identifiers, therefore symbols: every IO entry, every declared handle name (supplied by
-`__set_name__` from the class attribute), every operation parameter name (read off the signature
-by `@operation`). Go-to-definition lands on the declaration, find-references lists consumers,
-rename is a real refactor, a typo is an error at import.
-
-**`Derived("selected_polygons")` deliberately stays a literal.** It is declared once, `eq=False`,
-and no consumer requires it to match its symbol — any unique string would work. What *is*
-required is uniqueness within the pipeline, because the scratch location is built from it, and
-that is a check rather than a naming mechanism. Converting it would also mean an LSP rename moved
-a live object's run-scratch location and invalidated the resume window for in-flight runs.
-
-Internal scratch names (`scratch("dissolved")`) are the same case: nothing in the program reads
-them, they render into a layer name in a workspace that dies with the pod, and the only reader is
-a human looking at a scratch dump.
+Identifiers and literals: ADR-0020 Direction 2, OP-D1, OP-D4 to OP-D6. Go-to-definition lands
+on the declaration, find-references lists consumers, rename is a real refactor, a typo is an
+error at import.
 
 ### 2.3 Stages
 
@@ -231,15 +192,7 @@ everything else in the pod scratch root — reachable for troubleshooting, on th
 never as an input. That is not an optimisation to implement; it is what happens when nobody
 declares it.
 
-**Handles are class attributes, not module constants.** `__set_name__` supplies the `name` and
-the `namespace` from the attribute, so the name is written once and two handles in one stage
-cannot collide — which is what deleted the uniqueness check that used to police it. A handle
-built outside a class body has no namespace and is rejected where it is bound.
-
-**`handles=` is not decoration.** It is what makes cross-stage leakage checkable: a
-`Displacement` operation still referencing a handle from another stage's class type-checks, is a
-perfectly good `ScratchHandle`, and otherwise fails in the pod as a missing dataset after fan-out
-has already moved the data.
+Handles: ADR-0020 OP-D4, OP-D8.
 
 **Grouping criterion: a stage is the span between re-partitionings.** Operations belong
 together when they prefer the same partition size — a judgement about data, not derivable from
@@ -254,45 +207,7 @@ crossover where splitting a stage is cheaper than widening its halo, and it is m
 list is enough, and the author grouped them deliberately. Correctness of the list is checked
 ([the static checks](#8-validation)), not derived.
 
-**A stage input has a role and a spatiality** ([ADR-0016](decisions/0016-stage-inputs-have-a-role-and-a-spatiality.md)).
-The **input role** is declared per stage input, not per object: `InputRole.PROCESSING` or
-`InputRole.CONTEXT`, answering one question — may this input's rows become stage output? The
-same water layer is PROCESSING in the stage that generalises it and CONTEXT in the stage that
-moves buildings away from it. Whether an input is **spatial** is read from its object's
-`DataType` and never declared: `FEATURE_CLASS` and `RASTER` are spatial, `TABLE` and `SYMBOLOGY`
-are not. `role` is for fan-out, never for an operation.
-
-| | spatial | non-spatial |
-|---|---|---|
-| PROCESSING | partitioned, with halo overlap | rejected at declaration |
-| CONTEXT | context filter, then partitioned with the same overlap | sent whole to every pod, written **once** at a shared key |
-
-- The **context filter** keeps the CONTEXT rows within `context_radius_m` of any PROCESSING row
-  of the stage, before partitioning; at 0 m it keeps the rows that intersect a PROCESSING row.
-  The filter distance is the stage's context radius; there is no second number, because a
-  context set filtered with the wrong radius looks exactly like a correct one.
-- **Overlap** applies to both partitioned roles. A PROCESSING row within the radius of a
-  partition but outside it reaches that partition too, and fan-in discards it; a CONTEXT row
-  within the radius of a partition reaches it.
-- **Non-spatial PROCESSING is rejected** when the `StageInput` is constructed: there is nothing
-  to partition, so the model defines no behaviour for it.
-- **Only rows originating from PROCESSING inputs may become stage outputs**, and stage outputs
-  are the only data that leaves a stage. A CONTEXT row may affect an output and never becomes
-  one: `DISPLACED` carries the buildings' lineage, and the roads are a spatial influence.
-  Scratch intermediates built from CONTEXT rows are legal inside a stage and reach the scratch
-  dump like every other handle. An object derived from CONTEXT rows that a later stage must
-  read is produced in a stage where its source is PROCESSING. Enforced by review until a static
-  check exists.
-- **Rasters** are spatial and take either role; transfer is tile selection or clipping to the
-  partition plus its halo, not row filtering. The mechanism is open until a stage declares one.
-- **Symbology files** (`.lyrx`) are `SYMBOLOGY` inputs: non-spatial, CONTEXT, sent whole,
-  declared as an `ExternalSource` with a location and a classification, never baked into the
-  image. The trade: at a stage declaration a reader must know the data type to see that a
-  table or a symbology file is sent whole, which is why the `InputRole` docstring states both
-  transfers side by side.
-- **The radius is a claim about the logic.** Operations never see partitions (ADR-0003), so
-  `context_radius_m` is the one place a stage author reasons about partition boundaries. A 0 m
-  radius states that nothing in the stage consults a neighbour; a reviewer can challenge it.
+Roles and spatiality: ADR-0021 Direction 2 and 3, ST-2, ST-D11 to ST-D22, ST-R3, ST-R5.
 
 ### 2.4 Operations
 
@@ -313,33 +228,20 @@ def thin_road_network(
     _build_topology(roads=dissolved, tb=tb, scratch=scratch.child("build_topology"))
 ```
 
-`@operation` changes only the return type — `Callable[P, OperationCall]` — so the declaration
-site is type-checked against the real signature, go-to-definition lands on the implementation,
-and a renamed parameter is an error in the editor at every call site. It reads the operation
-name, the parameter names, the input/output split and whether a `ScratchScope` is wanted **off
-the signature**, so none of the four is restated.
+The declaration is the signature: ADR-0020 Direction 1, OP-1, OP-D2, OP-D7, OP-D10.
 
-This replaces a hand-written factory twin per operation that restated all four as strings, where
-renaming a parameter produced `TypeError: unexpected keyword argument` inside a pod after fan-out
-had already moved the data. ADR-0011.
-
-**What fails at import**, while the pipeline module is being read in CI or at orchestrator
-startup: an unannotated or misclassified parameter, a positional-or-keyword parameter, a
-misspelled or missing keyword at a declaration site, a non-handle passed to an `In`/`Out`, a
-handle built outside a class body, a config that is not a frozen dataclass, and a `scratch=`
-passed where there is no workspace to allocate in yet.
+This replaces a hand-written factory twin per operation that restated the signature as
+strings, where renaming a parameter produced `TypeError: unexpected keyword argument` inside a
+pod after fan-out had already moved the data (ADR-0020 OP-R1).
 
 **An operation calls ports, never a vendor library.** `import arcpy` appears in one file in
 the whole system; the engine reaching an operation is whichever adapter the pod entry point
 put in the `Toolbox`. This is what keeps a declaration module importable with arcpy blocked, which
 [§2.6](#26-declarations-must-be-constructible-without-touching-data) requires. See
-[03-architecture, the import rules](03-architecture.md#41-the-rules). `Toolbox` is the fourth
-parameter kind `@operation` admits, alongside `In`/`Out`, `config` and `ScratchScope`; anything
-else is rejected at decoration.
+[03-architecture, the import rules](03-architecture.md#41-the-rules).
 
-**Internal scratch comes from a `ScratchScope`**, so a developer writes bare names and never
-invents unique ones. A helper receives a scope the same way an operation does — derive downward —
-so it never learns its own trail and stays callable from anywhere.
+Scratch and scope passing: ADR-0020 OP-D5, OP-D20; a helper never learns its own trail and
+stays callable from anywhere.
 
 ### 2.5 A pipeline is a development artifact
 
@@ -369,25 +271,8 @@ to decide an output name.
 
 ### 2.7 Configs and tuning
 
-**One frozen config dataclass per operation**, passed as the parameter named `config` and
-enforced at decoration, so `OperationCall.parameters` is uniformly `{"config": ...}` or empty and
-a run manifest gets a serializable tuning record per operation with no special-casing. An
-operation with nothing tunable declares nothing.
-
-Config *fields* are declared beside the operation, because they change when it changes. Config
-*values* live in tuning modules, because they change per scale: an object base module stating
-every field, one `replace` delta per scale, over per-scale cartographic constants
-(*scale constants*) named for the concept (`MINIMUM_VISIBLE_LENGTH_M`) rather than the consuming
-parameter. **No resolution
-mechanism** — sharing happens because a line of code references a constant, so "what is N100's
-road thinning length" stays a value you read rather than one you compute. ADR-0013.
-
-**No config carries a scale.** An operation that could read the scale could branch on it, and
-"one function serves N50 and N100" would stop being enforced by anything. The scale selects
-*which* config; it is never *in* one.
-
-`__post_init__` on a frozen config is the first place in the design with anywhere to put a
-constraint on a value — a stage cannot check that a tolerance is positive.
+Configs and tuning: ADR-0020 Direction 5, OP-4, OP-D24 to OP-D34, OP-R6. An operation with
+nothing tunable declares nothing.
 
 ---
 
@@ -574,7 +459,7 @@ cloud) is legitimate by construction.
 
 ### 5.2 Classification is computed over stage wiring
 
-> **Every Source that reached a stage taints everything that stage produces, context included.**
+Computed over the wiring: ADR-0021 Direction 1, ST-D5.
 
 Not over `origin`. `DISPLACED`'s origin is `BUILDING_N50`, which is `CLOUD_OK` — but its
 geometry was determined by restricted NVDB road positions, and displaced footprints partially
@@ -623,19 +508,13 @@ outputs inherit restrictions they never needed.
 
 ### 5.5 Reclassification
 
-The one place a human may assert a product is less restricted than what produced it is
-`reclassify_to` on a `Publish`.
+`reclassify_to` and its propagation: ADR-0021 ST-D5, ST-D6.
 
 **Per output, not per pipeline.** A pipeline may publish a generalized product *and*
 diagnostics that retained the detail; a blanket reclassification would sweep both silently.
 
 **It takes effect at publication**, which is physically the on-prem → cloud copy — so the guard
 fires at one discrete, auditable point rather than being smeared across a run.
-
-**It follows the product to its consumers.** When another pipeline reads a published identity,
-its classification is the producing stage's computation with `reclassify_to` applied — so a
-consumer of a declassified product sees `CLOUD_OK`, not the producer's raw `PREM_ONLY`. An
-identity nothing here publishes falls back to rules and fails closed.
 
 A mismatch between a declared destination and a computed classification is **an error, never
 auto-resolved.** It is evidence of human error and requires oversight. Checked in CI, again at
@@ -717,7 +596,7 @@ Job orphaned by an orchestrator crash.
 ([§7.4](#74-partition-pods-must-be-idempotent)). A pod dying is ordinary and handled.
 
 **What is not persisted is how far the run got.** If the orchestrator itself dies, the run
-fails and a human reruns with `--invalidate-from <stage>`, which computes the downstream
+fails and a human reruns with `--invalidate-from <stage>` (ADR-0021 ST-D23), which computes the downstream
 closure over the declared graph — not "that stage and everything after it in the list."
 
 **No fingerprinting, and that is the durable part.** A human forgetting to invalidate is
@@ -757,8 +636,7 @@ The graph permits running independent stages at once, and the design is ready fo
 
 ### 7.1 The halo requirement is transitive
 
-Fan-out gives each pod its partition's PROCESSING rows plus those within the halo, and the
-CONTEXT rows within the halo ([§2.3](#23-stages)). Logic must be deterministic, so a feature
+Fan-out's transfer is ADR-0021 ST-D14. Logic must be deterministic, so a feature
 appearing as center-in in partition A and as a halo copy in partition B is moved
 **identically** in both — otherwise fan-in stitches together geometry that disagrees with
 itself.
@@ -835,7 +713,7 @@ express rather than as accumulated habit.
 a static test over the whole surface enforces the grammar, in CI rather than in `validate()`,
 because it is a property of the Protocols, not of a plan; a wrong `Rows` already fails when the
 Protocol is imported. The grammar and the check's rules are
-[ADR-0017](decisions/0017-row-shape-grammar.md) RS-1 to RS-4.
+ADR-0017 RS-1 to RS-4.
 
 **Inside a stage** — ScratchHandle level:
 
@@ -853,14 +731,11 @@ Protocol is imported. The grammar and the check's rules are
    `ScratchHandle.namespace` exist for.*
 6. **(WARNING)** A handle written, read by nothing, and named by no `StageOutput`. *Legal,
    usually dead work.*
-6a. No `StageInput` pairs a non-spatial object with `InputRole.PROCESSING`. *There is nothing
-   to partition ([§2.3](#23-stages)); a construction-time check on `StageInput`.*
+6a. ADR-0021 ST-D15, the construction-time check on `StageInput`.
 
 **Across stages** — DataObject level:
 
-7. Every `Stage` agrees with its `Pipeline` on scale and object. *Cannot be an import-time check:
-   a Stage is fully constructed before the Pipeline that lists it exists. The tags reach the
-   scratch path, the Job name, run selection and the placement tag group.*
+7. ADR-0021 ST-D10, the plan-time check that a `Stage` agrees with its `Pipeline`.
 8. `Derived` names are unique **per pipeline**. *The scratch location is built from the name and
    `Derived` has identity equality, so two same-named objects compute the same location and one
    silently overwrites the other. Per pipeline is deliberately stricter than the path scheme

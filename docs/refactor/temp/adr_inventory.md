@@ -289,7 +289,7 @@ the split argument, AR-D5, AR-D6, AR-D12, Direction 3), 03 §4.1 (adapter choice
 | 0015 | Wrong field name not checked; schema declarations on handles are a stated non-goal | §Consequences; A2.3 | detail | |
 | 0015 | `Attr(cql: str)` as the only leaf rejected: every adapter parses; admits uncompilable expressions | §Context | rejected | plausible; reopen: NEW |
 | 0015 | Three template expressions rewritten; subqueries become `read_rows` plus `Attr.in_` | §Consequences | drop | history; the target form survives as a detail under PC-4 (deletion) |
-| 0015 | Amends ADR-0001 | header | drop | |
+| 0015 | Amends 0001 | header | drop | |
 | 0004 | No cursor; `calculate_field`, `read_rows`, `write_rows` | §Decision | Dir 4 + detail | |
 | 0004 | `Geometry` value type: kind, coordinates, CRS; yielded by `read_rows`, accepted by `write_rows` | §Decision | detail | |
 | 0004 | Vectorized engines; a cursor port guarantees a bad second adapter | §Consequences | rejected (a cursor or row iterator) | likely proposed under migration pressure; reopen: NEW |
@@ -501,7 +501,7 @@ are corrected in the approved text.
 | 0014 | `core-is-pure` contract unchanged | §Consequences | Dir OP-2 | |
 | 0014 | Classify by parameter name rejected: the `config` precedent does not transfer | §Rejected | rejected | likely (cheap); reopen: NEW (nothing) |
 | 0014 | Move `Toolbox` into `core/` rejected: drags `ports/` in; `TYPE_CHECKING` plus string compare fails at runtime | §Rejected | rejected | plausible; reopen: NEW (nothing) |
-| 0014 | Extends ADR-0011 | header | drop | |
+| 0014 | Extends 0011 | header | drop | |
 | 0008 | Frozen `Toolbox` bundling `geometry`, `table`, `cartographic`, `graph`, assembled once by the pod entry point, passed explicitly | §Decision; 03 §4.4 | Dir 4 + detail | |
 | 0008 | `ScratchScope` is already explicit and derived downward into helpers; two styles in one signature is worse than either | §Consequences; 02 §2.4 | detail | as "`Toolbox` and `ScratchScope` are passed the same way" |
 | 0008 | Tests stay stateless: a fake `Toolbox` is constructed and passed | §Consequences | detail | constrains tests |
@@ -710,7 +710,7 @@ explanation line by line before the cut-over.
 | 0012 | Reviewer property moved up a level | §Consequences | drop | commentary |
 | 0012 | No pipeline imports another; pipelines import a leaf | §Consequences | detail | constraint |
 | 0012 | `locations.py` owns environment prefixing; four remote-path builders live there | §Consequences | detail | the argument itself stays in the docstring |
-| 0012 | Note on ADR-0003's stale enumeration | §Consequences | drop | applied in PC |
+| 0012 | Note on 0003's stale enumeration | §Consequences | drop | applied in PC |
 | 0012 | `Scale`, `ObjectName` are `StrEnum`; `RAW` is `Scale.RAW`; closed `ObjectName` | §Also decided | detail | |
 | 0012 | `scale`, `object_name` repeated on every `Stage`; `check_stage_tags_match_pipeline` at plan time | §Also decided | detail | |
 | 0012 | Supersedes 02 §2.2 | header | drop | 02-runtime already reflects it |
@@ -912,18 +912,18 @@ pass 2 change summary:
 
 | A-item | destination as written | draft Direction line | result |
 |---|---|---|---|
-| A1.3 | ADR-0008 (amend with the incremental-port argument and the constructor-injection guidance) | OP Dir 4; OP-3 line | compatible: constructor binding is in both; the incremental-port argument becomes the singleton Rejected entry's reason |
-| A2.1 | ADR-0015 (landed 2026-10-07) | PC Dir 3; PC-3 line | compatible; already in 0015 §Decision |
-| A2.2 | ADR-0015 (landed) | PC Dir 3 | compatible |
-| A2.3 | ADR-0015 (landed) | PC-3 detail (schema declarations a non-goal) | compatible |
-| A4.1 | ADR-0004 (amend with the counts) | PC Dir 4; PC-4 line | compatible. Resolved 2026-10-21: the counts go to 04-migration Appendix A as rows with their regenerating `rg` commands; the ADR keeps the rules. Approved destination text: "`destination:` ADR-0019 PC-4 (the no-cursor rule, the bulk mapping, deletion as select); 04-migration.md Appendix A (the per-method counts, with their commands)." Applied at the cut-over. |
-| A4.2 | ADR-0004 | PC Dir 4 (keyed bulk update) | compatible; the side-table alternative becomes a Rejected candidate. Destination text proposed for approval: "`destination:` ADR-0019 PC-4 (the keyed bulk update; the side-table alternative as a Rejected entry); 04-migration.md Appendix A (the `updateRow` and `CalculateField` counts, with their commands)." |
-| A4.3 | `ports/table_ops.py` docstring; ADR-0004 amendment | PC-4 line; detail | compatible: `update_rows`, keyed, `Row.geometry`, stable key |
-| A10.5 | same ADR as A10.1; ADR-0009 | ST Dir 4 | Resolved 2026-10-21: checkpoints for job pods are out of scope for the refactor, neither planned nor depended on nor banned; F4 closed. Approved replacement text: "**A10.5** Minter id is stable per logical job. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another minter's space. `destination:` same ADR as A10.1." TASKS T3.5's "ADR-0009 amendment for the checkpoint" is removed. Both applied at the cut-over. |
-| A10.4 | same ADR as A10.1; 02 §7.4 (TASKS 1320 adds "ADR-0009 amendment") | ST-3 | compatible: retry reuses the minter id and replaces artifacts wholesale, which is a stage restart, not a resume |
-| body cites, not destinations | DECISIONS.md 1792 (ADR-0011, `fn.__name__`), 1875 (ADR-0003, no partition index), 1904 (ADR-0013, config fields), 2567 (B22, ADR-0011's own-handles check) | OP-1 detail; PC-1 detail; OP-4; OP-1 detail | compatible; repointed at the cut-over |
+| A1.3 | 0008 (amend with the incremental-port argument and the constructor-injection guidance) | OP Dir 4; OP-3 line | compatible: constructor binding is in both; the incremental-port argument becomes the singleton Rejected entry's reason |
+| A2.1 | 0015 (landed 2026-10-07) | PC Dir 3; PC-3 line | compatible; already in 0015 §Decision |
+| A2.2 | 0015 (landed) | PC Dir 3 | compatible |
+| A2.3 | 0015 (landed) | PC-3 detail (schema declarations a non-goal) | compatible |
+| A4.1 | 0004 (amend with the counts) | PC Dir 4; PC-4 line | compatible. Resolved 2026-10-21: the counts go to 04-migration Appendix A as rows with their regenerating `rg` commands; the ADR keeps the rules. Approved destination text: "`destination:` ADR-0019 PC-4 (the no-cursor rule, the bulk mapping, deletion as select); 04-migration.md Appendix A (the per-method counts, with their commands)." Applied at the cut-over. |
+| A4.2 | 0004 | PC Dir 4 (keyed bulk update) | compatible; the side-table alternative becomes a Rejected candidate. Destination text proposed for approval: "`destination:` ADR-0019 PC-4 (the keyed bulk update; the side-table alternative as a Rejected entry); 04-migration.md Appendix A (the `updateRow` and `CalculateField` counts, with their commands)." |
+| A4.3 | `ports/table_ops.py` docstring; 0004 amendment | PC-4 line; detail | compatible: `update_rows`, keyed, `Row.geometry`, stable key |
+| A10.5 | same ADR as A10.1; 0009 | ST Dir 4 | Resolved 2026-10-21: checkpoints for job pods are out of scope for the refactor, neither planned nor depended on nor banned; F4 closed. Approved replacement text: "**A10.5** Minter id is stable per logical job. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another minter's space. `destination:` same ADR as A10.1." TASKS T3.5's "0009 amendment for the checkpoint" is removed. Both applied at the cut-over. |
+| A10.4 | same ADR as A10.1; 02 §7.4 (TASKS 1320 adds "0009 amendment") | ST-3 | compatible: retry reuses the minter id and replaces artifacts wholesale, which is a stage restart, not a resume |
+| body cites, not destinations | DECISIONS.md 1792 (0011, `fn.__name__`), 1875 (0003, no partition index), 1904 (0013, config fields), 2567 (B22, 0011's own-handles check) | OP-1 detail; PC-1 detail; OP-4; OP-1 detail | compatible; repointed at the cut-over |
 
-No other `destination:` line names ADR-0001 to ADR-0016. Lines naming ADR-0017 (A12.1 to
+No other `destination:` line names 0001 to 0016. Lines naming ADR-0017 (A12.1 to
 A12.5a) are unaffected.
 
 ## 8. Lines marked "new, needs decision"
@@ -956,7 +956,7 @@ A12.5a) are unaffected.
 
 1. Write ADR-0018, ADR-0019, ADR-0020, ADR-0021 under `docs/decisions/`, from the approved
    pass 2 and pass 3 text. Move and revise ADR-0017 to `docs/decisions/0017-row-shape-grammar.md`.
-2. Remove the seventeen files under `docs/refactor/decisions/` from the working tree. Staging
+2. Remove the seventeen files under `docs/refactor/decisions/ (now docs/decisions/)` from the working tree. Staging
    (`git rm`) is the architect's, listed in the report.
 3. `docs/decisions/README.md`: fill the Index in reading order (AR, PC, RS, OP, ST), fill the
    Provenance table (0001 to 0016 to their ADR and ids), add the Sources section (Cockburn,
@@ -968,7 +968,7 @@ A12.5a) are unaffected.
 5. DECISIONS.md: the thirteen lines of the Part B table (2026-10-20 message), applied only with
    the architect's approval of the exact text, requested again at pass 4 with ids final. Already
    approved as exact text (2026-10-21): the A10.5 replacement and the A4.1 destination, both in
-   section 7; A4.2's destination awaits approval. TASKS.md 1320 loses "ADR-0009 amendment for
+   section 7; A4.2's destination awaits approval. TASKS.md 1320 loses "0009 amendment for
    the checkpoint"; T3.5's acceptance clause that copies the checkpoint sentence (REVIEW F4) is
    checked and removed if present; F4 recorded as closed, checkpoints out of scope.
 5a. 04-migration.md Appendix A gains the A4.1 and A4.2 per-method counts as rows, each with
@@ -1014,7 +1014,7 @@ A12.5a) are unaffected.
 | area | files | citations |
 |---|---|---|
 | `docs/refactor/temp/` (DECISIONS, TASKS, PROPOSALS, REVIEW, findings) | 9 | 103 |
-| `docs/refactor/decisions/` (the ADRs themselves) | 17 | 48 |
+| `docs/refactor/decisions/ (now docs/decisions/)` (the ADRs themselves) | 17 | 48 |
 | `docs/refactor/` design documents and README | 5 | 41 |
 | `docs/refactor/template_code/` | 19 | 46 |
 | `src/ag/` | 13 | 31 |
@@ -1054,3 +1054,53 @@ the source or already approved.
 
 No entry is dropped outright: AR-R10 moves to Details, and the merges reduce 29 candidates to 22
 entries.
+
+**Pass 3 approved 2026-10-21.** Grouping, the four merges and AR-D22 agreed; the reopen column
+approved as one set, as sent, including the RS-R4 and RS-R5 changes to ADR-0017. Ids stay as
+presented; AR-R3, AR-R4, AR-R9, AR-R10, OP-R3 and ST-R4 are unused. AR-R5's reason: "One driving
+actor, Kubernetes via the orchestrator. The CLI, the pod entry points and the invariance harness
+are driving adapters, not further actors; a Protocol around one caller is ceremony."
+
+| id | reopen (approved) |
+|---|---|
+| AR-R1 | A transactional store behind a port. |
+| AR-R2 | Concurrency within a pod, a second writer per object, or a request-serving use; any of these changes AR Direction 1. |
+| AR-R5 | A second driving actor that needs a call shape the pod entry points do not offer. |
+| AR-R6 | Reopening this changes AR Direction 4. |
+| AR-R7 | A log transport stdlib handlers cannot reach. |
+| AR-R8 | The terminology retiring the collision: `tool` leaving the retired-words list, or multipart geometry leaving the vocabulary. The rename itself is one `git mv` and one `.importlinter` line. |
+| PC-R1 | A backend that short-circuits (SQL `EXISTS`, `LIMIT 1`). |
+| PC-R2 | Reopening this changes PC Direction 2. |
+| PC-R3 | Reopening this changes PC Direction 3. |
+| PC-R4 | Reopening this changes PC Direction 4. |
+| PC-R5 | An engine with no keyed bulk update, where the adapter would implement `update_rows` this way; the port shape does not change. |
+| OP-R1 | Operations needing to be substitutable per scale. |
+| OP-R2 | Classifying by name changes OP Direction 3. Moving the bundle into the core changes the core-is-pure import rule (OP-D11, `.importlinter` row 3). |
+| OP-R4 | A typing feature that narrows the parameter to `Toolbox` inside the body without an assertion in every operation. |
+| OP-R5 | The parameter proving worse in practice than predicted once real operations exist. |
+| OP-R6 | Reopening this changes OP Direction 5. |
+| ST-R1 | Reopening this changes ST Direction 1. |
+| ST-R2 | Reopening this changes ST Direction 1. |
+| ST-R3 | Reopening either changes ST Direction 2 and 3. |
+| ST-R5 | A second file kind whose transfer and legality rules are identical to symbology's; until then, the next file kind gets its own member and its own decision. |
+| ST-R6 | A stage whose re-run cost makes a checkpoint pay after promoting its expensive operator to its own stage has been tried; the mint counter then becomes checkpoint state. |
+| RS-R4 | A method whose lineage handling cannot be derived from its declaration by the generic facade. (replaces the existing text) |
+| RS-R5 | Reopening this changes RS Direction 7. (replaces the existing text) |
+| RS-R1, R2, R3, R6 | unchanged |
+
+## 13. Cut-over (pass 4) applied 2026-10-22
+
+Applied as one batch on `slice_1a_memory_adapter`: the five themed ADRs under
+`docs/decisions/`, the seventeen old files removed, the README filled, the approved record,
+task and terminology edits, the agreed design-document split, the citation test with its
+break-once cases, and the pointer updates. The report of the batch lists every changed item.
+
+## 14. Follow-ups, not in this change
+
+- The wider docstring convention, as its own task, starting from "names and types first; a
+  docstring states only what they cannot" (arch 2026-10-22). Trimming `ports/row_shape.py`
+  belongs to that task.
+- `.importlinter` row 12's name cites the retired number 0003; it becomes "(ADR-0019 PC-D1)".
+  Explicit-request file; proposed, not edited.
+- The retired-number references in this inventory are written as bare numbers so that the
+  citation test's retired-number rule does not fire on a working document.

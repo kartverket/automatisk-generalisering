@@ -46,7 +46,14 @@ These sections are helpful when:
 
 When type hints and descriptive naming already communicate the intent, these sections can be omitted.
 
-### 5. Avoid documenting what the code already expresses
+### 5. Cite the decision, do not restate it
+
+A docstring cites the ADR id for a rule it relies on, at the end of the sentence the rule
+supports: `ADR-0017 RS-D5`. It does not restate the ADR's Direction, its alternatives or its
+argument, and it names no slice, task, A-id or temp document. The ADRs are in
+`docs/decisions/`.
+
+### 6. Avoid documenting what the code already expresses
 
 Docstrings should not restate implementation details or obvious behavior.
 If the code is clear, keep the documentation minimal to avoid unnecessary noise.

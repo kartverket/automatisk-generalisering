@@ -2,7 +2,7 @@
 
 The De Morgan rewrite, which is the only non-obvious claim in the predicate model.
 
-ADR-0001 says selection is a composable predicate VALUE rather than arcpy's held
+ADR-0019 PC-2 says selection is a composable predicate VALUE rather than arcpy's held
 selection, and the objection it has to answer is "arcpy cannot evaluate a boolean
 tree". The answer is `push_negation`: rewrite until every negation sits on a leaf,
 where arcpy has a flag for it. These tests are that answer's evidence.

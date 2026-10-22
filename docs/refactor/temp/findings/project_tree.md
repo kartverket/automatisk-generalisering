@@ -11,7 +11,7 @@ as the record of what was weighed.
 subject axis), §7.2 (ports are flat, one file per port), §7.3 (a directory per (object, scale),
 one module per stage), §7.4 (object-major), §7.6 (contract tests). `template_code/.importlinter`
 is the first instalment of §4.2. `04-migration.md` §1 maps every legacy module onto that tree.
-ADR-0005 names `helpers/`; ADR-0012 fixes `sources.py` and `products.py` as leaves; ADR-0013
+ADR-0018 AR-4 names `helpers/`; ADR-0021 ST-1 fixes `sources.py` and `products.py` as leaves; ADR-0020 OP-4
 fixes the tuning layout. This proposal starts from that tree and departs from it in the eight
 places §8 lists.
 
@@ -218,7 +218,7 @@ domain" true for everything except the two composition roots, which is where 03-
 | file size at full surface | about 1,200 to 1,500 lines with What / How / Why docstrings | 150 to 300 lines per file |
 | reading the contract | top to bottom in one file; what a second adapter author needs | assembled across eight files |
 | concurrent edits | two developers adding methods to one port touch one file, in different sections; conflicts are rare and trivial | never touch the same file |
-| risk | a long file | the group Protocols are importable, and someone will type a parameter as `SelectionMethods`; that is the interface segregation ADR-0002 and 03-architecture §4.7 decided against, arriving by the back door |
+| risk | a long file | the group Protocols are importable, and someone will type a parameter as `SelectionMethods`; that is the interface segregation ADR-0018 AR-2 and 03-architecture §4.7 decided against, arriving by the back door |
 | `__row_shape__` lookup | `GeometryOps.dissolve.__row_shape__` | same, through inheritance |
 
 **Recommendation: A**, as 03-architecture §7.2 already says ("flat; six files are browsable").
@@ -279,7 +279,7 @@ group silently calls the wrong helper.
 
 The new code already has the other style. Every helper in the template takes what it needs as an
 explicit argument and is a module-level function (`_repair_geometry`, `_build_topology`,
-`_vertex_deltas` take `tb` and `scratch`; A1.3, ADR-0008), and `temp/arcpy_part_locator.py` has
+`_vertex_deltas` take `tb` and `scratch`; A1.3, ADR-0020 OP-3), and `temp/arcpy_part_locator.py` has
 nine module-level helpers against three helper methods, with `find_empty_geometries` and
 `degenerate_inputs` as plain functions. Module-level private functions collide in 2 of 136 names
 across the same scan, harmlessly, because a module is its own namespace.
@@ -290,7 +290,7 @@ across the same scan, harmlessly, because a module is its own namespace.
 |---|---|---|---|
 | mixins with helper methods (the first draft) | clean, and blind to the collision | silent, order-dependent | none until it bites |
 | **mixins holding Protocol methods only; helpers module-level, session passed as an argument; one base class per adapter; a static test** (chosen) | clean; `self._session` is typed in every group through the base | impossible for helpers (module namespace); a duplicated Protocol method or a stray attribute fails the static test | the session is an explicit first argument to helpers, which is already the house style |
-| composition with delegation | clean; a forgotten delegate is caught by the conformance assignment (probed: `"dissolve" is not present`) | impossible | every method's keyword list and defaults restated a third time (Protocol, delegate, group), which is the restated-signature disease ADR-0011 removed; about 45 delegates per adapter per port, twice |
+| composition with delegation | clean; a forgotten delegate is caught by the conformance assignment (probed: `"dissolve" is not present`) | impossible | every method's keyword list and defaults restated a third time (Protocol, delegate, group), which is the restated-signature disease ADR-0020 OP-1 removed; about 45 delegates per adapter per port, twice |
 | group modules of plain functions bound into the class body (`select = select`) | clean (probed, with `self` typed by a small `HasSession` Protocol) | impossible | no restated signatures, but an idiom nobody on the team has seen, and a binding list per adapter |
 
 **Chosen: the second.** It removes the hazard by construction instead of detecting it, costs
@@ -478,7 +478,7 @@ One directory, one row. "Expressible" means import-linter can state it without a
 | 9 | protected | `ag/staging/` | importers: `ag.runtime` | yes |
 | 10 | protected | `ag/lineage/` | importers: `ag.runtime`, plus whatever T4.3's mint surface requires. If `mint` is reached through the `Toolbox`, the domain imports nothing from `lineage/` and the list stays at one entry. | yes |
 | 11 | forbidden | `ag/generalization/sources.py`, `products.py` | import only `ag.core` | yes |
-| 12 | forbidden | `ag/generalization/operations/`, `helpers/` | may not import `ag.core.data_objects`, `ag.core.pipeline`, `sources`, `products` (ADR-0003) | yes |
+| 12 | forbidden | `ag/generalization/operations/`, `helpers/` | may not import `ag.core.data_objects`, `ag.core.pipeline`, `sources`, `products` (ADR-0019 PC-1) | yes |
 | 13 | forbidden | `ag/generalization/` | may not import `ag.adapters`, `ag.staging`, `ag.runtime`, `ag.orchestrator`, `ag.lineage` | yes (redundant with 6, 9, 10; kept because its failure message is the one a domain developer should read) |
 | 14 | forbidden | `ag/observability/` | imports only stdlib and `ag.core.types`; and `ag.core`, `ag.generalization.pipelines` may not import the context accessor | yes |
 | 15 | forbidden | `ag/orchestrator/` | may not import `ag.generalization.operations`, `ag.adapters.arcpy`, `ag.staging`; among ports only `cluster` and `archive` | yes |
@@ -630,7 +630,7 @@ The guide `docs/contributing/adding-a-port-method.md` is the long form of this l
    about the map at a scale, not about this object, goes in `tuning/scale/<scale>.py` and is
    referenced from there.
 3. Used by a second object: move it to `operations/shared/`. A *helper* used by a second object
-   moves to `helpers/<subject>.py` (the promotion rule, ADR-0005).
+   moves to `helpers/<subject>.py` (the promotion rule, ADR-0018 AR-4).
 4. Unit test under `tests/unit/generalization/operations/<object>/`, run against the fake.
 5. Imports. The contracts are the rule (§6 rows 8, 12, 13); this is what they leave open to an
    operation or helper module:

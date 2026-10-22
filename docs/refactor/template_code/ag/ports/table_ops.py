@@ -10,7 +10,7 @@ third is the decisive one:
   input replicated whole to every pod rather than partitioned.
   `GeometryOps.add_field()` reads wrong.
 
-NO CURSOR. ADR-0004, and `ports/geometry.py` carries the argument. Three bulk methods
+NO CURSOR. ADR-0019 PC-4, and `ports/geometry.py` carries the argument. Three bulk methods
 replace 483 cursor call sites:
 
     set a field from other fields    UpdateCursor loop  ->  calculate_field
@@ -43,7 +43,7 @@ class FieldType(Enum):
 
 FieldName: TypeAlias = str
 """Names a column in data the program does not own, so it stays a literal - the
-value half of ADR-0011's identifier/value test."""
+value half of ADR-0020 OP-1's identifier/value test."""
 
 AttributeValue: TypeAlias = int | float | str | date | None
 """What a cell can hold. Exactly the `FieldType` members, plus None for a null.
@@ -193,7 +193,7 @@ class TableOps(Protocol):
         fields: tuple[FieldName, ...],
     ) -> None: ...
 
-    # -- bulk row IO (ADR-0004) ---------------------------------------------
+    # -- bulk row IO (ADR-0019 PC-4) ---------------------------------------------
 
     def read_rows(
         self, *, input: ScratchHandle, fields: tuple[FieldName, ...] = ()
