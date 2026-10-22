@@ -2550,3 +2550,16 @@ clipping, to the partition plus its halo, for both roles. Legacy precedent is
 the processing extent and has no overlap. Due when a stage declares a `RASTER` input, which
 `sample_at` (T2.6, A5.2) will be the first to need.
 `destination:` `02-runtime.md` §2.3 when resolved.
+
+**B26. Failure isolation for payloads.** Opened 2026-10-22. Out of scope for the refactor;
+recorded so the failure model is designed once, not re-derived. Today a payload that cannot
+complete within the Job's retry limit fails the run (ADR-0021 ST-3). The intended model: when
+a payload exhausts its retries, the stage is marked unable to complete and needing manual
+review, each failed payload is marked, and the stage's other payloads carry on. Stages that
+depend on the failed stage's outputs, by the DAG, are dropped from the run; unaffected stages
+complete. The failed stage then enters investigation. If every payload failed, the stage is
+classified a major issue and investigation stops. Otherwise each failed payload is
+re-partitioned recursively into smaller partitions to isolate the source data that cannot
+complete, and the isolated data is merged into one investigation file. Adopting this changes
+ST-3's "a payload that cannot complete fails the run".
+`destination:` the orchestrator design when taken up; `02-runtime.md` §6.4; ADR-0021 ST-3.

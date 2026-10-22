@@ -19,8 +19,8 @@ RS-2 relates to ST-2).
    spatiality read from its object's data type, never declared.
 3. Only PROCESSING inputs can become stage outputs, though they need not. A CONTEXT input
    serves only as context for the PROCESSING inputs and never becomes an output.
-4. The stage is the resume granularity. The design neither plans for nor depends on intra-pod
-   checkpoints.
+4. A failed worker pod reruns its payload from the start; a run is resumed from a stage. The
+   design neither plans for nor depends on intra-pod checkpoints.
 
 ## ST-1 Sources and products
 
@@ -66,10 +66,8 @@ both and from the context radius, and from nothing else.
 
 **Details.**
 
-- **ST-D11** PROCESSING: the stage acts on the whole source. Fan-out applies no filter; every
-  row is processed in its partition, with the context around the partition. CONTEXT: the
-  source matters only as context for the PROCESSING inputs. Fan-out filters a spatial CONTEXT
-  input to the context radius around the PROCESSING rows and sends a non-spatial one whole.
+- **ST-D11** PROCESSING: the stage acts on the whole source. CONTEXT: the source matters only
+  as context for the PROCESSING inputs; a non-spatial CONTEXT input reaches every pod whole.
   The role belongs to the stage input, not to the object: the same water layer is PROCESSING
   in the stage that generalises it and CONTEXT in the stage that moves buildings away from
   it.
@@ -79,11 +77,17 @@ both and from the context radius, and from nothing else.
   context-filtered, then partitioned with the same overlap; non-spatial PROCESSING is
   rejected at declaration; non-spatial CONTEXT is sent whole to every pod, written once at a
   shared key.
-- **ST-D14** The context filter keeps CONTEXT rows within the stage's context radius of any
-  PROCESSING row, before partitioning; at 0 m, the rows that intersect one. The filter
-  distance is the radius, with no second number. Overlap applies to both partitioned roles: a
-  PROCESSING row within the radius of a partition but outside it reaches that partition too
-  and fan-in discards it; a CONTEXT row within the radius reaches it.
+- **ST-D14** Fan-out, in order: filter each spatial CONTEXT input to the context radius of
+  the spatial PROCESSING inputs, at 0 m to the rows that intersect one; the filter distance
+  is the radius, with no second number. Build the partitions from all spatial inputs,
+  PROCESSING and filtered CONTEXT, unless the stage supplies its own partition polygons;
+  either way they tile without overlap. Give each partition every spatial row, of either
+  role, within the context radius of the partition by geometry distance, at 0 m the rows
+  that intersect it. Membership and ownership are different tests: a row whose centre lies
+  in the partition is owned by it, every other row in the payload is a halo copy, and with a
+  radius above 0 m a row near a border is in more than one payload. Fan-in guarantees that
+  stage outputs have neither duplicated nor lost rows: that is partition ownership, which
+  joins this ADR when it migrates.
 - **ST-D15** Non-spatial PROCESSING is rejected when the `StageInput` is constructed, with a
   break-it case. There is no other guard: 0 m with spatial context is legal.
 - **ST-D16** A stage output derives only from PROCESSING inputs: every output row originates
@@ -122,15 +126,16 @@ both and from the context radius, and from nothing else.
 
 ## ST-3 Resume
 
-**Direction.** A pod lost mid-stage restarts the stage, and the resilience budget goes into
-not losing pods.
+**Direction.** A failed worker pod is restarted under the Job's restart policy and reruns its
+payload from the start; a payload that cannot complete fails the run. The resilience budget
+goes into not losing pods.
 
 **Details.**
 
-- **ST-D23** The stage workspace is pod-local. `--invalidate-from <stage>` is the only resume
-  mechanism; a pod lost to OOMKill, eviction or node maintenance restarts from the beginning
-  of its stage.
-- **ST-D24** An operator whose runtime approaches its stage's total re-run cost is promoted
+- **ST-D23** The stage workspace is pod-local. A pod lost to OOMKill, eviction or node
+  maintenance reruns its payload from the beginning. `--invalidate-from <stage>` reruns a run
+  from a stage and is the only way to resume a run.
+- **ST-D24** An operator whose runtime approaches its payload's re-run cost is promoted
   to its own stage: a declaration change, not an architecture change. Whether the trade pays
   is Q-G, measurable once one operator is reimplemented.
 
@@ -151,6 +156,7 @@ not losing pods.
   file kind gets its own member and its own decision.
 - **ST-R6** Intra-pod resume. The stage workspace is pod-local, so resuming from operation N
   means persisting inter-operation handles to run-scratch, roughly 2K transfers plus a merge
-  per stage, the cost stage grouping exists to avoid. Reopened by a stage whose re-run cost
-  makes a checkpoint pay after promoting its expensive operator to its own stage has been
-  tried; the mint counter then becomes checkpoint state.
+  per stage, the cost stage grouping exists to avoid. Reopened by a payload whose runtime makes it likely
+  to be disrupted, for example by platform maintenance, after splitting the stage's
+  operations across more stages and tuning the partition size have both been tried; the mint
+  counter then becomes checkpoint state.

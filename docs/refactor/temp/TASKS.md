@@ -2430,3 +2430,6 @@ than decided, per the constraint on this pass.
 10. **B8 — `LineageRoot` → `OriginRoot` is a code rename.** The collision ruling is settled but the
     work was not scoped; it touches `data_objects.py`, `locations.py`, `policy.py` and
     `validation.py`. Now **T7.2**.
+
+**deferred** B26, failure isolation for payloads: out of scope for the refactor, recorded for
+the orchestrator design.
