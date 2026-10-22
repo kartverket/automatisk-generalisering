@@ -131,8 +131,9 @@ and no second implementation, and helpers compose port calls without being sched
 
 ## Rejected
 
-- **AR-R1** Repository and Unit of Work. No transactional aggregate store: the geodatabase is
-  the store, the pod the unit of work. Reopened by a transactional store behind a port.
+- **AR-R1** Repository and Unit of Work. No transactional aggregate store: the datasets the
+  adapters read and write are the store, whatever their format, and the pod is the unit of
+  work. Reopened by a transactional store behind a port.
 - **AR-R2** The application-layer patterns: entities and aggregates, a service layer above
   operations, a message bus with domain events and CQRS. Feature classes on disk are not
   object graphs; operations are the use cases; one sequential executor and one writer per

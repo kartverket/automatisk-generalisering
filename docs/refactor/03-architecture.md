@@ -780,8 +780,8 @@ deferring cheap rather than evasive (ADR-0018 AR-D7).
 **Q-F — The distribution name.** `ag` is a placeholder.
 
 **Q-G — Is a stage split cheaper than a re-run?** For an operator whose runtime approaches
-its stage's total re-run cost, measure whether promoting it to its own stage costs less than
-re-running the stage on failure. Measure once one operator is reimplemented
+its payload's re-run cost, measure whether promoting it to its own stage costs less than
+re-running the payload on failure. Measure once one operator is reimplemented
 (ADR-0021 ST-D24).
 
 ---

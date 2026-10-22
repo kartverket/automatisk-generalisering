@@ -1104,3 +1104,11 @@ break-once cases, and the pointer updates. The report of the batch lists every c
   Explicit-request file; proposed, not edited.
 - The retired-number references in this inventory are written as bare numbers so that the
   citation test's retired-number rule does not fire on a working document.
+
+## 15. Post-cut-over follow-ups applied 2026-10-22
+
+AR-R1 reworded; ADR-0021 Direction 4 and the ST-3 line replaced (a failed pod reruns its
+payload, a run is resumed from a stage); ST-D11 reduced to the roles; ST-D14 states the fan-out
+sequence, membership by geometry distance and ownership by centre; ST-D23, ST-D24 and ST-R6
+adapted; 03 §9 Q-G aligned; B26 opened with its TASKS.md line; `.importlinter` row 12 repointed
+at the architect's request.
