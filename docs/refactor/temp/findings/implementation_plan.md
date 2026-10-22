@@ -87,8 +87,8 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 |---|---|---|---|
 | `types.py` | lift | nothing | 1a, first pull request (the architect's core lift) |
 | `injection.py` | lift | nothing | 1a, first pull request |
-| `operations.py` | lift, then extend | `ScratchHandle` (frozen, `path` `compare=False`, `namespace` in equality) matches A15.3's retained clause and A12.5a's needs exactly. `Direction`/`In`/`Out` exist; add the two markers A12.5a needs (`Mutates` for T2.8's in-place mutators, `ParentsOut` for A11.15) as `Direction` members with aliases, and make `@operation` reject them on an operation signature (an operation parameter is only ever `In` or `Out`). `@operation`, `OperationCall`, `ScratchScope`, `INJECTED` are decided (ADR-0011, ADR-0014) and lift as is. | 1a, first pull request: the split into `handles.py` and `operations.py`, the restamp guard, the internal-handle namespace, the markers, and the pyright-strict restructuring of `@operation` |
-| `pipeline.py` | lift, plus one guard | `StageInput.__post_init__` rejects a non-spatial object with role PROCESSING (A31.2), with a break-it case (A30); the `context_radius_m` docstring states that operations never see partitions (ADR-0003), so the radius is the one place a stage author reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can challenge. `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | Task B |
+| `operations.py` | lift, then extend | `ScratchHandle` (frozen, `path` `compare=False`, `namespace` in equality) matches A15.3's retained clause and A12.5a's needs exactly. `Direction`/`In`/`Out` exist; add the two markers A12.5a needs (`Mutates` for T2.8's in-place mutators, `ParentsOut` for A11.15) as `Direction` members with aliases, and make `@operation` reject them on an operation signature (an operation parameter is only ever `In` or `Out`). `@operation`, `OperationCall`, `ScratchScope`, `INJECTED` are decided (ADR-0020 OP-1, ADR-0020 OP-2) and lift as is. | 1a, first pull request: the split into `handles.py` and `operations.py`, the restamp guard, the internal-handle namespace, the markers, and the pyright-strict restructuring of `@operation` |
+| `pipeline.py` | lift, plus one guard | `StageInput.__post_init__` rejects a non-spatial object with role PROCESSING (A31.2), with a break-it case (A30); the `context_radius_m` docstring states that operations never see partitions (ADR-0019 PC-1), so the radius is the one place a stage author reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can challenge. `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | Task B |
 | `data_objects.py` | lift | T7.2 rename (`lineage_roots()` becomes `origin_roots()`) | Task B |
 | `locations.py` | lift, one edit | `StorageRoots.for_environment` hardcodes bucket names; that is deployment configuration and moves to the settings object of §7.1. Path builders stay. | 1c (dump path), 5 (payloads) |
 | `graph.py` | lift | nothing | Task B |
@@ -101,8 +101,8 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 
 | module | state | how close to the decided design | slice |
 |---|---|---|---|
-| `toolbox.py` | lift | Exactly A1.3 / ADR-0008 / ADR-0014: frozen four-port bundle, `NOT_INJECTED` sentinel with the one load-bearing cast. No change. | 1a |
-| `geometry.py` | lift | `Geometry` value type is ADR-0004 as decided. T2.5 (linear referencing methods) and T2.7 (`Coordinate` z-free docstring) are additive, independent hand-offs. | 1a (value type), 4 (T2.5, T2.7) |
+| `toolbox.py` | lift | Exactly A1.3 / ADR-0020 OP-3 / ADR-0020 OP-2frozen four-port bundle, `NOT_INJECTED` sentinel with the one load-bearing cast. No change. | 1a |
+| `geometry.py` | lift | `Geometry` value type is ADR-0019 PC-4 as decided. T2.5 (linear referencing methods) and T2.7 (`Coordinate` z-free docstring) are additive, independent hand-offs. | 1a (value type), 4 (T2.5, T2.7) |
 | `table_ops.py` | rework | `FieldType` lacks `BIGINT` (A10.1, B1, gated by T0.1). `Row` needs `slots=True` (T2.7). Missing: the native index accessor and its join-key addressability declaration (T3.1), `update_rows` (T2.2), the `join_field` unique-key contract (T2.8), `create_workspace` (A5.7, decided 2026-09-21). No `In`/`Out` annotations (A12.5a), no `@row_shape` on `map_fields` (A12.11a) and none on `write_rows`/`write_table` (B13, A12.7a). `read_rows` returning `Iterable[Row]` is right and is what the lineage-aware pipe of A12.7 wraps. | 1a (`read_rows` and its value types), 1c (`exists`, `data_type_of`), 2a (what the id map needs), 4 |
 | `geometry_ops.py` | stale in five places | `union` must go (A5.4). `DissolveOption` must go (B18). `buffer`, `spatial_join`, `nearest_neighbors`, `extract_vertices` must split (A5.6). `dissolve` needs `statistics: tuple[StatisticSpec, ...]` (A9.12) and `parents: ScratchHandle \| None` (A11.15), and the other four `MINT` methods need `parents` too. `Attr(cql: str)` becomes structured leaves plus `Attr.raw` (A2.1). `VertexPosition.DANGLE` is already present (A5.5 is done in the template). `Relation`, `EndCap`, `JoinStyle`, the predicate algebra and `Spatial.__post_init__` are decided and lift. `sample_at` (T2.6) is additive. | 1a (`select`, `explode_multipart`, the predicate algebra), 2b (`dissolve`), 4 (rest) |
 | `cartographic_ops.py` | rework | `aggregate`, `collapse_to_centerline` need `parents` (A11.15); `displace_features.displacement` stays undeclared until B11; `select_network.exempt: Predicate` stays. Row shapes per A12.11. | 4 |
@@ -322,10 +322,10 @@ handles are named by trail and leaf and stamped with the scope's namespace; call
 A29 (T2.13). Evidence: `findings/slice_1a_core_lift_evidence.md`. The core lift merged as #688.
 **Second pull request, the port values (2026-10-07):** `ports/geometry.py`, `ports/attributes.py`
 (a departure, project_tree §8 row 9), `ports/table_ops.py` values, `ports/predicates.py` with
-structured `Attr` (A2.1 to A2.3 struck into ADR-0015), `ports/toolbox.py` with the sentinel as a
+structured `Attr` (A2.1 to A2.3 struck into ADR-0019 PC-3), `ports/toolbox.py` with the sentinel as a
 `Toolbox` subclass and no cast, `ports/errors.py`, `core/warnings.py`, the four Protocol classes
 empty, `ports/__init__.py` rebuilt; T2.7 done, T2.1's port half done. Round two
-(2026-10-08): ADR-0015 extended with the three-valued NULL rule, `LIKE`'s wildcards and case
+(2026-10-08): ADR-0019 PC-3 extended with the three-valued NULL rule, `LIKE`'s wildcards and case
 rule, and `DATE` as a naive `datetime`; predicates have no truth value, connectives have two
 terms, `bool` is refused; row 5 of `.importlinter` extended to the layers inside `ag.ports`
 and turned into tests (`tests/static/test_import_contracts.py`); B22 opened. Evidence:
@@ -393,7 +393,7 @@ columns` as one line; B22 extended with the `Mutates` rule. Evidence:
   in two class bodies raises; two operations' `scratch("x")` are unequal.
 - The facade spike: one `cast` in `src/ag`, reachability test green, pyright strict green.
 
-**Design record.** T4.1 marked done and the 1a share of T2.1 recorded; A12.1 to A12.5, A12.5a (A12.6 stays until T2.8) and A2.1 to A2.3 migrated to their destinations (`ports/row_shape.py`, `ports/predicates.py`, the ADR amending ADR-0001) and struck; `03-architecture.md` §2.3 and §2.4 updated for the markers and structured `Attr`; the terminology rows for *row shape*, *cardinality*, `ids`, *subject* and `context` repointed.
+**Design record.** T4.1 marked done and the 1a share of T2.1 recorded; A12.1 to A12.5, A12.5a (A12.6 stays until T2.8) and A2.1 to A2.3 migrated to their destinations (`ports/row_shape.py`, `ports/predicates.py`, the ADR amending ADR-0019 PC-2) and struck; `03-architecture.md` §2.3 and §2.4 updated for the markers and structured `Attr`; the terminology rows for *row shape*, *cardinality*, `ids`, *subject* and `context` repointed.
 
 **Size.** About one week.
 
@@ -868,7 +868,7 @@ separate estimate once slice 5 exists.
 
 **Review hard.** That the migrated operation declares only what the legacy code actually did,
 not what the template example imagined; that constants split correctly between config values and
-scale constants (ADR-0013); that no `in_memory\` literal or `WorkFileManager` survives.
+scale constants (ADR-0020 OP-4); that no `in_memory\` literal or `WorkFileManager` survives.
 
 #### The legacy track (beside slices 0 to 3, all hand-off)
 
@@ -980,8 +980,8 @@ needs it.
 
 | document | covers | created / updated in |
 |---|---|---|
-| `docs/refactor/` as a whole: `01-terminology.md`, `02-runtime.md`, `03-architecture.md`, `decisions/`, `temp/DECISIONS.md`, `temp/TASKS.md` | **the working design record for this change**; stays where it is and is updated in place, in the same pull requests as the code (§2.2) | every slice; moves once, at the end of slice 5 (§4.8) |
-| `docs/README.md` | index: `setup/`, `contributing/`, `developer_reference/`, each with its status; gains `architecture/`, `decisions/` and `terminology.md` at the move. It never indexes `refactor/`: nothing outside `docs/refactor/` references the design record unless tooling needs the path to run | 0, 5 |
+| `docs/refactor/` as a whole: `01-terminology.md`, `02-runtime.md`, `03-architecture.md`, `temp/DECISIONS.md`, `temp/TASKS.md` | **the working design record for this change**; stays where it is and is updated in place, in the same pull requests as the code (§2.2) | every slice; moves once, at the end of slice 5 (§4.8) |
+| `docs/README.md` | index: `setup/`, `contributing/`, `developer_reference/`, each with its status; gains `architecture/` and `terminology.md` at the move, `decisions/` since 2026-10-22. It never indexes `refactor/`: nothing outside `docs/refactor/` references the design record unless tooling needs the path to run | 0, 5 |
 | `docs/architecture/errors.md` | the taxonomy of §6, the raise/warn/log rules, what every error carries | 1a (with the error modules), completed 1c |
 | `docs/architecture/lineage.md` | short: the seam in one page (parents at the port, ids above it, edges at the boundary), pointing at the ADRs and the `lineage/` docstrings | 3 |
 | `docs/contributing/adding-a-port-method.md` | the guide (§4.5) | 1c |
@@ -990,7 +990,7 @@ needs it.
 | `docs/contributing/testing.md` | the layers of §5, markers, what runs where (the four buckets from the platform decision) | 0, updated 1c and 5 |
 | `docs/contributing/writing-an-operation.md` | operation authoring: In/Out, config, scratch, ports only, `mint(parents=)`, ref columns, what not to do | 3 |
 | `docs/contributing/migrating-a-stage.md` | the recipe, written from slice 6's first stage | 6 |
-| after the move: `docs/terminology.md`, `docs/architecture/runtime.md`, `docs/architecture/structure.md`, `docs/decisions/` | the same documents, settled (§4.8) | end of 5 |
+| after the move: `docs/terminology.md`, `docs/architecture/runtime.md`, `docs/architecture/structure.md` | the same documents, settled (§4.8) | end of 5 |
 | `docs/refactor/04-migration.md` | stays until the migration completes; gains the per-stage inventory and status table | 6 |
 
 The split is by what a document describes. **A document describing landed code is created under
@@ -1015,9 +1015,8 @@ contract facts). Documents point at docstrings; they do not repeat them.
 - **Drops** the TARGET header and the graduation clause; the `LineageRoot` renaming note (T7.2
   done in slice 0); the `@row_shape(out=...)` example (the patch fixes it).
 - **The authority column** keeps citing A-ids until each item migrates; the migration protocol's
-  step 3 repoints them. After the lineage record moves under `docs/decisions/` (§4.4) an A-id
-  citation is a permanent link, so the "no entry cites an A-id" completion clause becomes
-  "every citation resolves", which `check_terminology.py` already tests for anchors.
+  step 3 repoints them. Once every item has landed the record is deleted (§4.4), every
+  authority cites an ADR id, and `tests/static/test_adr_citations.py` resolves it.
 - **A new check** in `tests/static/`: every backticked identifier in the terminology tables that
   names a class, function or field (`ScratchHandle`, `lineage_id`, `PARENT_ID`, `Statistic`)
   exists in `src/ag` by grep. That is what makes the document "the vocabulary reference for the
@@ -1028,31 +1027,26 @@ contract facts). Documents point at docstrings; they do not repeat them.
 
 ### 4.4 What happens to `DECISIONS.md`
 
-**Recommendation: it stays one file, stays at `docs/refactor/temp/DECISIONS.md` while the pass
-runs so that every citation in findings, pull requests and `check_consistency.py` keeps resolving,
-moves to `docs/decisions/lineage-decision-record.md` once at the end of slice 5 (§4.8), and is
-never deleted.** The rationale migrates into ADRs per the existing protocol; the
-file becomes the permanent index of A- and B-ids.
-
-Why not ADRs only: the completion test in TASKS.md deletes `temp/` when every A-item has landed,
-which is exactly the moment every `A11.15` citation in findings, docstrings, PR descriptions and
-this plan becomes a dead reference. The A-numbering is stable *because* the file is; deleting the
-file breaks the property it exists for. Why not a split: forty numbered items across six files
-is the section-number rot the README warns about.
+**Recommendation: it stays one file at `docs/refactor/temp/DECISIONS.md` while the pass runs,
+is struck item by item into the themed ADRs under `docs/decisions/` and the docstrings, and is
+deleted with `docs/refactor/`.** The ADRs are current state only; the record is a staging area,
+and its rationale either lands in an ADR's details and Rejected entries or lives in git. Each
+ADR's Scope lists the A-ids it absorbed, so an A-id cited in the evidence resolves through
+`git log -S` over the deleted path.
 
 Mechanics:
 - The file keeps its structure. As an item migrates, its body is replaced by one line:
-  `**A11.15** moved to ADR-0017 §Decision and the `lineage/` package docstring.` The heading and
+  `**A11.15** moved to ADR-00nn LM-D7 and the `lineage/` package docstring.` The heading and
   number stay, so the anchor stays.
-- New ADRs, numbered from 0015, written under `docs/refactor/decisions/` beside the fourteen while
-  the pass runs and moved with them (§4.8), one per cluster the `destination:` lines
-  already name: identity (A9, A10, A24, A25), lineage mechanism (A11, A13, A15, A16), row shape
-  and the port contract (A12, A14.1, A18), partition ownership (A6, A7, A8), cross-run lineage and
-  retention (A21, A22, A23). Five, not forty. Each ADR's Context section cites the A-ids it
-  absorbs, so a reader arriving from either side finds the other.
+- New ADRs, numbered from 0022, written under `docs/decisions/` beside the themed ADRs, one per
+  cluster the `destination:` lines already name: lineage ids (A9, A10, A24, A25), lineage
+  mechanism (A11, A13, A15, A16), cross-run lineage and retention (A21, A22, A23). Partition
+  ownership (A6, A7, A8) joins ADR-0021; the port-contract items (A14.1, A18) join ADR-0019; row
+  shape (A12) is ADR-0017. Each ADR's Scope cites the A-ids it absorbs.
 - B-items resolve into A-items as now, or are promoted to a named open question in the owning
   document. The record keeps the B-id line either way.
-- `check_consistency.py` is retargeted at the new path at the move (§4.8) and stops being temp-lifetime.
+- `check_consistency.py` dies with `temp/`; its terminology checks are replaced by the ADR-id
+  check, `tests/static/test_adr_citations.py`.
 
 ### 4.5 The port-method guide is slice 1c
 
@@ -1073,9 +1067,9 @@ its first use and the review of Task C is the review of the guide.
 | `02-runtime.md`, `03-architecture.md` | stay, updated in place by every slice (§2.2); move to `docs/architecture/` at the move. No per-section status markers: nothing moves before its content has landed | end of 5 |
 | `04-migration.md` | stays; deleted on completion as it says | 6+ |
 | `README.md` | stays; its "recommended actions" are struck as slice 0 performs them; becomes `docs/architecture/README.md` at the move | end of 5 |
-| `decisions/` | stays; new ADRs from 0015 are written here beside the fourteen; moves to `docs/decisions/` at the move | end of 5 |
+| `decisions/` | moved to `docs/decisions/` on 2026-10-22 with the consolidation into themed ADRs | done |
 | `check_terminology.py` | runs in CI from slice 0 where it is; moves with the terminology document | 0, end of 5 |
-| `temp/DECISIONS.md` | stays, items struck in place as they land; moves to `docs/decisions/lineage-decision-record.md` at the move | end of 5 |
+| `temp/DECISIONS.md` | stays, items struck in place as they land; deleted with `docs/refactor/` once every item has landed (§4.4) | end |
 | `temp/TASKS.md` | stays in `temp/` as the task tracker until its tasks are done; its status column is the one place progress is recorded | throughout |
 | `temp/findings/*` | stay; move to `docs/decisions/evidence/` at the move: the measurements are the rationale for A14.1 and B17 and must outlive `temp/`. This plan, `template_review.md` and `project_tree.md` go with them as the record of the pass | end of 5 |
 | `temp/goldens/`, the resolver scripts | promoted with slice 2b | 2b |
@@ -1124,10 +1118,10 @@ edits:**
 |---|---|
 | `docs/refactor/01-terminology.md`, `check_terminology.py` | `docs/terminology.md`, `docs/check_terminology.py` |
 | `docs/refactor/02-runtime.md`, `03-architecture.md`, `README.md` | `docs/architecture/runtime.md`, `structure.md`, `README.md` |
-| `docs/refactor/decisions/` (ADR-0001 onward) | `docs/decisions/` |
-| `docs/refactor/temp/DECISIONS.md`, `check_consistency.py` | `docs/decisions/lineage-decision-record.md`, `docs/decisions/check_consistency.py` |
+| `docs/refactor/temp/check_consistency.py` | deleted; its A-id checks have nothing left to check |
 | `docs/refactor/temp/findings/` | `docs/decisions/evidence/` |
 
+The ADRs moved to `docs/decisions/` on 2026-10-22 with the consolidation into themed ADRs.
 `TASKS.md` and `04-migration.md` stay under `docs/refactor/` until their work is done; both are
 disposable by their own terms.
 
@@ -1137,8 +1131,8 @@ disposable by their own terms.
   must still run after `docs/refactor/` is deleted in full, so no hook may name a document path
   after the move. `check_terminology.py` becomes `tests/static/test_terminology.py` over
   `docs/terminology.md` and the architecture documents, and absorbs the two checks of
-  `check_consistency.py` that concern the glossary's authority column (every cited A-id resolves
-  in `docs/decisions/lineage-decision-record.md`; every headword appears there): permanent.
+  `check_consistency.py` that concern the glossary's authority column (every cited ADR id
+  resolves in `docs/decisions/`; every headword appears in the ADR it cites): permanent.
   `check_consistency.py`'s other four checks (A-orphan, dangling-ref, ordering, B-referenced) all
   read `TASKS.md` and become `tests/static/test_task_plan.py`, the one test module that still
   reads `docs/refactor/`; the deletion commit deletes it with the directory. Both checker hooks
@@ -1147,7 +1141,7 @@ disposable by their own terms.
   terminology test rewrites nothing: the authority column's `file.md#anchor` citations are
   retargeted in the documents by the move itself, and the test proves every one resolves.
 - Citation paths: `temp/DECISIONS.md`, `temp/findings/...`, `02-runtime.md`, `03-architecture.md`,
-  `01-terminology.md` and `decisions/NNNN-...` as they appear in the documents themselves (their
+  `01-terminology.md` as they appear in the documents themselves (their
   links to each other), in `TASKS.md`'s `destination` and `doc migration` lines, in module and
   package docstrings under `src/ag`, in the contributor guides, in the CI workflow and
   pre-commit steps that run the two checkers, and in `.claude/settings.local.json`'s allowlist.
@@ -1489,7 +1483,7 @@ day, each placed so that the unapplied patch still applies (`git apply --check` 
 | # | decision | rests on | outcome |
 |---|---|---|---|
 | 1 | Approve `findings/template_review.md` | this plan's rule that every lift cites a verdict; the five defects it confirmed by running the template | **Approved as written, 2026-09-21.** Every lift cites its row. The two verdicts that change most downstream are the handle fixes (A15.3's cache keys on handle equality) and the `ArchiveClient` verdict. |
-| 2 | Approve `findings/project_tree.md` | 03-architecture §7, §4.1, §4.2; ADR-0005, ADR-0012, ADR-0013 | **Accepted**, with §2 option B (domain code under `ag/generalization/`), §3.1 option A (one module per port Protocol), §3.2 (group classes hold Protocol methods only), §4 (the fake importable by `runtime/local.py` only; one constrained import by string) and §6.1 (ArcPy importable under the whole ArcPy adapter, with a stub that omits tools, `env` and exceptions as the guard). |
+| 2 | Approve `findings/project_tree.md` | 03-architecture §7, §4.1, §4.2; ADR-0018 AR-4, ADR-0021 ST-1, ADR-0020 OP-4 | **Accepted**, with §2 option B (domain code under `ag/generalization/`), §3.1 option A (one module per port Protocol), §3.2 (group classes hold Protocol methods only), §4 (the fake importable by `runtime/local.py` only; one constrained import by string) and §6.1 (ArcPy importable under the whole ArcPy adapter, with a stub that omits tools, `env` and exceptions as the guard). |
 | 3 | Apply `PATCH-2026-09-17.patch` | the patch; every slice cites its items | **Decided: applied as the first act of slice 0.** Recorded at the head of `DECISIONS.md`. B17's closing wording is still owed before 2b. |
 | 4 | A12.7a, the signature | PROPOSALS-2026-09-14 §3; B13; A12.7 against A15.6 | **Signed as proposed.** `DECISIONS.md` A12.7a (after A12.7, which carries a supersession note); B13 marked resolved; `TASKS.md` T4.4 carries the acceptance additions and cites it. The check of 1a treats an `Out` whose row is declared at the call site as a category of the grammar. |
 | 5 | Workspace creation (raised here as B21) | no A-item covered it; `staging/` may not import an engine | **Decided: option (a), `TableOps.create_workspace`.** `DECISIONS.md` A5.7, with B21 kept as a resolved entry; `WorkspaceFormat` moves to `ports/`; `TASKS.md` gains T2.12. Delivered in slice 1c in both adapters with conformance cases; the test-support stopgap is dropped. |
@@ -1531,7 +1525,7 @@ in which the answer is needed.
 | A generic facade cannot satisfy a `Protocol` under pyright strict without per-method code (A11.11's "one cast") | 40 wrappers or a code generator | **now a deliverable of slice 1a**, not a risk to watch: a generic wrapper with no lineage logic, one `cast`, pyright strict clean, reaching every method, with the reachability test | 1a |
 | `join_field` on a BIGINT key at national scale is slow or coerces (Path A) | the preferred ArcPy id-map path falls back to Path B everywhere | T0.1 case 8 and T0.6's `JoinField` timing at three sizes | 0, 2a |
 | The edge-emission model at the operation boundary mis-handles multi-output operations (A11.8) | forensic answers wrong on every ramp-like operation | the `resolve_ramps` unit test with the fake, written before the session | 3 |
-| `read_rows` as `Row` dataclasses over millions of rows is too slow or too large for the pipe and for parents mapping (A4.4) | the bulk-IO design under ADR-0004 needs a columnar path | the capped, incrementally logged timing run of slice 1b over the 2.3 M-row national road set; if the projection is minutes for a partition-sized input, add a columnar read before slice 3 rather than after | 1b |
+| `read_rows` as `Row` dataclasses over millions of rows is too slow or too large for the pipe and for parents mapping (A4.4) | the bulk-IO design under ADR-0019 PC-4 needs a columnar path | the capped, incrementally logged timing run of slice 1b over the 2.3 M-row national road set; if the projection is minutes for a partition-sized input, add a columnar read before slice 3 rather than after | 1b |
 | Lineage overhead on real partitions exceeds A15.7 on `buffer_dissolve` or polygons (unmeasured) | `build_displacement_feature` is A15.5's worst case | run the promoted resolver on a real building-polygon partition and the displacement buffer in 2b | 2b |
 | The K = 1 code path hides a partition dependence (halo, ownership) that only shows at K > 1 | slice 5 finds it after slices 2 to 4 are built | the legacy shadow track (T1.1, T1.4) runs from now on the current implementation, which is the same data and the same tools | legacy track |
 | ArcPy on Windows rejects `posixpath`-joined `.gdb` layer paths or the name budget miscounts | every local run fails on the developers' machines | hand-built paths in the slice 1b Windows run, then the fixture stage in 1c | 1b, 1c |

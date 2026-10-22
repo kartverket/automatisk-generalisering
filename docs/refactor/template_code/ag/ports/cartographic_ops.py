@@ -7,7 +7,7 @@ elsewhere; the ones that do not are concentrated here. In the current codebase t
 cartography toolbox is 78 of 2801 tool call sites across 16 distinct tools - small and
 enumerable, but each member needs hundreds to thousands of lines to reproduce. Keeping
 them behind their own port is what lets the migration be incremental: `GeometryOps` and
-`TableOps` can get a second adapter long before this one does. ADR-0002.
+`TableOps` can get a second adapter long before this one does. ADR-0018 AR-2.
 
 NAMES COME FROM THE ICA OPERATOR TAXONOMY, so each one describes what the cartographer
 wanted rather than which vendor button was pressed, and each maps to a published

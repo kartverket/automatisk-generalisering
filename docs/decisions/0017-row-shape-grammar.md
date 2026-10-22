@@ -1,16 +1,16 @@
 # ADR-0017: Row shape, the declared grammar of port outputs
 
-**Status:** Accepted (decided 2026-09-14 to 2026-10-19, recorded here 2026-10-19).
+**Status:** Accepted, 2026-10-19.
 
 **Scope:** `ag/ports/row_shape.py`, `ag/ports/columns.py`, every port Protocol in
 `ag/ports/`, and the checks over them in `tests/static/`. Absorbs A12.1, A12.2, A12.3,
-A12.4, A12.5 and A12.5a of the lineage decision record. Two items join later: A12.7a, the
-call-site declaration for writes, with the declaration type in slice 2a; A12.6, the
-in-place mutators, with T2.8. The lineage side of the grammar, what the facade does with a
-declaration and with a parents table, belongs to the lineage design and is not here.
+A12.4, A12.5 and A12.5a. Two items join later: the call-site declaration for writes
+(A12.7a), with its declaration type; the in-place mutators (A12.6), with their declaration
+form. The lineage side of the grammar, what the facade does with a declaration and with a
+parents table, belongs to the lineage design and is not here.
 
-Related: ADR-0007 (ports are Protocols), ADR-0011 (declarations come from signatures),
-ADR-0016 (stage inputs have a role; section RS-2 relates to it).
+Related: ADR-0018 AR-3 (ports are Protocols), ADR-0020 OP-1 (the declaration is the
+signature), ADR-0021 ST-2 (stage inputs: role and spatiality; section RS-2 relates to it).
 
 ## Direction
 
@@ -23,7 +23,7 @@ ADR-0016 (stage inputs have a role; section RS-2 relates to it).
 3. Every output names the input its rows derive from: the subject for `CARRY` and `MINT`,
    the inputs its ref columns name for `FOREIGN`. Only the subject carries identity into an
    output; a context influences the output without contributing identity. This relates to,
-   and is not the same as, the stage-level input roles of ADR-0016.
+   and is not the same as, the stage-level input roles of ADR-0021 ST-2.
 4. The declaration lives on the port Protocol, is read from the Protocol and never from an
    adapter, and leaves the method's structural type untouched, so adapters conform without
    decoration.
@@ -74,7 +74,7 @@ the ref columns name the subject inputs in place of a subject.
   feature is buffered from context roads. A port context may be fed from a
   `PROCESSING`-derived intermediate: `propagate_displacement` reads that feature as
   `context` and the simplified buildings as `subject`. What holds at both levels: only the
-  subject carries identity into outputs (ADR-0016).
+  subject carries identity into outputs (ADR-0021 ST-D21).
 - **RS-D8** The word `context` is shared with the stage role because both mean "influences,
   never becomes", and for no other reason.
 - **RS-D9** `refs` maps a ref column to the subject input whose ids it holds and replaces
@@ -91,7 +91,7 @@ type.
 
 - **RS-D10** `@row_shape(**outputs)`, keyed by the `Out` parameter's name, stores the
   mapping as `__row_shape__` on the Protocol function and returns the function unchanged.
-  The lineage facade reads it from the Protocol class (A11.11).
+  The lineage facade reads it from the Protocol class.
 - **RS-D11** Every port handle parameter carries exactly one of `In`, `Out`, `Mutates` and
   `ParentsOut`, written with the signature; a parameter-name convention is not used.
 
@@ -112,7 +112,7 @@ static test over every port Protocol, with each rule broken once.
 - **RS-D13** Two things no rule sees, stated so they are not mistaken for omissions: a
   handle inside a `Spatial` predicate is a value, outside any marker; a method that changes
   its input in place has no output to declare, and a join on a non-unique key would change
-  row count with nothing to declare it (A12.6, with T2.8).
+  row count with nothing to declare it; open until the in-place mutators join.
 - **RS-D14** Where: `tests/static/test_row_shape.py` over every Protocol in `ag/ports/`,
   and `tests/static/test_row_shape_typing.py` for the structural-type guard, which runs
   pyright on a fixture it writes. Each rule has a case in `tools/break_once/cases/`.
@@ -127,7 +127,7 @@ called, not by an entry on the Protocol; the form arrives with the declaration t
 - **RS-D15** No such method is on the surface yet. Until the declaration type exists, an
   `Out` with no entry fails RS-D12; once it exists, the check identifies the declaring
   parameter by that type, and an `Out` declared at the call site has no `@row_shape` entry
-  while an `Out` with an entry has no call-site keyword (A12.7a).
+  while an `Out` with an entry has no call-site keyword.
 
 ## RS-6 Parents
 
@@ -154,11 +154,12 @@ the layer above uses it belong to the lineage design.
   cover the group with two parents. Reopened by nothing short of a new identity model.
 - **RS-R4** Per-method wrappers implementing the Protocol. Rejected: about forty delegating
   methods, two implementations of one Protocol free to drift, easy to use wrongly. Reopened
-  by nothing; the generic facade is the design.
+  by a method whose lineage handling cannot be derived from its declaration by the generic
+  facade.
 - **RS-R5** Marking handle parameters by a name convention, or by "named by some
   declaration". Rejected because names are not checked, and a declaration-derived rule
-  misses the undeclared output, which is the case the check exists for. Reopened by
-  nothing.
+  misses the undeclared output, which is the case the check exists for. Reopening this
+  changes Direction 7.
 - **RS-R6** A sentinel entry in `@row_shape` for a call-site-declared write. Rejected because
   the call-site value names handles, not parameters, so it is a different type, and a
   sentinel would widen `__row_shape__` for every reader. Reopened by the call-site

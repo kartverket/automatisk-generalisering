@@ -17,7 +17,7 @@ CONVENTIONS, all three from 03-architecture §2.3:
 
     ScratchHandle, never DataObject      identity and legality are the planning
                                          layer's; a port that saw them would drag it
-                                         into every adapter. ADR-0003.
+                                         into every adapter. ADR-0019 PC-1.
     project enums, never vendor strings  `end_cap: EndCap`, not `flat: bool`
     keyword-only, units in the name      `distance_m`, `tolerance_m`, `search_radius_m`
 """
@@ -99,7 +99,7 @@ class VertexPosition(Enum):
 # ---------------------------------------------------------------------------
 # The predicate algebra
 #
-# ADR-0001: selection is a composable predicate VALUE, not a held selection. A
+# ADR-0019 PC-2selection is a composable predicate VALUE, not a held selection. A
 # mutable selection is the arcpy idiom, not the concept, and exposing it would force
 # every future adapter to emulate it. It is also lazier - nothing materializes until
 # `select`.
@@ -134,7 +134,7 @@ class Attr(Predicate):
     """An attribute predicate, as a CQL2 text expression.
 
     A STRING, AND IT STAYS ONE. It names fields in data the program does not own, so
-    by the identifier/value test in ADR-0011 it is a value. CQL2-Text rather than SQL
+    by the identifier/value test in ADR-0020 OP-1 it is a value. CQL2-Text rather than SQL
     because SQL dialects differ per backend and CQL2 is the standard both a SQL and a
     dataframe adapter can compile to.
     """
@@ -198,7 +198,7 @@ def DWithin(other: ScratchHandle, distance_m: float) -> Spatial:
 
 
 class GeometryOps(Protocol):
-    """Operations on spatial datasets. 25-35 methods; ADR-0002 for the split.
+    """Operations on spatial datasets. 25-35 methods; ADR-0018 AR-2 for the split.
 
     COARSE ON PURPOSE. Interface segregation applies when clients depend on different
     subsets, and here any operation potentially uses any geometry method
@@ -206,7 +206,7 @@ class GeometryOps(Protocol):
     ISP.
     """
 
-    # -- selection (ADR-0001) ----------------------------------------------
+    # -- selection (ADR-0019 PC-2) ----------------------------------------------
 
     def select(
         self, *, input: ScratchHandle, where: Predicate, output: ScratchHandle

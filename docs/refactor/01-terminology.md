@@ -53,10 +53,10 @@ the wrong review comments.
 | **fan-in** | The single pod that merges K outputs, discards non-center-in features, and uploads. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
 | **K** | The partition count for a stage. Decided by fan-out; the only value that flows upward. | [02-runtime §6.3](02-runtime.md#63-the-loop) |
 | **halo** / **context radius** | The overlap included in each partition so a feature is processed identically wherever it appears. Transitive. Also the distance of the context filter; at 0 m the filter is "intersects". Declared as `context_radius_m`, the one place a stage author reasons about partition boundaries. | [02-runtime §7.1](02-runtime.md#71-the-halo-requirement-is-transitive) |
-| **input role** | `InputRole.PROCESSING` or `InputRole.CONTEXT`, declared per stage input: whether the input's rows may become stage output. Only rows originating from PROCESSING inputs may. | A31.1, A31.3 |
-| **spatial** | Derived from `DataType`, never declared: `FEATURE_CLASS` and `RASTER` are spatial, `TABLE` and `SYMBOLOGY` are not. Fan-out partitions spatial inputs and sends non-spatial CONTEXT whole; non-spatial PROCESSING is rejected. Not the `Spatial` predicate node. | A31.1, A31.2 |
-| **context filter** | Fan-out's selection of a spatial CONTEXT input to the rows within the context radius of any PROCESSING row, before partitioning. | A31.2 |
-| **`SYMBOLOGY`** (DataType) | A `.lyrx` file as a stage input: non-spatial, CONTEXT, sent whole, declared as an `ExternalSource` with a location and a classification. | A31.5 |
+| **input role** | Declared per stage input, `InputRole.PROCESSING` or `InputRole.CONTEXT`: how fan-out treats that source. Only PROCESSING inputs can become stage outputs; a CONTEXT input serves only as context for them. | ADR-0021 ST-2, ST-D11 |
+| **spatial** | Derived from `DataType`, never declared: `FEATURE_CLASS` and `RASTER` are spatial, `TABLE` and `SYMBOLOGY` are not. Fan-out partitions spatial inputs and sends non-spatial CONTEXT whole; non-spatial PROCESSING is rejected. Not the `Spatial` predicate node. | ADR-0021 ST-D12, ST-D13 |
+| **context filter** | Fan-out's selection of a spatial CONTEXT input to the rows within the context radius of any PROCESSING row, before partitioning. | ADR-0021 ST-D14 |
+| **`SYMBOLOGY`** (DataType) | A `.lyrx` file as a stage input: non-spatial, CONTEXT, sent whole, declared as an `ExternalSource` with a location and a classification. | ADR-0021 ST-D19 |
 | **closure** | Expansion of a run selection along the graph. Downstream = what my change affects; upstream = what I need to run at all. | [02-runtime §6.1](02-runtime.md#61-a-run-is-a-selection) |
 | **pod-local** | Storage scope that dies with the pod. | [02-runtime §4.1](02-runtime.md#41-four-scopes) |
 | **run-scratch** | Storage scope living for the run plus a retention window. Retention is the resume window. | [02-runtime §4.1](02-runtime.md#41-four-scopes) |
@@ -65,12 +65,12 @@ the wrong review comments.
 | **placement** | Which cluster pods run in. Reachability, decided once per pipeline. | [02-runtime §5.3](02-runtime.md#53-placement-is-per-pipeline) |
 | **port** | A `Protocol` naming one purposeful conversation with something outside the core. | [03-architecture §2.1](03-architecture.md#21-the-six) |
 | **adapter** | An implementation of a port. The only place a vendor library is imported. | [03-architecture §4.1](03-architecture.md#41-the-rules) |
-| **driven port** | A port the core calls out through. All six declared ports. | [03-architecture §4.5](03-architecture.md#45-the-driving-side) |
-| **driving adapter** | An actor that calls into the core: `orchestrator/cli.py`, the `runtime/` entry points, `tests/invariance/`. No primary port is formalised. | [03-architecture §4.5](03-architecture.md#45-the-driving-side) |
+| **driven port** | A port the core calls out through. All six declared ports. | ADR-0018 Direction 2, AR-D5 |
+| **driving adapter** | An adapter on the driving side, calling into the core: `orchestrator/cli.py`, the `runtime/` entry points, `tests/invariance/`. Not a further actor; the one driving actor is Kubernetes via the orchestrator, and no primary port is formalised. | ADR-0018 AR-D4, AR-R5 |
 | **Toolbox** | The frozen bundle of ports passed explicitly into operations and helpers. | [03-architecture §4.4](03-architecture.md#44-how-ports-reach-the-code) |
 | **config** | The one non-IO parameter an operation takes: a frozen dataclass holding everything tunable. Never contains a scale. | [02-runtime §2.7](02-runtime.md#27-configs-and-tuning) |
 | **tuning** | The values in a config, per scale. A base module plus one `replace` delta per scale; no resolution mechanism. | [02-runtime §2.7](02-runtime.md#27-configs-and-tuning) |
-| **scale constant** | A cartographic fact about the map at one scale, shared across objects. Named for the concept (`MINIMUM_VISIBLE_LENGTH_M`), not the consuming parameter. | [02-runtime §2.7](02-runtime.md#27-configs-and-tuning) |
+| **scale constant** | A cartographic fact about the map at one scale, shared across objects. Named for the concept (`MINIMUM_VISIBLE_LENGTH_M`), not the consuming parameter. | ADR-0020 OP-D25, OP-D29 |
 | **Finding** | One validation result, carrying a `Severity` of ERROR or WARNING. | [02-runtime §8](02-runtime.md#8-validation) |
 
 ### Identity and lineage
@@ -94,8 +94,8 @@ docstring; the A-ids below are that file's section numbers.
 | **row shape** | A per-output declaration on a port Protocol method, `@row_shape(<output parameter>=Rows(...))`, keyed by the output parameter's name, read by the lineage facade. Two axes, never a single enum. | ADR-0017 RS-1, RS-3 |
 | **cardinality** | Row-shape axis: `ONE` \| `MANY` \| `GROUP` output rows per subject row. | ADR-0017 RS-1 |
 | **`ids`** (row-shape axis) | `CARRY` (keep the subject's id) \| `MINT` (new ids, edges recorded) \| `FOREIGN` (no `lineage_id`; declared columns hold subject ids). `CARRY` implies `ONE`. | ADR-0017 RS-1 |
-| **subject** | The input parameter whose rows contribute identity to an output. Related to, not the same as, the stage-level input role: a port subject may be fed from a CONTEXT stage input (`build_displacement_feature`), and a port `context=` from a PROCESSING-derived intermediate (`propagate_displacement`). Only "the subject carries identity into outputs" holds at both levels. | ADR-0017 RS-2, A31.6 |
-| **`context`** (row-shape) | An input that influenced an output without contributing identity. Shares the word with `InputRole.CONTEXT` because both mean "influences, never becomes"; declared at different levels and need not coincide for a given call (see **subject**). | ADR-0017 RS-2, A31.6 |
+| **subject** | The input parameter whose rows contribute identity to an output. Related to, not the same as, the stage-level input role: a port subject may be fed from a CONTEXT stage input (`build_displacement_feature`), and a port `context=` from a PROCESSING-derived intermediate (`propagate_displacement`). Only "the subject carries identity into outputs" holds at both levels. | ADR-0017 RS-2, ADR-0021 ST-D21 |
+| **`context`** (row-shape) | An input that influenced an output without contributing identity. Shares the word with `InputRole.CONTEXT` because both mean "influences, never becomes"; declared at different levels and need not coincide for a given call (see **subject**). | ADR-0017 RS-2, ADR-0021 ST-D21 |
 | **ref column** | A column on a `FOREIGN` output holding a subject's `lineage_id` as a foreign key. A null is legitimate data. When it feeds a rebuild, the ref column *is* the lineage path. | A11.12, A11.13 |
 | **`diff-tracked`** | A handle reaches a `StageOutput`. Decides whether the boundary diff runs. | A15.2 |
 | **lineage-bearing** | A handle's declaration chain ends in `CARRY` or `MINT`, so it has a `lineage_id` column. A `FOREIGN`-terminal handle can be `diff-tracked` without being lineage-bearing — `SNAP_DISPLACEMENT` is. | A15.6 |
@@ -154,7 +154,7 @@ produce wrong code when guessed.
 | **context** | Three senses, each qualified: the **input role** `InputRole.CONTEXT` (a stage input whose rows never become output); the row-shape **`context=`** (a port input that influences without contributing identity); and the **halo copy**, a PROCESSING row a pod received through the overlap. | An unqualified *context*. The observability context (`ContextVar`) is unrelated. |
 | **archive** | The permanent storage scope, and `ArchiveClient` which transports to it. | A `.tar` or `.zip`. Packing a `.gdb` for transport is *packing*. |
 | **scratch** | Any of the ephemeral tiers: the pod scratch root, run-scratch. | Discardable in the sense of unimportant — the scratch dump is a deliverable. |
-| **registry** | `StageRegistry` — every stage in the system, flat, produced by `flatten()`. What the runtime and every check take. | An archive identity registry mapping `(scale, dataset)` to a location: that never existed, and `products.py` replaces the idea (ADR-0012). A container registry — say *image registry*. |
+| **registry** | `StageRegistry` — every stage in the system, flat, produced by `flatten()`. What the runtime and every check take. | An archive identity registry mapping `(scale, dataset)` to a location: that never existed, and `products.py` replaces the idea (ADR-0021 ST-D2). A container registry — say *image registry*. |
 | **validation** | The static checks over declarations in [02-runtime §8](02-runtime.md#8-validation). | Geometry validity, or checking data quality. That is *data validation*. |
 | **selection** | A `Predicate` value, or the act of materialising one. | A held, mutable arcpy selection set — deliberately absent. *Run* selection, which is `RunRequest` in `selection.py`. A `Selection` handle class: several pipelines name their first stage's handles that, which is why `namespace` uses `__qualname__`. |
 | **lineage** | Depends on level, and every use must say which: **object-level** lineage is `origin` and `OriginRoot`, declared at plan time; **feature-level** lineage is `lineage_id` and the edge log, produced at runtime. | Anything unqualified. The two never join — an `origin` names datasets, a `lineage_id` names a row. |
@@ -173,8 +173,8 @@ produce wrong code when guessed.
 | **general tools** | Retired. The package is removed by the refactor. | **helpers/**, organised on the subject axis. |
 | **custom tools** | Retired. Same package. | **helpers/**, **operations/**, or **adapters/** depending on the piece — see [04-migration](04-migration.md#1-what-dissolves). |
 | **file manager** | Retired. `file_manager/**` is removed. | `ScratchFileManager` for pod paths; `locations.py` for remote ones; `ExternalSource`/`ProductIdentity`/`Derived` declarations for identities. |
-| **`Source`** | Retired as a single type. It conflated external data with other pipelines' products, and its optional `classification` was a leak — see ADR-0012. | **`ExternalSource`** in `sources.py`; **`ProductIdentity`** in `products.py`. |
-| **operation factory** | Retired. The hand-written twin that restated an operation's signature. | **`@operation`** on the function itself — ADR-0011. |
+| **`Source`** | Retired as a single type. It conflated external data with other pipelines' products, and its optional `classification` was a leak — see ADR-0021 ST-1. | **`ExternalSource`** in `sources.py`; **`ProductIdentity`** in `products.py`. |
+| **operation factory** | Retired. The hand-written twin that restated an operation's signature. | **`@operation`** on the function itself — ADR-0020 OP-D2. |
 | **`ValidationError`** | Retired. | **`Finding`**, which carries a `Severity`. |
 | **work file** | Retired. | **internal scratch**, allocated through a `ScratchScope`. |
 | **layout** | Retired for storage. Not a concept when storage is not a tree. | Nothing. Locations come from declarations; scratch paths from `ScratchFileManager`. |

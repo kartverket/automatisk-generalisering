@@ -152,7 +152,7 @@ def run_every_stage(registry: StageRegistry, order: Sequence[str]) -> None:
     derivation over declarations; this drives `runtime.stage_entry.run_operations`,
     which materializes handles, dispatches by splat, and sweeps outputs - the same
     function a pod calls. What differs is the Toolbox, and that is the whole point of
-    ADR-0008: the operations cannot tell.
+    ADR-0020 OP-3the operations cannot tell.
 
     WHAT A FAILURE HERE MEANS. `OutputMissing` means an operation declared an output
     and never passed it to any port call, which in a pod is a dataset that is not

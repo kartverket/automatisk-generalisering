@@ -28,7 +28,7 @@ the output without contributing identity: `intersection` output rows are pieces 
 roads, and the overlay shaped them without becoming their ancestor. The word is shared
 with the stage-level input role because both mean "influences, never becomes", and for no
 other reason; the two are declared at different levels and need not coincide for a call
-(ADR-0016). `Rows` refuses the three illegal cells and these subject and refs rules at
+(ADR-0021 ST-D21). `Rows` refuses the three illegal cells and these subject and refs rules at
 construction, so a wrong declaration fails when the Protocol is imported. The check over
 the surface, `tests/static/test_row_shape.py`, holds what construction cannot see; its
 rules are ADR-0017 RS-4, and a handle inside a `Spatial` predicate and a method that

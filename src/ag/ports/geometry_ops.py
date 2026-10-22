@@ -33,7 +33,7 @@ class GeometryOps(Protocol):
 
         Why: one method and a value type replace the engine's make-layer, select and copy
         idiom; nothing is materialised before this call, and no selection state survives
-        it. ADR-0001.
+        it. ADR-0019 PC-D5.
         """
         ...
 
