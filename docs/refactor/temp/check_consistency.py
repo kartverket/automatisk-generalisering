@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Consistency checks over DECISIONS.md, TASKS.md and 01-terminology.md.
+"""Consistency checks over DECISIONS.md, TASKS.md and docs/terminology.md.
 
 STAGING TOOLING. Dies with temp/, like everything else here.
 
@@ -45,7 +45,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DECISIONS = (HERE / "DECISIONS.md").read_text(encoding="utf-8")
 TASKS = (HERE / "TASKS.md").read_text(encoding="utf-8")
-TERMS = (HERE.parent / "01-terminology.md").read_text(encoding="utf-8")
+TERMS = (HERE.parent.parent / "terminology.md").read_text(encoding="utf-8")
 
 # Headwords whose wording legitimately differs from the prose in DECISIONS.
 # Keep this list short and justified; a new entry is a small smell.

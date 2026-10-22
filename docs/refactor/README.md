@@ -6,7 +6,7 @@ adapter boundary. Being implemented under `src/ag` slice by slice
 requests as its code, and they move out of `docs/refactor/` once their content has landed (plan
 §4.8).
 
-Read [01-terminology](01-terminology.md) first — several everyday words mean something
+Read [terminology](../terminology.md) first — several everyday words mean something
 specific here, and two of them (`workspace`, `container`) mean the opposite of the obvious
 reading.
 
@@ -15,7 +15,7 @@ reading.
 | doc | owns | status | graduates when |
 |---|---|---|---|
 | [template_code](template_code/README.md) | a learning pass, reviewed in `temp/findings/template_review.md`; the source for lifts into `src/ag`, one module per slice | TEMPLATE, not promoted | its last module has been lifted or dropped; then **deleted** |
-| [01-terminology](01-terminology.md) | the vocabulary, the collisions, the retired words | TARGET | the identifiers exist in `src/ag/`; then it becomes the vocabulary reference |
+| [terminology](../terminology.md) | the vocabulary, the collisions, the retired words | TARGET | the identifiers exist in `src/ag/`; then it becomes the vocabulary reference |
 | [02-runtime](02-runtime.md) | how the system executes — declarations, derivation, storage scopes, legality, partition correctness, validation | TARGET | `src/ag/core/` and `src/ag/runtime/` exist and a stage runs end to end on the cluster |
 | [03-architecture](03-architecture.md) | how the code is structured — boundary, ports, layering, helpers, observability, failure | TARGET | `.importlinter` exists and passes in CI, and one port has an adapter plus contract tests |
 | [04-migration](04-migration.md) | what changes in the current codebase, in what order, and the measurements | TARGET | never — **deleted** on completion, not graduated |

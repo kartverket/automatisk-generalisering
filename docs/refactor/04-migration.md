@@ -6,7 +6,7 @@
 justify the port split.
 
 **Does not own:** the target design. Runtime is [02-runtime](02-runtime.md), structure is
-[03-architecture](03-architecture.md), vocabulary is [01-terminology](01-terminology.md).
+[03-architecture](03-architecture.md), vocabulary is [terminology](../terminology.md).
 
 **Deleted when:** the migration completes. This document does **not** graduate — it is
 disposable by construction. Anything in it still worth knowing at that point has already
@@ -87,7 +87,7 @@ code carries the old names.
 
 This section exists only for readers of the earlier drafts and goes when they do. The durable
 part is the retirement of "container" for data, in
-[01-terminology §3](01-terminology.md#3-retired-and-discouraged).
+[terminology §3](../terminology.md#3-retired-and-discouraged).
 
 ---
 

@@ -340,7 +340,7 @@ makes a single reversible decision with all evidence present.
 > ids. The error mattered: a reader concluding duplicates are expected does not build the
 > uniqueness assertion.
 
-`destination:` new ADR on identity; `01-terminology.md`.
+`destination:` new ADR on identity; `docs/terminology.md`.
 
 **A9.2** Native index goes behind the port. Contract is narrow: **valid until this dataset is
 next written**. Backends differ — GeoPackage rowid is stable, Postgres `ctid` moves on update —
@@ -417,7 +417,7 @@ no cardinality change, which is not locally checkable, so it is not a pattern to
 `destination:` new ADR on identity; `02-runtime.md` §2.4.
 
 **A9.11 A combining rule is evaluated over the parents of each output row.** The combining rule
-"reduces several parents' values to one" (`01-terminology.md`, *combining rule*); parents are "which
+"reduces several parents' values to one" (`docs/terminology.md`, *combining rule*); parents are "which
 input rows produced an output row". So the value written on an output row of a `GROUP` method is
 the rule over that row's parents and nothing wider. Under single-part output a dissolve key that
 splits into several parts has several output rows, each with its own parent set and its own
@@ -560,7 +560,7 @@ instead of one mechanism.
 > discussion, including in the port parameter name and the column constants. It is **parents**
 > everywhere: the out-param is `parents:`, the table columns are `PARENT_ID` and `CHILD_ID`.
 > `source_rows` was considered and rejected because `source` already means `ExternalSource` in
-> this repository (`01-terminology.md` §2).
+> this repository (`docs/terminology.md` §2).
 
 `destination:` new ADR on lineage; lineage module docstring.
 
@@ -1290,7 +1290,7 @@ only.
 
 Recorded separately because one word doing two jobs would make `SNAP_DISPLACEMENT` look like
 an exemption instead of a legal case.
-`destination:` lineage module docstring; `01-terminology.md`.
+`destination:` lineage module docstring; `docs/terminology.md`.
 
 **A15.7 Time budgets for lineage overhead.** Measured as **time added over the bare tool** on the
 same input in the same process, never as total tool time:
@@ -1844,7 +1844,7 @@ input has two independent properties.
 
 `destination:` ADR-0021; `02-runtime.md` §2.3 and `03-architecture.md` §7.5 as pointers;
 `core/types.py` (`InputRole` and `DataType` docstrings); `core/pipeline.py` guard (Task B);
-`01-terminology.md`.
+`docs/terminology.md`.
 
 ---
 
@@ -1916,7 +1916,7 @@ cross-run ids are never minted against; or make `minter_id` globally unique rath
 run-scoped. Each has a different cost and none is chosen here.
 
 **B8 — RESOLVED 2026-09-22 by T7.2 (slice 0).** Renamed in `template_code/` and in
-`01-terminology.md` and `02-runtime.md` §2.2; every lift now carries `OriginRoot` and
+`docs/terminology.md` and `02-runtime.md` §2.2; every lift now carries `OriginRoot` and
 `origin_roots()`. The item as written: `LineageRoot` → `OriginRoot` is a code rename, not a doc
 change. The ruling is settled; the work is not scoped. `LineageRoot` is a `TypeAlias` at `core/data_objects.py:147` with uses in
 `locations.py`, `policy.py` and `validation.py`, plus a `lineage_roots()` function that presumably

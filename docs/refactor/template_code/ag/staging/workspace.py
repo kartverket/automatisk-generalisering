@@ -5,7 +5,7 @@ Workspace format: the join rule, name legality, and the name budget.
 A `.gdb` is a directory holding feature classes; a `.gpkg` is a single SQLite file
 holding tables; a plain directory holds `.shp` files. All three are "a workspace with
 named layers inside", which is why the model says workspace rather than directory —
-and why `container` is reserved for OCI (01-terminology §3).
+and why `container` is reserved for OCI (docs/terminology.md §3).
 
 THE ONLY PLACE THE FORMAT IS KNOWN. ScratchFileManager holds the pod's paths but asks
 this module how to spell them, so an operation never learns which format is in use and
