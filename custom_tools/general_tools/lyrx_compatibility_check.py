@@ -228,6 +228,10 @@ class LyrxCompatibilityChecker:
         )
         copied_features_layer = f"{copied_features}_layer"
         arcpy.management.CopyFeatures(self.feature_class_or_layer, copied_features)
+        if int(arcpy.management.GetCount(copied_features)[0]) == 0:
+            logger.warning("No features in input.")
+            return False
+
         arcpy.management.MakeFeatureLayer(copied_features, copied_features_layer)
 
         layer_names = [layer.get("name") for layer in self.selected_layers]

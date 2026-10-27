@@ -63,6 +63,7 @@ from composition_configs.logic_config import RoadRampsConfig
 from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
 from typing import Callable
+from custom_tools.general_tools.integrate_diff import IntegrateDiff
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -75,7 +76,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Oslo', 'Ringerike')"
+    AREA_SELECTOR = "navn IN ('Ringerike')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -191,6 +192,13 @@ def data_selection_and_validation(
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
+
+    # run integrate diff on all inputs
+    # IntegrateDiff(Road_N100.data_selection___nvdb_roads___n100_road.value).run_integration()
+    # IntegrateDiff(Road_N100.data_selection___vegsperring___n100_road.value).run_integration()
+    # IntegrateDiff(Road_N100.data_selection___railroad___n100_road.value).run_integration()
+    # IntegrateDiff(Road_N100.data_selection___begrensningskurve___n100_road.value).run_integration()
+    # IntegrateDiff(Road_N100.data_selection___admin_boundary___n100_road.value).run_integration()
 
 
 def reclassify_medium():
