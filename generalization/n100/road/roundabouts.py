@@ -3,7 +3,6 @@ import os
 from collections import defaultdict
 
 import arcpy
-from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
@@ -236,12 +235,7 @@ def create_intersections_of_roundabouts() -> None:
     temp_roundabout = r"in_memory/temp_roundabout"
     oid_geom_pairs = defaultdict(list)
 
-    for r_id, r_geom, r_number in tqdm(
-        roundabouts,
-        desc="Checks roads against roundabouts",
-        colour="yellow",
-        leave=False,
-    ):
+    for r_id, r_geom, r_number in roundabouts:
         temp_geom = arcpy.management.CopyFeatures(r_geom, temp_roundabout)
         arcpy.management.SelectLayerByLocation(
             in_layer="road_lyr",
@@ -267,9 +261,7 @@ def create_intersections_of_roundabouts() -> None:
     changed = {}
     centroids = []
 
-    for key in tqdm(
-        oid_geom_pairs, desc="Edits the geometry", colour="yellow", leave=False
-    ):
+    for key in oid_geom_pairs:
         to_edit = oid_geom_pairs[key]
         for i in range(len(to_edit)):
             if to_edit[i][2] in changed:

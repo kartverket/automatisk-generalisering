@@ -3,7 +3,6 @@
 from collections import defaultdict, deque
 
 import arcpy
-from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
@@ -294,12 +293,7 @@ def build_railroad_network_fkb_safe(files: dict) -> arcpy.Geometry:
     # Collect oids for geometries that has 75% of
     # their geometry length inside the small geometry
     valid_oids = set()
-    for oid, geom in tqdm(
-        intersect_geoms.items(),
-        desc="Collect valid geometries",
-        colour="yellow",
-        leave=False,
-    ):
+    for oid, geom in intersect_geoms.items():
         if oid in valid_oids:
             continue
 
@@ -778,12 +772,7 @@ def fetch_edge_case_ends(files: dict) -> None:
     while changed:
         changed = False
 
-        for oid, (start, end, status) in tqdm(
-            fkb_railroad.items(),
-            desc="Adds disused railroad",
-            colour="yellow",
-            leave=False,
-        ):
+        for oid, (start, end, status) in fkb_railroad.items():
             # Skip those already added
             if oid in to_edit:
                 continue
