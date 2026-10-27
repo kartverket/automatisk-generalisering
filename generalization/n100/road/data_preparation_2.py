@@ -194,11 +194,21 @@ def data_selection_and_validation(
     road_data_validation.check_repair_sequence()
 
     # run integrate diff on all inputs
-    # IntegrateDiff(Road_N100.data_selection___nvdb_roads___n100_road.value).run_integration()
-    # IntegrateDiff(Road_N100.data_selection___vegsperring___n100_road.value).run_integration()
-    # IntegrateDiff(Road_N100.data_selection___railroad___n100_road.value).run_integration()
-    # IntegrateDiff(Road_N100.data_selection___begrensningskurve___n100_road.value).run_integration()
-    # IntegrateDiff(Road_N100.data_selection___admin_boundary___n100_road.value).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___nvdb_roads___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___vegsperring___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___railroad___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___begrensningskurve___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___admin_boundary___n100_road.value
+    ).run_integration()
 
 
 def reclassify_medium():
