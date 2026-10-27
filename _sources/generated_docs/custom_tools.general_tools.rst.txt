@@ -44,6 +44,14 @@ custom\_tools.general\_tools.graph module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.integrate\_diff module
+---------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.integrate_diff
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.isolated\_line\_remover module
 -----------------------------------------------------------
 
