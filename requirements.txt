@@ -20,7 +20,6 @@
 #pyvis
 #requests
 #shapely
-#tqdm
 google-cloud-storage
 minio==7.2.20
 certifi>=2026.10.19

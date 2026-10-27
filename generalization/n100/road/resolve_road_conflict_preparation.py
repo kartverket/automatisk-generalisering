@@ -4,7 +4,6 @@ import os
 
 import arcpy
 import numpy as np
-from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
@@ -494,18 +493,10 @@ def is_narrow(pnt_fc: str, area_fc: str, narrow_field: str) -> None:
         distance_unit="Meters",
     )
 
-    total = int(arcpy.management.GetCount(pnt_fc).getOutput(0))
-
     with arcpy.da.UpdateCursor(
         pnt_fc, ["SHAPE@", "NEAR_DIST", "NEAR_X", "NEAR_Y", narrow_field]
     ) as update_cursor:
-        for geom, dist, x, y, _ in tqdm(
-            update_cursor,
-            total=total,
-            desc="Updating narrow attribute",
-            colour="yellow",
-            leave=False,
-        ):
+        for geom, dist, x, y, _ in update_cursor:
             if dist == -1:
                 continue
             if dist > BUFFER_DIST * 1.5:
@@ -707,20 +698,10 @@ def update_road_geometries(files: dict, road_oids: set, mapping: dict) -> None:
         in_features=files["simplified_fc"], out_layer=roads_to_edit, where_clause=sql
     )
 
-    total = int(arcpy.management.GetCount(roads_to_edit).getOutput(0))
-
     with arcpy.da.UpdateCursor(roads_to_edit, ["OID@", "SHAPE@"]) as update_cursor:
-        for oid, geom in tqdm(
-            update_cursor,
-            total=total,
-            desc="Edit road geometries in water",
-            colour="yellow",
-            leave=False,
-        ):
+        for oid, geom in update_cursor:
             parts = []
-            for part in tqdm(
-                geom, desc="Editing geometries", colour="yellow", leave=False
-            ):
+            for part in geom:
                 points = []
                 prev_x, prev_y = None, None
                 for pt in part:
