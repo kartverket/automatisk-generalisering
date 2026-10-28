@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from data_orchestrator_2.constants.common import Scale
-from data_orchestrator_2.constants.featureClasses import FeatureClassName, ObjectType
+from data_orchestrator_2.constants.featureClasses import FeatureClassName, GDBName
 from paths import GIS_FILES_ROOT
 
 ######################
@@ -11,9 +11,9 @@ from paths import GIS_FILES_ROOT
 ######################
 
 
-def get_gdb_path(scale: Scale, object_type: ObjectType) -> Path:
+def get_gdb_path(scale: Scale, gdb_name: GDBName) -> Path:
     """Build a geodatabase path under the configured GIS files root."""
-    return Path.joinpath(Path(GIS_FILES_ROOT), scale, f"{object_type}.gdb")
+    return Path.joinpath(Path(GIS_FILES_ROOT), scale, f"{gdb_name}.gdb")
 
 
 def get_feature_class_path(
@@ -25,10 +25,13 @@ def get_feature_class_path(
 
 def get_feature_class_full_path(
     scale: Scale,
-    object_type: ObjectType,
+    gdb_name: GDBName,
     feature_class_name: FeatureClassName,
 ) -> str:
     """Build a feature class path from its source scale and object type."""
-    gdb_path = get_gdb_path(scale, object_type)
-    full_path = get_feature_class_path(gdb_path, feature_class_name)
-    return str(full_path)
+    return str(
+        get_feature_class_path(
+            gdb_path=get_gdb_path(scale=scale, gdb_name=gdb_name),
+            feature_class_name=feature_class_name,
+        )
+    )

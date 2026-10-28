@@ -1,15 +1,24 @@
 from __future__ import annotations
 
-# Libraries
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+
+# Libraries
+import arcpy
 
 from custom_tools.general_tools.validation import (
     feature_class_exists,
     fetch_existing_fields,
     has_data,
 )
+from data_orchestrator_2.constants.domains import (
+    DomainObject,
+    DomainScale,
+    get_allowed_values,
+)
 from data_orchestrator_2.constants.featureClasses import FeatureClassName
+from data_orchestrator_2.organizers.path_factory import get_feature_class_full_path
+from data_orchestrator_2.schemas.datasets import DatasetDefinition
 from data_orchestrator_2.schemas.fields import FieldUsage
 
 if TYPE_CHECKING:
@@ -148,3 +157,45 @@ def validate_pipeline(pipeline: Pipeline, usage: FieldUsage) -> list[ValidationR
         results.append(validation)
 
     return results
+
+
+def validate_columns_in_dataset(
+    dataset: DatasetDefinition, scale: DomainScale, obj: DomainObject
+) -> list[str]:
+    errors = []
+
+    # Finding only the fields that should be verified
+    field_names = []
+    allowed_sets = []
+
+    for field_name in dataset.getFieldNames():
+        allowed_values = get_allowed_values(field_name, scale, obj)
+        if allowed_values:
+            field_names.append(field_name)
+            allowed_sets.append(set(allowed_values))
+
+    if not field_names:
+        return errors
+
+    with arcpy.da.SearchCursor(
+        get_feature_class_full_path(
+            scale=dataset.source_scale,
+            object_type=dataset.object_type,
+            feature_class_name=dataset.name,
+        ),
+        ["OBJECTID", *field_names],
+    ) as cursor:
+        for row in cursor:
+            oid = row[0]
+            for value, field_name, allowed in zip(
+                row[1:],
+                field_names,
+                allowed_sets,
+                strict=True,
+            ):
+                if value not in allowed:
+                    errors.append(
+                        f"OBJECTID {oid}: Field '{field_name}' has invalid value '{value}'"
+                    )
+
+    return errors
