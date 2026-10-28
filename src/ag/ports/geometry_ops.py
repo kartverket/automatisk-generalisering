@@ -29,7 +29,8 @@ class GeometryOps(Protocol):
         UNKNOWN, and only TRUE rows are kept, so a row whose field is NULL is excluded by
         a comparison and included by `Attr.is_null`; the rules are in the predicate
         module. Rows keep their attributes and geometry; `ONE + CARRY`, since every output
-        row is an input row with its identity.
+        row is an input row with its identity. `input` and `output` name different
+        datasets; both on one path is a `PortContractError`.
 
         Why: one method and a value type replace the engine's make-layer, select and copy
         idiom; nothing is materialised before this call, and no selection state survives
@@ -48,7 +49,13 @@ class GeometryOps(Protocol):
         the feature it came from. When `parents` is a handle the adapter writes a table
         of `(PARENT_ID, CHILD_ID)` rows to it, one per (input row, output row) pair, in
         the port's native indices; when it is None no parents are produced and nothing
-        is paid for them.
+        is paid for them. `input` is a feature class, and `input`, `output` and `parents`
+        each name a different dataset; a table input, or two handles on one path, is a
+        `PortContractError`. A subject row with a null
+        geometry raises `EmptyGeometryError` before anything is written, with its native
+        index in the context: a null shape has no parts, so there is no row to write for
+        it, and the guard does not depend on `parents`, because the output of a call must
+        be the same whether or not parents were asked for.
 
         Why: the parts of a feature are the unit later operations work on, and the
         parents table is what lets the layer above record which feature each part came

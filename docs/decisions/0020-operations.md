@@ -83,8 +83,8 @@ package.
   default is forced because the declaration site shares the function's parameter list;
   without it every declaration site is a type error for omitting an argument it must not
   supply.
-- **OP-D14** `NOT_INJECTED` is one `cast` over one object whose `__getattr__` raises, naming
-  the port that was reached.
+- **OP-D14** `NOT_INJECTED` is an instance of a `Toolbox` subclass whose constructor sets no
+  field and whose `__getattr__` raises, naming the port that was reached; no `cast`.
 - **OP-D15** `OperationCall.injected: Mapping[type[Injected], ParamName]`, read at
   decoration. The core never names `Toolbox`; adding a kind changes nothing in the core; the
   parameter name is not load-bearing.

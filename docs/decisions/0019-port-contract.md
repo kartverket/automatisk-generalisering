@@ -88,7 +88,10 @@ constructors on a namespace, not a type, and the raw escape hatch is counted.
   matched case-sensitively with no escape character; a literal `%` or `_` goes through
   `Attr.raw`.
 - **PC-D17** A value whose type does not match the field's type is a `PortContractError`
-  raised by the adapter, so an engine's coercion and a Python comparison can never disagree.
+  raised by the adapter when a predicate is evaluated, so an engine's coercion and a Python
+  comparison can never disagree. `SHORT` and `LONG` take an `int` within the type's range,
+  `DOUBLE` takes `int` or `float`, `TEXT` takes a `str` of at most the field's length in
+  characters, `DATE` takes a naive `datetime`; a `bool` is refused at that boundary.
 - **PC-D18** A predicate has no truth value in Python: `and`, `or` and `not` raise. A
   connective has at least two terms.
 - **PC-D19** The leaves are frozen dataclasses `Compare`, `IsIn`, `IsNull` and `RawAttr`, so
@@ -124,6 +127,9 @@ on a stable id and may carry geometry.
   coordinate sequence, CRS. `read_rows` yields it and `write_rows` accepts it. Domain code
   manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy geometry and
   convert at the boundary.
+- **PC-D26** A row written through the port is held to the field types and ranges of
+  PC-D17, with `None` a null in a cell; a mismatch is a `PortContractError` from the
+  adapter, raised before anything is written.
 
 ## Rejected
 
