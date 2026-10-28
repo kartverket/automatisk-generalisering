@@ -8,7 +8,8 @@ How: `Compare` and a non-empty `IsIn` are UNKNOWN when the field is NULL; the em
 is FALSE for every row; `IsNull` is never UNKNOWN; `Not` of UNKNOWN is UNKNOWN; `And` is
 FALSE if any term is FALSE and otherwise UNKNOWN if any term is; `Or` is the mirror.
 `LIKE` matches `%` as any run of characters and `_` as one, case-sensitively, with no
-escape character. A value that does not fit the field, or a field the schema does not
+escape character; its pattern is held to the field's type and not its length, since `%`
+may match nothing. A value that does not fit the field, or a field the schema does not
 declare, is a `PortContractError` from `check`; so is a `RawAttr`, which this adapter
 does not compile, and a `Spatial` leaf, which it does not evaluate. The check runs once
 per call, before any row, so a bad predicate fails on an empty dataset exactly as it
@@ -57,6 +58,13 @@ def check(predicate: Predicate, *, schema: Schema) -> None:
     evaluate over `schema`: an undeclared field, a value that does not fit its field, a
     raw expression, a spatial leaf. Runs once per call, before any row is read."""
     match predicate:
+        case Compare(field=name, op=Comparison.LIKE):
+            field = _declared(schema=schema, name=name)
+            if field.type is not FieldType.TEXT:
+                raise PortContractError(
+                    f"LIKE on {name!r}, a {field.type.value} field; a pattern matches "
+                    "text only."
+                )
         case Compare(field=name, value=value):
             _fit(value=value, field=_declared(schema=schema, name=name))
         case IsIn(field=name, values=values):

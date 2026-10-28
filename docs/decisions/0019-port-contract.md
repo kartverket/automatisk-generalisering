@@ -91,7 +91,9 @@ constructors on a namespace, not a type, and the raw escape hatch is counted.
   raised by the adapter when a predicate is evaluated, so an engine's coercion and a Python
   comparison can never disagree. `SHORT` and `LONG` take an `int` within the type's range,
   `DOUBLE` takes `int` or `float`, `TEXT` takes a `str` of at most the field's length in
-  characters, `DATE` takes a naive `datetime`; a `bool` is refused at that boundary.
+  characters, except a `LIKE` pattern, which is held to the type and not the length, since
+  `%` may match nothing; `DATE` takes a naive `datetime`; a `bool` is refused at that
+  boundary.
 - **PC-D18** A predicate has no truth value in Python: `and`, `or` and `not` raise. A
   connective has at least two terms.
 - **PC-D19** The leaves are frozen dataclasses `Compare`, `IsIn`, `IsNull` and `RawAttr`, so
