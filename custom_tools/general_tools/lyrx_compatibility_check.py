@@ -223,10 +223,12 @@ class LyrxCompatibilityChecker:
             logger.warning("No layers selected for compatibility check.")
             return False
 
+        run_id = uuid.uuid4().hex
         copied_features = self.wfm.build_file_path(
-            f"lyrx_checker_input_copy_{uuid.uuid4().hex}", "gdb"
+            f"lyrx_checker_input_copy_{run_id}", "gdb"
         )
-        copied_features_layer = f"{copied_features}_layer"
+        # A path-like layer name makes arcpy.da cursors treat it as a dataset path.
+        copied_features_layer = f"lyrx_checker_layer_{run_id}"
         arcpy.management.CopyFeatures(self.feature_class_or_layer, copied_features)
         if int(arcpy.management.GetCount(copied_features)[0]) == 0:
             logger.warning("No features in input.")
