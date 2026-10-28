@@ -15,6 +15,7 @@ class DataNames(StrEnum):
     road = "ROAD"
     symbology = "SYMBOLOGY"
     river_basin = "RIVER_BASIN"
+    partitioning = "PARTITIONING"
 
     #########################
     # Main folder names
@@ -85,3 +86,7 @@ class DataNames(StrEnum):
 
     # River Basin
     Nedborfelt_Vassdragsomr = "Nedborfelt_Vassdragsomr"
+
+    # Partitioning
+    road_partitions_fan_out = "road_partitions_fan_out"
+    road_partitions_fan_in = "road_partitions_fan_in"
