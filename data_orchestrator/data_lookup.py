@@ -34,6 +34,7 @@ PIPELINE_INPUT = {
             dn.JernbaneStasjon_BaneNor,
         ],
         dn.road: [dn.elveg_and_sti, dn.vegsperring, dn.VegSti_N50],
+        dn.partitioning: [dn.road_partitions_fan_out, dn.road_partitions_fan_in],
     },
     dn.scale_n10: {
         dn.object_bygning: [],
@@ -89,6 +90,7 @@ PIPELINE_INPUT = {
             dn.building: [dn.AnleggsLinje_N50],
             dn.railway: [dn.Bane_N50],
             dn.road: [dn.elveg_and_sti, dn.vegsperring],
+            dn.partitioning: [dn.road_partitions_fan_out],
         },
     },
     dn.scale_n250: {

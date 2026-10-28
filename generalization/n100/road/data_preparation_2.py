@@ -67,13 +67,36 @@ from custom_tools.general_tools.integrate_diff import IntegrateDiff
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-if require("SELECT_STUDY_AREA") == "False":
-    SELECT_STUDY_AREA = False
+# SELECT_STUDY_AREA: "True" selects the AREA municipalities, "False" runs on the global
+# data, "Partition" runs the partition PARTITION_INDEX of the fan-out partition feature.
+STUDY_AREA_MODE = require("SELECT_STUDY_AREA")
+if STUDY_AREA_MODE not in ("True", "False", "Partition"):
+    raise ValueError(
+        f"SELECT_STUDY_AREA must be True, False or Partition, got {STUDY_AREA_MODE!r}"
+    )
+SELECT_STUDY_AREA = STUDY_AREA_MODE == "True"
+SELECT_PARTITION = STUDY_AREA_MODE == "Partition"
+
+if SELECT_PARTITION:
+    try:
+        PARTITION_INDEX = int(require("PARTITION_INDEX"))
+    except ValueError:
+        raise ValueError(
+            f"PARTITION_INDEX must be an integer, got {os.environ['PARTITION_INDEX']!r}"
+        ) from None
+elif os.environ.get("PARTITION_INDEX") is not None:
+    raise ValueError(
+        f"PARTITION_INDEX is only valid with SELECT_STUDY_AREA=Partition, "
+        f"got SELECT_STUDY_AREA={STUDY_AREA_MODE}"
+    )
 else:
-    SELECT_STUDY_AREA = True
+    PARTITION_INDEX = None
 
-
-if os.environ.get("AREA"):
+# Temporary: AREA_SELECTOR is also read by remove_road_points_in_water, which would
+# otherwise limit global and partition runs to the default municipalities.
+if not SELECT_STUDY_AREA:
+    AREA_SELECTOR = "1=1"
+elif os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
     AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
@@ -166,6 +189,7 @@ def data_selection_and_validation(
     area: DatasetNamespace = data_orc.get_dataset(dn.area)
     road: DatasetNamespace = data_orc.get_dataset(dn.road)
     railway: DatasetNamespace = data_orc.get_dataset(dn.railway)
+    partitioning: DatasetNamespace = data_orc.get_dataset(dn.partitioning)
 
     selector = StudyAreaSelector(
         input_output_file_dict={
@@ -178,6 +202,11 @@ def data_selection_and_validation(
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
         select_local=SELECT_STUDY_AREA,
+        partition_feature=(
+            partitioning.road_partitions_fan_out if SELECT_PARTITION else None
+        ),
+        partition_index=PARTITION_INDEX,
+        halo_m=SEARCH_DISTANCE,
     )
 
     selector.run()
