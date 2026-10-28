@@ -308,7 +308,7 @@ if __name__ == "__main__":
             _raw_feature(dn.area, dn.Begrensningskurve_N50),
             _raw_feature(dn.area, dn.AdminGrense_N50),
         ],
-        target_partition_count=16,
+        target_partition_count=6,
         output_gdb=str(raw_data / f"{dn.partitioning.lower()}.gdb"),
         name_prefix="road",
         halo_m=5000,
