@@ -1538,6 +1538,14 @@ re-propose.
 
 **status:** not started
 
+**note (2026-10-28)** The facade spike moved out of the fourth pull request of slice 1a into
+its own, the fifth. Carried in from the review of the fourth: a pyright case that must fail where
+the wrapped port is handed out, because `wrap(protocol: type[P], port: P) -> P` solves `P` to a
+union against a non-conforming adapter and reports nothing at the call; plain
+`before(call) -> None` hooks, with how the facade adds `parents=` left to 2a; a cast count over
+the syntax tree, `typing.cast` under any alias, not a text match; break-it cases for reading
+`__row_shape__` from the instance and for a second cast.
+
 **what done means** One facade class wraps each of the three handle-bearing ports, reading
 `__row_shape__` **from the Protocol** rather than from the adapter instance, so adapters need no
 decoration and cannot drift. Composed in `runtime/`, with one `cast` at the composition root and a

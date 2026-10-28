@@ -336,7 +336,17 @@ ADR-0017 as the first themed ADR, absorbing A12.1 to A12.5 and A12.5a; A12.7a's 
 category deferred to 2a with the declaration type (option C); the check fails closed on
 `Mutates`, so T2.8 moves into 2a; row 5 of `.importlinter` gains `predicates | row_shape |
 columns` as one line; B22 extended with the `Mutates` rule. Evidence:
-`findings/slice_1a_row_shape_evidence.md`.
+`findings/slice_1a_row_shape_evidence.md`. **Fourth pull request, the in-memory adapter (2026-10-28):**
+`adapters/fakes/memory/` with the store keyed by path and one native-index counter, the base,
+`support/predicate_eval.py` (three values, checked once before any row) and
+`support/preconditions.py`, three group modules composed per port, and a conformance assignment
+per port; the field rule both adapters share in `adapters/_shared/field_values.py`;
+`tests/static/test_adapter_groups.py` with the static adapter x port matrix; engine-neutral cases
+and the memory seeder in `tests/support/`; ADR-0019 PC-D17 adapted (types, ranges, text length,
+the `LIKE` exception) and PC-D26 added, ADR-0020 OP-D14 corrected; `select` and
+`explode_multipart` state the distinct-path, feature-class and null-geometry preconditions. The
+facade spike moved to a fifth pull request, with the points to carry under T4.3. Evidence:
+`findings/slice_1a_memory_adapter_evidence.md`.
 
 **Contains.**
 - **The first pull request of 1a is the core lift, by the architect**: `core/types.py`,
