@@ -43,8 +43,8 @@ Appendix A: the scope list (classified).
   PROCESSING overlap. At a search distance of 0 the pre-filter is skipped and the per-partition
   selection keeps the context intersecting the partition (`:1146-1152`), which is what the
   model specifies at 0 m. Legacy declares vector only (`composition_configs/core_config.py:34-40`).
-- No ADR states the context model. ADR-0012:47 shows `role=InputRole.PROCESSING` in an
-  example; ADR-0003 and ADR-0015 are role-neutral.
+- No ADR states the context model. ADR-0021 ST-1shows `role=InputRole.PROCESSING` in an
+  example; ADR-0019 PC-1 and ADR-0019 PC-3 are role-neutral.
 - The canonical statement, `02-runtime.md:255-259`, says context inputs are "selected within
   `context_radius_m`" with no referent, says nothing about overlap for either role, and
   derives the non-spatial case from the data ("is context in the operative sense").
@@ -90,7 +90,7 @@ spatial data pay nothing for the second axis.
   to partition, so the model defines no behaviour for it; the guard fails closed. It is a
   construction-time check in `core/pipeline.py` with a break-it case (A30), recorded in the
   plan for the Task B lift.
-- **The radius is a claim about the logic.** Operations never see partitions (ADR-0003), so
+- **The radius is a claim about the logic.** Operations never see partitions (ADR-0019 PC-1), so
   `context_radius_m` is the one place a stage author reasons about partition boundaries. A
   0 m radius states that nothing in the stage consults a neighbour. The model does not guard
   it; a reviewer can challenge it.
@@ -119,7 +119,7 @@ carry attributes that must stay on-prem, and one rule for all of them is more co
 than a split by author. The member is `SYMBOLOGY`, not a generic `FILE`, so the next file kind
 gets its own decision. Numeric symbol dimensions (`building_symbol_dimension`, buffer
 factors) are a different thing: a project-wide Python resource that reaches operations as
-config dataclass fields varying by pipeline (ADR-0013), never a stage input. Deriving them
+config dataclass fields varying by pipeline (ADR-0020 OP-4), never a stage input. Deriving them
 from `.lyrx` files is possible later and not planned. This settles 03-architecture §7.5 and
 Q-D for both.
 
@@ -143,7 +143,7 @@ side by side.
 
 `destination:` `02-runtime.md` §2.3 (A31.1, A31.2, A31.3, A31.7), §7.1 (overlap), §8 (the
 guard); `03-architecture.md` §7.5 (A31.5); `core/types.py` (`InputRole` and `DataType`
-docstrings); `core/pipeline.py` guard (Task B); `01-terminology.md`; the ADR of section 8 if
+docstrings); `core/pipeline.py` guard (Task B); `docs/terminology.md`; the ADR of section 8 if
 written.
 
 **Hook consequence.** `check_consistency` requires every `A31.x` to be cited by id in a
@@ -470,7 +470,7 @@ is drafted then. Template code is not edited; the plan lines that govern a lift 
 - `findings/implementation_plan.md:91, 482-483, 896-902` (Task B): "rename only" becomes
   "rename plus one construction guard: `StageInput` rejects a non-spatial object with role
   PROCESSING, with a break-it case (A30); and the `context_radius_m` docstring states that
-  operations never see partitions (ADR-0003), so the radius is the one place a stage author
+  operations never see partitions (ADR-0019 PC-1), so the radius is the one place a stage author
   reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can
   challenge". `findings/template_review.md:52`: "keep as is" becomes "keep with changes",
   naming the guard and the docstring.
@@ -494,10 +494,10 @@ is drafted then. Template code is not edited; the plan lines that govern a lift 
   added to the inside-a-stage checks. `:48-53` (§1.2): fan-out "context filter, partition with
   overlap"; fan-in "select centre-in, append".
 - `03-architecture.md:777-790` (§7.5): rewritten per A31.5: `.lyrx` files are `SYMBOLOGY`
-  stage inputs; numeric symbol dimensions are config dataclass fields per ADR-0013, never a
+  stage inputs; numeric symbol dimensions are config dataclass fields per ADR-0020 OP-4, never a
   stage input. `:865-866` (Q-D): closed. `:135-138`: "(non-spatial context inputs, sent whole
   to every pod)".
-- `01-terminology.md`: row 93 (**subject**) and 94 (**context (row-shape)**) rewritten to
+- `docs/terminology.md`: row 93 (**subject**) and 94 (**context (row-shape)**) rewritten to
   "related, not identical" with the two counter-examples, citing A12.2 and A31.6. Row 127
   (**.lyrx**): a `SYMBOLOGY` stage input, non-spatial CONTEXT, sent whole, from a settable
   location, never in the image. Row 51 (**fan-out**): filters and partitions the spatial
@@ -581,8 +581,8 @@ lift into `src/`.
 
 ### ADRs
 
-None states the context model. ADR-0012:47 shows `role=` in an example; ADR-0003:24-25 and
-ADR-0015:19, 74-76 are role-neutral. Nothing to correct.
+None states the context model. ADR-0021 ST-1shows `role=` in an example; ADR-0019 PC-1and
+ADR-0019 PC-3are role-neutral. Nothing to correct.
 
 ### Documents, plan, code, fixtures
 

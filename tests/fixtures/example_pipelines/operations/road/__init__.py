@@ -166,7 +166,7 @@ class SmoothConfig:
 # Field names
 #
 # LITERALS, DELIBERATELY. These name columns in data the project does not own -
-# NVDB's schema and the published product schema - so by ADR-0011's identifier/value
+# NVDB's schema and the published product schema - so by ADR-0020 OP-D1's identifier-or-value
 # test they are values. A different string could be correct here; only the data
 # decides.
 # ---------------------------------------------------------------------------
@@ -808,7 +808,7 @@ def resolve_road_railway_conflicts(
     pre-port version was `Buffer -> SelectLayerByLocation -> ResolveRoadConflicts`;
     the buffer existed only to give the location selection something to test against,
     and `DWithin` says the same thing without materializing it. That is 616 call
-    sites of the same shape in the current codebase. ADR-0001.
+    sites of the same shape in the current codebase. ADR-0019 PC-2.
     """
     intersecting = scratch("intersecting")
 

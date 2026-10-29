@@ -158,7 +158,7 @@ a consumer's report cannot say which one they hold.
 | **A9.6** | Amended: the sweep is no longer redundant on `ROAD`. |
 | **A13** | Last bullet scoped to the delivered copy. |
 | **A19 / B3** | A19's "cheap insurance" is resolved by T0.4 as above. B3 (a stable published identity) stays open and is untouched. |
-| **01-terminology.md** | **Publish** gains the delivered copy. **archive** says pipelines read it. New entry **delivered copy**. |
+| **docs/terminology.md** | **Publish** gains the delivered copy. **archive** says pipelines read it. New entry **delivered copy**. |
 | **02-runtime.md** §2.2, §4.1 | Publish produces two artifacts when a delivered schema is declared, and archive versions are immutable. |
 
 ---

@@ -22,7 +22,7 @@ context compaction or a three-month gap.
    `03-architecture.md`, or the validation vocabulary;
 2. been struck in DECISIONS.md with a pointer to where it landed — do not leave a copy in both
    places, because two copies diverge; **and**
-3. had **every `01-terminology.md` entry citing it repointed to that destination.**
+3. had **every `docs/terminology.md` entry citing it repointed to that destination.**
 
 Step 3 is not housekeeping. The glossary's authority column cites A-ids, and those A-ids live only
 here — so without it the citations decay silently as temp empties, and the completion test would
@@ -40,7 +40,7 @@ addition in A9.10.
 2. every A-item has landed at its `destination:`, whether it rode on a task or not; **and**
 3. every B-item is either resolved into an A-item or promoted into a real document as a stated
    open question; **and**
-4. **no `01-terminology.md` entry cites an A-id any more** — every authority column points at a
+4. **no `docs/terminology.md` entry cites an A-id any more** — every authority column points at a
    real document. Without this clause the test passes precisely when the glossary's citations all
    become dead references.
 
@@ -125,7 +125,7 @@ work but have different lifetimes and different modules.
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
 | 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
-| 20 | T3.5 | Per-job log artifact and counter checkpoint | not started |
+| 20 | T3.5 | Per-job log artifact | not started |
 | 20b | T3.6 | Lineage retention alongside products | not started |
 | 20c | T3.7 | Foreign-id guard | not started |
 | 21 | T3.2 | Work-key API | not started |
@@ -781,7 +781,7 @@ which is why T1.4 is started early and left in flight rather than blocking.
 
 **status:** port half done, slice 1a, 2026-10-07: `Attr.cmp`, `Attr.in_`, `Attr.is_null`,
 `Attr.raw` and the leaf types in `ports/predicates.py`, the pinned call-site count in
-`tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0015.
+`tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0019 PC-3.
 Remaining: the adapter compile with identifier quoting (slice 1b) and the three call-site
 rewrites in the example fixtures (slice 1c).
 *(merged: the A17.4 and A17.7 call-site fixes)*
@@ -807,7 +807,7 @@ rewrites in the example fixtures (slice 1c).
 
 **decision refs** A2.1, A2.2, A2.3, A17.4, A17.7.
 
-**doc migration** A2.1–A2.3 → new ADR amending ADR-0001. A17.4 and A17.7 retire with the fix.
+**doc migration** A2.1–A2.3 → ADR-0019 PC-3. A17.4 and A17.7 retire with the fix.
 
 **note** A17.7 matters beyond the fix: `data_selection` is the one place in the template
 demonstrating the *legitimate* domain-key lookup pattern (A17.6), and it is currently written in
@@ -909,7 +909,7 @@ equivalents that keep it portable.
 
 **decision refs** A4.1, A4.2, A4.3, A12.11a.
 
-**doc migration** A4.1–A4.3 → ADR-0004 amendment and `ports/table_ops.py`.
+**doc migration** A4.1–A4.3 → ADR-0019 PC-4 and `ports/table_ops.py`.
 
 ---
 
@@ -1224,7 +1224,7 @@ form instead. An adapter declares which it provides.
 **decision refs** A9.1, A9.2.
 
 **doc migration** A9.2 → `ports/table_ops.py`. A9.1's table → the new ADR on identity and
-`01-terminology.md`.
+`docs/terminology.md`.
 
 ---
 
@@ -1300,14 +1300,13 @@ ingests a national N50 product on every execution, so this branch runs constantl
 
 ---
 
-## 20. T3.5 — Per-job log artifact and counter checkpoint
+## 20. T3.5 — Per-job log artifact
 
 **status:** not started
 
 **what done means** The per-job lineage log is an output artifact written **pod-local and uploaded
 on success**, never streamed to shared storage — otherwise a dead attempt's records collide with
-its retry's. Midpoint restart persists the local counter's high-water mark in the checkpoint and
-resumes from *n+1*. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another
+its retry's. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another
 minter's space. If live progress is wanted it goes to a separate diagnostic channel that fan-in
 never reads.
 
@@ -1317,7 +1316,10 @@ never reads.
 
 **decision refs** A10.4, A10.5, A15.4.
 
-**doc migration** A10.4, A10.5 → the ADR from T3.3; ADR-0009 amendment for the checkpoint.
+**doc migration** A10.4, A10.5 → the ADR from T3.3.
+
+F4 (REVIEW-2026-09-14) closed 2026-10-21: checkpoints for job pods are out of scope for the
+refactor.
 
 ---
 
@@ -1536,6 +1538,14 @@ re-propose.
 
 **status:** not started
 
+**note (2026-10-28)** The facade spike moved out of the fourth pull request of slice 1a into
+its own, the fifth. Carried in from the review of the fourth: a pyright case that must fail where
+the wrapped port is handed out, because `wrap(protocol: type[P], port: P) -> P` solves `P` to a
+union against a non-conforming adapter and reports nothing at the call; plain
+`before(call) -> None` hooks, with how the facade adds `parents=` left to 2a; a cast count over
+the syntax tree, `typing.cast` under any alias, not a text match; break-it cases for reading
+`__row_shape__` from the instance and for a second cast.
+
 **what done means** One facade class wraps each of the three handle-bearing ports, reading
 `__row_shape__` **from the Protocol** rather than from the adapter instance, so adapters need no
 decoration and cannot drift. Composed in `runtime/`, with one `cast` at the composition root and a
@@ -1749,7 +1759,7 @@ applies. The derivation mechanism is unstated.
 
 **decision refs** A12.9, A15.2, A15.6, A31.6, B14, B24.
 
-**doc migration** A15.2, A15.6 → the lineage module docstring and `01-terminology.md`; A12.9 →
+**doc migration** A15.2, A15.6 → the lineage module docstring and `docs/terminology.md`; A12.9 →
 `02-runtime.md` §8.
 
 **note** Under A31.3 every `StageOutput` descends from a PROCESSING `StageInput`, so A15.2 needs
@@ -2190,10 +2200,10 @@ exists so the completion test stays mechanical.
   §5 and the `operations/` package docstring.
 - A1.2 (granularity is set by what must be visible outside the function) → `02-runtime.md` §2.4.
 - A1.3 (`Toolbox` explicit, never a module singleton; constructor injection for large tools) →
-  ADR-0008, amended with the incremental-port argument.
+  ADR-0020 OP-D21 and OP-R5.
 
 **files touched** `docs/refactor/03-architecture.md`, `docs/refactor/02-runtime.md`,
-`docs/refactor/decisions/0008-toolbox-passed-explicitly.md`,
+`docs/decisions/0020-operations.md`,
 `template_code/ag/operations/__init__.py`.
 
 **depends on** nothing.
@@ -2206,7 +2216,7 @@ exists so the completion test stays mechanical.
 
 ## 41. T7.2 — `LineageRoot` → `OriginRoot` rename `[INDEPENDENT]`
 
-**status:** done — slice 0, 2026-09-22, inside `template_code/` and in `01-terminology.md` and
+**status:** done — slice 0, 2026-09-22, inside `template_code/` and in `docs/terminology.md` and
 `02-runtime.md` §2.2. `tools/run_example.py` prints the same derivation as before the rename.
 B8 resolved.
 
@@ -2218,14 +2228,14 @@ is consistently "origin".
 **files touched** `template_code/ag/core/data_objects.py:147` (the `TypeAlias`) and `:185`,
 `:196`; `template_code/ag/core/locations.py:47`, `:87`;
 `template_code/ag/core/policy.py:54`, `:98`, `:105`;
-`template_code/ag/core/validation.py:53`, `:443`; `docs/refactor/01-terminology.md`;
+`template_code/ag/core/validation.py:53`, `:443`; `docs/terminology.md`;
 `docs/refactor/02-runtime.md` §2.2.
 
 **depends on** nothing.
 
 **decision refs** B8.
 
-**doc migration** resolves B8; updates the `01-terminology.md` entry.
+**doc migration** resolves B8; updates the `docs/terminology.md` entry.
 
 **why it is independent** This touches existing, working code for a naming reason only. It has no
 lineage dependency and can be done by anyone at any point — but it should be done *before* the
@@ -2379,7 +2389,7 @@ than decided, per the constraint on this pass.
    (B3). The lineage query module does not exist, so A20's home is provisional.
 
 2. **T1.3 and T4.11 have no test directory.** `tests/invariance/` is named in
-   `01-terminology.md` as a driving adapter but does not exist, and there is no adapter conformance
+   `docs/terminology.md` as a driving adapter but does not exist, and there is no adapter conformance
    path. Someone has to choose.
 
 3. **CLOSED — A14's capability check and the no-arcpy rule.** No exemption is needed. The probe
@@ -2404,7 +2414,7 @@ than decided, per the constraint on this pass.
    `StageInput` can come from a previous run, carrying ids from that run's `minter_id` space.
 
 5. **"Registry" is now overloaded three ways.** `StageRegistry` (existing), the dispatch registry
-   (A10.3), and the work-key registry (A9.5). Ruled **keep, qualified** — `01-terminology.md` §2
+   (A10.3), and the work-key registry (A9.5). Ruled **keep, qualified** — `docs/terminology.md` §2
    carries the collision entry and every use names which registry it means.
 
 6. **T3.2's module has no home.** The work-key API is not a port, not an operation and not a
@@ -2428,3 +2438,6 @@ than decided, per the constraint on this pass.
 10. **B8 — `LineageRoot` → `OriginRoot` is a code rename.** The collision ruling is settled but the
     work was not scoped; it touches `data_objects.py`, `locations.py`, `policy.py` and
     `validation.py`. Now **T7.2**.
+
+**deferred** B26, failure isolation for payloads: out of scope for the refactor, recorded for
+the orchestrator design.

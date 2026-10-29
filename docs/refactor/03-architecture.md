@@ -8,7 +8,7 @@ the source tree.
 
 **Does not own:** how the system executes — declarations, derivation, storage scopes, legality,
 partition correctness and validation are [02-runtime](02-runtime.md); vocabulary is
-[01-terminology](01-terminology.md); what changes in the current codebase is
+[terminology](../terminology.md); what changes in the current codebase is
 [04-migration](04-migration.md).
 
 **Graduates when:** `.importlinter` exists and passes in CI, and at least one port has an
@@ -87,7 +87,7 @@ Two consequences that are otherwise implicit. Legality
 of these a datum may reach. And the two lineage-root types are what "something crossing this
 boundary" means — `ExternalSource` inward only, `ProductIdentity` in both directions — which is
 why they are the only places a location is declared. Only the inward one carries a
-classification: what we produce is computed, never declared. ADR-0012.
+classification: what we produce is computed, never declared. ADR-0021 ST-D5.
 
 ### 1.2 What forces the design
 
@@ -125,23 +125,10 @@ engine are assumed temporary.
 | `ArchiveClient` | object storage transport | 2 |
 | `ClusterClient` | Kubernetes job lifecycle | 4–5 |
 
-**Geoprocessing splits into three ports because the migration must be incremental.** Most
-arcpy calls have near-1:1 equivalents elsewhere; the ones that do not are concentrated in the
-cartography toolbox, which is 78 of 2801 tool call sites here across 16 distinct tools
-([04-migration, Appendix A](04-migration.md#appendix-a-measurements)). That residue is small
-and enumerable, but each member needs hundreds to thousands of lines to reproduce. Full
-argument: ADR-0002.
-
-`TableOps` separates from `GeometryOps` because it is a different conversation (schema and
-rows, not geometry), because it applies to non-spatial lookup tables — a real case here,
-[02-runtime §2.3](02-runtime.md#23-stages) (non-spatial context inputs, sent whole to every pod) — and
-because `GeometryOps.add_field()` reads wrong.
-
-**Ports are `typing.Protocol`, not `ABC`**, so adapters satisfy them structurally and the
-dependency arrow never reverses.
-
-Conformance is asserted by an `if TYPE_CHECKING:` assignment at the bottom of each adapter
-module, plus one adapter × port matrix in `tests/static/`. ADR-0007.
+The ports and the split: ADR-0018 Direction 2 and 3, AR-D5, AR-D6. Protocols and conformance:
+ADR-0018 Direction 4, AR-D14. The cartography toolbox is 78 of 2801 tool call sites here
+across 16 distinct tools ([04-migration, Appendix A](04-migration.md#appendix-a-measurements)):
+the residue is small and enumerable.
 
 **Prior art:**
 
@@ -157,12 +144,13 @@ module, plus one adapter × port matrix in `tests/static/`. ADR-0007.
 
 **Decided.**
 
+Vocabulary from open standards: ADR-0018 AR-D12. The mappings below are reference.
+
 **Spatial predicates: OGC CQL2 / DE-9IM.** CQL2 defines standardized spatial predicate
 functions with an `s_` prefix over the DE-9IM relation model: `s_intersects`, `s_within`,
 `s_contains`, `s_touches`, `s_crosses`, `s_overlaps`, `s_disjoint`, `s_equals`, plus
-`s_dwithin` for distance. Our `Relation` enum takes these names, not arcpy's `OverlapType`
-strings. Two arcpy relations have no standard equivalent and are expressed as composites
-rather than as magic relations:
+`s_dwithin` for distance. Two arcpy relations have no standard equivalent and are expressed as
+composites rather than as magic relations:
 
 - `WITHIN_A_DISTANCE` → `s_dwithin`; keep as `Relation.DWITHIN` + `distance_m`.
 - `HAVE_THEIR_CENTER_IN` → not a relation but `s_within(centroid(geom), other)`. Express it
@@ -214,34 +202,22 @@ pressed, and each maps to a published literature trail for whoever reimplements 
 
 **Decided.**
 
-- **`ScratchHandle`, not `DataObject`.** `DataObject` is the declaration vocabulary —
-  identity, lineage, legality, remote location. Putting it in a port drags the planning
-  layer into every adapter. ADR-0003.
-- **Project enums, never vendor strings or bare booleans.** `end_cap: EndCap`, not
-  `flat: bool`.
-- **Keyword-only, explicit units in the name:** `width_m`, `distance_m`, `tolerance_m`.
+- Contract shape: ADR-0019 PC-1, PC-D1 and PC-D4.
 - **Every handle parameter carries a direction marker, and every output declares its row
   shape.** `In`, `Out`, `Mutates` and `ParentsOut` are `Annotated` aliases over `ScratchHandle`
   from `core/handles.py`; `@row_shape` on the Protocol method declares each `Out` on two axes,
   cardinality and ids, and names the input its rows derive from. The declaration is read from
   the Protocol, never from an adapter, and a static test over the surface rejects an undeclared
-  output, an unmarked handle and the illegal cells.
-  [ADR-0017](decisions/0017-row-shape-grammar.md).
+  output, an unmarked handle and the illegal cells. ADR-0017.
 
 ### 2.4 Selection is a predicate value
 
 **Decided.**
 
-Selection is a composable predicate, not a mutable held selection: a mutable selection is the
-arcpy idiom, not the concept, and exposing it would force every future adapter to emulate it.
-It is also lazier — nothing materializes until `select`. This collapses the largest idiom
-cluster in the codebase, the 616-site make-layer/select triple
+Selection as a predicate: ADR-0019 Direction 2, PC-2, PC-D5 to PC-D9 and PC-R1. It collapses
+the largest idiom cluster in the codebase, the 616-site make-layer/select triple
 ([04-migration, Appendix A](04-migration.md#appendix-a-measurements)), into two methods and a
-value type. ADR-0001.
-
-`count(input, where=...) -> int` answers "how many match" without materializing; comparing
-to zero covers the boolean case. A dedicated `any()` is not shipped: it only pays when a
-backend can short-circuit (SQL `EXISTS`, `LIMIT 1`), and arcpy's `GetCount` cannot.
+value type.
 
 The full vertical slice, port to call site — the only end-to-end example in these documents.
 
@@ -255,7 +231,7 @@ class Predicate:                             # `&`, `|`, `~` construct And/Or/No
     def __or__(self, other: Predicate) -> Predicate:  return Or((self, other))
     def __invert__(self) -> Predicate:                return Not(self)
 
-@dataclass(frozen=True)                      # attribute leaves (ADR-0015): Compare, IsIn,
+@dataclass(frozen=True)                      # attribute leaves (PC-D19): Compare, IsIn,
 class Compare(Predicate): field: FieldName; op: Comparison; value: AttributeValue  # IsNull,
 class Attr:               # RawAttr; built as Attr.cmp / Attr.in_ / Attr.is_null / Attr.raw
     @staticmethod
@@ -326,18 +302,18 @@ tb.geometry.select(
 `DWithin(water, 500)` and `Intersects(railway)` are constructors over
 `Spatial(relate_to=..., relation=Relation.DWITHIN, distance_m=500)` and
 `Relation.INTERSECTS`; `Attr.cmp` builds a `Compare` leaf, one of the four structured
-attribute leaves of ADR-0015 (the field names are NVDB's).
+attribute leaves of ADR-0019 PC-3 (the field names are NVDB's).
 
 ### 2.5 The other libraries
 
 **Decided.**
 
-- **networkx → `GraphOps`.** Build a graph from edges, connected components, shortest path,
-  MST, cycle detection. Currently `custom_tools/general_tools/graph.py`, `_UnionFind` inside
-  `line_topology.py`, and the river strahler modules.
-- **shapely → below the `Geometry` value type** ([§3.2](#32-the-geometry-value-type)). Domain
-  code manipulates `Geometry`; adapters use shapely, GEOS or arcpy geometry to implement it.
-- **numpy → not a port.** A data structure, not a capability.
+- **networkx → `GraphOps`** (ADR-0018 AR-D5, AR-D7). Build a graph from edges, connected
+  components, shortest path, MST, cycle detection. Currently
+  `custom_tools/general_tools/graph.py`, `_UnionFind` inside `line_topology.py`, and the
+  river strahler modules.
+- **shapely → below the `Geometry` value type** (ADR-0019 PC-D25).
+- **numpy → not a port.** A data structure, not a capability (ADR-0018 Direction 2).
 
 ### 2.6 Format swappability is the same seam
 
@@ -368,16 +344,11 @@ arcpy API: streaming row iterators with a vendor field-token language (`SHAPE@`,
 
 Target engines are vectorized, where a row loop is idiomatically wrong and orders of
 magnitude slower. Porting the cursor faithfully would make the slowest arcpy-shaped pattern
-part of the contract and guarantee a bad second adapter. `TableOps` has no cursor:
-
-| purpose | today | port |
-|---|---|---|
-| set a field from other fields | `UpdateCursor` loop | `calculate_field(input, field, expression)` |
-| read attributes for an algorithm | `SearchCursor` loop | `read_rows(input, fields) -> Iterable[Row]` |
-| build a dataset from computed rows | `InsertCursor` loop | `write_rows(output, schema, rows)` |
+part of the contract and guarantee a bad second adapter. No cursor: ADR-0019 Direction 4,
+PC-4, PC-D22 to PC-D24.
 
 These 483 sites are the most expensive part of the migration and the least mechanically
-translatable. ADR-0004.
+translatable.
 
 ### 3.2 The `Geometry` value type
 
@@ -388,10 +359,9 @@ Some logic manipulates geometry values in Python rather than whole datasets:
 inspects `.firstPoint` and `.lastPoint`, and inserts the results. That is our algorithm, and
 a dataset-level port gives it nowhere to live.
 
-The port vocabulary therefore includes a small immutable `Geometry` value type — geometry
-kind, coordinate sequence, CRS — that `read_rows` yields and `write_rows` accepts. Adapters
-convert at the boundary: `arcpy.Polyline(arcpy.Array(pts))` ↔ `LineString(coords)`,
-`.firstPoint`/`.lastPoint` ↔ `coords[0]`/`coords[-1]`.
+The value type: ADR-0019 PC-D25. Adapters convert at the boundary:
+`arcpy.Polyline(arcpy.Array(pts))` ↔ `LineString(coords)`, `.firstPoint`/`.lastPoint` ↔
+`coords[0]`/`coords[-1]`.
 
 ### 3.3 Decomposition: `line_topology.py`
 
@@ -463,14 +433,8 @@ location was corrected there on 2026-10-02). `networkx` is imported by
 [02-runtime §2.6](02-runtime.md#26-declarations-must-be-constructible-without-touching-data)
 (declarations constructible with no data and no arcpy) pass by construction.
 
-**`runtime/` and `orchestrator/` are the only places that choose which adapter to
-instantiate.** The fake is narrower still: `runtime/local.py` is its only importer, so
-`runtime/compose.py` takes port instances and never an adapter name.
-
-**`sources.py` and `products.py` must stay leaves.** They are only useful as the single place
-every identity is declared; one convenience import back into a pipeline makes them a cycle and
-the "read one file and see everything entering the project" property is gone silently. A
-docstring saying "leaf module" is not enforcement — a contract is. ADR-0012.
+Adapter choice: ADR-0018 AR-D11. The leaves: ADR-0021 ST-D3, ST-D7; a docstring saying "leaf
+module" is not enforcement — a contract is.
 
 ### 4.2 Enforcement
 
@@ -487,7 +451,7 @@ because a contract over an empty tree passes whether or not its names are right.
 | `layers`, `exhaustive = true` | 1 | the package stack, `core` at the bottom, `orchestrator` at the top; a new top-level package fails until it is given a layer |
 | `layers`, `exhaustive = true` | 2 | the stack inside `generalization/`, and a new domain module fails until it is placed |
 | `layers` | 5, 17 | the ports acyclic; inside each adapter, port packages over `support` over `_base` over the session or store |
-| `forbidden` | 3, 4, 11, 12, 13, 14a, 14b, 15 | what a package may not import, following indirect imports where the rule needs it (row 12: `operations/` never reaches a `DataObject`, ADR-0003) |
+| `forbidden` | 3, 4, 11, 12, 13, 14a, 14b, 15 | what a package may not import, following indirect imports where the rule needs it (row 12: `operations/` never reaches a `DataObject`, ADR-0019 PC-D1) |
 | `forbidden`, external packages | 8 | `arcpy` only under `adapters/arcpy/`, `networkx` in one module, `shapely` and the storage clients only under `adapters/` |
 | `protected` | 6, 9, 10, 18 | the allow-lists: who may import `adapters`, `staging`, `lineage`, `adapters.fakes`; written as `protected` rather than `forbidden` so that a new package is denied until added on purpose |
 | `independence` | 7, 16 | adapter packages do not import each other; the group modules of one port package do not import each other |
@@ -502,8 +466,8 @@ for `session.py` by the ArcPy stub; class contents by `tests/static/test_adapter
 
 **Decided.**
 
-An adapter may consume other ports — it is a client of those contracts, not of their
-implementations, and the composition root wires it:
+Port layering and thick adapters: ADR-0018 Direction 3, AR-D9, AR-D10. The composition root
+wires an adapter that consumes other ports:
 
 ```python
 class OpenCartographicOps:                       # satisfies CartographicOps
@@ -515,19 +479,12 @@ The eventual non-arcpy `CartographicOps` is written against `GeometryOps`/`Table
 `GraphOps`, not against GeoPandas directly, so it can be developed and tested while arcpy is
 still the backend.
 
-**Ports must stay acyclic**, linted: `CartographicOps` may use `GeometryOps`, `TableOps`,
-`GraphOps`; those three may never use `CartographicOps`.
-
-**An implementation that adapts nothing is not an adapter.** Our own displacement algorithm
-is domain logic that satisfies a port; the first one goes in a top-level `cartography/`,
-leaving `adapters/` to mean "wraps somebody else's library". Not created now.
 
 ### 4.4 How ports reach the code
 
 **Decided.**
 
-One bundled context object, resolved once by the pod entry point and passed explicitly,
-rather than three or four port parameters at 100+ call sites:
+How ports reach the code: ADR-0020 Direction 4, OP-3, OP-D19, OP-D20, OP-D23.
 
 ```python
 @dataclass(frozen=True)
@@ -538,30 +495,12 @@ class Toolbox:
     graph: GraphOps
 ```
 
-Explicit rather than ambient, because
-[02-runtime §2.4](02-runtime.md#24-operations) already passes `ScratchScope` as a parameter
-and two dependency-passing styles in one signature is worse than either consistently. The one
-exception is observability context, which carries no capability. ADR-0008.
 
 ### 4.5 The driving side
 
 **Decided.**
 
-All six declared ports are driven ports (secondary): the core calls out through them. The driving
-(primary) side is `orchestrator/cli.py`, the three `runtime/` pod entry points, and
-`tests/invariance/`.
-
-**A primary port is deliberately not formalised.** A formal primary port pays off when
-several actors drive the same core and logic would otherwise be duplicated across them. This
-system has one driving actor — Kubernetes, via the orchestrator — with no plan for a second.
-A Protocol around a single caller is ceremony.
-
-Naming the driving side still buys two things. It explains why `runtime/` and `orchestrator/`
-sit outside the `core → ports → adapters` layering rather than violating it: they are the
-adapters on the driving side, and a composition root is where the two sides meet. And it
-identifies `tests/invariance/` as a driving adapter, which is the structural reason the same
-pipeline can be driven at K=4 by a harness and K=16 by Kubernetes with no special-casing.
-Cockburn names a test harness as the natural primary adapter and isolated-mode execution as
+The driving side: ADR-0018 AR-D4; the primary port: AR-R5. Cockburn names a test harness as the natural primary adapter and isolated-mode execution as
 the pattern's ultimate payoff.
 
 ### 4.6 Adapter-internal scratch
@@ -590,20 +529,7 @@ intermediates become trail-bearing and dumpable. Port signatures do not change.
 
 **Decided.**
 
-This is batch geoprocessing: no users, no requests, no transactional store, no concurrency
-within a pod.
-
-Repository, Unit of Work, DDD aggregates, a service layer above operations, and a message bus
-are all deliberately absent. ADR-0010 records why, so nobody later "fixes" the omission.
-
-Two adopted deviations change how the rest of this document should be read:
-
-- **Ports are split by measured call-site frequency**
-  ([04-migration, Appendix A](04-migration.md#appendix-a-measurements)), not by "one reason to
-  change". The port boundary tracks a vendor library's surface, not a use case.
-- **Ports are coarse** (25–35 methods). Interface segregation applies when clients depend on
-  different subsets, and here every operation potentially uses any geometry method. This
-  weakens the textbook pressure behind **Q-B** — settle it by measurement, not by ISP.
+Adopted selectively: ADR-0018 Direction 1, AR-1, AR-D1, AR-D2, AR-R1, AR-R2.
 
 The K-invariance harness
 ([02-runtime §7.2](02-runtime.md#72-partition-invariance-is-testable--build-it-first)) is the
@@ -616,20 +542,9 @@ Partition correctness is data-shaped, and no architecture pattern addresses it.
 
 **Decided.**
 
-Reusable, object-agnostic, scale-agnostic functions that compose port calls. Called only
-from inside operations, never named in a stage, never scheduled.
+Helpers: ADR-0018 Direction 5, AR-4, AR-D20 to AR-D22, AR-R8. Scope passing: ADR-0020 OP-D20.
 
-**Membership test:** an operation is decorated with `@operation`, so calling it returns an
-`OperationCall` that can be named in a `Stage`; a helper is not decorated. It takes whatever
-arguments it needs and never appears in a stage.
-
-**Package name: `helpers/`.** ADR-0005.
-
-**Not `operations/shared/`.** That name is reserved for operations shared between objects,
-which [02-runtime §6.1](02-runtime.md#61-a-run-is-a-selection) (selecting a run by operation)
-requires.
-
-**Subject axis**, since helpers have no object or scale dimension: `lines.py` (segmentation,
+**Subject axis**, as reference: `lines.py` (segmentation,
 isolated removal, endpoints, angles), `polygons.py` (hole filling, small-feature
 elimination), `points.py` (rotation, placement), `topology.py` (node/edge construction,
 connectivity), `attributes.py` (field derivation above `TableOps`), `extents.py` (envelope
@@ -638,37 +553,29 @@ and partition geometry).
 **Promotion rule.** A helper used by one object's operations stays next to them in
 `operations/road/`; it moves here on a second caller from a different object.
 
-**Helpers take a `ScratchScope`** exactly like operations, deriving downward.
-
 ---
 
 ## 6. Observability
 
 **Decided.**
 
-**Logging is not a port.** It fails [§7.2](#72-ports-directory-conventions)'s test: stdlib, no
-vendor to adapt, no second implementation foreseeable. Transport of archived logs reuses
-`ArchiveClient`. Do not add a `LogPort`. ADR-0006.
+Observability is not a port: ADR-0018 Direction 5, AR-4, AR-D17 to AR-D19, AR-R7.
 
-**`observability/` is a horizontal leaf** — imports stdlib and `core.types` only; every
-package may import it except `core/`, which stays side-effect free
-([§4.1](#41-the-rules)).
-
-**Format is JSONL.** Text logs do not merge deterministically: multi-line tracebacks, no
-stable sort key.
+**JSONL**, because text logs do not merge deterministically: multi-line tracebacks, no stable
+sort key.
 
 **Every record carries** `run_id`, `stage_id`, `pod_role`, `partition_index`,
 `partition_count`, `operation`, `level`, `ts`, `seq`. `seq` is a per-process monotonic
 counter and exists because pod clocks drift, so `ts` alone yields a plausible but wrong
 interleaving. Sort key is `(ts, pod_key, seq)`: exact within a pod, approximate across pods.
-Fields live in a `ContextVar` and are injected by a logging filter, so an operation calls
-`log.info()` with no plumbing.
+The fields travel as ADR-0018 AR-D19 says, so an operation calls `log.info()` with no
+plumbing.
 
 **Two sinks per pod.** stdout is ground truth: the cluster collector receives it even if the
 pod dies. A local JSONL, uploaded via `ArchiveClient` in the pod's `finally`, is the
 mergeable artifact; an OOM-killed pod loses it. Layout
 `logs/{run_id}/{stage_id}/{pod_role}-{partition_index:04d}.jsonl`, merged to `merged.jsonl`
-beside it. **Merge lives in `orchestrator/`**, runs once a stage reaches a terminal state
+beside it. **Merge lives in `orchestrator/`** (ADR-0018 AR-D18), runs once a stage reaches a terminal state
 including failure, and is a streaming k-way merge (`heapq.merge`) since each per-pod file is
 already sorted.
 
@@ -785,21 +692,15 @@ reintroducing the scale binding being removed. And the ladder is an object-major
 
 **Decided.**
 
-Two different things carry the word ([ADR-0016](decisions/0016-stage-inputs-have-a-role-and-a-spatiality.md)).
+Two different things carry the word (ADR-0021 ST-D19, ST-D20).
 
 **Numeric symbol dimensions** are a project-wide Python resource: `LineToBufferSymbologyKwargs`
 already carries `sql_selection_query: dict` plus buffer factors, and `BufferDisplacementKwargs`
-carries `building_symbol_dimension: Dict[int, Tuple[int, int]]`. They reach operations as
-config dataclass fields that vary by pipeline (ADR-0013), never as a stage input. Deriving
-them from `.lyrx` files is possible later and not planned.
+carries `building_symbol_dimension: Dict[int, Tuple[int, int]]`.
 
 **`.lyrx` files** are what arcpy's own tools demand as an input format
 (`ApplySymbologyFromLayer`, `resolve_road_conflicts.py`'s `input_lyrx`). A `.lyrx` is a
-symbology blueprint with no data. It is a stage input with `DataType.SYMBOLOGY`: non-spatial,
-role CONTEXT, sent whole to every pod, declared as an `ExternalSource` with a settable location
-and a classification, and never baked into the container image, because some carry
-attributes that must stay on-prem and one rule for every table and symbology file is more
-consistent than a split by author. The arcpy adapter consumes the handle's path; a `.lyrx` a
+symbology blueprint with no data. The arcpy adapter consumes the handle's path; a `.lyrx` a
 tool writes (`lyrx_output`) is adapter-internal scratch unless a stage declares it. A
 `StyleOps` port is deferred until there is map rendering to produce; its adapters would be
 lyrx / SLD / QML.
@@ -846,24 +747,19 @@ multi-hour partitions.
 
 **Decided.**
 
-Intra-pod resume is not planned, and the blocker is structural rather than effort. The stage
-workspace is pod-local ([§4.1](#41-the-rules)), so resuming from operation N requires
-persisting inter-operation handles to run-scratch — the ~2K transfers plus merge that stage
-grouping ([02-runtime §2.3](02-runtime.md#23-stages)) exists to avoid.
-
-An operator whose runtime approaches its stage's re-run cost becomes its own stage. That is a
-declaration change, not an architecture change. **Q-G** is the measurement. ADR-0009.
+Resume granularity: ADR-0021 Direction 4, ST-3, ST-D23, ST-D24, ST-R6. **Q-G** is the
+measurement.
 
 ---
 
 ## 9. Open questions
 
-**Q-A — closed.** See ADR-0005.
+**Q-A — closed.** See ADR-0018 AR-D20.
 
 **Q-B — `CartographicOps`: one port or several?** Displacement and network selection share
 no vocabulary. If the reimplementations are independent projects, splitting per operator
 lets them land separately. Defer until at least one is reimplemented; settle by measurement,
-not by interface segregation ([§4.7](#47-deliberate-deviations)).
+not by interface segregation (ADR-0018 AR-D2).
 
 **Q-C — Does `GraphOps` know about datasets?** Whether graph construction is a `GraphOps`
 method taking a `ScratchHandle`, or a helper that calls `read_rows` and hands edges to a
@@ -875,41 +771,21 @@ of six methods. One caller is evidence that one caller was writable, not evidenc
 port's shape, and the strahler code this question actually turns on has not been read. Left
 open deliberately: if it wants graph and geometry together, the dataset-aware form costs a
 rewrite of that one helper and **no operation signature changes**, which is what makes
-deferring cheap rather than evasive.
+deferring cheap rather than evasive (ADR-0018 AR-D7).
 
-**Q-D — closed.** See [§7.5](#75-symbology) and ADR-0016: `.lyrx` files are `SYMBOLOGY` stage
-inputs from a settable location whoever authors them; numeric symbol dimensions are config
-dataclass fields (ADR-0013).
+**Q-D — closed.** See ADR-0021 ST-D19 and ST-D20.
 
-**Q-E — closed.** See ADR-0008.
+**Q-E — closed.** See ADR-0020 OP-3.
 
 **Q-F — The distribution name.** `ag` is a placeholder.
 
 **Q-G — Is a stage split cheaper than a re-run?** For an operator whose runtime approaches
-its stage's total re-run cost, measure whether promoting it to its own stage costs less than
-re-running the stage on failure. Measure once one operator is reimplemented
-([§8.3](#83-resume-granularity-is-the-stage)).
+its payload's re-run cost, measure whether promoting it to its own stage costs less than
+re-running the payload on failure. Measure once one operator is reimplemented
+(ADR-0021 ST-D24).
 
 ---
 
 ## 10. Decisions
 
-| ADR | decision |
-|---|---|
-| 0001 | Selection is a composable predicate value, not a held selection |
-| 0002 | Three geoprocessing ports rather than one or many |
-| 0003 | `ScratchHandle`, not `DataObject`, at the port boundary |
-| 0004 | `Geometry` as a value type; no cursor in the port |
-| 0005 | `helpers/` as the package name |
-| 0006 | Logging is not a port |
-| 0007 | Ports are `Protocol`, not `ABC` |
-| 0008 | `Toolbox` passed explicitly, not ambient |
-| 0009 | No intra-pod resume; the stage is the resume granularity |
-| 0010 | Hexagonal adopted selectively for a batch geoprocessing domain |
-| 0011 | Declarations come from signatures and class attributes, not from strings |
-| 0012 | Sources and products are declared once, centrally, as symbols |
-| 0013 | Tuning is base plus one delta, with no resolution mechanism |
-| 0014 | Runtime-injected parameters are recognised by a marker base class |
-| 0015 | Attribute predicates are structured leaves, with a counted escape hatch (amends 0001) |
-| 0016 | Stage inputs have a declared role and a derived spatiality |
-| 0017 | Row shape, the declared grammar of port outputs |
+The decisions: `docs/decisions/README.md`, the index.

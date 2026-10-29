@@ -6,7 +6,7 @@ THIS MODULE EXISTS TO BE IMPORTED UPWARD, which makes it the odd one out in `cor
 `Toolbox` lives in `ports/` and `core/` may not import it (03-architecture §4.1), but
 `@operation` must still recognise it as a parameter kind. Inverting the arrow settles
 it: `ports.toolbox` imports this, `core.operations` asks `issubclass(hint, Injected)`,
-and the name `Toolbox` never appears anywhere in `core/`. ADR-0014.
+and the name `Toolbox` never appears anywhere in `core/`. ADR-0020 OP-2.
 
 Nothing here imports anything, including from this package. It cannot: every layer
 above `core/` is allowed to depend on it.

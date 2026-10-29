@@ -12,7 +12,7 @@ because the namespace tells a reader which contract a call belongs to. Four fiel
 the archive and cluster clients are not here, so an operation cannot reach them and "an
 operation never sees a client" stays enforced by something. Constructed per pod by the
 runtime; nothing below it constructs one, and no operation can reach an adapter to swap it.
-ADR-0008, ADR-0014.
+ADR-0020 OP-3, OP-D13.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ class Toolbox(Injected):
     """The four processing ports, as one parameter.
 
     Inherits `Injected` so `@operation` admits `tb: Toolbox` as a parameter kind without
-    `core` ever importing this module, which it may not. ADR-0014.
+    `core` ever importing this module, which it may not. ADR-0020 OP-D11.
     """
 
     geometry: GeometryOps

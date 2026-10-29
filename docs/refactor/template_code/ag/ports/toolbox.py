@@ -1,6 +1,6 @@
 """TEMPLATE — not shipped. Target module: `src/ag/ports/toolbox.py`.
 
-The bundle of ports an operation is handed. ADR-0008.
+The bundle of ports an operation is handed. ADR-0020 OP-3.
 
 One context object resolved once by the pod entry point and passed explicitly, rather
 than three or four port parameters at 100+ call sites. Explicit rather than ambient,
@@ -37,7 +37,7 @@ class Toolbox(Injected):
     four ports onto one object is 50+ methods with real collisions - `count`, `delete`
     and `exists` each mean something different depending on which port they came from -
     and either breaks structural typing or means a hand-written forwarder per method,
-    which is the restated-signature disease ADR-0011 exists to remove. The namespace
+    which is the restated-signature disease ADR-0020 OP-1 exists to remove. The namespace
     also tells a reader which contract a call belongs to, which is the thing they need
     when asking what a second adapter would have to implement.
 
@@ -49,7 +49,7 @@ class Toolbox(Injected):
 
     INHERITS `Injected` so `@operation` admits `tb: Toolbox` as a parameter kind
     without `core/` ever importing this module - which it may not, and which would be
-    a cycle if it could. ADR-0014.
+    a cycle if it could. ADR-0020 OP-2.
     """
 
     geometry: GeometryOps
@@ -86,5 +86,5 @@ require a Toolbox while the declaration signature does not.
 
 `Toolbox | None = None` does not work in its place: it does not remove the need for a
 default, and it makes `tb.geometry` an optional-member-access error in every operation
-body. ADR-0014.
+body. ADR-0020 OP-2.
 """

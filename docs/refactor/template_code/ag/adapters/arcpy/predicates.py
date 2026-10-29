@@ -5,7 +5,7 @@ Compiling a `Predicate` tree onto arcpy's selection API. No `import arcpy` here.
 THE PROBLEM THIS SOLVES, AND WHY IT IS THE ADAPTER'S AND NOT THE MODEL'S
 
 `Predicate` is an ordinary boolean algebra: `And`, `Or`, `Not` over attribute and
-spatial leaves (ADR-0001). arcpy cannot evaluate one. It offers a running selection on
+spatial leaves (ADR-0019 PC-2). arcpy cannot evaluate one. It offers a running selection on
 a layer, mutated by successive calls, and it can invert only at a LEAF -
 `invert_where_clause` on SelectLayerByAttribute, `invert_spatial_relationship` on
 SelectLayerByLocation. There is no representation for `Not(And(a, b))`.
@@ -21,7 +21,7 @@ structural recursion with no rewrite at all:
     Not(term)  -> f"NOT ({compile(term)})"
     Spatial(h, Relation.DWITHIN, d) -> f"ST_DWithin(geom, {ref(h)}, {d})"
 
-That asymmetry is the argument for ADR-0001 in miniature: a port shaped after arcpy's
+That asymmetry is the argument for ADR-0019 PC-2 in miniature: a port shaped after arcpy's
 held selection would have made every future adapter emulate a mutable cursor over a
 layer, to buy nothing. A port shaped after the concept costs this one file.
 """

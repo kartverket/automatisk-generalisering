@@ -1,7 +1,7 @@
 # Lineage seam readiness — audit, 2026-09-17
 
 **Status:** STAGING finding. Nothing here is decided. It reports what `DECISIONS.md`, `TASKS.md`,
-`01-terminology.md` and `findings/n1_correspondence.md` say about the interface between the
+`docs/terminology.md` and `findings/n1_correspondence.md` say about the interface between the
 ports, the `@row_shape` declarations, the lineage layer and the toolbox call site, so that port
 and adapter design can start on settled ground. Proposed A-item and B-item text in §3 is
 paste-ready but unsigned.
@@ -415,7 +415,7 @@ Not blocking a signature; blocking the `dissolve` docstring, and cheap to write 
 
 ```
 **A9.11 A combining rule is evaluated over the parents of each output row.** The
-combining rule "reduces several parents' values to one" (01-terminology.md, combining rule);
+combining rule "reduces several parents' values to one" (docs/terminology.md, combining rule);
 parents are "which input rows produced an output row". So the value written on an output row of
 a `GROUP` method is the rule over that row's parents and nothing wider. Under `SINGLE_PART` a
 dissolve key that splits into several parts has several output rows, each with its own parent
