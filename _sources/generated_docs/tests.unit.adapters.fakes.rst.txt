@@ -1,0 +1,18 @@
+tests.unit.adapters.fakes package
+=================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.unit.adapters.fakes.memory
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.adapters.fakes
+   :members:
+   :show-inheritance:
+   :undoc-members:

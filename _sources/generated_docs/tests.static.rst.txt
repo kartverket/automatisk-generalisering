@@ -4,6 +4,22 @@ tests.static package
 Submodules
 ----------
 
+tests.static.test\_adapter\_groups module
+-----------------------------------------
+
+.. automodule:: tests.static.test_adapter_groups
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.static.test\_adr\_citations module
+----------------------------------------
+
+.. automodule:: tests.static.test_adr_citations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.static.test\_attr\_raw\_count module
 ------------------------------------------
 

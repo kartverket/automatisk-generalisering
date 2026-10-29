@@ -9,6 +9,25 @@ Subpackages
 
    tests.support.arcpy
 
+Submodules
+----------
+
+tests.support.cases module
+--------------------------
+
+.. automodule:: tests.support.cases
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.support.memory module
+---------------------------
+
+.. automodule:: tests.support.memory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

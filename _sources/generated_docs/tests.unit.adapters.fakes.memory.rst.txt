@@ -1,0 +1,45 @@
+tests.unit.adapters.fakes.memory package
+========================================
+
+Submodules
+----------
+
+tests.unit.adapters.fakes.memory.test\_geometry\_ops module
+-----------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.fakes.memory.test_geometry_ops
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.fakes.memory.test\_predicate\_eval module
+-------------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.fakes.memory.test_predicate_eval
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.fakes.memory.test\_store module
+---------------------------------------------------
+
+.. automodule:: tests.unit.adapters.fakes.memory.test_store
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.fakes.memory.test\_table\_ops module
+--------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.fakes.memory.test_table_ops
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.adapters.fakes.memory
+   :members:
+   :show-inheritance:
+   :undoc-members:
