@@ -346,7 +346,16 @@ and the memory seeder in `tests/support/`; ADR-0019 PC-D17 adapted (types, range
 the `LIKE` exception) and PC-D26 added, ADR-0020 OP-D14 corrected; `select` and
 `explode_multipart` state the distinct-path, feature-class and null-geometry preconditions. The
 facade spike moved to a fifth pull request, with the points to carry under T4.3. Evidence:
-`findings/slice_1a_memory_adapter_evidence.md`.
+`findings/slice_1a_memory_adapter_evidence.md`. **Fifth pull request, the facade spike
+(2026-10-29):** `lineage/facade.py`, a generic wrapper with no lineage logic: `PortCall`,
+`PortFacade` resolving names on the Protocol's member set and reading `__row_shape__` from the
+Protocol, `wrap` holding the one `cast` in `src/ag`; pyright strict clean with nothing else
+loosened, so the one-generic-facade design stands and 2a builds on it; the reachability test
+over the Toolbox's handle-bearing ports against the fake, the typing guard asserting the
+non-conformer is refused at the hand-out and recording the bare-call gap, the cast count over
+the syntax tree; A11.11's cost sentence reworded (the cast is in `wrap`, the composition root
+holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Evidence:
+`findings/slice_1a_facade_evidence.md`.
 
 **Contains.**
 - **The first pull request of 1a is the core lift, by the architect**: `core/types.py`,
@@ -1534,7 +1543,7 @@ in which the answer is needed.
 | risk | why it would be expensive late | cheapest early test | slice |
 |---|---|---|---|
 | The native index is not stable enough to key parents across the calls the pipeline makes (A9.2) | every parents mechanism and Path A of the id map key on it | conformance case: a `.gdb` input whose `OBJECTID`s are non-dense after deletes, run `select` then `explode_multipart`, assert `ORIG_FID` maps to the pre-call index set and `native_index` is unchanged | 1b |
-| A generic facade cannot satisfy a `Protocol` under pyright strict without per-method code (A11.11's "one cast") | 40 wrappers or a code generator | **now a deliverable of slice 1a**, not a risk to watch: a generic wrapper with no lineage logic, one `cast`, pyright strict clean, reaching every method, with the reachability test | 1a |
+| A generic facade cannot satisfy a `Protocol` under pyright strict without per-method code (A11.11's "one cast") | 40 wrappers or a code generator | **delivered in 1a, fifth pull request**: a generic wrapper with no lineage logic, one `cast`, pyright strict clean, reaching every method, with the reachability test | 1a |
 | `join_field` on a BIGINT key at national scale is slow or coerces (Path A) | the preferred ArcPy id-map path falls back to Path B everywhere | T0.1 case 8 and T0.6's `JoinField` timing at three sizes | 0, 2a |
 | The edge-emission model at the operation boundary mis-handles multi-output operations (A11.8) | forensic answers wrong on every ramp-like operation | the `resolve_ramps` unit test with the fake, written before the session | 3 |
 | `read_rows` as `Row` dataclasses over millions of rows is too slow or too large for the pipe and for parents mapping (A4.4) | the bulk-IO design under ADR-0019 PC-4 needs a columnar path | the capped, incrementally logged timing run of slice 1b over the 2.3 M-row national road set; if the projection is minutes for a partition-sized input, add a columnar read before slice 3 rather than after | 1b |

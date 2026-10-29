@@ -131,7 +131,7 @@ work but have different lifetimes and different modules.
 | 21 | T3.2 | Work-key API | not started |
 | 22 | T4.1 | `@row_shape` types and CI check | **done** (slice 1a) |
 | 23 | T4.2 | Declare shapes across the port surface | not started |
-| 24 | T4.3 | Generic lineage facade | not started |
+| 24 | T4.3 | Generic lineage facade | spike landed (slice 1a); open for 2a |
 | 25 | T4.5 | Disk-backed id map | not started |
 | 26 | T4.4 | Lineage-aware `read_rows` → `write_table` pipe | not started |
 | 27 | T4.6 | Mint, edges, and the per-operation sweep | not started |
@@ -1536,7 +1536,12 @@ re-propose.
 
 ## 24. T4.3 — Generic lineage facade
 
-**status:** not started
+**status:** spike landed, slice 1a, 2026-10-29: `src/ag/lineage/facade.py` (`PortCall`,
+`PortFacade`, `wrap` holding the one `cast` in `src/ag`), the reachability test over the
+Toolbox's handle-bearing ports, the typing guard and the cast count; pyright strict clean with
+nothing else loosened, so the one-generic-facade design stands. The task stays open for 2a: the
+lineage logic, the parents channel, the post-call assertion, and B27 (when the facade is
+wrapped). Evidence: `findings/slice_1a_facade_evidence.md`.
 
 **note (2026-10-28)** The facade spike moved out of the fourth pull request of slice 1a into
 its own, the fifth. Carried in from the review of the fourth: a pyright case that must fail where
@@ -1546,11 +1551,11 @@ union against a non-conforming adapter and reports nothing at the call; plain
 the syntax tree, `typing.cast` under any alias, not a text match; break-it cases for reading
 `__row_shape__` from the instance and for a second cast.
 
-**what done means** One facade class wraps each of the three handle-bearing ports, reading
+**what done means** One generic facade, applied to each handle-bearing port, reading
 `__row_shape__` **from the Protocol** rather than from the adapter instance, so adapters need no
-decoration and cannot drift. Composed in `runtime/`, with one `cast` at the composition root and a
-conformance test asserting every Protocol method is reachable through the facade. Operations see
-`tb.geometry` typed as `GeometryOps` and receive no injected `lineage`.
+decoration and cannot drift. Composed in `runtime/`, which calls `wrap` per port; the one `cast`
+is inside `wrap`, and a conformance test asserts every Protocol method is reachable through the
+facade. Operations see `tb.geometry` typed as `GeometryOps` and receive no injected `lineage`.
 
 Owns B10's facade-side pieces, if B10 is adopted:
 
@@ -1579,12 +1584,13 @@ predicate argument must be one of the current call's handles.
 on lines (parents resolution is not free there); T4.14 records the numbers and the revisit is
 listed under it. Nothing in this task's interface changes either way.
 
-**files touched** new `template_code/ag/lineage/` package,
-`template_code/ag/runtime/stage_entry.py`, `template_code/.importlinter`.
+**files touched** `src/ag/lineage/facade.py`, `tests/unit/lineage/test_facade.py`,
+`tests/static/test_facade_typing.py`, `tests/static/test_cast_count.py`,
+`tools/break_once/cases/facade.py`; in 2a, `src/ag/runtime/` for the composition.
 
 **depends on** T4.2.
 
-**decision refs** A11.11, A11.12, A11.15, A15.1, B10.
+**decision refs** A11.11, A11.12, A11.15, A15.1, B10, B27.
 
 **doc migration** A11.11 → the new ADR on lineage and `03-architecture.md` §4. A11.12 and A15.1 →
 the lineage module docstring — A15.1 is the cost model the facade is built around ("mint always,
