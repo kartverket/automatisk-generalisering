@@ -8,7 +8,8 @@ same returned rows. The walked set is pinned, so a broken discovery step cannot 
 an empty walk. The hooks see a `PortCall` carrying the Protocol's own `__row_shape__`,
 not one on the adapter (ADR-0017 RS-D10), and the whole call as keyword arguments
 (ADR-0019 PC-D4); `before` runs before the port writes, `after` after, and not at all
-when the port raises. A non-member raises `AttributeError`, a positional call raises
+when the port raises. A public name on the adapter but off the Protocol is not reachable
+and never called, a non-member raises `AttributeError`, a positional call raises
 `TypeError` naming the method, the facade has no public name of its own, and a
 non-Protocol is refused by `wrap`. The facade's private state is reachable as any Python
 attribute is; the lint rule on private member access is what keeps domain code from
@@ -246,12 +247,27 @@ def test_a_name_off_the_protocol_raises_and_the_facade_has_no_public_name() -> N
     copy.copy(facade)
 
 
+def test_a_public_name_on_the_adapter_but_off_the_protocol_is_not_reachable() -> None:
+    called: list[str] = []
+
+    class Extra(MemoryGeometryOps):
+        def extra(self) -> None:
+            called.append("extra")
+
+    facade = wrap(GeometryOps, Extra(store=MemoryStore()))
+    with pytest.raises(AttributeError, match="GeometryOps has no member 'extra'"):
+        getattr(facade, "extra")()
+    assert called == []
+
+
 def test_a_positional_call_fails_at_the_facade_naming_the_method() -> None:
     store = MemoryStore()
     seeded = seed(store, roads())
-    facade = wrap(GeometryOps, MemoryGeometryOps(store=store))
+    seen: list[PortCall] = []
+    facade = wrap(GeometryOps, MemoryGeometryOps(store=store), before=seen.append)
     with pytest.raises(TypeError, match="GeometryOps.select takes keyword arguments"):
         getattr(facade, "select")(seeded.handle)
+    assert seen == [], "no incomplete PortCall reaches a hook"
     with pytest.raises(PortContractError):
         store.read(memory_handle("kept"))
 
