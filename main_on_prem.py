@@ -210,11 +210,11 @@ def main():
     secret_key = os.environ.get("scality_pass")
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
+    job_completion_index = None
     if os.environ.get("JOB_COMPLETION_INDEX"):
-        area = os.environ.get("AREAS").split(",")[
-            int(os.environ.get("JOB_COMPLETION_INDEX"))
-        ]
-        os.environ["AREA"] = area
+        job_completion_index = os.environ.get("JOB_COMPLETION_INDEX")
+        os.environ["PARTITION_INDEX"] = job_completion_index
+
     args = parse_args()
     check_uid_gid()
     check_read_only()
@@ -243,17 +243,21 @@ def main():
         print_available()
         sys.exit()
 
+    if job_completion_index:
+        namespace = f"{args.scale}_{args.obj}_{job_completion_index}"
+    else:
+        namespace = f"{args.scale}_{args.obj}"
     checkpoint = ScalityPipelineCheckpoint(
         client=s3,
         bucket_name=bucket_name,
         gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),
-        namespace=f"{args.scale}_{args.obj}",
+        namespace=namespace,
     )
     handler(args, checkpoint=checkpoint)
 
-    if os.environ.get("AREA"):
+    if job_completion_index:
         object_name = (
-            f"outputs/{args.scale}_{args.obj}_{os.environ.get('AREA')}/output.gdb.zip"
+            f"outputs/{args.scale}_{args.obj}_{job_completion_index}/output.gdb.zip"
         )
     else:
         object_name = f"outputs/{args.scale}_{args.obj}/output.gdb.zip"

@@ -15,11 +15,8 @@ logger = logging.getLogger(__name__)
 
 NAMESPACE = os.environ.get("NAMESPACE")
 RUN_ID = os.environ.get("RUN_ID")
-AREAS = os.environ.get("PARTITION_STUDY_AREAS")
-AREAS_LIST = os.environ["PARTITION_STUDY_AREAS"].split(",")
-PARTITION_COUNT = 2
+PARTITION_COUNT = int(os.environ.get("PARTITION_COUNT"))
 PARALLELISM = int(os.environ.get("PARALLELISM", "2"))
-STAGE_NAME = os.environ.get("STAGE_NAME", "ramps")
 
 PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
 
@@ -42,8 +39,6 @@ def create_indexed_job(batch_api):
     """
     logger.info(f"Creating indexed Job: {PARTITION_JOB_NAME}")
     logger.info(f"Namespace: {NAMESPACE}")
-    logger.info(f"Partitions: {PARTITION_COUNT}")
-    logger.info(f"Areas: {AREAS_LIST}")
     logger.info(f"Parallelism: {PARALLELISM}")
 
     job = client.V1Job(
@@ -66,7 +61,7 @@ def create_indexed_job(batch_api):
             completions=PARTITION_COUNT,
             parallelism=PARALLELISM,
             backoff_limit=1,
-            ttl_seconds_after_finished=300,
+            ttl_seconds_after_finished=604800,
             template=client.V1PodTemplateSpec(
                 metadata=client.V1ObjectMeta(
                     labels={
@@ -79,7 +74,7 @@ def create_indexed_job(batch_api):
                     containers=[
                         client.V1Container(
                             name="worker",
-                            image="ghcr.io/kartverket/automatisk-generalisering:run_partition",
+                            image="ghcr.io/kartverket/automatisk-generalisering:on_prem",
                             image_pull_policy="Always",
                             env=[
                                 client.V1EnvVar(
@@ -95,20 +90,12 @@ def create_indexed_job(batch_api):
                                     ),
                                 ),
                                 client.V1EnvVar(
-                                    name="AREAS",
-                                    value=AREAS,
-                                ),
-                                client.V1EnvVar(
                                     name="ENVIRONMENT",
                                     value="on_prem",
                                 ),
                                 client.V1EnvVar(
                                     name="PIPELINE_NAME",
                                     value="n100_roads",
-                                ),
-                                client.V1EnvVar(
-                                    name="STAGE_NAME",
-                                    value=STAGE_NAME,
                                 ),
                             ],
                             env_from=[
@@ -332,6 +319,8 @@ def delete_partition_job(batch_api, wait: bool = True, timeout_seconds: int = 12
 def main():
     logger.info("Pipeline driver started")
     logger.info(f"Namespace: {NAMESPACE}")
+    logger.info(f"Partition count: {PARTITION_COUNT}")
+    logger.info(f"Parallelism: {PARALLELISM}")
     logger.info(f"Run ID: {RUN_ID}")
 
     load_kube_config()
