@@ -1,7 +1,11 @@
 import argparse
+import io
+import json
 import os
 import sys
 import logging
+import traceback
+from datetime import datetime, timezone
 from typing import Callable, Dict, Tuple
 from pathlib import Path
 import shutil
@@ -115,6 +119,45 @@ def upload_results_to_scality(
     )
 
     logger.info("ZIP upload completed.")
+
+
+def upload_error_to_scality(
+    client: Minio,
+    bucket_name: str,
+    error: BaseException,
+    job_completion_index: str,
+    prefix: str = "indexed_error_log",
+) -> None:
+    """
+    Upload the full error (message and traceback) as a JSON file to Scality.
+
+    Retried pods share the same completion index, so the pod name (HOSTNAME)
+    is part of the object name to keep every attempt's log.
+    Never raises: a failed upload must not mask the original pipeline error.
+    """
+    object_name = f"{prefix.strip('/')}/{job_completion_index}.json"
+    payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "job_completion_index": job_completion_index,
+        "error_type": type(error).__name__,
+        "error_message": str(error),
+        "traceback": "".join(
+            traceback.format_exception(type(error), error, error.__traceback__)
+        ),
+    }
+    data = json.dumps(payload, indent=2).encode("utf-8")
+
+    try:
+        client.put_object(
+            bucket_name=bucket_name,
+            object_name=object_name,
+            data=io.BytesIO(data),
+            length=len(data),
+            content_type="application/json",
+        )
+        logger.info("Uploaded error file to s3://%s/%s", bucket_name, object_name)
+    except Exception:
+        logger.exception("Failed to upload error file to Scality")
 
 
 def check_uid_gid():
@@ -253,7 +296,18 @@ def main():
         gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),
         namespace=namespace,
     )
-    handler(args, checkpoint=checkpoint)
+    try:
+        handler(args, checkpoint=checkpoint)
+    except Exception as e:
+        logger.exception(f"Pipeline failed: {e}")
+        if job_completion_index:
+            upload_error_to_scality(
+                client=s3,
+                bucket_name=bucket_name,
+                error=e,
+                job_completion_index=job_completion_index,
+            )
+        sys.exit(1)
 
     if job_completion_index:
         object_name = (

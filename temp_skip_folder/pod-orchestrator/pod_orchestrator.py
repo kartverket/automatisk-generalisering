@@ -60,7 +60,7 @@ def create_indexed_job(batch_api):
             completion_mode="Indexed",
             completions=PARTITION_COUNT,
             parallelism=PARALLELISM,
-            backoff_limit=1,
+            backoff_limit=3,
             ttl_seconds_after_finished=604800,
             template=client.V1PodTemplateSpec(
                 metadata=client.V1ObjectMeta(
