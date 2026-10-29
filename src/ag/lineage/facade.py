@@ -8,13 +8,14 @@ shape the Protocol declares for the method, and the keyword arguments of the cal
 How: `PortFacade.__getattr__` resolves a name on every attribute access and caches no
 forwarder; the Protocol's member set is read once, at construction. A name that is not a
 member raises `AttributeError`, so the facade exposes the Protocol surface and nothing
-else, and no public name reaches the inner port. The row shape is read from the Protocol class, never from the port, so an adapter
-carries no declaration and cannot drift from the contract (ADR-0017 RS-D10); a method
-with no declaration, a query, records an empty mapping. The forwarder takes keyword
-arguments only, so `PortCall.kwargs` is the whole call, which holds because port
-parameters are keyword-only (ADR-0019 PC-D4); a positional call fails at the facade
-before the port is reached. An exception from the port propagates and `after` is not
-called; whether the lineage layer needs to see a failed call is decided with it.
+else, and no public name reaches the inner port. The row shape is read from the Protocol
+class, never from the port, so an adapter carries no declaration and cannot drift from
+the contract (ADR-0017 RS-D10); a method with no declaration, a query, records an empty
+mapping. The forwarder takes keyword arguments only, so `PortCall.kwargs` is the whole
+call, which holds because port parameters are keyword-only (ADR-0019 PC-D4); a
+positional call fails at the facade before the port is reached. An exception from the
+port propagates and `after` is not called; whether the lineage layer needs to see a
+failed call is decided with it.
 
 Why: one generic facade rather than a delegating wrapper per method (ADR-0017 RS-R4),
 at the cost of one `cast`, in `wrap`, where the wrapper is handed out as the port type.
