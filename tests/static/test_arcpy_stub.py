@@ -2,15 +2,16 @@
 
 What: pyright, run on a probe this test writes under a configuration that puts the real
 stub on `extraPaths` exactly as `pyproject.toml` does for the adapter root, refuses a
-tool call, an `arcpy.env` access, the vendor exception name and a `from arcpy import`
-of a toolbox or of `env`, exactly those lines and no other, and reports nothing on a
-`getattr` or a `__dict__` lookup, which is why the static scan exists.
+tool call, an `arcpy.env` access, the vendor exception name and `from arcpy import env`,
+exactly those lines and no other, and reports nothing on a `getattr` or a `__dict__`
+lookup, which is why the static scan exists.
 
 How: the probe is written to a temporary directory with its own `pyrightconfig.json`, so
 it is never inside the hook's include list. The refused lines are the stub's own and
-are pinned on every interpreter. A second probe holds the two submodule-import forms,
-`import arcpy.management` and `from arcpy.management import Delete`: on an interpreter
-without ArcPy they are unresolved imports and the tool reached through one is not
+are pinned on every interpreter. A second probe holds the submodule-import forms,
+`import arcpy.management`, `from arcpy.management import Delete` and
+`from arcpy import management`: on an interpreter without ArcPy the first two are
+unresolved imports, the third is refused, and a tool reached through any of them is not
 refused, which is pinned here and is why the scan refuses those forms; on an
 interpreter with ArcPy they resolve past the stub, which the first run under the engine
 records, so that part is asserted only where ArcPy is absent. Evidenced like an import
@@ -40,7 +41,6 @@ UNRESOLVED = "reportMissingImports"
 PROBE = """\
 import arcpy
 from arcpy import env
-from arcpy import management
 
 arcpy.management.Delete("x")
 arcpy.env.workspace = "x"
@@ -55,9 +55,11 @@ SUBMODULE_PROBE = """\
 import arcpy
 import arcpy.management
 from arcpy.management import Delete
+from arcpy import management
 
 arcpy.management.Delete("x")
 Delete("y")
+management.Delete("z")
 """
 
 
@@ -101,7 +103,6 @@ def test_the_stub_refuses_tools_env_and_the_exception_name(tmp_path: Path) -> No
     refused = [line for rule, line in found if rule == REFUSED]
     assert refused == [
         line_of(PROBE, "from arcpy import env"),
-        line_of(PROBE, "from arcpy import management"),
         line_of(PROBE, 'arcpy.management.Delete("x")'),
         line_of(PROBE, 'arcpy.env.workspace = "x"'),
         line_of(PROBE, "except arcpy.ExecuteError:"),
@@ -127,4 +128,5 @@ def test_a_submodule_import_is_unresolved_and_its_tool_is_not_refused(
         line_of(SUBMODULE_PROBE, "import arcpy.management"),
         line_of(SUBMODULE_PROBE, "from arcpy.management import Delete"),
     ]
-    assert [line for rule, line in found if rule == REFUSED] == []
+    refused = [line for rule, line in found if rule == REFUSED]
+    assert refused == [line_of(SUBMODULE_PROBE, "from arcpy import management")]
