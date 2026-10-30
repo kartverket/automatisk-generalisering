@@ -137,7 +137,6 @@ def upload_error_to_scality(
     """
     object_name = f"{prefix.strip('/')}/{job_completion_index}.json"
     payload = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
         "job_completion_index": job_completion_index,
         "error_type": type(error).__name__,
         "error_message": str(error),
