@@ -4,8 +4,8 @@
 
 **Scope:** `ag/core/pipeline.py`, `ag/generalization/sources.py`,
 `ag/generalization/products.py`, `ag/core/locations.py`, and the stage-level model that
-fan-out, fan-in and resume implement. Absorbs A31.1 to A31.7. Partition ownership (A6, A7, A8)
-joins when it migrates.
+fan-out, fan-in and resume implement. Absorbs A31.1 to A31.7 and A32.1. Partition
+ownership (A6, A7, A8) joins when it migrates.
 
 Related: ADR-0019 (what crosses a port), ADR-0020 (operations), ADR-0017 (row shape; section
 RS-2 relates to ST-2).
@@ -57,6 +57,9 @@ import those leaves and never each other.
 - **ST-D10** `scale` and `object_name` are repeated on every `Stage`. A plan-time check
   confirms they agree with the pipeline, since the `Stage` is constructed before the
   `Pipeline`.
+- **ST-D25** Every source conforms to the one project environment standard, CRS, XY
+  resolution and XY tolerance, before any stage runs, and every product is in it; the
+  standard's values live in one place in code and are tuned outside this record.
 
 ## ST-2 Stage inputs: role and spatiality
 
@@ -160,3 +163,8 @@ goes into not losing pods.
   to be disrupted, for example by platform maintenance, after splitting the stage's
   operations across more stages and tuning the partition size have both been tried; the mint
   counter then becomes checkpoint state.
+- **ST-R7** Per-input environment values on `StageInput`. Every port method would carry an
+  environment, the fake would model reprojection, and parents pairs across inputs in
+  different CRSs would mean nothing. Reopened when adapting an input to the standard causes
+  a problem, for example a lossy transformation or a product that must be delivered in
+  another CRS.

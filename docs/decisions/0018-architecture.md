@@ -89,6 +89,14 @@ decides, per port, which adapter carries it.
   would pass every test today and be worthless on the day it is needed.
 - **AR-D13** An operation that needs several ports receives them as one `Toolbox`
   (ADR-0020 OP-3).
+- **AR-D23** Each adapter has one session module that alone executes engine tools, holds
+  engine-global state and names vendor exceptions; every other engine call in the adapter,
+  including the fetches and the conversions that touch engine objects, runs inside the
+  session's guard. No vendor exception leaves an adapter: a tool failure or a guarded call
+  leaves it only as `EngineError`, carrying what the engine was asked and its messages. How
+  an adapter enforces this is its own. The ArcPy adapter enforces the names with a
+  constrained type stub and the direct uses with a static scan; a call on an engine object
+  is a review rule.
 
 ## AR-3 Ports are Protocols
 
