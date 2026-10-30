@@ -1287,7 +1287,7 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 
 **depends on** T0.1, T3.3.
 
-**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7.
+**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7, A32.1, B28.
 
 **doc migration** A10.6, A10.7, A24, A24.1 → the ADR from T3.3 and `02-runtime.md` §6. A22 →
 `02-runtime.md` §6.1.

@@ -140,9 +140,12 @@ nothing else. The fix is not to widen the constrained stub and not to add a `stu
 `pyproject.toml`; either would apply a stub to code it was never written for. In
 `src/ag/adapters/arcpy/` and `tests/support/arcpy/` the editor shows the constrained ArcPy
 stub whichever interpreter is selected: a tool call, an `arcpy.env` access or
-`arcpy.ExecuteError` is an error there, exactly as in the hooks. The response is never to
-widen the stub for the editor's sake: a tool goes through `session.run_tool`, and a
-non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same pull
+`arcpy.ExecuteError` is an error there, exactly as in the hooks. A submodule import such as
+`import arcpy.management` is not held by the stub: under `.venv` it is an unresolved import;
+under the Pro interpreter it is expected to resolve past the stub to ArcPy itself, which the
+first run under the engine confirms; the source scan refuses that form on both. The response
+is never to widen the stub for the editor's sake: a tool goes through `session.run_tool`, and
+a non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same pull
 request. Elsewhere in `src/ag`, `tests/` and `tools/`, ArcPy is not importable at all, which
 is what CI relies on.
 
