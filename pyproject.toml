@@ -152,14 +152,15 @@ pythonVersion = "3.13"
 # interpreter's site-packages, so the constraint holds whichever interpreter an editor has
 # selected. The stub is never placed at `typings/`: pyright treats that directory as the
 # global stubPath and would apply the stub to every file in the repository, legacy
-# packages included (docs/contributing/toolchain.md).
+# packages included (docs/contributing/toolchain.md). An execution environment's
+# extraPaths replace the top-level ones, so each lists `src` again, after the stub.
 [[tool.pyright.executionEnvironments]]
 root = "src/ag/adapters/arcpy"
-extraPaths = ["stubs/arcpy_constrained"]
+extraPaths = ["stubs/arcpy_constrained", "src"]
 
 [[tool.pyright.executionEnvironments]]
 root = "tests/support/arcpy"
-extraPaths = ["stubs/arcpy_constrained"]
+extraPaths = ["stubs/arcpy_constrained", "tools", "src"]
 
 [[tool.pyright.executionEnvironments]]
 root = "."
