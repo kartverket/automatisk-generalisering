@@ -753,9 +753,10 @@ operation, not about lineage.
 
 Chosen: `@row_shape` declarations on the Protocol, read by one generic facade. The facade looks
 up `GeometryOps.dissolve.__row_shape__` — on the **Protocol**, not the adapter instance — so
-adapters need no decoration and cannot drift. Cost is one `cast` at the composition root plus a
-conformance test asserting every Protocol method is reachable; the same trade as
-`ports/toolbox.py`'s single load-bearing cast.
+adapters need no decoration and cannot drift. Cost is one `cast`, in the generic facade's
+`wrap`, where the wrapper is handed out as the port type; the composition root calls it per
+port and holds no cast of its own. A conformance test asserts every Protocol method is
+reachable through the facade.
 `destination:` same ADR as A11.1; `03-architecture.md` §4.
 
 **A11.12** Operations do **not** receive an injected `lineage`. The facade mints;
@@ -2563,3 +2564,11 @@ re-partitioned recursively into smaller partitions to isolate the source data th
 complete, and the isolated data is merged into one investigation file. Adopting this changes
 ST-3's "a payload that cannot complete fails the run".
 `destination:` the orchestrator design when taken up; `02-runtime.md` §6.4; ADR-0021 ST-3.
+
+**B27. When the facade is wrapped.** Opened 2026-10-29 with the facade spike. The facade needs a
+lineage session and the current call identity (A29) without ambient state (ADR-0018 AR-D19
+admits a `ContextVar` for logging context only). Either the runtime wraps each port once per
+run with an explicit session and the facade receives call identity per operation, or the stage
+entry point wraps per operation call. Decide before 2a's first lineage logic lands; the spike's
+hooks are a test seam and settle nothing here.
+`destination:` the lineage ADR when written; T4.3.
