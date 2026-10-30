@@ -9,6 +9,7 @@ Subpackages
 
    tests.unit.adapters
    tests.unit.core
+   tests.unit.lineage
    tests.unit.ports
    tests.unit.tools
 

@@ -1,0 +1,21 @@
+tests.unit.lineage package
+==========================
+
+Submodules
+----------
+
+tests.unit.lineage.test\_facade module
+--------------------------------------
+
+.. automodule:: tests.unit.lineage.test_facade
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.lineage
+   :members:
+   :show-inheritance:
+   :undoc-members:

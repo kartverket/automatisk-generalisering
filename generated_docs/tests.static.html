@@ -126,6 +126,30 @@
 <section id="tests-static-test-attr-raw-count-module">
 <h2>tests.static.test_attr_raw_count module<a class="headerlink" href="#tests-static-test-attr-raw-count-module" title="Link to this heading"></a></h2>
 </section>
+<section id="tests-static-test-cast-count-module">
+<h2>tests.static.test_cast_count module<a class="headerlink" href="#tests-static-test-cast-count-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.static.test_facade_typing">
+<span id="tests-static-test-facade-typing-module"></span><h2>tests.static.test_facade_typing module<a class="headerlink" href="#module-tests.static.test_facade_typing" title="Link to this heading"></a></h2>
+<p>The facade hands a wrapped port out as the port type, and pyright still refuses a
+non-conformer there: the one <cite>cast</cite> erases nothing a caller relies on.</p>
+<p>What: pyright, run on a fixture this test writes, accepts a conforming adapter through
+<cite>wrap</cite> and refuses a non-conforming one at the two places a wrapped port is handed out,
+an annotated assignment and a dataclass field, which is the Toolbox’s shape. The bare
+call, with no declared type to meet, reports nothing: the type variable solves to a union
+of the Protocol and the adapter, and the fixture records that gap by asserting the exact
+diagnostics, so a change in the checker that closes it is noticed.</p>
+<p>How: as <cite>test_row_shape_typing.py</cite>: the fixture is written to a temporary directory, so
+the non-conformer is never in the pyright hook’s include list, and it imports the real
+<cite>wrap</cite> through the installed package.</p>
+<p>Why: <cite>wrap</cite> returns <cite>P</cite> through a <cite>cast</cite>; if that <cite>cast</cite> or the signature ever erased the
+type, every hand-out would type-check and nothing in strict mode would say so.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.static.test_facade_typing.test_a_non_conformer_is_refused_where_the_wrapped_port_is_handed_out">
+<span class="sig-prename descclassname"><span class="pre">tests.static.test_facade_typing.</span></span><span class="sig-name descname"><span class="pre">test_a_non_conformer_is_refused_where_the_wrapped_port_is_handed_out</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmp_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/tests/static/test_facade_typing.html#test_a_non_conformer_is_refused_where_the_wrapped_port_is_handed_out"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.static.test_facade_typing.test_a_non_conformer_is_refused_where_the_wrapped_port_is_handed_out" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="tests-static-test-import-contracts-module">
 <h2>tests.static.test_import_contracts module<a class="headerlink" href="#tests-static-test-import-contracts-module" title="Link to this heading"></a></h2>
 </section>

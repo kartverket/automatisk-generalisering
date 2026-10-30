@@ -28,6 +28,22 @@ tests.static.test\_attr\_raw\_count module
    :show-inheritance:
    :undoc-members:
 
+tests.static.test\_cast\_count module
+-------------------------------------
+
+.. automodule:: tests.static.test_cast_count
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.static.test\_facade\_typing module
+----------------------------------------
+
+.. automodule:: tests.static.test_facade_typing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.static.test\_import\_contracts module
 -------------------------------------------
 
