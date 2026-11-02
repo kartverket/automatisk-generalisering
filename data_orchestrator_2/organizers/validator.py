@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 # Libraries
 import arcpy
@@ -16,13 +15,9 @@ from data_orchestrator_2.constants.domains import (
     DomainScale,
     get_allowed_values,
 )
-from data_orchestrator_2.constants.featureClasses import FeatureClassName
+from data_orchestrator_2.constants.fileStructures import FeatureClassName
 from data_orchestrator_2.organizers.path_factory import get_feature_class_full_path
-from data_orchestrator_2.schemas.datasets import DatasetDefinition
-from data_orchestrator_2.schemas.fields import FieldUsage
-
-if TYPE_CHECKING:
-    from data_orchestrator_2.runtime.pipeline import Pipeline
+from data_orchestrator_2.schemas.datasets import DatasetDefinition, FieldUsage
 
 ######################
 # Classes
@@ -107,7 +102,7 @@ class ValidationResult:
 ######################
 
 
-def validate_pipeline(pipeline: Pipeline, usage: FieldUsage) -> list[ValidationResult]:
+def validate_pipeline(pipeline, usage: FieldUsage) -> list[ValidationResult]:
     """Inspect every dataset for rows and fields expected at a usage stage.
 
     Missing optional fields are allowed; inspection does not alter the dataset.
@@ -180,7 +175,7 @@ def validate_columns_in_dataset(
     with arcpy.da.SearchCursor(
         get_feature_class_full_path(
             scale=dataset.source_scale,
-            object_type=dataset.object_type,
+            gdb_name=dataset.gdb_name,
             feature_class_name=dataset.name,
         ),
         ["OBJECTID", *field_names],

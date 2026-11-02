@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from data_orchestrator_2.constants.common import FieldType
-from data_orchestrator_2.constants.values import ColumnName
+from data_orchestrator_2.constants.columns import ColumnName
+from data_orchestrator_2.constants.general import FieldType
 
 ######################
 # Classes

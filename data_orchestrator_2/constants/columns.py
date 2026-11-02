@@ -11,6 +11,7 @@ class ColumnName(StrEnum):
     ADRESSENAVN = "adressenavn"
     ADSKILTELOP = "adskiltelop"
     ADSKILTELOPNUMMER = "adskiltelopnummer"
+    AREAL_M2 = "areal_m2"
     EIER = "EIER"
     ER_KRYSSNINGSPUNKT = "er_kryssningspunkt"
     FELTOVERSIKT = "feltoversikt"

@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from data_orchestrator_2.constants.common import Scale
-from data_orchestrator_2.constants.featureClasses import FeatureClassName, GDBName
+from data_orchestrator_2.constants.fileStructures import FeatureClassName, GDBName
+from data_orchestrator_2.constants.general import Scale
 from paths import GIS_FILES_ROOT
 
 ######################

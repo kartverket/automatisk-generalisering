@@ -4,16 +4,18 @@ import time
 
 import arcpy
 
-from data_orchestrator_2.constants.values import ColumnName
-from data_orchestrator_2.runtime.dataset import Dataset
-from data_orchestrator_2.schemas.fields import FieldDefinition, FieldUsage
+from data_orchestrator_2.constants.columns import ColumnName
+
+# from data_orchestrator_2.runtime.dataset import Dataset
+from data_orchestrator_2.schemas.datasets import FieldUsage
+from data_orchestrator_2.schemas.fields import FieldDefinition
 
 ######################
 # Functionality
 ######################
 
 
-def remove_none_geometry(dataset: Dataset) -> None:
+def remove_none_geometry(dataset) -> None:
     """Delete null-geometry rows and report the number removed."""
     layer = arcpy.management.MakeFeatureLayer(dataset.path, "del_lyr")
     try:
@@ -32,7 +34,7 @@ def remove_none_geometry(dataset: Dataset) -> None:
     )
 
 
-def clean_columns(dataset: Dataset, usage: FieldUsage) -> None:
+def clean_columns(dataset, usage: FieldUsage) -> None:
     """Delete unregistered or unused fields, preserving required and system fields.
 
     Combined usage flags retain fields marked for any requested stage.
@@ -55,7 +57,7 @@ def clean_columns(dataset: Dataset, usage: FieldUsage) -> None:
     )
 
 
-def prepare_final_dataset(dataset: Dataset) -> None:
+def prepare_final_dataset(dataset) -> None:
     """Perform final cleanup and preparation of the dataset before use."""
     remove_none_geometry(dataset)
     clean_columns(dataset, FieldUsage.OUTPUT)
