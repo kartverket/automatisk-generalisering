@@ -1849,6 +1849,19 @@ input has two independent properties.
 
 ---
 
+## A32. One environment standard
+
+*Decided 2026-10-30.* One project environment standard, CRS, XY resolution and XY tolerance; raw
+data is converted to it, with data-quality controls, before any stage runs; per-input
+environment values on `StageInput` are not pursued.
+
+**A32.1** moved to ADR-0021 ST-D25 and ST-R7 (2026-10-30); the ArcPy session's environment
+constant holds the values, tuned by the team outside this record.
+
+`destination:` ADR-0021.
+
+---
+
 # B. Open
 
 These are **not settled**. Nothing below should be treated as a decision.
@@ -2572,3 +2585,11 @@ run with an explicit session and the facade receives call identity per operation
 entry point wraps per operation call. Decide before 2a's first lineage logic lands; the spike's
 hooks are a test seam and settle nothing here.
 `destination:` the lineage ADR when written; T4.3.
+
+**B28. Where input conforms to the environment standard.** Opened 2026-10-30 with the ArcPy
+session; the standard itself is A32. Open: (a) where the standard's values live once the
+ingest step needs them outside the ArcPy adapter, since the CRS also crosses the port as
+`Schema.geometry_crs`; (b) whether the session also refuses a non-conforming input to a
+tool, and whether the session environment's implicit reprojection of tool outputs stays as
+a second line or is turned off once ingest conforms every input.
+`destination:` the ingest task and the session docstring when decided.

@@ -579,9 +579,10 @@ beside it. **Merge lives in `orchestrator/`** (ADR-0018 AR-D18), runs once a sta
 including failure, and is a streaming k-way merge (`heapq.merge`) since each per-pod file is
 already sorted.
 
-**arcpy tool messages bypass Python logging.** `adapters/arcpy/session.py` drains
-`arcpy.GetMessages()` after each tool call and re-emits them tagged with the tool name — one
-wrapper rather than 483 call sites, a direct payoff of the port design.
+**arcpy tool messages bypass Python logging.** `adapters/arcpy/session.py` reads each tool's
+messages from its result object after a successful call and logs them tagged with the tool
+name, and drains the process-wide `arcpy.GetMessages()` buffer into the `EngineError` when a
+tool fails — one wrapper rather than 483 call sites, a direct payoff of the port design.
 
 **Volume rule:** per-feature at DEBUG, per-operation at INFO. `timing_decorator` emits
 structured duration records, so the merged log doubles as a partition profile.
