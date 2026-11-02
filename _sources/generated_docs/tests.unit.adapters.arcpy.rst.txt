@@ -1,0 +1,21 @@
+tests.unit.adapters.arcpy package
+=================================
+
+Submodules
+----------
+
+tests.unit.adapters.arcpy.test\_session module
+----------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_session
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.adapters.arcpy
+   :members:
+   :show-inheritance:
+   :undoc-members:

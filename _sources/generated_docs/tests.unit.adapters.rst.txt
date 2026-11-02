@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   tests.unit.adapters.arcpy
    tests.unit.adapters.fakes
 
 Module contents
