@@ -20,6 +20,7 @@ major_road_crossings = "major_road_crossings"
 vegsperring_file = "vegsperring"
 road_cleaning = "road_cleaning"
 ramps_file = "ramps"
+fan_in_file = "fan_in"
 
 """
 first_generalization = "first_generalization"
@@ -978,6 +979,26 @@ class Road_N100(Enum):
 
     road_cleaning_output__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=road_cleaning, description="road_cleaning_output"
+    )
+
+    # ========================================
+    #                                FAN IN
+    # ========================================
+
+    fan_in___root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="root"
+    )
+
+    fan_in___road_output___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="road_output"
+    )
+
+    fan_in___unclaimed___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="unclaimed"
+    )
+
+    fan_in___unmatched___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="unmatched"
     )
 
 
