@@ -9,6 +9,10 @@ from collections import deque, defaultdict
 from typing import Dict, Set, List, Any, Iterable, Optional
 
 from composition_configs.logic_config import RoadRampsConfig
+from generalization.n100.road.ramps_dangles import (
+    create_dangle_points,
+    remove_new_dangles,
+)
 
 
 @timing_decorator
@@ -29,6 +33,7 @@ def main(
     output_points_fc = ramp_config.output_points
 
     arcpy.management.CopyFeatures(input_fc, files["copy_of_input"])
+    create_dangle_points(files["copy_of_input"], files["baseline_dangles"])
 
     relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400)
 
@@ -59,6 +64,12 @@ def main(
         out_feature_class=output_roads_fc,
     )
     arcpy.management.Append([files["new_lines"]], output_roads_fc)
+    remove_new_dangles(
+        lines_fc=output_roads_fc,
+        baseline_dangles_fc=files["baseline_dangles"],
+        dangle_points_fc=files["dangle_points"],
+        removed_fc=ramp_config.output_removed_dangles,
+    )
     arcpy.management.CopyFeatures(
         in_features=files["potential_points"],
         out_feature_class=output_points_fc,
@@ -105,6 +116,10 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     new_lines = wfm.build_file_path(file_name="new_lines", file_type="gdb")
     ramp_group = wfm.build_file_path(file_name="ramp_group", file_type="gdb")
     endpoint_group = wfm.build_file_path(file_name="endpoint_group", file_type="gdb")
+    dangle_points = wfm.build_file_path(file_name="dangle_points", file_type="gdb")
+    baseline_dangles = wfm.build_file_path(
+        file_name="baseline_dangles", file_type="gdb"
+    )
 
     return {
         "copy_of_input": copy_of_input,
@@ -121,6 +136,8 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "new_lines": new_lines,
         "ramp_group": ramp_group,
         "endpoint_group": endpoint_group,
+        "dangle_points": dangle_points,
+        "baseline_dangles": baseline_dangles,
     }
 
 
@@ -3905,6 +3922,7 @@ if __name__ == "__main__":
             input_roads=Road_N100.data_preparation___road_single_part_2___n100_road.value,
             output_roads=Road_N100.ramps__generalized_ramps__n100_road.value,
             output_points=Road_N100.ramps__potential_points__n100_road.value,
+            output_removed_dangles=Road_N100.ramps__removed_dangles__n100_road.value,
             wfm_config=core_config.WorkFileConfig(
                 root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
             ),
