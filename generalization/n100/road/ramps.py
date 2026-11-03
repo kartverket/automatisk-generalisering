@@ -9,10 +9,7 @@ from collections import deque, defaultdict
 from typing import Dict, Set, List, Any, Iterable, Optional
 
 from composition_configs.logic_config import RoadRampsConfig
-from generalization.n100.road.ramps_dangles import (
-    create_dangle_points,
-    remove_new_dangles,
-)
+from generalization.n100.road.ramps_dangles import remove_new_dangles
 
 
 @timing_decorator
@@ -33,7 +30,6 @@ def main(
     output_points_fc = ramp_config.output_points
 
     arcpy.management.CopyFeatures(input_fc, files["copy_of_input"])
-    create_dangle_points(files["copy_of_input"], files["baseline_dangles"])
 
     relevant_roads_layer = select_relevant_roads(files=files, buffer_size=400)
 
@@ -66,6 +62,7 @@ def main(
     arcpy.management.Append([files["new_lines"]], output_roads_fc)
     remove_new_dangles(
         lines_fc=output_roads_fc,
+        ramp_reference_fc=input_fc,
         baseline_dangles_fc=files["baseline_dangles"],
         dangle_points_fc=files["dangle_points"],
         removed_fc=ramp_config.output_removed_dangles,
