@@ -63,8 +63,6 @@ def main(
     remove_new_dangles(
         lines_fc=output_roads_fc,
         ramp_reference_fc=input_fc,
-        baseline_dangles_fc=files["baseline_dangles"],
-        dangle_points_fc=files["dangle_points"],
         removed_fc=ramp_config.output_removed_dangles,
     )
     if (
@@ -119,10 +117,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     new_lines = wfm.build_file_path(file_name="new_lines", file_type="gdb")
     ramp_group = wfm.build_file_path(file_name="ramp_group", file_type="gdb")
     endpoint_group = wfm.build_file_path(file_name="endpoint_group", file_type="gdb")
-    dangle_points = wfm.build_file_path(file_name="dangle_points", file_type="gdb")
-    baseline_dangles = wfm.build_file_path(
-        file_name="baseline_dangles", file_type="gdb"
-    )
 
     return {
         "copy_of_input": copy_of_input,
@@ -139,8 +133,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "new_lines": new_lines,
         "ramp_group": ramp_group,
         "endpoint_group": endpoint_group,
-        "dangle_points": dangle_points,
-        "baseline_dangles": baseline_dangles,
     }
 
 
