@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TypeAlias, TypeVar, cast, get_protocol_members
 
-from ag.ports.row_shape import Rows
+from ag.ports.row_shape import Rows, declared_rows
 
 P = TypeVar("P")
 
@@ -41,7 +41,7 @@ P = TypeVar("P")
 class PortCall:
     """One call through the facade, as the hooks see it.
 
-    `rows` is the method's `__row_shape__` as the Protocol declares it, empty for a query.
+    `rows` is the method's row shape as the Protocol declares it, empty for a query.
     `kwargs` is every argument of the call, since the forwarder admits no positional one.
     """
 
@@ -97,7 +97,8 @@ class PortFacade:
                 "the Protocol surface and nothing else."
             )
         declaration = getattr(self._protocol, name)
-        rows: Mapping[str, Rows] = getattr(declaration, "__row_shape__", _NO_ROWS)
+        declared = declared_rows(declaration)
+        rows: Mapping[str, Rows] = _NO_ROWS if declared is None else declared
         target: Callable[..., object] = getattr(self._port, name)
 
         def forward(*args: object, **kwargs: object) -> object:

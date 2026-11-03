@@ -1,12 +1,12 @@
-"""Preconditions more than one method group of the in-memory adapter checks.
+"""Preconditions more than one method group of an adapter checks; engine-free.
 
 What: `distinct_paths`, which refuses a call whose handles share a path.
 
 Why: a method that reads a dataset and writes the same path would replace its input
 mid-call, and two outputs on one path would leave only the second; the port docstrings
-state the precondition and the adapter enforces it before touching the store. Paths are
-compared, not handles, because handle equality leaves the path out and the store is
-keyed by path.
+state the precondition and every adapter enforces it before touching its store or its
+engine. Paths are compared, not handles, because handle equality leaves the path out
+and a dataset is addressed by path.
 """
 
 from __future__ import annotations

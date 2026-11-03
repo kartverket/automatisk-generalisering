@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import os
 
+from ag.adapters._shared.preconditions import distinct_paths
 from ag.adapters.fakes.memory._base import MemoryPortBase
 from ag.adapters.fakes.memory.store import Dataset
-from ag.adapters.fakes.memory.support.preconditions import distinct_paths
 from ag.core.errors import ErrorContext
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType

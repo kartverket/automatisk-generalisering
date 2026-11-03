@@ -13,7 +13,7 @@ from ..engine import Case
 
 FIELD_VALUES = "src/ag/adapters/_shared/field_values.py"
 STORE = "src/ag/adapters/fakes/memory/store.py"
-PRECONDITIONS = "src/ag/adapters/fakes/memory/support/preconditions.py"
+PRECONDITIONS = "src/ag/adapters/_shared/preconditions.py"
 PREDICATE_EVAL = "src/ag/adapters/fakes/memory/support/predicate_eval.py"
 SELECTION = "src/ag/adapters/fakes/memory/geometry_ops/selection.py"
 SHAPE = "src/ag/adapters/fakes/memory/geometry_ops/shape.py"

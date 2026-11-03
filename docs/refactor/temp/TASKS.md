@@ -782,8 +782,10 @@ which is why T1.4 is started early and left in flight rather than blocking.
 **status:** port half done, slice 1a, 2026-10-07: `Attr.cmp`, `Attr.in_`, `Attr.is_null`,
 `Attr.raw` and the leaf types in `ports/predicates.py`, the pinned call-site count in
 `tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0019 PC-3.
-Remaining: the adapter compile with identifier quoting (slice 1b) and the three call-site
-rewrites in the example fixtures (slice 1c).
+The adapter compile landed in slice 1b, 2026-11-02: `adapters/arcpy/support/predicate_compiler.py`,
+attribute leaves to a WHERE clause with identifier quoting through the engine's own rule; the
+spatial leaf is not compiled yet. Remaining: the three call-site rewrites in the example fixtures
+(slice 1c).
 *(merged: the A17.4 and A17.7 call-site fixes)*
 
 **what done means**
@@ -1832,7 +1834,10 @@ removed.
 
 ## 32. T4.10 — Adapter parents capability
 
-**status:** not started
+**status:** record published, slice 1b, 2026-11-02: `ports/capabilities.py`, `capabilities()` in
+each adapter package, one member `explode_multipart`, pinned by `tests/static/test_capabilities.py`;
+A14.1's record and refusal moved to ADR-0019 PC-D28 and PC-D29. The per-method sources and the
+plan-time check remain.
 
 **what done means** The arcpy adapter honours `parents=` (A11.15) on every method it names in its
 capability record, and publishes that record at construction as a set of method names declared

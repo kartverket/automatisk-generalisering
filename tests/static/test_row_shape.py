@@ -36,7 +36,7 @@ import pytest
 
 import ag.ports
 from ag.core.handles import Direction, ScratchHandle
-from ag.ports.row_shape import Rows
+from ag.ports.row_shape import Rows, declared_rows
 
 QUERIES: frozenset[str] = frozenset({"TableOps.read_rows"})
 """Methods outside the grammar: they return values and write no handle. Listed, not
@@ -109,7 +109,7 @@ def _classify(fn: Any, owner: str) -> Method:
             unmarked.append(param)
         elif found:
             directions[param] = found.pop()
-    rows = getattr(fn, "__row_shape__", None)
+    rows = declared_rows(fn)
     return Method(
         name=f"{owner}.{fn.__name__}",
         directions=directions,

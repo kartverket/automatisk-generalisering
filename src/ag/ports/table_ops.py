@@ -83,7 +83,10 @@ class TableOps(Protocol):
         cursor property worth keeping, since these datasets do not fit in memory twice.
         `fields` is required: which fields "all of them" means is engine-dependent, and a
         default can be added later without breaking a caller. `geometry` is read whenever
-        the dataset has one. A query, outside the row-shape grammar: it writes no handle.
+        the dataset has one. `fields` names attribute fields the dataset declares; the
+        native index, the geometry and a length or area the engine maintains are not
+        among them, and an undeclared name is a `PortContractError`, raised before any
+        row is read. A query, outside the row-shape grammar: it writes no handle.
 
         Why: bulk reads carrying `Row` values replace the row loops, so the slowest
         engine-shaped pattern never becomes part of the contract. ADR-0019 PC-D22.

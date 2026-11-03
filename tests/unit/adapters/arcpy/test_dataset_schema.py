@@ -1,0 +1,101 @@
+"""Describe to `Schema` on the fake engine: the type map, the omitted engine fields, the
+unrepresentable fields, the refusals and the one lookup. ADR-0019 PC-D17, PC-D27."""
+
+from __future__ import annotations
+
+import pytest
+
+from ag.adapters.arcpy.session import ArcpySession
+from ag.adapters.arcpy.support.dataset_schema import declared_field, describe
+from ag.core.types import DataType
+from ag.ports.attributes import Field, FieldType
+from ag.ports.errors import EngineError, PortContractError
+from tests.support.cases import lookup, roads
+from tests.support.fake_arcpy import FakeDataset, FakeEngine, FakeField, seed
+
+
+def test_the_five_types_map_and_the_engine_fields_are_left_out(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    engine.datasets["roads"].area_name = "Shape_Area"
+
+    dataset = describe(session, "roads")
+
+    assert dataset.schema == roads().schema
+    assert dataset.schema.data_type is DataType.FEATURE_CLASS
+    assert dataset.schema.geometry_crs == "EPSG:25833"
+    assert dataset.engine_fields == {"OBJECTID", "Shape", "Shape_Length", "Shape_Area"}
+    assert dataset.all_fields[:4] == ("OBJECTID", "Shape", "Shape_Length", "Shape_Area")
+    assert dataset.unrepresentable == {}
+
+
+def test_a_table_has_no_crs_and_only_the_native_index_as_engine_field(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, lookup(), path="lookup")
+    dataset = describe(session, "lookup")
+    assert dataset.schema == lookup().schema
+    assert dataset.engine_fields == {"OBJECTID"}
+    assert dataset.schema.fields[0] == Field("code", FieldType.SHORT)
+
+
+def test_an_unrepresentable_field_is_recorded_not_refused_until_named(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    engine.datasets["roads"].fields += [
+        FakeField("GlobalID", "GlobalID"),
+        FakeField("big", "BigInteger"),
+    ]
+
+    dataset = describe(session, "roads")
+
+    assert dataset.schema == roads().schema
+    assert dataset.unrepresentable == {"GlobalID": "GlobalID", "big": "BigInteger"}
+    assert declared_field(dataset, "rank") == Field("rank", FieldType.LONG)
+    with pytest.raises(PortContractError, match="'big' is a BigInteger field"):
+        declared_field(dataset, "big")
+    with pytest.raises(PortContractError, match="'colour' is not a field of 'roads'"):
+        declared_field(dataset, "colour")
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"has_z": True}, "carries Z values"),
+        ({"has_m": True}, "carries M values"),
+        ({"epsg": 0}, "no EPSG code"),
+        ({"data_type": "FeatureDataset"}, "not a table or a feature class"),
+    ],
+    ids=["z", "m", "no-epsg", "not-a-dataset"],
+)
+def test_describe_refuses_before_any_row(
+    engine: FakeEngine,
+    session: ArcpySession,
+    change: dict[str, object],
+    message: str,
+) -> None:
+    seed(engine, roads(), path="roads")
+    for name, value in change.items():
+        setattr(engine.datasets["roads"], name, value)
+    with pytest.raises(PortContractError, match=message) as caught:
+        describe(session, "roads")
+    assert caught.value.context.handle == "roads"
+    assert engine.cursors_opened == 0
+
+
+def test_a_describe_failure_is_an_engine_error_naming_the_call(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    with pytest.raises(EngineError) as caught:
+        describe(session, "missing")
+    assert caught.value.context.tool == "Describe"
+    assert isinstance(caught.value.__cause__, RuntimeError)
+
+
+def test_an_empty_engine_name_is_not_an_engine_field(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    engine.datasets["fc"] = FakeDataset("FeatureClass", [FakeField("a", "Double")])
+    assert "" not in describe(session, "fc").engine_fields
