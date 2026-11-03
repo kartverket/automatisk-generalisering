@@ -41,6 +41,38 @@ class FieldCatalog:
         name=ColumnName.ADSKILTELOPNUMMER,
         datatype=FieldType.STRING,
     )
+    AREAL_M2 = FieldDefinition(
+        name=ColumnName.AREAL_M2,
+        datatype=FieldType.DOUBLE,
+    )
+    AREALBRUK_HOVEDKLASSE = FieldDefinition(
+        name=ColumnName.AREALBRUK_HOVEDKLASSE,
+        datatype=FieldType.STRING,
+    )
+    AREALBRUK_UNDERKLASSE = FieldDefinition(
+        name=ColumnName.AREALBRUK_UNDERKLASSE,
+        datatype=FieldType.STRING,
+    )
+    AREALDEKKE = FieldDefinition(
+        name=ColumnName.AREALDEKKE,
+        datatype=FieldType.STRING,
+    )
+    BRUKTFLAGG = FieldDefinition(
+        name=ColumnName.BRUKTFLAGG,
+        datatype=FieldType.LONG,
+    )
+    DGFCD_FEATURE_531 = FieldDefinition(
+        name=ColumnName.DGFCD_FEATURE_531,
+        datatype=FieldType.STRING,
+    )
+    DGFCD_FEATURE_ALPHA = FieldDefinition(
+        name=ColumnName.DGFCD_FEATURE_ALPHA,
+        datatype=FieldType.STRING,
+    )
+    DGIF_CCODE = FieldDefinition(
+        name=ColumnName.DGIF_CCODE,
+        datatype=FieldType.STRING,
+    )
     EIER = FieldDefinition(
         name=ColumnName.EIER,
         datatype=FieldType.STRING,
@@ -57,9 +89,37 @@ class FieldCatalog:
         name=ColumnName.FUNKSJON,
         datatype=FieldType.STRING,
     )
+    GRUNNFORHOLD = FieldDefinition(
+        name=ColumnName.GRUNNFORHOLD,
+        datatype=FieldType.STRING,
+    )
+    GRUNNKART_KILDE = FieldDefinition(
+        name=ColumnName.GRUNNKART_KILDE,
+        datatype=FieldType.STRING,
+    )
+    HAVAREALBRUKSTEDSBUNDET = FieldDefinition(
+        name=ColumnName.HAVAREALBRUKSTEDSBUNDET,
+        datatype=FieldType.STRING,
+    )
+    HAVFISKERIBRUK = FieldDefinition(
+        name=ColumnName.HAVFISKERIBRUK,
+        datatype=FieldType.STRING,
+    )
     HIERARKI = FieldDefinition(
         name=ColumnName.HIERARKI,
         datatype=FieldType.SHORT,
+    )
+    HOYDE = FieldDefinition(
+        name=ColumnName.HOYDE,
+        datatype=FieldType.STRING,
+    )
+    ID = FieldDefinition(
+        name=ColumnName.ID,
+        datatype=FieldType.LONG,
+    )
+    KOMID = FieldDefinition(
+        name=ColumnName.KOMID,
+        datatype=FieldType.LONG,
     )
     KONNEKTERINGSLENKE = FieldDefinition(
         name=ColumnName.KONNEKTERINGSLENKE,
@@ -68,6 +128,10 @@ class FieldCatalog:
     KRYSSDEL = FieldDefinition(
         name=ColumnName.KRYSSDEL,
         datatype=FieldType.DOUBLE,
+    )
+    LRV = FieldDefinition(
+        name=ColumnName.LRV,
+        datatype=FieldType.LONG,
     )
     MEDIUM = FieldDefinition(
         name=ColumnName.MEDIUM,
@@ -86,6 +150,30 @@ class FieldCatalog:
         name=ColumnName.OBJTYPE,
         datatype=FieldType.STRING,
     )
+    OKOSYSTEMTYPE_1 = FieldDefinition(
+        name=ColumnName.OKOSYSTEMTYPE_1,
+        datatype=FieldType.STRING,
+    )
+    OKOSYSTEMTYPE_2 = FieldDefinition(
+        name=ColumnName.OKOSYSTEMTYPE_2,
+        datatype=FieldType.STRING,
+    )
+    OKOSYSTEMTYPE_3 = FieldDefinition(
+        name=ColumnName.OKOSYSTEMTYPE_3,
+        datatype=FieldType.STRING,
+    )
+    OKOSYSTEMTYPE_KODE = FieldDefinition(
+        name=ColumnName.OKOSYSTEMTYPE_KODE,
+        datatype=FieldType.STRING,
+    )
+    OMKRETS = FieldDefinition(
+        name=ColumnName.OMKRETS,
+        datatype=FieldType.DOUBLE,
+    )
+    PARTITION_SELECTION_FIELD = FieldDefinition(
+        name=ColumnName.PARTITION_SELECTION_FIELD,
+        datatype=FieldType.LONG,
+    )
     RUTEMERKING = FieldDefinition(
         name=ColumnName.RUTEMERKING,
         datatype=FieldType.STRING,
@@ -95,17 +183,34 @@ class FieldCatalog:
         datatype=FieldType.GEOMETRY,
         system_field=True,
     )
+    SHAPE_AREA = FieldDefinition(
+        name=ColumnName.SHAPE_AREA,
+        datatype=FieldType.DOUBLE,
+        system_field=True,
+    )
     SHAPE_LENGTH = FieldDefinition(
         name=ColumnName.SHAPE_LENGTH,
         datatype=FieldType.DOUBLE,
         system_field=True,
     )
+    SKOGBONITET = FieldDefinition(
+        name=ColumnName.SKOGBONITET,
+        datatype=FieldType.STRING,
+    )
     SIDEANLEGGSDEL = FieldDefinition(
         name=ColumnName.SIDEANLEGGSDEL,
         datatype=FieldType.DOUBLE,
     )
+    SSBAREALBRUK_KILDE = FieldDefinition(
+        name=ColumnName.SSBAREALBRUK_KILDE,
+        datatype=FieldType.STRING,
+    )
     SUBTYPEKODE = FieldDefinition(
         name=ColumnName.SUBTYPEKODE,
+        datatype=FieldType.STRING,
+    )
+    TRESLAG = FieldDefinition(
+        name=ColumnName.TRESLAG,
         datatype=FieldType.STRING,
     )
     TYPE = FieldDefinition(

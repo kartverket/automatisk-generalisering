@@ -11,6 +11,7 @@ class FieldType(StrEnum):
     BOOLEAN = "Boolean"
     DOUBLE = "Double"
     GEOMETRY = "Geometry"
+    LONG = "Long"
     OID = "OID"
     SHORT = "Short"
     STRING = "String"

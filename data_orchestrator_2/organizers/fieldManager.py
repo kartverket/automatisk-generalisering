@@ -5,16 +5,14 @@ import time
 import arcpy
 
 from data_orchestrator_2.constants.columns import ColumnName
-
-# from data_orchestrator_2.runtime.dataset import Dataset
-from data_orchestrator_2.schemas.datasets import FieldUsage
-from data_orchestrator_2.schemas.fields import FieldDefinition
+from data_orchestrator_2.schemas.datasets import DatasetField, FieldUsage
 
 ######################
 # Functionality
 ######################
 
 
+# TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline
 def remove_none_geometry(dataset) -> None:
     """Delete null-geometry rows and report the number removed."""
     layer = arcpy.management.MakeFeatureLayer(dataset.path, "del_lyr")
@@ -34,6 +32,7 @@ def remove_none_geometry(dataset) -> None:
     )
 
 
+# TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline
 def clean_columns(dataset, usage: FieldUsage) -> None:
     """Delete unregistered or unused fields, preserving required and system fields.
 
@@ -45,7 +44,7 @@ def clean_columns(dataset, usage: FieldUsage) -> None:
     removed = 0
 
     for actual in actual_fields:
-        definition: FieldDefinition | None = definitions.get(actual.name.casefold())
+        definition: DatasetField | None = definitions.get(actual.name.casefold())
         if actual.required or (definition is not None and definition.system_field):
             continue
         if definition is None or not definition.isUsedFor(usage):
@@ -57,6 +56,7 @@ def clean_columns(dataset, usage: FieldUsage) -> None:
     )
 
 
+# TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline
 def prepare_final_dataset(dataset) -> None:
     """Perform final cleanup and preparation of the dataset before use."""
     remove_none_geometry(dataset)

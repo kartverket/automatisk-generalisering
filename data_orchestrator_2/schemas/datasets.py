@@ -114,6 +114,83 @@ def used_for(
 class DatasetCatalog:
     """Named dataset definitions available to pipelines."""
 
+    AREALDEKKE = DatasetDefinition(
+        name=FeatureClassName.AREALDEKKE,
+        source_scale=Scale.RAW_DATA,
+        gdb_name=GDBName.AREA,
+        geometry_type=GeometryType.POLYGON,
+        fields=(
+            used_for(FieldCatalog.AREAL_M2, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.AREALBRUK_HOVEDKLASSE,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(
+                FieldCatalog.AREALBRUK_UNDERKLASSE,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(FieldCatalog.AREALDEKKE, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.BRUKTFLAGG, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.DGFCD_FEATURE_531, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.DGFCD_FEATURE_ALPHA,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(FieldCatalog.DGIF_CCODE, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.GRUNNFORHOLD, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.GRUNNKART_KILDE, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.HAVAREALBRUKSTEDSBUNDET,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(
+                FieldCatalog.HAVFISKERIBRUK, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(FieldCatalog.HOYDE, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.ID, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.KOMID, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.LRV, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.OBJECTID, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.OKOSYSTEMTYPE_1, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.OKOSYSTEMTYPE_2, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.OKOSYSTEMTYPE_3, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.OKOSYSTEMTYPE_KODE,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(FieldCatalog.OMKRETS, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.PARTITION_SELECTION_FIELD,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(FieldCatalog.SHAPE, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(FieldCatalog.SHAPE_AREA, FieldUsage.INPUT | FieldUsage.PROCESSING),
+            used_for(
+                FieldCatalog.SHAPE_LENGTH, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.SKOGBONITET, FieldUsage.INPUT | FieldUsage.PROCESSING
+            ),
+            used_for(
+                FieldCatalog.SSBAREALBRUK_KILDE,
+                FieldUsage.INPUT | FieldUsage.PROCESSING,
+            ),
+            used_for(FieldCatalog.TRESLAG, FieldUsage.INPUT | FieldUsage.PROCESSING),
+        ),
+    )
+
     ELVEG_AND_STI = DatasetDefinition(
         name=FeatureClassName.ELVEG_AND_STI,
         source_scale=Scale.RAW_DATA,
