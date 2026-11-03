@@ -420,24 +420,19 @@ def _select_border_line_oids(
                 f"Border selection kept growing past {max_distance_m} m without "
                 f"reaching a gap of {step_m} m with no new points"
             )
-        arcpy.management.SelectLayerByLocation(
+        count = _select_by_location(
             in_layer=points_layer,
             overlap_type="WITHIN_A_DISTANCE",
             select_features=border_lines,
             search_distance=f"{distance_m} Meters",
-            selection_type="NEW_SELECTION",
         )
-        count = _count(points_layer)
         logger.info(f"Border search at {distance_m:.2f} m selected {count} points")
         if count == previous_count or (previous_count is None and count == 0):
             break
         previous_count = count
         step += 1
 
-    if count == 0:
-        return set()
-    with arcpy.da.SearchCursor(points_layer, ["ORIG_FID"]) as cursor:
-        return {oid for (oid,) in cursor}
+    return _selected_line_oids(points_layer=points_layer, count=count)
 
 
 def _deduplicate(candidates: list[_LineSignature], tolerance_m: float) -> set[int]:
@@ -471,14 +466,12 @@ def _select_main_line_oids(
         points_layer = layers.make(
             in_features=centre_points, where_clause=f"{SRC_INDEX_FIELD} = {index}"
         )
-        arcpy.management.SelectLayerByLocation(
-            in_layer=points_layer,
-            overlap_type="WITHIN",
-            select_features=cell_layer,
-            selection_type="NEW_SELECTION",
+        count = _select_by_location(
+            in_layer=points_layer, overlap_type="WITHIN", select_features=cell_layer
         )
-        with arcpy.da.SearchCursor(points_layer, ["ORIG_FID"]) as cursor:
-            oids.update(oid for (oid,) in cursor)
+        if count == 0:
+            logger.warning(f"No centre points of output {index} within cell {index}")
+        oids |= _selected_line_oids(points_layer=points_layer, count=count)
     return oids
 
 
@@ -490,27 +483,65 @@ def _select_dropped_cell_line_oids(
     dropped for having no counted features.
     """
     dropped_cells_layer = layers.make(in_features=fan_in_feature)
-    arcpy.management.SelectLayerByLocation(
+    dropped_count = _select_by_location(
         in_layer=dropped_cells_layer,
         overlap_type="ARE_IDENTICAL_TO",
         select_features=fan_out_feature,
-        selection_type="NEW_SELECTION",
-        invert_spatial_relationship="INVERT",
+        invert=True,
     )
-    if _count(dropped_cells_layer) == 0:
+    if dropped_count == 0:
         return set()
 
     points_layer = layers.make(in_features=centre_points)
-    arcpy.management.SelectLayerByLocation(
+    count = _select_by_location(
         in_layer=points_layer,
         overlap_type="WITHIN",
         select_features=dropped_cells_layer,
-        selection_type="NEW_SELECTION",
     )
-    if _count(points_layer) == 0:
+    return _selected_line_oids(points_layer=points_layer, count=count)
+
+
+def _select_by_location(
+    in_layer: str,
+    overlap_type: str,
+    select_features: str,
+    search_distance: str | None = None,
+    invert: bool = False,
+) -> int:
+    """
+    What:
+        Makes a new selection on in_layer and returns how many features it selected.
+
+    Why:
+        A selection that selects nothing leaves the layer without a selection, and
+        GetCount and cursors then see every feature. The count is read from the
+        tool result instead, and callers must not read the layer when it is 0.
+    """
+    result = arcpy.management.SelectLayerByLocation(
+        in_layer=in_layer,
+        overlap_type=overlap_type,
+        select_features=select_features,
+        search_distance=search_distance,
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT" if invert else "NOT_INVERT",
+    )
+    return int(result.getOutput(2))
+
+
+def _selected_line_oids(points_layer: str, count: int) -> set[int]:
+    """
+    Returns the ORIG_FID of the selected centre points, or none when count is 0.
+    """
+    if count == 0:
         return set()
     with arcpy.da.SearchCursor(points_layer, ["ORIG_FID"]) as cursor:
-        return {oid for (oid,) in cursor}
+        oids = {oid for (oid,) in cursor}
+    if len(oids) != count:
+        raise RuntimeError(
+            f"Read {len(oids)} centre points from {points_layer}, but the selection "
+            f"reported {count}"
+        )
+    return oids
 
 
 def _unmatched_line_oids(
@@ -585,10 +616,6 @@ def _write_output(all_lines: str, state: str, output: str) -> None:
         where_clause=f"{_STATE_FIELD} = '{state}'",
     )
     arcpy.management.DeleteField(in_table=output, drop_field=[_STATE_FIELD])
-
-
-def _count(feature: str) -> int:
-    return int(arcpy.management.GetCount(feature)[0])
 
 
 def _log_summary(

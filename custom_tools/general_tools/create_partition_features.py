@@ -176,17 +176,22 @@ def _count_selected(
     layer, overlap_type: str, search_distance: str | None = None
 ) -> int:
     """
-    Selects the features in layer that relate to the current cell and returns how
-    many were selected.
+    What:
+        Selects the features in layer that relate to the current cell and returns how
+        many were selected.
+
+    Why:
+        A selection that selects nothing leaves the layer without a selection, and
+        GetCount then counts every feature. The count is read from the tool result.
     """
-    arcpy.management.SelectLayerByLocation(
+    result = arcpy.management.SelectLayerByLocation(
         in_layer=layer,
         overlap_type=overlap_type,
         select_features=_CELL_LAYER,
         search_distance=search_distance,
         selection_type="NEW_SELECTION",
     )
-    return _count(layer)
+    return int(result.getOutput(2))
 
 
 def _count(feature) -> int:

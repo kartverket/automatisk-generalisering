@@ -1,3 +1,5 @@
+import os
+
 import arcpy
 
 from custom_tools.general_tools import custom_arcpy
@@ -98,17 +100,41 @@ class StudyAreaSelector:
             arcpy.management.MakeFeatureLayer(
                 in_features=input_file, out_layer=input_layer
             )
-            arcpy.management.SelectLayerByLocation(
+            result = arcpy.management.SelectLayerByLocation(
                 in_layer=input_layer,
                 overlap_type="WITHIN_A_DISTANCE",
                 select_features=partition_layer,
                 search_distance=f"{self.halo_m} Meters",
                 selection_type="NEW_SELECTION",
             )
+            # A selection of nothing leaves the layer without a selection, which
+            # CopyFeatures would read as every feature.
+            if int(result.getOutput(2)) == 0:
+                self._create_empty_copy(input_file=input_file, output_file=output_file)
+                print(f"Nothing within partition {self.partition_index}: {output_file}")
+                continue
             arcpy.management.CopyFeatures(
                 in_features=input_layer, out_feature_class=output_file
             )
             print(f"Selected partition {self.partition_index} into {output_file}")
+
+    @staticmethod
+    def _create_empty_copy(input_file: str, output_file: str) -> None:
+        """
+        Creates output_file as an empty feature class with the schema of input_file.
+        """
+        description = arcpy.Describe(input_file)
+        if arcpy.Exists(output_file):
+            arcpy.management.Delete(output_file)
+        arcpy.management.CreateFeatureclass(
+            out_path=os.path.dirname(output_file),
+            out_name=os.path.basename(output_file),
+            geometry_type=description.shapeType.upper(),
+            template=input_file,
+            has_m="ENABLED" if description.hasM else "DISABLED",
+            has_z="ENABLED" if description.hasZ else "DISABLED",
+            spatial_reference=description.spatialReference,
+        )
 
     def use_global_files(self):
         for input_file, output_file in self.input_output_file_dict.items():
