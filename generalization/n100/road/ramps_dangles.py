@@ -16,18 +16,26 @@ logger = logging.getLogger(__name__)
 _MATCH_TOLERANCE = "5 Meters"
 _NEW_DANGLES_LAYER = "new_dangles_layer"
 _DANGLING_LINES_LAYER = "dangling_lines_layer"
+_RAMP_REFERENCE_LAYER = "ramp_reference_layer"
+_RAMP_WHERE_CLAUSE = "typeveg = 'rampe'"
+_REMOVABLE_WHERE_CLAUSE = "objtype = 'VegSenterlinje'"
+_DANGLE_SOURCE_LAYER = "dangle_source_layer"
 
 
 def create_dangle_points(lines_fc: str, dangle_points_fc: str) -> None:
-    """Write the dangle end points of `lines_fc` to `dangle_points_fc`."""
+    """Write the dangle end points of the `VegSenterlinje` lines in `lines_fc` to `dangle_points_fc`."""
     if arcpy.Exists(dangle_points_fc):
         arcpy.management.Delete(dangle_points_fc)
 
+    arcpy.management.MakeFeatureLayer(
+        lines_fc, _DANGLE_SOURCE_LAYER, _REMOVABLE_WHERE_CLAUSE
+    )
     arcpy.management.FeatureVerticesToPoints(
-        in_features=lines_fc,
+        in_features=_DANGLE_SOURCE_LAYER,
         out_feature_class=dangle_points_fc,
         point_location="DANGLE",
     )
+    arcpy.management.Delete(_DANGLE_SOURCE_LAYER)
 
 
 def _select_new_dangles(dangle_points_fc: str, baseline_dangles_fc: str) -> int:
@@ -41,6 +49,23 @@ def _select_new_dangles(dangle_points_fc: str, baseline_dangles_fc: str) -> int:
         selection_type="NEW_SELECTION",
         invert_spatial_relationship="INVERT",
     )
+    return int(arcpy.management.GetCount(_NEW_DANGLES_LAYER).getOutput(0))
+
+
+def _select_start_dangles(dangle_points_fc: str, ramp_reference_fc: str) -> int:
+    """Make a layer of the dangles on `typeveg = 'rampe'` lines and return how many there are."""
+    arcpy.management.MakeFeatureLayer(
+        ramp_reference_fc, _RAMP_REFERENCE_LAYER, _RAMP_WHERE_CLAUSE
+    )
+    arcpy.management.MakeFeatureLayer(dangle_points_fc, _NEW_DANGLES_LAYER)
+    arcpy.management.SelectLayerByLocation(
+        in_layer=_NEW_DANGLES_LAYER,
+        overlap_type="WITHIN_A_DISTANCE",
+        select_features=_RAMP_REFERENCE_LAYER,
+        search_distance=_MATCH_TOLERANCE,
+        selection_type="NEW_SELECTION",
+    )
+    arcpy.management.Delete(_RAMP_REFERENCE_LAYER)
     return int(arcpy.management.GetCount(_NEW_DANGLES_LAYER).getOutput(0))
 
 
@@ -69,6 +94,7 @@ def _move_dangling_lines(lines_fc: str, removed_fc: str) -> int:
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=_DANGLING_LINES_LAYER,
         selection_type="SUBSET_SELECTION",
+        where_clause=_REMOVABLE_WHERE_CLAUSE,
     )
     count = int(arcpy.management.GetCount(_DANGLING_LINES_LAYER).getOutput(0))
     if count:
@@ -82,37 +108,57 @@ def _move_dangling_lines(lines_fc: str, removed_fc: str) -> int:
 
 def remove_new_dangles(
     lines_fc: str,
+    ramp_reference_fc: str,
     baseline_dangles_fc: str,
     dangle_points_fc: str,
     removed_fc: str,
     max_iterations: int = 20,
+    dangle_iterations_prefix: str | None = None,
 ) -> int:
-    """Repeatedly remove dangling lines that were not dangles in the baseline.
+    """Remove the lines at the starting dangles, then repeatedly remove newly exposed dangles.
 
-    Removing a dangling line can expose a new dangle on the line it was attached
-    to, so the search repeats until no new dangle (or no removable line) is left.
+    The starting dangles are the dangles of `lines_fc` on `typeveg = 'rampe'` lines in
+    `ramp_reference_fc`. Removing a line can expose a new dangle on the line it was
+    attached to, so the search then repeats on dangles that were not in the initial
+    dangles of `lines_fc`, until no new dangle (or no removable line) is left.
 
     Args:
         lines_fc: Line feature class edited in place.
-        baseline_dangles_fc: Dangle points that existed before the step that caused
-            the dangles (from `create_dangle_points`); these are never touched.
+        ramp_reference_fc: Lines with `typeveg`; dangles on its ramps are the starting dangles.
+        baseline_dangles_fc: Scratch output path for the initial dangles of `lines_fc`.
         dangle_points_fc: Scratch output path for dangle points.
         removed_fc: Permanent output; receives a copy of every removed line.
-        max_length_m: Longest line that may be removed.
         max_iterations: Safety limit for the loop.
+        dangle_iterations_prefix: If set, the dangles acted on in each iteration are
+            saved permanently as `<prefix>_ite1`, `<prefix>_ite2`, ...
 
     Returns:
         Total number of removed lines.
     """
     _create_removed_fc(template_fc=lines_fc, removed_fc=removed_fc)
 
+    create_dangle_points(lines_fc, baseline_dangles_fc)
+
     total_removed = 0
     for iteration in range(1, max_iterations + 1):
         create_dangle_points(lines_fc, dangle_points_fc)
-        new_dangle_count = _select_new_dangles(dangle_points_fc, baseline_dangles_fc)
+        if iteration == 1:
+            new_dangle_count = _select_start_dangles(
+                dangle_points_fc, ramp_reference_fc
+            )
+        else:
+            new_dangle_count = _select_new_dangles(
+                dangle_points_fc, baseline_dangles_fc
+            )
         if new_dangle_count == 0:
             arcpy.management.Delete(_NEW_DANGLES_LAYER)
             break
+
+        if dangle_iterations_prefix:
+            iteration_fc = f"{dangle_iterations_prefix}_ite{iteration}"
+            if arcpy.Exists(iteration_fc):
+                arcpy.management.Delete(iteration_fc)
+            arcpy.management.CopyFeatures(_NEW_DANGLES_LAYER, iteration_fc)
 
         removed = _move_dangling_lines(lines_fc, removed_fc)
         arcpy.management.Delete(_NEW_DANGLES_LAYER)
@@ -147,14 +193,12 @@ if __name__ == "__main__":
 
     arcpy.management.CopyFeatures(src, test_lines)
     test_baseline = f"{src}_dangle_test_baseline"
-    create_dangle_points(
-        Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        test_baseline,
-    )
     removed = remove_new_dangles(
         lines_fc=test_lines,
+        ramp_reference_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         baseline_dangles_fc=test_baseline,
         dangle_points_fc=test_points,
         removed_fc=test_removed,
+        dangle_iterations_prefix=f"{src}_dangle_test",
     )
     print(f"Removed {removed} lines")
