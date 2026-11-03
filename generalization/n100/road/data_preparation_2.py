@@ -105,6 +105,14 @@ SCALE = dn.scale_n100
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
 
+# Halo around a fan-out partition that a partition run selects its inputs within.
+FAN_OUT_HALO_M = 25_000
+
+# Temporary: thin roads runs twice with different partition sizes and context radii,
+# (max_elements_per_partition, context_radius_meters), and a road is only dropped
+# when both runs drop it. This damps the variance from differing context at seams.
+THIN_ROAD_RUNS = ((75_000, 7_000), (45_000, 10_000))
+
 
 @timing_decorator
 def main(checkpoint: PipelineCheckpoint | None = None):
@@ -206,7 +214,7 @@ def data_selection_and_validation(
             partitioning.road_partitions_fan_out if SELECT_PARTITION else None
         ),
         partition_index=PARTITION_INDEX,
-        halo_m=SEARCH_DISTANCE,
+        halo_m=FAN_OUT_HALO_M,
     )
 
     selector.run()
@@ -261,6 +269,7 @@ def run_thin_roads(
     docu_path: type_defs.SubdirectoryPath,
     min_length_m: int,
     feature_count,
+    context_radius_m: int = SEARCH_DISTANCE,
     special_selection_sql=None,
 ):
     road = "road"
@@ -321,7 +330,8 @@ def run_thin_roads(
 
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
-        context_radius_meters=SEARCH_DISTANCE,
+        context_radius_meters=context_radius_m,
+        run_partition_optimization=False,
     )
 
     partition_thin_roads = PartitionIterator(
@@ -333,6 +343,84 @@ def run_thin_roads(
         ),
     )
     partition_thin_roads.run()
+
+
+def run_consensus_thin_roads(
+    input_feature: str,
+    run_files: list[tuple[str, str, type_defs.SubdirectoryPath]],
+    consensus_feature: str,
+    output_feature: str,
+    min_length_m: int,
+) -> None:
+    """
+    What:
+        Runs thin roads once per THIN_ROAD_RUNS setting on the same input, and keeps
+        every input road that any run kept, so a road is only dropped when all runs
+        drop it.
+
+    How:
+        ThinRoadNetwork dissolves its output, so its rows are not the input rows.
+        The geometry is unchanged, so an input road counts as kept by a run when it
+        shares a line segment with that run's output. The kept roads are dissolved
+        with intersections into output_feature, as a single run's output is.
+
+    Args:
+        run_files: Per run, the partition root file, the run output and the
+            documentation directory, in the order of THIN_ROAD_RUNS.
+        consensus_feature: The kept input roads before the dissolve.
+    """
+    for (max_elements, context_radius_m), (root_file, run_output, docu_path) in zip(
+        THIN_ROAD_RUNS, run_files, strict=True
+    ):
+        run_thin_roads(
+            input_feature=input_feature,
+            partition_root_file=root_file,
+            output_feature=run_output,
+            docu_path=docu_path,
+            min_length_m=min_length_m,
+            feature_count=max_elements,
+            context_radius_m=context_radius_m,
+        )
+
+    input_layer = "thin_roads_consensus_input"
+    arcpy.management.MakeFeatureLayer(in_features=input_feature, out_layer=input_layer)
+    try:
+        for index, (_, run_output, _) in enumerate(run_files):
+            result = arcpy.management.SelectLayerByLocation(
+                in_layer=input_layer,
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=run_output,
+                selection_type="NEW_SELECTION",
+            )
+            print(f"Thin roads run {index + 1} kept {result.getOutput(2)} roads")
+
+        kept_count = 0
+        for index, (_, run_output, _) in enumerate(run_files):
+            result = arcpy.management.SelectLayerByLocation(
+                in_layer=input_layer,
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=run_output,
+                selection_type="NEW_SELECTION" if index == 0 else "ADD_TO_SELECTION",
+            )
+            kept_count = int(result.getOutput(2))
+        # A selection of nothing would be read as every road by CopyFeatures.
+        if kept_count == 0:
+            raise RuntimeError(f"No thin roads run kept any road of {input_feature}")
+        print(
+            f"Thin roads consensus kept {kept_count} of "
+            f"{file_utilities.count_objects(input_layer=input_feature)} roads"
+        )
+        arcpy.management.CopyFeatures(
+            in_features=input_layer, out_feature_class=consensus_feature
+        )
+    finally:
+        arcpy.management.Delete(input_layer)
+
+    run_dissolve_with_intersections(
+        input_line_feature=consensus_feature,
+        output_processed_feature=output_feature,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
 
 
 def calculate_boarder_road_hierarchy(
@@ -670,13 +758,23 @@ def thin_roads():
         output_road=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
     )
 
-    run_thin_roads(
+    run_consensus_thin_roads(
         input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        run_files=[
+            (
+                Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_road_run_1_output___n100_road.value,
+                Road_N100.thin_road_docu___n100_road.value,
+            ),
+            (
+                Road_N100.data_preparation___thin_road_run_2_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_road_run_2_output___n100_road.value,
+                Road_N100.thin_road_run_2_docu___n100_road.value,
+            ),
+        ],
+        consensus_feature=Road_N100.data_preparation___thin_road_consensus___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.thin_road_docu___n100_road.value,
         min_length_m=1400,
-        feature_count=OBJECT_LIMIT,
     )
 
 
@@ -720,13 +818,23 @@ def thin_sti_and_forest_roads():
         code_block=sti_and_forest_hierarchy,
     )
 
-    run_thin_roads(
+    run_consensus_thin_roads(
         input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+        run_files=[
+            (
+                Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_sti_run_1_output___n100_road.value,
+                Road_N100.thin_sti_docu___n100_road.value,
+            ),
+            (
+                Road_N100.data_preparation___thin_sti_run_2_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_sti_run_2_output___n100_road.value,
+                Road_N100.thin_sti_run_2_docu___n100_road.value,
+            ),
+        ],
+        consensus_feature=Road_N100.data_preparation___thin_sti_consensus___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        docu_path=Road_N100.thin_sti_docu___n100_road.value,
         min_length_m=1800,
-        feature_count=OBJECT_LIMIT,
     )
 
 

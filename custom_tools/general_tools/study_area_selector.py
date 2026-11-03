@@ -86,10 +86,11 @@ class StudyAreaSelector:
             )
         with arcpy.da.SearchCursor(partition_layer, [HALO_FIELD]) as cursor:
             (feature_halo_m,) = next(cursor)
+        # The cells do not depend on the halo; only their count metadata does.
         if feature_halo_m != self.halo_m:
-            raise ValueError(
-                f"{self.partition_feature} was created with {HALO_FIELD} = "
-                f"{feature_halo_m}, but this run uses {self.halo_m}"
+            print(
+                f"Warning: {self.partition_feature} counts were made with "
+                f"{HALO_FIELD} = {feature_halo_m}, this run uses {self.halo_m}"
             )
 
         for i, (input_file, output_file) in enumerate(

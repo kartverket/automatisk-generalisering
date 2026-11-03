@@ -529,6 +529,70 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___thin_road_run_1_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_1_output",
+        )
+    )
+
+    data_preparation___thin_road_run_2_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_2_output",
+        )
+    )
+
+    data_preparation___thin_road_run_2_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_2_partition_root",
+        )
+    )
+
+    thin_road_run_2_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_road_run_2_docu",
+    )
+
+    data_preparation___thin_road_consensus___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_consensus",
+        )
+    )
+
+    data_preparation___thin_sti_run_1_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_1_output",
+        )
+    )
+
+    data_preparation___thin_sti_run_2_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_2_output",
+        )
+    )
+
+    data_preparation___thin_sti_run_2_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_2_partition_root",
+        )
+    )
+
+    thin_sti_run_2_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_sti_run_2_docu",
+    )
+
+    data_preparation___thin_sti_consensus___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_consensus",
+        )
+    )
+
     data_preparation___thin_road_output_3___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,

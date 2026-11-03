@@ -31,9 +31,11 @@ _UNMATCHED = "unmatched"
 
 # Fields that are dropped from the indexed outputs before merging, by lowercase
 # prefix. FID_ fields from overlay tools carry the work file session id in their
-# name and differ per pod. ORIG_FID would clash with the ORIG_FID that
-# FeatureToPoint adds, which links each centre point to its line.
+# name and differ per pod. ORIG_FID would clash with the ORIG_FID written to the
+# midpoints, which links each midpoint to its line.
 DROPPED_FIELD_PREFIXES = ("fid_", "orig_fid")
+
+ORIG_FID_FIELD = "ORIG_FID"
 
 XY = tuple[float, float]
 
@@ -43,8 +45,8 @@ class _LineSignature:
     oid: int
     src_index: int
     start: XY
-    centre: XY
     end: XY
+    length: float
 
 
 def fan_in_partitions(
@@ -69,38 +71,45 @@ def fan_in_partitions(
     How:
         - N is read from the fan-out partition_index values. The indexed outputs gdb
           must hold exactly the N outputs, and their schemas must match.
-        - The outputs are merged with a src_index field, and every line gets a
-          centre point (FeatureToPoint INSIDE) whose ORIG_FID is the line.
-        - Border: centre points near the fan-out cell boundaries are selected with
-          a search distance growing by border_step_m until no new points are added.
-          Their lines are deduplicated across partitions, keeping the lowest
-          src_index, and taken out of the main selection.
-        - Main: for each partition N, the lines of output N whose centre point is
+        - The outputs are merged with a src_index field, and every line gets its
+          midpoint along its length, whose ORIG_FID is the line.
+        - Border: midpoints near the fan-out cell boundaries are selected with a
+          search distance growing by border_step_m until no new points are added.
+          Each border line is grouped with its copies from other partitions among
+          all lines; the lowest src_index of each group is kept, and every line in
+          a group is taken out of the main selection.
+        - Main: for each partition N, the lines of output N whose midpoint is
           within fan-out cell N.
-        - Lines that are not claimed and have no claimed line from another
-          partition sharing start, centre and end within match_tolerance_m are
-          written out: as unclaimed when their centre point is within a fan-in cell
-          that fan-out dropped, otherwise as unmatched.
+        - Lines that are not claimed and have no claimed copy from another
+          partition are written out: as unclaimed when their midpoint is within a
+          fan-in cell that fan-out dropped, otherwise as unmatched.
+
+        Two lines are copies when both endpoints lie within match_tolerance_m of
+        each other, in either direction, and their lengths differ by at most
+        match_tolerance_m.
 
     Why:
         Each partition output holds its halo as well, so the same road appears in
         several outputs. The outputs also differ by an XY resolution offset, so
         copies of a road are matched by tolerance rather than by identical geometry.
         A border copy just outside the search distance is caught by growing the
-        distance until a gap with no new points is found.
+        distance until a gap with no new points is found, and by looking for the
+        copies of border lines among all lines. The midpoint along the length moves
+        only by the offset between copies, unlike a FeatureToPoint INSIDE point.
 
     Args:
         indexed_outputs_gdb (str): The gdb holding only the per-partition outputs.
         fan_out_feature (str): The fan-out partition feature the outputs came from.
         fan_in_feature (str): The fan-in partition feature, all cells.
         output_feature (str): The merged output, with src_index.
-        unclaimed_output (str): Lines with no claimed copy whose centre lies in a
+        unclaimed_output (str): Lines with no claimed copy whose midpoint lies in a
             dropped cell.
         unmatched_output (str): Other lines with no claimed copy.
         work_file_config (core_config.WorkFileConfig): Work file configuration.
         output_name_prefix (str): Name of the outputs before the _N index.
-        match_tolerance_m (float): Distance within which start, centre and end
-            points of two lines must lie for them to be copies of one road.
+        match_tolerance_m (float): Distance within which the endpoints, and
+            difference within which the lengths, of two lines must lie for them to
+            be copies of one road.
         border_step_m (float): Step the border search distance grows by.
         max_border_distance_m (float): Border search distance at which the run
             fails instead of growing further.
@@ -116,7 +125,7 @@ def fan_in_partitions(
 
     wfm = WorkFileManager(config=work_file_config)
     all_lines = wfm.build_file_path("all_lines")
-    centre_points = wfm.build_file_path("centre_points")
+    midpoints = wfm.build_file_path("midpoints")
     border_lines = wfm.build_file_path("border_lines")
     layers = _Layers()
 
@@ -124,37 +133,34 @@ def fan_in_partitions(
         _merge_with_src_index(
             indexed_outputs=indexed_outputs, all_lines=all_lines, wfm=wfm
         )
-        arcpy.management.FeatureToPoint(
-            in_features=all_lines,
-            out_feature_class=centre_points,
-            point_location="INSIDE",
-        )
         arcpy.management.PolygonToLine(
             in_features=fan_out_feature,
             out_feature_class=border_lines,
             neighbor_option="IGNORE_NEIGHBORS",
         )
-        signatures = _line_signatures(all_lines=all_lines, centre_points=centre_points)
+        signatures = _write_midpoints(all_lines=all_lines, midpoints=midpoints)
+        copies = _CopyIndex(tolerance_m=match_tolerance_m)
+        for signature in signatures.values():
+            copies.add(signature=signature)
 
         border_oids = _select_border_line_oids(
-            centre_points=centre_points,
+            midpoints=midpoints,
             border_lines=border_lines,
             step_m=border_step_m,
             max_distance_m=max_border_distance_m,
             layers=layers,
         )
-        kept_border_oids = _deduplicate(
-            candidates=[signatures[oid] for oid in border_oids if oid in signatures],
-            tolerance_m=match_tolerance_m,
+        kept_border_oids, border_group_oids = _resolve_border_groups(
+            border_oids=border_oids, signatures=signatures, copies=copies
         )
         main_oids = (
             _select_main_line_oids(
-                centre_points=centre_points,
+                midpoints=midpoints,
                 fan_out_feature=fan_out_feature,
                 partition_count=partition_count,
                 layers=layers,
             )
-            - border_oids
+            - border_group_oids
         )
         claimed_oids = main_oids | kept_border_oids
 
@@ -164,7 +170,7 @@ def fan_in_partitions(
             tolerance_m=match_tolerance_m,
         )
         unclaimed_oids = unmatched_oids & _select_dropped_cell_line_oids(
-            centre_points=centre_points,
+            midpoints=midpoints,
             fan_out_feature=fan_out_feature,
             fan_in_feature=fan_in_feature,
             layers=layers,
@@ -188,7 +194,7 @@ def fan_in_partitions(
 
         _log_summary(
             total=len(signatures),
-            border=len(border_oids),
+            border=len(border_group_oids),
             kept_border=len(kept_border_oids),
             claimed=len(claimed_oids),
             unclaimed=len(unclaimed_oids),
@@ -368,34 +374,47 @@ def _merge_with_src_index(
     )
 
 
-def _line_signatures(all_lines: str, centre_points: str) -> dict[int, _LineSignature]:
+def _write_midpoints(all_lines: str, midpoints: str) -> dict[int, _LineSignature]:
     """
-    Returns the start, centre and end point of every line, keyed by its OID.
-    Lines without geometry have no centre point and are left out.
+    Writes the midpoint along the length of every line to midpoints, with the line
+    OID in ORIG_FID and its src_index, and returns the endpoints and length of
+    every line keyed by its OID. Lines without geometry are left out.
     """
-    with arcpy.da.SearchCursor(centre_points, ["ORIG_FID", "SHAPE@XY"]) as cursor:
-        centres = {oid: xy for oid, xy in cursor}
+    arcpy.management.CreateFeatureclass(
+        out_path=os.path.dirname(midpoints),
+        out_name=os.path.basename(midpoints),
+        geometry_type="POINT",
+        spatial_reference=arcpy.Describe(all_lines).spatialReference,
+    )
+    for field in (ORIG_FID_FIELD, SRC_INDEX_FIELD):
+        arcpy.management.AddField(
+            in_table=midpoints, field_name=field, field_type="LONG"
+        )
 
     signatures = {}
-    with arcpy.da.SearchCursor(
-        all_lines, ["OID@", SRC_INDEX_FIELD, "SHAPE@"]
-    ) as cursor:
-        for oid, src_index, shape in cursor:
-            if shape is None or oid not in centres:
+    with (
+        arcpy.da.SearchCursor(all_lines, ["OID@", SRC_INDEX_FIELD, "SHAPE@"]) as lines,
+        arcpy.da.InsertCursor(
+            midpoints, ["SHAPE@", ORIG_FID_FIELD, SRC_INDEX_FIELD]
+        ) as points,
+    ):
+        for oid, src_index, shape in lines:
+            if shape is None or shape.length == 0:
                 logger.warning(f"Line {oid} from output {src_index} has no geometry")
                 continue
+            points.insertRow([shape.positionAlongLine(0.5, True), oid, src_index])
             signatures[oid] = _LineSignature(
                 oid=oid,
                 src_index=src_index,
                 start=(shape.firstPoint.X, shape.firstPoint.Y),
-                centre=centres[oid],
                 end=(shape.lastPoint.X, shape.lastPoint.Y),
+                length=shape.length,
             )
     return signatures
 
 
 def _select_border_line_oids(
-    centre_points: str,
+    midpoints: str,
     border_lines: str,
     step_m: float,
     max_distance_m: float,
@@ -403,14 +422,14 @@ def _select_border_line_oids(
 ) -> set[int]:
     """
     What:
-        Returns the lines whose centre point is near a fan-out cell boundary.
+        Returns the lines whose midpoint is near a fan-out cell boundary.
 
     How:
         The search distance starts at step_m and grows by step_m until a step
         selects no new points. If the first step selects nothing, there are no
         border lines.
     """
-    points_layer = layers.make(in_features=centre_points)
+    points_layer = layers.make(in_features=midpoints)
     step = 1
     previous_count = None
     while True:
@@ -435,27 +454,47 @@ def _select_border_line_oids(
     return _selected_line_oids(points_layer=points_layer, count=count)
 
 
-def _deduplicate(candidates: list[_LineSignature], tolerance_m: float) -> set[int]:
+def _resolve_border_groups(
+    border_oids: set[int],
+    signatures: dict[int, _LineSignature],
+    copies: "_CopyIndex",
+) -> tuple[set[int], set[int]]:
     """
-    Returns the border lines to keep: one line per set of copies across
-    partitions, the one with the lowest src_index. Lines from the same partition
-    are never treated as copies of each other.
+    What:
+        Groups every border line with its copies from other partitions, and returns
+        the line kept from each group and all lines in the groups.
+
+    How:
+        Border lines are taken in order of src_index, then OID. A line already in a
+        group is skipped. Its copies are looked up among all lines, so a copy whose
+        midpoint is not near the border still joins the group. The lowest
+        (src_index, OID) of each group is kept.
     """
-    kept: dict[tuple[int, int], list[_LineSignature]] = defaultdict(list)
-    kept_oids = set()
-    for candidate in sorted(candidates, key=lambda s: (s.src_index, s.oid)):
-        if not _has_copy(signature=candidate, index=kept, tolerance_m=tolerance_m):
-            kept[_bucket(xy=candidate.centre, size=tolerance_m)].append(candidate)
-            kept_oids.add(candidate.oid)
-    return kept_oids
+    kept = set()
+    grouped = set()
+    ordered = sorted(
+        (signatures[oid] for oid in border_oids if oid in signatures),
+        key=lambda signature: (signature.src_index, signature.oid),
+    )
+    for signature in ordered:
+        if signature.oid in grouped:
+            continue
+        group = [signature] + [
+            copy
+            for copy in copies.copies_of(signature=signature)
+            if copy.oid not in grouped
+        ]
+        kept.add(min(group, key=lambda member: (member.src_index, member.oid)).oid)
+        grouped.update(member.oid for member in group)
+    return kept, grouped
 
 
 def _select_main_line_oids(
-    centre_points: str, fan_out_feature: str, partition_count: int, layers: _Layers
+    midpoints: str, fan_out_feature: str, partition_count: int, layers: _Layers
 ) -> set[int]:
     """
-    Returns, for every partition N, the lines of output N whose centre point is
-    within fan-out cell N.
+    Returns, for every partition N, the lines of output N whose midpoint is within
+    fan-out cell N.
     """
     oids = set()
     for index in range(partition_count):
@@ -464,23 +503,23 @@ def _select_main_line_oids(
             where_clause=f"{PARTITION_INDEX_FIELD} = {index}",
         )
         points_layer = layers.make(
-            in_features=centre_points, where_clause=f"{SRC_INDEX_FIELD} = {index}"
+            in_features=midpoints, where_clause=f"{SRC_INDEX_FIELD} = {index}"
         )
         count = _select_by_location(
             in_layer=points_layer, overlap_type="WITHIN", select_features=cell_layer
         )
         if count == 0:
-            logger.warning(f"No centre points of output {index} within cell {index}")
+            logger.warning(f"No midpoints of output {index} within cell {index}")
         oids |= _selected_line_oids(points_layer=points_layer, count=count)
     return oids
 
 
 def _select_dropped_cell_line_oids(
-    centre_points: str, fan_out_feature: str, fan_in_feature: str, layers: _Layers
+    midpoints: str, fan_out_feature: str, fan_in_feature: str, layers: _Layers
 ) -> set[int]:
     """
-    Returns the lines whose centre point is within a fan-in cell that fan-out
-    dropped for having no counted features.
+    Returns the lines whose midpoint is within a fan-in cell that fan-out dropped
+    for having no counted features.
     """
     dropped_cells_layer = layers.make(in_features=fan_in_feature)
     dropped_count = _select_by_location(
@@ -492,7 +531,7 @@ def _select_dropped_cell_line_oids(
     if dropped_count == 0:
         return set()
 
-    points_layer = layers.make(in_features=centre_points)
+    points_layer = layers.make(in_features=midpoints)
     count = _select_by_location(
         in_layer=points_layer,
         overlap_type="WITHIN",
@@ -530,15 +569,15 @@ def _select_by_location(
 
 def _selected_line_oids(points_layer: str, count: int) -> set[int]:
     """
-    Returns the ORIG_FID of the selected centre points, or none when count is 0.
+    Returns the ORIG_FID of the selected midpoints, or none when count is 0.
     """
     if count == 0:
         return set()
-    with arcpy.da.SearchCursor(points_layer, ["ORIG_FID"]) as cursor:
+    with arcpy.da.SearchCursor(points_layer, [ORIG_FID_FIELD]) as cursor:
         oids = {oid for (oid,) in cursor}
     if len(oids) != count:
         raise RuntimeError(
-            f"Read {len(oids)} centre points from {points_layer}, but the selection "
+            f"Read {len(oids)} midpoints from {points_layer}, but the selection "
             f"reported {count}"
         )
     return oids
@@ -551,55 +590,74 @@ def _unmatched_line_oids(
     Returns the lines that are not claimed and have no claimed copy from another
     partition.
     """
-    claimed: dict[tuple[int, int], list[_LineSignature]] = defaultdict(list)
+    claimed = _CopyIndex(tolerance_m=tolerance_m)
     for oid in claimed_oids:
-        signature = signatures[oid]
-        claimed[_bucket(xy=signature.centre, size=tolerance_m)].append(signature)
+        claimed.add(signature=signatures[oid])
 
     return {
         oid
         for oid, signature in signatures.items()
-        if oid not in claimed_oids
-        and not _has_copy(signature=signature, index=claimed, tolerance_m=tolerance_m)
+        if oid not in claimed_oids and not claimed.copies_of(signature=signature)
     }
 
 
-def _has_copy(
-    signature: _LineSignature,
-    index: dict[tuple[int, int], list[_LineSignature]],
-    tolerance_m: float,
-) -> bool:
+class _CopyIndex:
     """
-    Returns whether index holds a line from another partition whose start, centre
-    and end lie within tolerance_m of signature's, in either direction.
+    What:
+        Finds the copies of a line from other partitions: lines whose endpoints lie
+        within tolerance_m of its endpoints, in either direction, and whose length
+        differs by at most tolerance_m.
+
+    How:
+        Lines are bucketed by both endpoints on a grid of tolerance_m, so a lookup
+        only compares lines with an endpoint in the 3 x 3 buckets around the start
+        point of the line looked up.
     """
-    bx, by = _bucket(xy=signature.centre, size=tolerance_m)
-    for dx in (-1, 0, 1):
-        for dy in (-1, 0, 1):
-            for other in index.get((bx + dx, by + dy), ()):
-                if other.src_index != signature.src_index and _is_copy(
-                    a=signature, b=other, tolerance_m=tolerance_m
-                ):
-                    return True
-    return False
 
+    def __init__(self, tolerance_m: float) -> None:
+        self.tolerance_m = tolerance_m
+        self._buckets: dict[tuple[int, int], list[_LineSignature]] = defaultdict(list)
 
-def _is_copy(a: _LineSignature, b: _LineSignature, tolerance_m: float) -> bool:
-    if math.dist(a.centre, b.centre) > tolerance_m:
-        return False
-    same_direction = (
-        math.dist(a.start, b.start) <= tolerance_m
-        and math.dist(a.end, b.end) <= tolerance_m
-    )
-    reversed_direction = (
-        math.dist(a.start, b.end) <= tolerance_m
-        and math.dist(a.end, b.start) <= tolerance_m
-    )
-    return same_direction or reversed_direction
+    def add(self, signature: _LineSignature) -> None:
+        start_bucket = self._bucket(xy=signature.start)
+        end_bucket = self._bucket(xy=signature.end)
+        self._buckets[start_bucket].append(signature)
+        if end_bucket != start_bucket:
+            self._buckets[end_bucket].append(signature)
 
+    def copies_of(self, signature: _LineSignature) -> list[_LineSignature]:
+        bx, by = self._bucket(xy=signature.start)
+        found: dict[int, _LineSignature] = {}
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for other in self._buckets.get((bx + dx, by + dy), ()):
+                    if (
+                        other.src_index != signature.src_index
+                        and other.oid not in found
+                        and self._is_copy(a=signature, b=other)
+                    ):
+                        found[other.oid] = other
+        return list(found.values())
 
-def _bucket(xy: XY, size: float) -> tuple[int, int]:
-    return math.floor(xy[0] / size), math.floor(xy[1] / size)
+    def _is_copy(self, a: _LineSignature, b: _LineSignature) -> bool:
+        tolerance_m = self.tolerance_m
+        if abs(a.length - b.length) > tolerance_m:
+            return False
+        same_direction = (
+            math.dist(a.start, b.start) <= tolerance_m
+            and math.dist(a.end, b.end) <= tolerance_m
+        )
+        reversed_direction = (
+            math.dist(a.start, b.end) <= tolerance_m
+            and math.dist(a.end, b.start) <= tolerance_m
+        )
+        return same_direction or reversed_direction
+
+    def _bucket(self, xy: XY) -> tuple[int, int]:
+        return (
+            math.floor(xy[0] / self.tolerance_m),
+            math.floor(xy[1] / self.tolerance_m),
+        )
 
 
 def _write_state(all_lines: str, states: dict[int, str]) -> None:

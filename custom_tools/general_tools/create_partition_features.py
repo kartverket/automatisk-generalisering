@@ -316,5 +316,5 @@ if __name__ == "__main__":
         target_partition_count=6,
         output_gdb=str(raw_data / f"{dn.partitioning.lower()}.gdb"),
         name_prefix="road",
-        halo_m=5000,
+        halo_m=25_000,
     )
