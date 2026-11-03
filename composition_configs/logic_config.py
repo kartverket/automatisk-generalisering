@@ -567,6 +567,7 @@ class RoadRampsConfig:
     input_roads: io_types.GdbIOArg
     output_roads: io_types.GdbIOArg
     output_points: io_types.GdbIOArg
+    output_removed_dangles: io_types.GdbIOArg
     wfm_config: core_config.WorkFileConfig
 
 
