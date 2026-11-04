@@ -8,5 +8,6 @@
   },
   "ruff.importStrategy": "fromEnvironment",
   "ruff.configurationPreference": "filesystemFirst",
-  "python.analysis.diagnosticMode": "openFilesOnly"
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

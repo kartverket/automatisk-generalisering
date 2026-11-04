@@ -60,9 +60,7 @@ def worked(
     tb: Toolbox = NOT_INJECTED,
     scratch: ScratchScope = INJECTED,
 ) -> None:
-    tb.cartographic.smooth(
-        input=roads, output=output, tolerance_m=config.tolerance_m
-    )
+    tb.cartographic.smooth(input=roads, output=output, tolerance_m=config.tolerance_m)
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +84,9 @@ def test_a_string_annotation_still_classifies_as_injected() -> None:
     Without `get_type_hints`, `isinstance("Toolbox", type)` is False and `tb` is
     misclassified with no error raised anywhere.
     """
-    call = worked(roads=Example.roads, output=Example.output, config=ExampleConfig(30.0))
+    call = worked(
+        roads=Example.roads, output=Example.output, config=ExampleConfig(30.0)
+    )
     assert call.injected == {Toolbox: "tb", ScratchScope: "scratch"}
 
 
@@ -101,7 +101,9 @@ def test_both_injected_kinds_are_recognised_by_the_marker() -> None:
 
 
 def test_the_declaration_records_the_signature() -> None:
-    call = worked(roads=Example.roads, output=Example.output, config=ExampleConfig(30.0))
+    call = worked(
+        roads=Example.roads, output=Example.output, config=ExampleConfig(30.0)
+    )
     assert call.operation == "worked"
     assert set(call.inputs) == {"roads"}
     assert set(call.outputs) == {"output"}
@@ -120,7 +122,11 @@ def test_the_injected_parameter_name_is_not_load_bearing() -> None:
 
     @operation
     def named_differently(
-        *, roads: In, output: Out, toolbox: Toolbox = NOT_INJECTED, scope: ScratchScope = INJECTED
+        *,
+        roads: In,
+        output: Out,
+        toolbox: Toolbox = NOT_INJECTED,
+        scope: ScratchScope = INJECTED,
     ) -> None: ...
 
     call = named_differently(roads=Example.roads, output=Example.output)

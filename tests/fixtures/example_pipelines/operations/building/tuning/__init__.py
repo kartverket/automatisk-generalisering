@@ -13,7 +13,10 @@ enough to be worth the package.
 
 from __future__ import annotations
 
-from example_pipelines.operations.building import DisplacementFeatureConfig, SimplifyPolygonsConfig
+from example_pipelines.operations.building import (
+    DisplacementFeatureConfig,
+    SimplifyPolygonsConfig,
+)
 
 SIMPLIFY_POLYGONS_BASE = SimplifyPolygonsConfig(tolerance_m=10.0)
 

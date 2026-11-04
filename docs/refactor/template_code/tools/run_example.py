@@ -24,7 +24,9 @@ from pathlib import Path
 
 _TEMPLATE = Path(__file__).resolve().parent.parent  # TEMPLATE: see conftest.py
 sys.path.insert(0, str(_TEMPLATE))
-sys.path.insert(0, str(_TEMPLATE.parents[2] / "tests" / "fixtures"))  # example_pipelines
+sys.path.insert(
+    0, str(_TEMPLATE.parents[2] / "tests" / "fixtures")
+)  # example_pipelines
 
 from collections.abc import Sequence
 

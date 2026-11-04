@@ -124,9 +124,7 @@ def test_negation_reaches_leaves_through_nesting() -> None:
 def test_spatial_leaves_negate_like_attribute_leaves() -> None:
     """arcpy has a separate flag for each - invert_where_clause and
     invert_spatial_relationship - but the rewrite does not care which."""
-    assert push_negation(~Intersects(Layers.roads)) == Negated(
-        Intersects(Layers.roads)
-    )
+    assert push_negation(~Intersects(Layers.roads)) == Negated(Intersects(Layers.roads))
 
 
 def test_the_worked_example_from_the_architecture_document() -> None:

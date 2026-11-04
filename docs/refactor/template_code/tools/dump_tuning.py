@@ -25,7 +25,9 @@ from pathlib import Path
 
 _TEMPLATE = Path(__file__).resolve().parent.parent  # TEMPLATE: see conftest.py
 sys.path.insert(0, str(_TEMPLATE))
-sys.path.insert(0, str(_TEMPLATE.parents[2] / "tests" / "fixtures"))  # example_pipelines
+sys.path.insert(
+    0, str(_TEMPLATE.parents[2] / "tests" / "fixtures")
+)  # example_pipelines
 
 import argparse
 import importlib
@@ -41,7 +43,9 @@ def resolved(scale: str, object_name: str) -> dict[str, object]:
     config side by side - exactly the "answered in two places" confusion the
     base-plus-one-delta rule exists to avoid.
     """
-    module = importlib.import_module(f"example_pipelines.operations.{object_name}.tuning.{scale}")
+    module = importlib.import_module(
+        f"example_pipelines.operations.{object_name}.tuning.{scale}"
+    )
     return {
         name: asdict(value)
         for name, value in vars(module).items()

@@ -101,9 +101,7 @@ def build_displacement_feature(
     merged = scratch("merged")
     tb.geometry.buffer(input=roads, output=buffered, distance_m=config.buffer_m)
     tb.geometry.merge(inputs=(buffered, generalized_roads), output=merged)
-    tb.geometry.dissolve(
-        input=merged, output=output, option=DissolveOption.SINGLE_PART
-    )
+    tb.geometry.dissolve(input=merged, output=output, option=DissolveOption.SINGLE_PART)
 
 
 @operation

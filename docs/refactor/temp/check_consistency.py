@@ -103,7 +103,9 @@ exempt = {
     a
     for a in sub_items
     if re.search(
-        re.escape(f"**{a}") + r"(?![0-9.]).{0,3000}?`destination:` none", DECISIONS, re.S
+        re.escape(f"**{a}") + r"(?![0-9.]).{0,3000}?`destination:` none",
+        DECISIONS,
+        re.S,
     )
 }
 
@@ -119,7 +121,9 @@ report(
 )
 
 # --- ordering: a dependency must sit above its dependent -------------------
-order = [m[1] for m in re.findall(r"^\| ([0-9]+[a-c]?|—) \| (T[0-9.]+|B\d) \|", TASKS, re.M)]
+order = [
+    m[1] for m in re.findall(r"^\| ([0-9]+[a-c]?|—) \| (T[0-9.]+|B\d) \|", TASKS, re.M)
+]
 position = {task: i for i, task in enumerate(order)}
 violations = []
 for block in re.split(r"\n## ", TASKS)[1:]:
@@ -130,7 +134,9 @@ for block in re.split(r"\n## ", TASKS)[1:]:
     me = head.group(1)
     for dep in re.findall(r"T[0-9.]+", deps.group(1)):
         if dep in position and me in position and position[dep] > position[me]:
-            violations.append(f"{me} (pos {position[me]}) depends on {dep} (pos {position[dep]})")
+            violations.append(
+                f"{me} (pos {position[me]}) depends on {dep} (pos {position[dep]})"
+            )
 report("ordering      dependencies precede dependents", violations)
 
 report(
@@ -140,7 +146,9 @@ report(
 
 # --- terminology -----------------------------------------------------------
 # Rows look like:  | **term** | meaning | A11.5, A11.6 |
-term_rows = re.findall(r"^\| \*\*`?(.+?)`?\*\*[^|]*\|([^|]+)\|\s*([^|]*?)\s*\|$", TERMS, re.M)
+term_rows = re.findall(
+    r"^\| \*\*`?(.+?)`?\*\*[^|]*\|([^|]+)\|\s*([^|]*?)\s*\|$", TERMS, re.M
+)
 term_cites: set[str] = set()
 for _, _, authority in term_rows:
     term_cites |= set(re.findall(r"\bA\d+(?:\.\d+[a-z]?)?\b", authority))
