@@ -1,0 +1,37 @@
+data\_orchestrator\_2.schemas package
+=====================================
+
+Submodules
+----------
+
+data\_orchestrator\_2.schemas.datasets module
+---------------------------------------------
+
+.. automodule:: data_orchestrator_2.schemas.datasets
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator\_2.schemas.fields module
+-------------------------------------------
+
+.. automodule:: data_orchestrator_2.schemas.fields
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator\_2.schemas.pipelines module
+----------------------------------------------
+
+.. automodule:: data_orchestrator_2.schemas.pipelines
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: data_orchestrator_2.schemas
+   :members:
+   :show-inheritance:
+   :undoc-members:

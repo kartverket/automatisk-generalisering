@@ -1,0 +1,644 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>data_orchestrator_2.schemas package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="generalization package" href="generalization.html" />
+    <link rel="prev" title="data_orchestrator_2.organizers package" href="data_orchestrator_2.organizers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">automatisk-generalisering</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html">composition_configs package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conf.html">conf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html">data_orchestrator package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="data_orchestrator_2.html">data_orchestrator_2 package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="data_orchestrator_2.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.organizers.html">data_orchestrator_2.organizers package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">data_orchestrator_2.schemas package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.html#module-data_orchestrator_2.test">data_orchestrator_2.test module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.html#module-data_orchestrator_2">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalization.html">generalization package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main_on_cloud.html">main_on_cloud module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main_on_prem.html">main_on_prem module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mdGenerator.html">mdGenerator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="temp_skip_folder.html">temp_skip_folder package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests_legacy.html">tests_legacy package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">automatisk-generalisering</a></li>
+          <li class="breadcrumb-item"><a href="data_orchestrator_2.html">data_orchestrator_2 package</a></li>
+      <li class="breadcrumb-item active">data_orchestrator_2.schemas package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated_docs/data_orchestrator_2.schemas.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-orchestrator-2-schemas-package">
+<h1>data_orchestrator_2.schemas package<a class="headerlink" href="#data-orchestrator-2-schemas-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-data_orchestrator_2.schemas.datasets">
+<span id="data-orchestrator-2-schemas-datasets-module"></span><h2>data_orchestrator_2.schemas.datasets module<a class="headerlink" href="#module-data_orchestrator_2.schemas.datasets" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.FieldUsage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.datasets.</span></span><span class="sig-name descname"><span class="pre">FieldUsage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#FieldUsage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Flag</span></code></p>
+<p>Stages at which a field is expected or retained; values may be combined.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.FieldUsage.INPUT">
+<span class="sig-name descname"><span class="pre">INPUT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.FieldUsage.INPUT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.FieldUsage.PROCESSING">
+<span class="sig-name descname"><span class="pre">PROCESSING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.FieldUsage.PROCESSING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.FieldUsage.OUTPUT">
+<span class="sig-name descname"><span class="pre">OUTPUT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.FieldUsage.OUTPUT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.datasets.</span></span><span class="sig-name descname"><span class="pre">DatasetField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.fields.FieldDefinition" title="data_orchestrator_2.schemas.fields.FieldDefinition"><span class="pre">data_orchestrator_2.schemas.fields.FieldDefinition</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="data_orchestrator_2.schemas.datasets.FieldUsage"><span class="pre">data_orchestrator_2.schemas.datasets.FieldUsage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.field">
+<span class="sig-name descname"><span class="pre">field</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#data_orchestrator_2.schemas.fields.FieldDefinition" title="data_orchestrator_2.schemas.fields.FieldDefinition"><span class="pre">FieldDefinition</span></a></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.field" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.usage">
+<span class="sig-name descname"><span class="pre">usage</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="data_orchestrator_2.schemas.datasets.FieldUsage"><span class="pre">FieldUsage</span></a></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.usage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.required">
+<span class="sig-name descname"><span class="pre">required</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.required" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ColumnName</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.datatype">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">datatype</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FieldType</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.datatype" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.system_field">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">system_field</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.system_field" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetField.isUsedFor">
+<span class="sig-name descname"><span class="pre">isUsedFor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="data_orchestrator_2.schemas.datasets.FieldUsage"><span class="pre">FieldUsage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetField.isUsedFor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetField.isUsedFor" title="Link to this definition"></a></dt>
+<dd><p>Return whether any requested usage flag belongs to this field.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.datasets.</span></span><span class="sig-name descname"><span class="pre">DatasetDefinition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FeatureClassName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdb_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GDBName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeometryType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="data_orchestrator_2.schemas.datasets.DatasetField"><span class="pre">DatasetField</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetDefinition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Dataset schema and path derived from its source scale and object type.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FeatureClassName</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.source_scale">
+<span class="sig-name descname"><span class="pre">source_scale</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Scale</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.source_scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.gdb_name">
+<span class="sig-name descname"><span class="pre">gdb_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GDBName</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.gdb_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.geometry_type">
+<span class="sig-name descname"><span class="pre">geometry_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GeometryType</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.geometry_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="data_orchestrator_2.schemas.datasets.DatasetField"><span class="pre">DatasetField</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldNames">
+<span class="sig-name descname"><span class="pre">getFieldNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ColumnName</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetDefinition.getFieldNames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldNames" title="Link to this definition"></a></dt>
+<dd><p>Return the names of all registered fields.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.getField">
+<span class="sig-name descname"><span class="pre">getField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ColumnName</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="data_orchestrator_2.schemas.datasets.DatasetField"><span class="pre">DatasetField</span></a></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetDefinition.getField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.getField" title="Link to this definition"></a></dt>
+<dd><p>Return a registered field or raise KeyError if it is unknown.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldsFor">
+<span class="sig-name descname"><span class="pre">getFieldsFor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="data_orchestrator_2.schemas.datasets.FieldUsage"><span class="pre">FieldUsage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="data_orchestrator_2.schemas.datasets.DatasetField"><span class="pre">DatasetField</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetDefinition.getFieldsFor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldsFor" title="Link to this definition"></a></dt>
+<dd><p>Return fields carrying any of the requested usage flags.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetDefinition.hasField">
+<span class="sig-name descname"><span class="pre">hasField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ColumnName</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetDefinition.hasField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition.hasField" title="Link to this definition"></a></dt>
+<dd><p>Return True if the dataset contains the specified field.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.used_for">
+<span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.datasets.</span></span><span class="sig-name descname"><span class="pre">used_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.fields.FieldDefinition" title="data_orchestrator_2.schemas.fields.FieldDefinition"><span class="pre">FieldDefinition</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.FieldUsage" title="data_orchestrator_2.schemas.datasets.FieldUsage"><span class="pre">FieldUsage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetField" title="data_orchestrator_2.schemas.datasets.DatasetField"><span class="pre">DatasetField</span></a></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#used_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.used_for" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetCatalog">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.datasets.</span></span><span class="sig-name descname"><span class="pre">DatasetCatalog</span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/datasets.html#DatasetCatalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetCatalog" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Named dataset definitions available to pipelines.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetCatalog.AREALDEKKE">
+<span class="sig-name descname"><span class="pre">AREALDEKKE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">DatasetDefinition(name=&lt;FeatureClassName.AREALDEKKE:</span> <span class="pre">'ArealdekkeFlate'&gt;,</span> <span class="pre">source_scale=&lt;Scale.RAW_DATA:</span> <span class="pre">'raw_data'&gt;,</span> <span class="pre">gdb_name=&lt;GDBName.AREA:</span> <span class="pre">'area'&gt;,</span> <span class="pre">geometry_type=&lt;GeometryType.POLYGON:</span> <span class="pre">'polygon'&gt;,</span> <span class="pre">fields=(DatasetField(field=FieldDefinition(name=&lt;ColumnName.AREAL_M2:</span> <span class="pre">'areal_m2'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.AREALBRUK_HOVEDKLASSE:</span> <span class="pre">'arealbruk_hovedklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.AREALBRUK_UNDERKLASSE:</span> <span class="pre">'arealbruk_underklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.AREALDEKKE:</span> <span class="pre">'arealdekke'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.BRUKTFLAGG:</span> <span class="pre">'bruktflagg'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.DGFCD_FEATURE_531:</span> <span class="pre">'dgfcd_feature_531'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.DGFCD_FEATURE_ALPHA:</span> <span class="pre">'dgfcd_feature_alpha'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.DGIF_CCODE:</span> <span class="pre">'dgif_ccode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.GRUNNFORHOLD:</span> <span class="pre">'grunnforhold'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.GRUNNKART_KILDE:</span> <span class="pre">'grunnkart_kilde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.HAVAREALBRUKSTEDSBUNDET:</span> <span class="pre">'havarealbrukstedsbundet'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.HAVFISKERIBRUK:</span> <span class="pre">'havfiskeribruk'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.HOYDE:</span> <span class="pre">'hoyde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.ID:</span> <span class="pre">'id'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.KOMID:</span> <span class="pre">'komid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.LRV:</span> <span class="pre">'LRV'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OBJECTID:</span> <span class="pre">'objectid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.OID:</span> <span class="pre">'OID'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_1:</span> <span class="pre">'okosystemtype_1'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_2:</span> <span class="pre">'okosystemtype_2'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_3:</span> <span class="pre">'okosystemtype_3'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_KODE:</span> <span class="pre">'okosystemtype_kode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OMKRETS:</span> <span class="pre">'omkrets'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.PARTITION_SELECTION_FIELD:</span> <span class="pre">'partition_selection_field'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE:</span> <span class="pre">'SHAPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.GEOMETRY:</span> <span class="pre">'Geometry'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE_AREA:</span> <span class="pre">'SHAPE_Area'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE_LENGTH:</span> <span class="pre">'SHAPE_Length'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SKOGBONITET:</span> <span class="pre">'skogbonitet'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SSBAREALBRUK_KILDE:</span> <span class="pre">'ssbarealbruk_kilde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.TRESLAG:</span> <span class="pre">'treslag'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True)))</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetCatalog.AREALDEKKE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetCatalog.ELVEG_AND_STI">
+<span class="sig-name descname"><span class="pre">ELVEG_AND_STI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">DatasetDefinition(name=&lt;FeatureClassName.ELVEG_AND_STI:</span> <span class="pre">'elveg_and_sti'&gt;,</span> <span class="pre">source_scale=&lt;Scale.RAW_DATA:</span> <span class="pre">'raw_data'&gt;,</span> <span class="pre">gdb_name=&lt;GDBName.ROAD:</span> <span class="pre">'road'&gt;,</span> <span class="pre">geometry_type=&lt;GeometryType.POLYLINE:</span> <span class="pre">'polyline'&gt;,</span> <span class="pre">fields=(DatasetField(field=FieldDefinition(name=&lt;ColumnName.ADRESSENAVN:</span> <span class="pre">'adressenavn'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.ADSKILTELOP:</span> <span class="pre">'adskiltelop'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.ADSKILTELOPNUMMER:</span> <span class="pre">'adskiltelopnummer'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.FELTOVERSIKT:</span> <span class="pre">'feltoversikt'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.KONNEKTERINGSLENKE:</span> <span class="pre">'konnekteringslenke'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.KRYSSDEL:</span> <span class="pre">'kryssdel'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.MEDIUM:</span> <span class="pre">'medium'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.MOTORVEGTYPE:</span> <span class="pre">'motorvegtype'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OBJECTID:</span> <span class="pre">'objectid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.OID:</span> <span class="pre">'OID'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING|OUTPUT:</span> <span class="pre">7&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OBJTYPE:</span> <span class="pre">'objtype'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.RUTEMERKING:</span> <span class="pre">'rutemerking'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE:</span> <span class="pre">'SHAPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.GEOMETRY:</span> <span class="pre">'Geometry'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING|OUTPUT:</span> <span class="pre">7&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE_LENGTH:</span> <span class="pre">'SHAPE_Length'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.PROCESSING|OUTPUT:</span> <span class="pre">6&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SIDEANLEGGSDEL:</span> <span class="pre">'sideanleggsdel'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SUBTYPEKODE:</span> <span class="pre">'subtypekode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.TYPEVEG:</span> <span class="pre">'typeveg'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.UTTEGNING:</span> <span class="pre">'uttegning'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.VEDLIKEH:</span> <span class="pre">'vedlikeh'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.VEGKATEGORI:</span> <span class="pre">'vegkategori'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.VEGKLASSE:</span> <span class="pre">'vegklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.VEGNUMMER:</span> <span class="pre">'vegnummer'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.VEGSTATUS:</span> <span class="pre">'vegstatus'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True)))</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetCatalog.ELVEG_AND_STI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.datasets.DatasetCatalog.VEGSPERRING">
+<span class="sig-name descname"><span class="pre">VEGSPERRING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">DatasetDefinition(name=&lt;FeatureClassName.VEGSPERRING:</span> <span class="pre">'vegsperring'&gt;,</span> <span class="pre">source_scale=&lt;Scale.RAW_DATA:</span> <span class="pre">'raw_data'&gt;,</span> <span class="pre">gdb_name=&lt;GDBName.ROAD:</span> <span class="pre">'road'&gt;,</span> <span class="pre">geometry_type=&lt;GeometryType.POINT:</span> <span class="pre">'point'&gt;,</span> <span class="pre">fields=(DatasetField(field=FieldDefinition(name=&lt;ColumnName.EIER:</span> <span class="pre">'EIER'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT:</span> <span class="pre">1&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.FUNKSJON:</span> <span class="pre">'FUNKSJON'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT:</span> <span class="pre">1&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OBJECTID:</span> <span class="pre">'objectid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.OID:</span> <span class="pre">'OID'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING|OUTPUT:</span> <span class="pre">7&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.OBJTYPE:</span> <span class="pre">'objtype'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING:</span> <span class="pre">3&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.SHAPE:</span> <span class="pre">'SHAPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.GEOMETRY:</span> <span class="pre">'Geometry'&gt;,</span> <span class="pre">system_field=True),</span> <span class="pre">usage=&lt;FieldUsage.INPUT|PROCESSING|OUTPUT:</span> <span class="pre">7&gt;,</span> <span class="pre">required=True),</span> <span class="pre">DatasetField(field=FieldDefinition(name=&lt;ColumnName.TYPE:</span> <span class="pre">'TYPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False),</span> <span class="pre">usage=&lt;FieldUsage.INPUT:</span> <span class="pre">1&gt;,</span> <span class="pre">required=True)))</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.datasets.DatasetCatalog.VEGSPERRING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-data_orchestrator_2.schemas.fields">
+<span id="data-orchestrator-2-schemas-fields-module"></span><h2>data_orchestrator_2.schemas.fields module<a class="headerlink" href="#module-data_orchestrator_2.schemas.fields" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldDefinition">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.fields.</span></span><span class="sig-name descname"><span class="pre">FieldDefinition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ColumnName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datatype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FieldType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/fields.html#FieldDefinition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldDefinition" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Catalog metadata for a field; requiredness is separate from usage.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldDefinition.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ColumnName</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldDefinition.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldDefinition.datatype">
+<span class="sig-name descname"><span class="pre">datatype</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FieldType</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldDefinition.datatype" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldDefinition.system_field">
+<span class="sig-name descname"><span class="pre">system_field</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldDefinition.system_field" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.fields.</span></span><span class="sig-name descname"><span class="pre">FieldCatalog</span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/fields.html#FieldCatalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Reusable field definitions for dataset catalogs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.ADRESSENAVN">
+<span class="sig-name descname"><span class="pre">ADRESSENAVN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.ADRESSENAVN:</span> <span class="pre">'adressenavn'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.ADRESSENAVN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOP">
+<span class="sig-name descname"><span class="pre">ADSKILTELOP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.ADSKILTELOP:</span> <span class="pre">'adskiltelop'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOPNUMMER">
+<span class="sig-name descname"><span class="pre">ADSKILTELOPNUMMER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.ADSKILTELOPNUMMER:</span> <span class="pre">'adskiltelopnummer'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOPNUMMER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.AREAL_M2">
+<span class="sig-name descname"><span class="pre">AREAL_M2</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.AREAL_M2:</span> <span class="pre">'areal_m2'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.AREAL_M2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_HOVEDKLASSE">
+<span class="sig-name descname"><span class="pre">AREALBRUK_HOVEDKLASSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.AREALBRUK_HOVEDKLASSE:</span> <span class="pre">'arealbruk_hovedklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_HOVEDKLASSE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_UNDERKLASSE">
+<span class="sig-name descname"><span class="pre">AREALBRUK_UNDERKLASSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.AREALBRUK_UNDERKLASSE:</span> <span class="pre">'arealbruk_underklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_UNDERKLASSE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.AREALDEKKE">
+<span class="sig-name descname"><span class="pre">AREALDEKKE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.AREALDEKKE:</span> <span class="pre">'arealdekke'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.AREALDEKKE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.BRUKTFLAGG">
+<span class="sig-name descname"><span class="pre">BRUKTFLAGG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.BRUKTFLAGG:</span> <span class="pre">'bruktflagg'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.BRUKTFLAGG" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_531">
+<span class="sig-name descname"><span class="pre">DGFCD_FEATURE_531</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.DGFCD_FEATURE_531:</span> <span class="pre">'dgfcd_feature_531'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_531" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_ALPHA">
+<span class="sig-name descname"><span class="pre">DGFCD_FEATURE_ALPHA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.DGFCD_FEATURE_ALPHA:</span> <span class="pre">'dgfcd_feature_alpha'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_ALPHA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.DGIF_CCODE">
+<span class="sig-name descname"><span class="pre">DGIF_CCODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.DGIF_CCODE:</span> <span class="pre">'dgif_ccode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.DGIF_CCODE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.EIER">
+<span class="sig-name descname"><span class="pre">EIER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.EIER:</span> <span class="pre">'EIER'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.EIER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.ER_KRYSSNINGSPUNKT">
+<span class="sig-name descname"><span class="pre">ER_KRYSSNINGSPUNKT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.ER_KRYSSNINGSPUNKT:</span> <span class="pre">'er_kryssningspunkt'&gt;,</span> <span class="pre">datatype=&lt;FieldType.BOOLEAN:</span> <span class="pre">'Boolean'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.ER_KRYSSNINGSPUNKT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.FELTOVERSIKT">
+<span class="sig-name descname"><span class="pre">FELTOVERSIKT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.FELTOVERSIKT:</span> <span class="pre">'feltoversikt'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.FELTOVERSIKT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.FUNKSJON">
+<span class="sig-name descname"><span class="pre">FUNKSJON</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.FUNKSJON:</span> <span class="pre">'FUNKSJON'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.FUNKSJON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNFORHOLD">
+<span class="sig-name descname"><span class="pre">GRUNNFORHOLD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.GRUNNFORHOLD:</span> <span class="pre">'grunnforhold'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNFORHOLD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNKART_KILDE">
+<span class="sig-name descname"><span class="pre">GRUNNKART_KILDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.GRUNNKART_KILDE:</span> <span class="pre">'grunnkart_kilde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNKART_KILDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.HAVAREALBRUKSTEDSBUNDET">
+<span class="sig-name descname"><span class="pre">HAVAREALBRUKSTEDSBUNDET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.HAVAREALBRUKSTEDSBUNDET:</span> <span class="pre">'havarealbrukstedsbundet'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.HAVAREALBRUKSTEDSBUNDET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.HAVFISKERIBRUK">
+<span class="sig-name descname"><span class="pre">HAVFISKERIBRUK</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.HAVFISKERIBRUK:</span> <span class="pre">'havfiskeribruk'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.HAVFISKERIBRUK" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.HIERARKI">
+<span class="sig-name descname"><span class="pre">HIERARKI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.HIERARKI:</span> <span class="pre">'hierarki'&gt;,</span> <span class="pre">datatype=&lt;FieldType.SHORT:</span> <span class="pre">'Short'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.HIERARKI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.HOYDE">
+<span class="sig-name descname"><span class="pre">HOYDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.HOYDE:</span> <span class="pre">'hoyde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.HOYDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.ID">
+<span class="sig-name descname"><span class="pre">ID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.ID:</span> <span class="pre">'id'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.ID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.KOMID">
+<span class="sig-name descname"><span class="pre">KOMID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.KOMID:</span> <span class="pre">'komid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.KOMID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.KONNEKTERINGSLENKE">
+<span class="sig-name descname"><span class="pre">KONNEKTERINGSLENKE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.KONNEKTERINGSLENKE:</span> <span class="pre">'konnekteringslenke'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.KONNEKTERINGSLENKE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.KRYSSDEL">
+<span class="sig-name descname"><span class="pre">KRYSSDEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.KRYSSDEL:</span> <span class="pre">'kryssdel'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.KRYSSDEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.LRV">
+<span class="sig-name descname"><span class="pre">LRV</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.LRV:</span> <span class="pre">'LRV'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.LRV" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.MEDIUM">
+<span class="sig-name descname"><span class="pre">MEDIUM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.MEDIUM:</span> <span class="pre">'medium'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.MEDIUM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.MOTORVEGTYPE">
+<span class="sig-name descname"><span class="pre">MOTORVEGTYPE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.MOTORVEGTYPE:</span> <span class="pre">'motorvegtype'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.MOTORVEGTYPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OBJECTID">
+<span class="sig-name descname"><span class="pre">OBJECTID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OBJECTID:</span> <span class="pre">'objectid'&gt;,</span> <span class="pre">datatype=&lt;FieldType.OID:</span> <span class="pre">'OID'&gt;,</span> <span class="pre">system_field=True)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OBJECTID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OBJTYPE">
+<span class="sig-name descname"><span class="pre">OBJTYPE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OBJTYPE:</span> <span class="pre">'objtype'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OBJTYPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_1">
+<span class="sig-name descname"><span class="pre">OKOSYSTEMTYPE_1</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_1:</span> <span class="pre">'okosystemtype_1'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_2">
+<span class="sig-name descname"><span class="pre">OKOSYSTEMTYPE_2</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_2:</span> <span class="pre">'okosystemtype_2'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_3">
+<span class="sig-name descname"><span class="pre">OKOSYSTEMTYPE_3</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_3:</span> <span class="pre">'okosystemtype_3'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_KODE">
+<span class="sig-name descname"><span class="pre">OKOSYSTEMTYPE_KODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OKOSYSTEMTYPE_KODE:</span> <span class="pre">'okosystemtype_kode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_KODE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.OMKRETS">
+<span class="sig-name descname"><span class="pre">OMKRETS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.OMKRETS:</span> <span class="pre">'omkrets'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.OMKRETS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.PARTITION_SELECTION_FIELD">
+<span class="sig-name descname"><span class="pre">PARTITION_SELECTION_FIELD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.PARTITION_SELECTION_FIELD:</span> <span class="pre">'partition_selection_field'&gt;,</span> <span class="pre">datatype=&lt;FieldType.LONG:</span> <span class="pre">'Long'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.PARTITION_SELECTION_FIELD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.RUTEMERKING">
+<span class="sig-name descname"><span class="pre">RUTEMERKING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.RUTEMERKING:</span> <span class="pre">'rutemerking'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.RUTEMERKING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE">
+<span class="sig-name descname"><span class="pre">SHAPE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SHAPE:</span> <span class="pre">'SHAPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.GEOMETRY:</span> <span class="pre">'Geometry'&gt;,</span> <span class="pre">system_field=True)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_AREA">
+<span class="sig-name descname"><span class="pre">SHAPE_AREA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SHAPE_AREA:</span> <span class="pre">'SHAPE_Area'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=True)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_AREA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_LENGTH">
+<span class="sig-name descname"><span class="pre">SHAPE_LENGTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SHAPE_LENGTH:</span> <span class="pre">'SHAPE_Length'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=True)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_LENGTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SKOGBONITET">
+<span class="sig-name descname"><span class="pre">SKOGBONITET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SKOGBONITET:</span> <span class="pre">'skogbonitet'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SKOGBONITET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SIDEANLEGGSDEL">
+<span class="sig-name descname"><span class="pre">SIDEANLEGGSDEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SIDEANLEGGSDEL:</span> <span class="pre">'sideanleggsdel'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SIDEANLEGGSDEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SSBAREALBRUK_KILDE">
+<span class="sig-name descname"><span class="pre">SSBAREALBRUK_KILDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SSBAREALBRUK_KILDE:</span> <span class="pre">'ssbarealbruk_kilde'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SSBAREALBRUK_KILDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.SUBTYPEKODE">
+<span class="sig-name descname"><span class="pre">SUBTYPEKODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.SUBTYPEKODE:</span> <span class="pre">'subtypekode'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.SUBTYPEKODE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.TRESLAG">
+<span class="sig-name descname"><span class="pre">TRESLAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.TRESLAG:</span> <span class="pre">'treslag'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.TRESLAG" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.TYPE">
+<span class="sig-name descname"><span class="pre">TYPE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.TYPE:</span> <span class="pre">'TYPE'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.TYPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.TYPEVEG">
+<span class="sig-name descname"><span class="pre">TYPEVEG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.TYPEVEG:</span> <span class="pre">'typeveg'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.TYPEVEG" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.UTTEGNING">
+<span class="sig-name descname"><span class="pre">UTTEGNING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.UTTEGNING:</span> <span class="pre">'uttegning'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.UTTEGNING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.VEDLIKEH">
+<span class="sig-name descname"><span class="pre">VEDLIKEH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.VEDLIKEH:</span> <span class="pre">'vedlikeh'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.VEDLIKEH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.VEGKATEGORI">
+<span class="sig-name descname"><span class="pre">VEGKATEGORI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.VEGKATEGORI:</span> <span class="pre">'vegkategori'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.VEGKATEGORI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.VEGKLASSE">
+<span class="sig-name descname"><span class="pre">VEGKLASSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.VEGKLASSE:</span> <span class="pre">'vegklasse'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.VEGKLASSE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.VEGNUMMER">
+<span class="sig-name descname"><span class="pre">VEGNUMMER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.VEGNUMMER:</span> <span class="pre">'vegnummer'&gt;,</span> <span class="pre">datatype=&lt;FieldType.DOUBLE:</span> <span class="pre">'Double'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.VEGNUMMER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.fields.FieldCatalog.VEGSTATUS">
+<span class="sig-name descname"><span class="pre">VEGSTATUS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">FieldDefinition(name=&lt;ColumnName.VEGSTATUS:</span> <span class="pre">'vegstatus'&gt;,</span> <span class="pre">datatype=&lt;FieldType.STRING:</span> <span class="pre">'String'&gt;,</span> <span class="pre">system_field=False)</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.fields.FieldCatalog.VEGSTATUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-data_orchestrator_2.schemas.pipelines">
+<span id="data-orchestrator-2-schemas-pipelines-module"></span><h2>data_orchestrator_2.schemas.pipelines module<a class="headerlink" href="#module-data_orchestrator_2.schemas.pipelines" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.pipelines.</span></span><span class="sig-name descname"><span class="pre">PipelineDefinition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdb_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GDBName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">FeatureClassName</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition" title="data_orchestrator_2.schemas.datasets.DatasetDefinition"><span class="pre">DatasetDefinition</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/pipelines.html#PipelineDefinition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Target scale and datasets required for one object-type pipeline.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.gdb_name">
+<span class="sig-name descname"><span class="pre">gdb_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GDBName</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.gdb_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.scale">
+<span class="sig-name descname"><span class="pre">scale</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Scale</span></span><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.datasets">
+<span class="sig-name descname"><span class="pre">datasets</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">FeatureClassName</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition" title="data_orchestrator_2.schemas.datasets.DatasetDefinition"><span class="pre">DatasetDefinition</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.datasets" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDatasetNames">
+<span class="sig-name descname"><span class="pre">getDatasetNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FeatureClassName</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/pipelines.html#PipelineDefinition.getDatasetNames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDatasetNames" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.getAllDatasets">
+<span class="sig-name descname"><span class="pre">getAllDatasets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition" title="data_orchestrator_2.schemas.datasets.DatasetDefinition"><span class="pre">DatasetDefinition</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/pipelines.html#PipelineDefinition.getAllDatasets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getAllDatasets" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDataset">
+<span class="sig-name descname"><span class="pre">getDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FeatureClassName</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#data_orchestrator_2.schemas.datasets.DatasetDefinition" title="data_orchestrator_2.schemas.datasets.DatasetDefinition"><span class="pre">DatasetDefinition</span></a></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/pipelines.html#PipelineDefinition.getDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDataset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="data_orchestrator_2.schemas.pipelines.get_pipeline">
+<span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.schemas.pipelines.</span></span><span class="sig-name descname"><span class="pre">get_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdb_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GDBName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Scale</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#data_orchestrator_2.schemas.pipelines.PipelineDefinition" title="data_orchestrator_2.schemas.pipelines.PipelineDefinition"><span class="pre">PipelineDefinition</span></a></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/schemas/pipelines.html#get_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.schemas.pipelines.get_pipeline" title="Link to this definition"></a></dt>
+<dd><p>Look up a pipeline by object type and target scale; raise KeyError if absent.</p>
+</dd></dl>
+
+</section>
+<section id="module-data_orchestrator_2.schemas">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-data_orchestrator_2.schemas" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data_orchestrator_2.organizers.html" class="btn btn-neutral float-left" title="data_orchestrator_2.organizers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generalization.html" class="btn btn-neutral float-right" title="generalization package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,178 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>data_orchestrator_2.organizers.fieldManager &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">data_orchestrator_2.organizers.fieldManager</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for data_orchestrator_2.organizers.fieldManager</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Libraries</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">data_orchestrator_2.constants.columns</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnName</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">data_orchestrator_2.schemas.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetField</span><span class="p">,</span> <span class="n">FieldUsage</span>
+
+<span class="c1">######################</span>
+<span class="c1"># Functionality</span>
+<span class="c1">######################</span>
+
+
+<span class="c1"># TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline</span>
+<div class="viewcode-block" id="remove_none_geometry">
+<a class="viewcode-back" href="../../../generated_docs/data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.remove_none_geometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_none_geometry</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delete null-geometry rows and report the number removed."""</span>
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"del_lyr"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">layer</span><span class="p">,</span>
+            <span class="n">selection_type</span><span class="o">=</span><span class="s2">"NEW_SELECTION"</span><span class="p">,</span>
+            <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ColumnName</span><span class="o">.</span><span class="n">SHAPE</span><span class="si">}</span><span class="s2"> IS NULL"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">layer</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteRows</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S'</span><span class="p">)</span><span class="si">}</span><span class="s2">] Removed </span><span class="si">{</span><span class="n">removed</span><span class="si">}</span><span class="s2"> rows with None geometry."</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline</span>
+<div class="viewcode-block" id="clean_columns">
+<a class="viewcode-back" href="../../../generated_docs/data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.clean_columns">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clean_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">usage</span><span class="p">:</span> <span class="n">FieldUsage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delete unregistered or unused fields, preserving required and system fields.</span>
+
+<span class="sd">    Combined usage flags retain fields marked for any requested stage.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">path</span>
+    <span class="n">definitions</span> <span class="o">=</span> <span class="p">{</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">casefold</span><span class="p">():</span> <span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
+    <span class="n">actual_fields</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">removed</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">actual</span> <span class="ow">in</span> <span class="n">actual_fields</span><span class="p">:</span>
+        <span class="n">definition</span><span class="p">:</span> <span class="n">DatasetField</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">definitions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">casefold</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">actual</span><span class="o">.</span><span class="n">required</span> <span class="ow">or</span> <span class="p">(</span><span class="n">definition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">definition</span><span class="o">.</span><span class="n">system_field</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">definition</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">definition</span><span class="o">.</span><span class="n">isUsedFor</span><span class="p">(</span><span class="n">usage</span><span class="p">):</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">actual</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">removed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S'</span><span class="p">)</span><span class="si">}</span><span class="s2">] Removed </span><span class="si">{</span><span class="n">removed</span><span class="si">}</span><span class="s2"> columns not flagged for </span><span class="si">{</span><span class="n">usage</span><span class="si">}</span><span class="s2">."</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># TODO: Need to connect to a dataset runtime instance keeping the actual path to the current data in the pipeline</span>
+<div class="viewcode-block" id="prepare_final_dataset">
+<a class="viewcode-back" href="../../../generated_docs/data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.prepare_final_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_final_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Perform final cleanup and preparation of the dataset before use."""</span>
+    <span class="n">remove_none_geometry</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">clean_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">FieldUsage</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

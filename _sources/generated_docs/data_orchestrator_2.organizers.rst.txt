@@ -1,0 +1,37 @@
+data\_orchestrator\_2.organizers package
+========================================
+
+Submodules
+----------
+
+data\_orchestrator\_2.organizers.fieldManager module
+----------------------------------------------------
+
+.. automodule:: data_orchestrator_2.organizers.fieldManager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator\_2.organizers.path\_factory module
+-----------------------------------------------------
+
+.. automodule:: data_orchestrator_2.organizers.path_factory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+data\_orchestrator\_2.organizers.validator module
+-------------------------------------------------
+
+.. automodule:: data_orchestrator_2.organizers.validator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: data_orchestrator_2.organizers
+   :members:
+   :show-inheritance:
+   :undoc-members:

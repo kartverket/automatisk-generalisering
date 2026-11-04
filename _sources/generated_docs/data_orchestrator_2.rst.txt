@@ -1,0 +1,30 @@
+data\_orchestrator\_2 package
+=============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   data_orchestrator_2.organizers
+   data_orchestrator_2.schemas
+
+Submodules
+----------
+
+data\_orchestrator\_2.test module
+---------------------------------
+
+.. automodule:: data_orchestrator_2.test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: data_orchestrator_2
+   :members:
+   :show-inheritance:
+   :undoc-members:

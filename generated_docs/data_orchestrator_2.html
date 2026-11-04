@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>data_orchestrator_2 package &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="data_orchestrator_2.organizers package" href="data_orchestrator_2.organizers.html" />
+    <link rel="prev" title="data_orchestrator package" href="data_orchestrator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">automatisk-generalisering</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="composition_configs.html">composition_configs package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conf.html">conf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator.html">data_orchestrator package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">data_orchestrator_2 package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.organizers.html">data_orchestrator_2.organizers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html">data_orchestrator_2.schemas package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-data_orchestrator_2.test">data_orchestrator_2.test module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#data_orchestrator_2.test.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-data_orchestrator_2">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env_setup.html">env_setup package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalization.html">generalization package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_pyvis_docu.html">generate_pyvis_docu module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main_on_cloud.html">main_on_cloud module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main_on_prem.html">main_on_prem module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mdGenerator.html">mdGenerator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="paths.html">paths module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="temp_skip_folder.html">temp_skip_folder package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests_legacy.html">tests_legacy package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">automatisk-generalisering</a></li>
+      <li class="breadcrumb-item active">data_orchestrator_2 package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated_docs/data_orchestrator_2.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-orchestrator-2-package">
+<h1>data_orchestrator_2 package<a class="headerlink" href="#data-orchestrator-2-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="data_orchestrator_2.organizers.html">data_orchestrator_2.organizers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.organizers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.organizers.html#module-data_orchestrator_2.organizers.fieldManager">data_orchestrator_2.organizers.fieldManager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.remove_none_geometry"><code class="docutils literal notranslate"><span class="pre">remove_none_geometry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.clean_columns"><code class="docutils literal notranslate"><span class="pre">clean_columns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.organizers.html#data_orchestrator_2.organizers.fieldManager.prepare_final_dataset"><code class="docutils literal notranslate"><span class="pre">prepare_final_dataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.organizers.html#data-orchestrator-2-organizers-path-factory-module">data_orchestrator_2.organizers.path_factory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.organizers.html#data-orchestrator-2-organizers-validator-module">data_orchestrator_2.organizers.validator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.organizers.html#module-data_orchestrator_2.organizers">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_orchestrator_2.schemas.html">data_orchestrator_2.schemas package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.schemas.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.schemas.html#module-data_orchestrator_2.schemas.datasets">data_orchestrator_2.schemas.datasets module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.FieldUsage"><code class="docutils literal notranslate"><span class="pre">FieldUsage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.FieldUsage.INPUT"><code class="docutils literal notranslate"><span class="pre">FieldUsage.INPUT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.FieldUsage.PROCESSING"><code class="docutils literal notranslate"><span class="pre">FieldUsage.PROCESSING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.FieldUsage.OUTPUT"><code class="docutils literal notranslate"><span class="pre">FieldUsage.OUTPUT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField"><code class="docutils literal notranslate"><span class="pre">DatasetField</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.field"><code class="docutils literal notranslate"><span class="pre">DatasetField.field</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.usage"><code class="docutils literal notranslate"><span class="pre">DatasetField.usage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.required"><code class="docutils literal notranslate"><span class="pre">DatasetField.required</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.name"><code class="docutils literal notranslate"><span class="pre">DatasetField.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.datatype"><code class="docutils literal notranslate"><span class="pre">DatasetField.datatype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.system_field"><code class="docutils literal notranslate"><span class="pre">DatasetField.system_field</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetField.isUsedFor"><code class="docutils literal notranslate"><span class="pre">DatasetField.isUsedFor()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.name"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.source_scale"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.source_scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.gdb_name"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.gdb_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.geometry_type"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.geometry_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.fields"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.fields</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldNames"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.getFieldNames()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.getField"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.getField()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.getFieldsFor"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.getFieldsFor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetDefinition.hasField"><code class="docutils literal notranslate"><span class="pre">DatasetDefinition.hasField()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.used_for"><code class="docutils literal notranslate"><span class="pre">used_for()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetCatalog"><code class="docutils literal notranslate"><span class="pre">DatasetCatalog</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetCatalog.AREALDEKKE"><code class="docutils literal notranslate"><span class="pre">DatasetCatalog.AREALDEKKE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetCatalog.ELVEG_AND_STI"><code class="docutils literal notranslate"><span class="pre">DatasetCatalog.ELVEG_AND_STI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.datasets.DatasetCatalog.VEGSPERRING"><code class="docutils literal notranslate"><span class="pre">DatasetCatalog.VEGSPERRING</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.schemas.html#module-data_orchestrator_2.schemas.fields">data_orchestrator_2.schemas.fields module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldDefinition"><code class="docutils literal notranslate"><span class="pre">FieldDefinition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldDefinition.name"><code class="docutils literal notranslate"><span class="pre">FieldDefinition.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldDefinition.datatype"><code class="docutils literal notranslate"><span class="pre">FieldDefinition.datatype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldDefinition.system_field"><code class="docutils literal notranslate"><span class="pre">FieldDefinition.system_field</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog"><code class="docutils literal notranslate"><span class="pre">FieldCatalog</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.ADRESSENAVN"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.ADRESSENAVN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOP"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.ADSKILTELOP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.ADSKILTELOPNUMMER"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.ADSKILTELOPNUMMER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.AREAL_M2"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.AREAL_M2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_HOVEDKLASSE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.AREALBRUK_HOVEDKLASSE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.AREALBRUK_UNDERKLASSE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.AREALBRUK_UNDERKLASSE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.AREALDEKKE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.AREALDEKKE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.BRUKTFLAGG"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.BRUKTFLAGG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_531"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.DGFCD_FEATURE_531</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.DGFCD_FEATURE_ALPHA"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.DGFCD_FEATURE_ALPHA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.DGIF_CCODE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.DGIF_CCODE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.EIER"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.EIER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.ER_KRYSSNINGSPUNKT"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.ER_KRYSSNINGSPUNKT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.FELTOVERSIKT"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.FELTOVERSIKT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.FUNKSJON"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.FUNKSJON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNFORHOLD"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.GRUNNFORHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.GRUNNKART_KILDE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.GRUNNKART_KILDE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.HAVAREALBRUKSTEDSBUNDET"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.HAVAREALBRUKSTEDSBUNDET</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.HAVFISKERIBRUK"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.HAVFISKERIBRUK</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.HIERARKI"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.HIERARKI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.HOYDE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.HOYDE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.ID"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.ID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.KOMID"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.KOMID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.KONNEKTERINGSLENKE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.KONNEKTERINGSLENKE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.KRYSSDEL"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.KRYSSDEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.LRV"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.LRV</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.MEDIUM"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.MEDIUM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.MOTORVEGTYPE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.MOTORVEGTYPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OBJECTID"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OBJECTID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OBJTYPE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OBJTYPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_1"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OKOSYSTEMTYPE_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_2"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OKOSYSTEMTYPE_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_3"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OKOSYSTEMTYPE_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OKOSYSTEMTYPE_KODE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OKOSYSTEMTYPE_KODE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.OMKRETS"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.OMKRETS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.PARTITION_SELECTION_FIELD"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.PARTITION_SELECTION_FIELD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.RUTEMERKING"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.RUTEMERKING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SHAPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_AREA"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SHAPE_AREA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SHAPE_LENGTH"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SHAPE_LENGTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SKOGBONITET"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SKOGBONITET</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SIDEANLEGGSDEL"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SIDEANLEGGSDEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SSBAREALBRUK_KILDE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SSBAREALBRUK_KILDE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.SUBTYPEKODE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.SUBTYPEKODE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.TRESLAG"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.TRESLAG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.TYPE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.TYPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.TYPEVEG"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.TYPEVEG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.UTTEGNING"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.UTTEGNING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.VEDLIKEH"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.VEDLIKEH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.VEGKATEGORI"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.VEGKATEGORI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.VEGKLASSE"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.VEGKLASSE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.VEGNUMMER"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.VEGNUMMER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.fields.FieldCatalog.VEGSTATUS"><code class="docutils literal notranslate"><span class="pre">FieldCatalog.VEGSTATUS</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.schemas.html#module-data_orchestrator_2.schemas.pipelines">data_orchestrator_2.schemas.pipelines module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.gdb_name"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.gdb_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.scale"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.datasets"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.datasets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDatasetNames"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.getDatasetNames()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getAllDatasets"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.getAllDatasets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.PipelineDefinition.getDataset"><code class="docutils literal notranslate"><span class="pre">PipelineDefinition.getDataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_orchestrator_2.schemas.html#data_orchestrator_2.schemas.pipelines.get_pipeline"><code class="docutils literal notranslate"><span class="pre">get_pipeline()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_orchestrator_2.schemas.html#module-data_orchestrator_2.schemas">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-data_orchestrator_2.test">
+<span id="data-orchestrator-2-test-module"></span><h2>data_orchestrator_2.test module<a class="headerlink" href="#module-data_orchestrator_2.test" title="Link to this heading"></a></h2>
+<p>Example of redirecting a runtime dataset to a geoprocessing output.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="data_orchestrator_2.test.main">
+<span class="sig-prename descclassname"><span class="pre">data_orchestrator_2.test.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/data_orchestrator_2/test.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data_orchestrator_2.test.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-data_orchestrator_2">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-data_orchestrator_2" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data_orchestrator.html" class="btn btn-neutral float-left" title="data_orchestrator package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data_orchestrator_2.organizers.html" class="btn btn-neutral float-right" title="data_orchestrator_2.organizers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -9,6 +9,7 @@ automatisk-generalisering
    config
    custom_tools
    data_orchestrator
+   data_orchestrator_2
    env_setup
    file_manager
    generalization
