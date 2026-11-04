@@ -30,6 +30,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from ag.adapters.arcpy.cartographic_ops import ArcpyCartographicOps
+from ag.adapters.arcpy.geometry_ops import ArcpyGeometryOps
+from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.adapters.fakes.memory.cartographic_ops import MemoryCartographicOps
 from ag.adapters.fakes.memory.geometry_ops import MemoryGeometryOps
 from ag.adapters.fakes.memory.table_ops import MemoryTableOps
@@ -38,12 +41,19 @@ from ag.ports.geometry_ops import GeometryOps
 from ag.ports.table_ops import TableOps
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
+    from ag.adapters.arcpy.session import ArcpySession
     from ag.adapters.fakes.memory.store import MemoryStore
 
     _store = MemoryStore()
     _memory_geometry: GeometryOps = MemoryGeometryOps(store=_store)
     _memory_table: TableOps = MemoryTableOps(store=_store)
     _memory_cartographic: CartographicOps = MemoryCartographicOps(store=_store)
+    _session = ArcpySession(engine=ModuleType("arcpy"))
+    _arcpy_geometry: GeometryOps = ArcpyGeometryOps(session=_session)
+    _arcpy_table: TableOps = ArcpyTableOps(session=_session)
+    _arcpy_cartographic: CartographicOps = ArcpyCartographicOps(session=_session)
 
 PORTS: dict[str, type] = {
     "geometry_ops": GeometryOps,
@@ -59,6 +69,9 @@ ADAPTERS: dict[str, tuple[str, str]] = {
 """Adapter to its root package and the module holding its one shared object."""
 
 MATRIX: dict[tuple[str, str], type] = {
+    ("arcpy", "geometry_ops"): ArcpyGeometryOps,
+    ("arcpy", "table_ops"): ArcpyTableOps,
+    ("arcpy", "cartographic_ops"): ArcpyCartographicOps,
     ("memory", "geometry_ops"): MemoryGeometryOps,
     ("memory", "table_ops"): MemoryTableOps,
     ("memory", "cartographic_ops"): MemoryCartographicOps,
@@ -261,8 +274,9 @@ def test_every_composed_class_is_in_the_matrix() -> None:
                 )
 
 
-def test_the_scan_sees_the_memory_groups() -> None:
-    by_name = {g.name: g for g in _group_classes("memory")}
+@pytest.mark.parametrize("adapter", sorted(ADAPTERS), ids=sorted(ADAPTERS))
+def test_the_scan_sees_the_groups(adapter: str) -> None:
+    by_name = {g.name: g for g in _group_classes(adapter)}
     assert by_name["Selection"].defined == ("select",)
     assert by_name["Shape"].defined == ("explode_multipart",)
     assert by_name["RowIO"].defined == ("read_rows",)

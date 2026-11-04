@@ -93,6 +93,7 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         (_road(name="x" * 21), "holds at most 20"),
         (_road(surveyed="2024-01-01"), "is not a datetime"),
         (_road(surveyed=datetime(2024, 1, 1, tzinfo=UTC)), "aware datetime"),
+        (_road(surveyed=datetime(2024, 1, 1, 0, 0, 0, 1)), r"replace\(microsecond=0\)"),
         (
             Row(_road().attributes, Geometry.point(0.0, 0.0, crs="EPSG:4326")),
             "schema declares",
@@ -109,6 +110,7 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         "text-too-long",
         "str-on-date",
         "aware-datetime",
+        "sub-second-date",
         "wrong-crs",
     ],
 )

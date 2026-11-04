@@ -3,10 +3,10 @@
 **Status:** Accepted, 2026-10-22.
 
 **Scope:** The values and method contracts of `ag/ports/`: handles at the boundary,
-`ports/predicates.py`, `ports/attributes.py`, `ports/geometry.py`, and row IO on `TableOps`.
-Absorbs A2.1, A2.2 and A2.3; A4.1, A4.2 and A4.3 land here. The method contracts for parents
-capability and single-part dissolve (A14.1, A18) join when they migrate. Row shape is
-ADR-0017.
+`ports/predicates.py`, `ports/attributes.py`, `ports/geometry.py`, row IO on `TableOps`, and
+the capability record in `ports/capabilities.py`. Absorbs A2.1, A2.2 and A2.3, and from A14.1
+the capability record and the refusal; A4.1, A4.2 and A4.3 land here. The rest of A14.1 and
+single-part dissolve (A18) join when they migrate. Row shape is ADR-0017.
 
 Related: ADR-0018 (the ports as a package), ADR-0017 (row shape), ADR-0020 (operations).
 
@@ -21,6 +21,8 @@ Related: ADR-0018 (the ports as a package), ADR-0017 (row shape), ADR-0020 (oper
    SQL does. A raw expression is a counted escape hatch.
 4. No cursor crosses a port. Rows are read, written and updated in bulk, an update keyed on a
    stable id; expression updates are declarative; `Geometry` is an immutable value type.
+5. An adapter states at construction, as data, the `MINT` methods it honours `parents=` for;
+   a request for parents on any other method is an error, never an empty table.
 
 ## PC-1 Handles at the boundary
 
@@ -92,8 +94,8 @@ constructors on a namespace, not a type, and the raw escape hatch is counted.
   comparison can never disagree. `SHORT` and `LONG` take an `int` within the type's range,
   `DOUBLE` takes `int` or `float`, `TEXT` takes a `str` of at most the field's length in
   characters, except a `LIKE` pattern, which is held to the type and not the length, since
-  `%` may match nothing; `DATE` takes a naive `datetime`; a `bool` is refused at that
-  boundary.
+  `%` may match nothing; `DATE` takes a naive `datetime` with no sub-second part, since the
+  port carries dates to the whole second; a `bool` is refused at that boundary.
 - **PC-D18** A predicate has no truth value in Python: `and`, `or` and `not` raise. A
   connective has at least two terms.
 - **PC-D19** The leaves are frozen dataclasses `Compare`, `IsIn`, `IsNull` and `RawAttr`, so
@@ -132,6 +134,21 @@ on a stable id and may carry geometry.
 - **PC-D26** A row written through the port is held to the field types and ranges of
   PC-D17, with `None` a null in a cell; a mismatch is a `PortContractError` from the
   adapter, raised before anything is written.
+- **PC-D27** Coordinates are planar. No Z and no M cross a port; heights and depths are
+  attribute values on points. An adapter refuses a dataset carrying Z or M values before
+  any row is read.
+
+## PC-5 Parents capability
+
+**Direction.** The layer above asks for parents and does not care how they are produced.
+
+**Details.**
+
+- **PC-D28** Each adapter publishes at construction a capability record naming the port
+  methods declared `ids=MINT` for which it honours `parents=`, as method objects; it names
+  methods, never mechanisms, and the layer above receives it as data.
+- **PC-D29** An adapter that cannot honour `parents=` for a method raises
+  `ParentsUnavailableError`; it never returns an empty table.
 
 ## Rejected
 

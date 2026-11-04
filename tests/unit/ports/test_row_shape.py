@@ -10,14 +10,13 @@ is `tests/static/test_row_shape_typing.py`, which needs pyright.
 from __future__ import annotations
 
 import inspect
-from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Protocol, get_type_hints
 
 import pytest
 
 from ag.core.handles import In, Out
-from ag.ports.row_shape import Cardinality, Ids, Rows, row_shape
+from ag.ports.row_shape import Cardinality, Ids, Rows, declared_rows, row_shape
 
 
 def test_group_with_carry_or_foreign_is_refused_because_a_scalar_cannot_hold_a_set() -> (
@@ -75,8 +74,9 @@ def test_the_decorator_returns_the_function_itself() -> None:
     declared = Ops.__dict__["copy"]
     assert inspect.isfunction(declared)
     assert not hasattr(declared, "__wrapped__")
-    stored: Mapping[str, Rows] = getattr(declared, "__row_shape__")
+    stored = declared_rows(declared)
     assert stored == {"output": Rows(Cardinality.ONE, Ids.CARRY, subject="input")}
+    assert stored is not None
     with pytest.raises(TypeError):
         stored["output"] = None  # type: ignore[index]
 

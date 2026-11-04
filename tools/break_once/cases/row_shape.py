@@ -104,11 +104,11 @@ CASES: tuple[Case, ...] = (
                 "from typing import Any, TypeVar, cast\n",
             ),
             (
-                '        setattr(fn, "__row_shape__", MappingProxyType(dict(outputs)))\n'
+                "        setattr(fn, _ATTRIBUTE, MappingProxyType(dict(outputs)))\n"
                 "        return fn\n",
                 "        def wrapper(*args: Any, **kwargs: Any) -> Any:\n"
                 "            return fn(*args, **kwargs)\n\n"
-                '        setattr(wrapper, "__row_shape__", MappingProxyType(dict(outputs)))\n'
+                "        setattr(wrapper, _ATTRIBUTE, MappingProxyType(dict(outputs)))\n"
                 "        return cast(F, wrapper)\n",
             ),
         ),
@@ -128,12 +128,12 @@ CASES: tuple[Case, ...] = (
                 "from typing import Any, TypeVar, cast\n",
             ),
             (
-                '        setattr(fn, "__row_shape__", MappingProxyType(dict(outputs)))\n'
+                "        setattr(fn, _ATTRIBUTE, MappingProxyType(dict(outputs)))\n"
                 "        return fn\n",
                 "        @functools.wraps(fn)\n"
                 "        def wrapper(*args: Any, **kwargs: Any) -> Any:\n"
                 "            return fn(*args, **kwargs)\n\n"
-                '        setattr(wrapper, "__row_shape__", MappingProxyType(dict(outputs)))\n'
+                "        setattr(wrapper, _ATTRIBUTE, MappingProxyType(dict(outputs)))\n"
                 "        return cast(F, wrapper)\n",
             ),
         ),

@@ -1,8 +1,9 @@
 """The row-shape grammar: what a port method declares about each output it writes.
 
 What: `Cardinality` and `Ids`, the two axes; `Rows`, one output's declaration, naming the
-input its rows derive from; and `@row_shape(**outputs)`, which attaches one `Rows` per
-output parameter to a Protocol method as `__row_shape__`, keyed by the parameter's name.
+input its rows derive from; `@row_shape(**outputs)`, which attaches one `Rows` per output
+parameter to a Protocol method, keyed by the parameter's name; and `declared_rows(fn)`,
+which reads them back. The attribute that carries them is named here and nowhere else.
 
 How: the two axes are independent and declared together. `cardinality` says how many
 output rows one subject row yields (`ONE`, `MANY`, `GROUP`); `ids` says what identity those
@@ -143,17 +144,31 @@ class Rows:
 
 F = TypeVar("F", bound=Callable[..., Any])
 
+_ATTRIBUTE = "__row_shape__"
+"""Where a declaration lives on the function object; `declared_rows` is the one reader."""
+
 
 def row_shape(**outputs: Rows) -> Callable[[F], F]:
     """Attaches one `Rows` per output parameter to a Protocol method, by name.
 
-    The mapping is stored as `__row_shape__` on the function object and the function is
-    returned unchanged, so the Protocol's structural type is exactly what the signature
-    says. Read it from the Protocol class, never from an adapter instance.
+    The mapping is stored on the function object and the function is returned
+    unchanged, so the Protocol's structural type is exactly what the signature says.
+    Read it back with `declared_rows`, from the Protocol class and never from an adapter
+    instance.
     """
 
     def attach(fn: F) -> F:
-        setattr(fn, "__row_shape__", MappingProxyType(dict(outputs)))
+        setattr(fn, _ATTRIBUTE, MappingProxyType(dict(outputs)))
         return fn
 
     return attach
+
+
+def declared_rows(fn: Callable[..., object]) -> Mapping[str, Rows] | None:
+    """The `Rows` a Protocol method declares, by output name; None when it declares none.
+
+    None and an empty mapping differ: a query declares nothing, and the surface check
+    treats an `Out` without a declaration as an error.
+    """
+    found: Mapping[str, Rows] | None = getattr(fn, _ATTRIBUTE, None)
+    return found

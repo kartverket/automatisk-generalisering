@@ -16,7 +16,7 @@ checks are:
 | `ruff check` | pyflakes, import order and `SLF001` on `src/ag/generalization/`; on the legacy packages `F401` and `I001` are held back and a per-file baseline applies ([setup and toolchain](toolchain.md)) |
 | `pyright` | strict type checking of `src/`, `tests/`, `tools/` |
 | `lint-imports` | the import contracts in `.importlinter` |
-| `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py` |
+| `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py`; engine reach-through outside the ArcPy session's guard under `ag/adapters/arcpy/` and `tests/support/arcpy/` |
 | `pytest -m "not arcpy"` | every test that does not need ArcPy |
 | `python -m tools.break_once --check` | the break-it-once case tables still match the source and their tests still exist (see below) |
 | `check_consistency.py`, `check_terminology.py` | the design record's internal consistency |

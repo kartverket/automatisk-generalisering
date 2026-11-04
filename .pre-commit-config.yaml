@@ -46,7 +46,7 @@ repos:
         always_run: true
 
       - id: scan-sources
-        name: source scans (environment reads, imports by string)
+        name: source scans (environment reads, imports by string, engine reach-through)
         entry: uv run --locked --extra dev python tools/scan_sources.py
         language: system
         pass_filenames: false
