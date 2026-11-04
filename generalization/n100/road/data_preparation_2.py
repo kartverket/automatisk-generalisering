@@ -77,7 +77,7 @@ if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
     AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
-SCALE = "n100"
+SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
@@ -88,7 +88,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
     environment_setup.main()
     arcpy.env.referenceScale = 100000
 
-    data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.road)
+    data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.object_veg_sti)
     area_data = data_orc.get_dataset(dn.area)
     building_data = data_orc.get_dataset(dn.building)
 
@@ -169,7 +169,7 @@ def data_selection_and_validation(
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            road.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            road.elveg_and_sti_liten: Road_N100.data_selection___nvdb_roads___n100_road.value,
             road.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,

@@ -25,10 +25,10 @@ class DataReader:
         pipeline (str): The pipeline to the data that should be generalized
     """
 
-    def __init__(self, map_scale: str = None, pipeline: str = None):
-        self.map_scale: str = map_scale.lower()
+    def __init__(self, map_scale: dn, pipeline: dn):
+        self.map_scale: dn = map_scale
         self.path: Path = GIS_FILES_ROOT
-        self.pipeline: str = pipeline.lower()
+        self.pipeline: dn = pipeline
 
     # ========================
     # Fetchers
@@ -39,7 +39,7 @@ class DataReader:
         Fetches the relevant datasets for the specific pipeline and scale,
         and returns them as a dictionary of DatasetNamespace objects.
         """
-        relevant_datasets: dict[str, list] = PIPELINE_INPUT[self.map_scale][
+        relevant_datasets: dict[dn, list[dn]] = PIPELINE_INPUT[self.map_scale][
             self.pipeline
         ]
         datasets = {}

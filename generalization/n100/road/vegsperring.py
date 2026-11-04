@@ -8,7 +8,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_roads import Road_N100
 from data_orchestrator.datasets import DatasetNamespace
 
-data_files = {
+DATA_FILES = {
     # Stores all the relevant file paths to the geodata used in this Python file
     "input_road": Road_N100.roundabout__cleaned_road__n100_road.value,
     "input_vegsperring": Road_N100.data_selection___vegsperring___n100_road.value,
@@ -50,20 +50,23 @@ def remove_roadblock(data: DatasetNamespace):
     Identifies every road having some kind of roadblock 2 m from the
     centre line and marks them with either "ja" (yes) or "nei" (no).
     """
-    road_fc = data_files["input_road"]
-    roadblock_fc = data_files["input_vegsperring"]
-    output = data_files["veg_uten_bom"]
+    road_fc = DATA_FILES["input_road"]
+    roadblock_fc = DATA_FILES["input_vegsperring"]
+    output = DATA_FILES["veg_uten_bom"]
+
+    arcpy.management.CopyFeatures(road_fc, output)
 
     # Fetch the relevant roads
+    road_lyr = "road_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=road_fc, out_layer="road_lyr", where_clause="medium = 'T'"
+        in_features=output, out_layer=road_lyr, where_clause="medium = 'T'"
     )
 
     # Create near table with connections to roadblocks
     near_table = r"in_memory/near_table"
     arcpy.analysis.GenerateNearTable(
         in_features=roadblock_fc,
-        near_features="road_lyr",
+        near_features=road_lyr,
         out_table=near_table,
         search_radius="2 Meters",
         closest="ALL",
@@ -81,16 +84,15 @@ def remove_roadblock(data: DatasetNamespace):
 
     # If no roadblocks detected, just return input
     if not road_oids_with_roadblock:
-        arcpy.management.CopyFeatures(road_fc, output)
         arcpy.management.Delete(near_table)
         return
 
     # Select roads with bom
-    oid_field = arcpy.Describe(road_fc).OIDFieldName
+    oid_field = arcpy.Describe(output).OIDFieldName
     oid_list_str = ",".join(map(str, road_oids_with_roadblock))
     where_clause = f"{oid_field} IN ({oid_list_str})"
     arcpy.management.MakeFeatureLayer(
-        in_features=road_fc,
+        in_features=output,
         out_layer="roads_with_roadblock_lyr",
         where_clause=where_clause,
     )
@@ -131,7 +133,7 @@ def remove_roadblock(data: DatasetNamespace):
     to_delete = road_oids_with_roadblock.intersection(important_oids)
 
     if to_delete:
-        arcpy.management.MakeFeatureLayer(road_fc, "to_delete_lyr")
+        arcpy.management.MakeFeatureLayer(output, "to_delete_lyr")
         where_clause = f"{oid_field} IN ({','.join(map(str, to_delete))})"
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view="to_delete_lyr",
@@ -139,9 +141,6 @@ def remove_roadblock(data: DatasetNamespace):
             where_clause=where_clause,
         )
         arcpy.management.DeleteFeatures("to_delete_lyr")
-
-    # Copy the result
-    arcpy.management.CopyFeatures(road_fc, output)
 
     # Clean up
     for tmp in (joined, near_table):
