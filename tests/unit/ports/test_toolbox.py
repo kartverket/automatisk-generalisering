@@ -9,18 +9,49 @@ from __future__ import annotations
 
 import copy
 import pickle
+from collections.abc import Iterable
 
 import pytest
 
 from ag.core.errors import InjectionError
-from ag.core.handles import In, Out, handle
+from ag.core.handles import In, Out, ParentsOut, handle
 from ag.core.operations import operation
-from ag.ports import NOT_INJECTED, Toolbox
+from ag.ports import NOT_INJECTED, FieldName, Predicate, Row, Toolbox
 
 
 class Example:
     roads = handle()
     output = handle()
+
+
+class GeometryStub:
+    """Conforms to `GeometryOps` structurally; the test needs a value, not behaviour."""
+
+    def select(self, *, input: In, where: Predicate, output: Out) -> None: ...
+
+    def explode_multipart(
+        self, *, input: In, output: Out, parents: ParentsOut = None
+    ) -> None: ...
+
+
+class TableStub:
+    """Conforms to `TableOps` structurally."""
+
+    def read_rows(self, *, input: In, fields: tuple[FieldName, ...]) -> Iterable[Row]:
+        return ()
+
+
+class EmptyStub:
+    """Conforms to the Protocols that have no members yet."""
+
+
+def a_toolbox() -> Toolbox:
+    return Toolbox(
+        geometry=GeometryStub(),
+        table=TableStub(),
+        cartographic=EmptyStub(),
+        graph=EmptyStub(),
+    )
 
 
 def test_the_sentinel_is_a_toolbox_that_refuses_every_port() -> None:
@@ -37,7 +68,7 @@ def test_the_sentinel_compares_by_identity_and_survives_pickling() -> None:
     instances would raise rather than answer; identity equality keeps hash and equality
     consistent. A copy or a pickle must come back as the same singleton, since the stage
     runner compares against it."""
-    assert NOT_INJECTED != Toolbox(object(), object(), object(), object())
+    assert NOT_INJECTED != a_toolbox()
     # The static type is Toolbox; the sentinel's class takes no arguments. Comparing two
     # instances is what the inherited equality cannot do without reading a field.
     second_instance = type(NOT_INJECTED)()  # pyright: ignore[reportCallIssue]
@@ -57,12 +88,12 @@ def test_an_operation_classifies_the_toolbox_as_injected() -> None:
 
 
 def test_a_toolbox_is_a_frozen_value_of_four_ports() -> None:
-    """The Protocols are empty for now, so any object satisfies them; the value semantics
-    are what this pins."""
-    ports = [object() for _ in range(4)]
+    """Stubs that conform structurally stand in for the ports; the value semantics are
+    what this pins."""
+    ports = (GeometryStub(), TableStub(), EmptyStub(), EmptyStub())
     tb = Toolbox(
         geometry=ports[0], table=ports[1], cartographic=ports[2], graph=ports[3]
     )
-    assert (tb.geometry, tb.table, tb.cartographic, tb.graph) == tuple(ports)
+    assert (tb.geometry, tb.table, tb.cartographic, tb.graph) == ports
     with pytest.raises(AttributeError):
         tb.geometry = ports[1]  # type: ignore[misc]

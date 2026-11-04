@@ -1,5 +1,4 @@
 import arcpy
-from tqdm import tqdm
 
 
 class Append_Features:
@@ -40,7 +39,7 @@ class Append_Features:
 
         arcpy.management.CopyFeatures(fcs[0], self.output_fc)
 
-        for fc in tqdm(fcs[1:], desc="Appends fcs", colour="yellow", leave=False):
+        for fc in fcs[1:]:
             arcpy.management.Append(fc, self.output_fc, "NO_TEST")
 
         print(f"Finished! Combined {len(fcs)} feature classes.")

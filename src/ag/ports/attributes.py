@@ -18,7 +18,7 @@ from typing import TypeAlias
 
 FieldName: TypeAlias = str
 """Names a column in data the program does not own, so it stays a literal: the value half
-of the identifier-or-value test. ADR-0011."""
+of the identifier-or-value test. ADR-0020 OP-D1."""
 
 AttributeValue: TypeAlias = int | float | str | datetime | None
 """What a cell can hold: exactly the `FieldType` members, plus None for a null.

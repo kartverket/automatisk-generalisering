@@ -24,9 +24,10 @@ anywhere. sources.py says why in full.
 WHAT MOVES ACROSS THE WIRE, AND WHEN
 
   StageInput   is DOWNLOADED. Fan-out reads it from the location pinned at plan
-               time, cuts it into K partition payloads (or writes it ONCE at a
-               shared key, if it is unpartitioned context), and each worker pulls
-               its own.
+               time and cuts it into K overlapping partition payloads - a CONTEXT
+               input after filtering it to the halo of the PROCESSING rows - or
+               writes it ONCE at a shared key if it is non-spatial. Each worker
+               pulls its own.
   StageOutput  is UPLOADED. Fan-in merges the K partition results and writes them to
                locations.scratch_location - a path computed mechanically from the
                PRODUCING STAGE, never declared, and never anywhere near the object's
@@ -109,8 +110,8 @@ The dependency graph is a graph, not a chain. Nothing in the model requires a st
 to read only its predecessor, and the non-adjacent edge (selection -> conflict
 resolution) appears in derive_stage_dependencies without anyone declaring it.
 
-It is also cheap: a table is unpartitioned CONTEXT, so fan-out writes it once at a
-shared key and all K workers read the same object.
+It is also cheap: a table is non-spatial, so as CONTEXT it is sent whole - fan-out
+writes it once at a shared key and all K workers read the same object.
 """
 
 THINNED_ROADS = Derived("thinned_roads", origin=(N50_ROAD, ADMIN_AREAS))
@@ -341,11 +342,12 @@ network continues, drops the segment, and fan-in stitches together a network wit
 holes in it. No error - just a map missing roads.
 
 THREE INPUTS, THREE DIFFERENT TRANSFER SHAPES. `roads_in` is PROCESSING, so it is
-cut into K payloads. `nvdb_reference` is spatial CONTEXT, so each pod gets the
-features within 5000m of its own extent. `ranks` is a TABLE and therefore
-unpartitioned context: fan-out writes it ONCE at a shared key and all K workers read
-the same object. At K=50 that is the difference between one transfer and fifty for
-identical bytes.
+cut into K payloads that overlap by 5000m; fan-in discards the overlap copies.
+`nvdb_reference` is spatial CONTEXT, so fan-out first keeps the features within
+5000m of any SELECTED_ROADS row, then cuts that set into K payloads with the same
+overlap. `ranks` is non-spatial CONTEXT, so it is sent whole: fan-out writes it ONCE
+at a shared key and all K workers read the same object. At K=50 that is the
+difference between one transfer and fifty for identical bytes.
 
 MULTI-OUTPUT OPERATIONS THAT END DIFFERENTLY. `merge_report` and `dropped` are
 second outputs that a later operation in this stage reads and nothing uploads.

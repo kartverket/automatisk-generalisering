@@ -9,7 +9,7 @@ values in Python nowhere to live. So bulk reads and writes carry an immutable va
 no cursor crosses the port; adapters convert at the boundary. Frozen, with coordinates as
 tuples, because a row read from one dataset is routinely written into another, and a value
 that can be a dict key is what endpoint matching needs. No geometry library is imported here:
-that lives in the adapters. ADR-0004.
+that lives in the adapters. ADR-0019 PC-D25.
 """
 
 from __future__ import annotations

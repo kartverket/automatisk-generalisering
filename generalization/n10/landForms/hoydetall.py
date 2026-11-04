@@ -11,7 +11,6 @@ arcpy.env.overwriteOutput = True
 from collections import defaultdict
 
 from lxml import etree
-from tqdm import tqdm
 
 from composition_configs import core_config
 from constants.county_numbers import county_numbers
@@ -396,9 +395,7 @@ def fetch_data(files: dict, area: list = None) -> None:
         )
 
     # 4) Process each layer
-    for lyr_name, _, _, out_fc, append in tqdm(
-        layers, desc="Fetching data", colour="yellow", leave=False
-    ):
+    for lyr_name, _, _, out_fc, append in layers:
         process(files, lyr_name, out_fc, clip=clip_lyr, append=append)
 
     # 5) Prepare out-of-bounds points
@@ -457,9 +454,7 @@ def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
         )
 
     # 4) Process each layer and add the data in one feature class
-    for lyr_name, _, out_fc in tqdm(
-        layers, desc="Fetching annotations to avoid", colour="yellow", leave=False
-    ):
+    for lyr_name, _, out_fc in layers:
         tmp = files["temporary_file"]
         if arcpy.Exists(files["temporary_file"]):
             arcpy.management.Delete(files["temporary_file"])
@@ -824,12 +819,7 @@ def move_ladders_to_valid_area(files: dict, valid_fc: str, ladders: dict) -> dic
 
     contours = {}  # Point ID -> valid, dissolved, multipart contour geometry
 
-    for h in tqdm(
-        heights,
-        desc="Matching points with clipped contours",
-        colour="yellow",
-        leave=False,
-    ):
+    for h in heights:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view=clip_lyr,
             selection_type="NEW_SELECTION",
@@ -857,9 +847,7 @@ def move_ladders_to_valid_area(files: dict, valid_fc: str, ladders: dict) -> dic
     # 3) Iterate through each ladder and fetch new geometries
     points_to_delete = set()
 
-    for oids in tqdm(
-        ladders.values(), desc="Moving ladders", colour="yellow", leave=False
-    ):
+    for oids in ladders.values():
         oids.sort(key=lambda oid: point_info[oid]["height"])
         accumulated = []
         for oid in oids:

@@ -187,7 +187,7 @@ def test_the_same_operation_runs_with_no_engine_at_all() -> None:
     """The counterpart, and it is NOT skipped.
 
     Same function, same declaration, a recording Toolbox instead of arcpy - and it
-    runs to completion on any machine. That is what ADR-0008 buys beyond tidiness: a
+    runs to completion on any machine. That is what ADR-0020 OP-3 buys beyond tidiness: a
     fake is CONSTRUCTED AND PASSED, with no global to set, no module to monkeypatch
     and no import to intercept.
 

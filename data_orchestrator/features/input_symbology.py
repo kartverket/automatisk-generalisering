@@ -37,6 +37,7 @@ DATA = {
         "jernbanestasjon": "jernbanestasjon_square.lyrx",
         "samferdsel": "M616_Samferdsel.lyrx",
         "vei_buffer": "building_polygons_drawn_from_points.lyrx",
+        "resolve_road_roads": "N100_ResolveRoad_road_symbol.lyrx",
     },
     "n250": {
         "begrensnings_kurve_line": "N250_Begrensningskurve.lyrx",

@@ -9,8 +9,6 @@ arcpy.env.overwriteOutput = True
 
 from collections import Counter
 
-from tqdm import tqdm
-
 from custom_tools.decorators.timing_decorator import timing_decorator
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     load_rules,
@@ -113,8 +111,6 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
 
         return [a, None]
 
-    total_count = int(arcpy.management.GetCount(input_fc)[0])
-
     # Map rule column names to field indices
     relevant_fields = {}
     for rule_col in rule_columns[:4]:
@@ -135,13 +131,7 @@ def change_attributes(input_fc: str, output_fc: str, new_fields: list) -> None:
     try:
         with arcpy.da.SearchCursor(input_fc, cursor_fields) as src:
             with arcpy.da.InsertCursor(output_fc, cursor_fields + new_fields) as ins:
-                for row in tqdm(
-                    src,
-                    desc="Rewrites attributes",
-                    total=total_count,
-                    colour="yellow",
-                    leave=False,
-                ):
+                for row in src:
                     row = list(row)
                     # Build attribute values dictionary for lookup
                     attribute_values = {

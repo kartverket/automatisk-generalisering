@@ -343,7 +343,7 @@ Expected: BROKEN. Got: BROKEN. as expected.
 Every contract broken by this probe: Row 12.
 
 ```
-Row 12: operations and helpers never see a DataObject (ADR-0003)
+Row 12: operations and helpers never see a DataObject (ADR-0019 PC-1)
 ----------------------------------------------------------------
 
 ag.generalization.operations is not allowed to import ag.core.data_objects:
@@ -359,7 +359,7 @@ Expected: BROKEN. Got: BROKEN. as expected.
 Every contract broken by this probe: Row 12.
 
 ```
-Row 12: operations and helpers never see a DataObject (ADR-0003)
+Row 12: operations and helpers never see a DataObject (ADR-0019 PC-1)
 ----------------------------------------------------------------
 
 ag.generalization.helpers is not allowed to import ag.core.pipeline:

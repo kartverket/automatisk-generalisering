@@ -4,7 +4,7 @@
 `TASKS.md` is quoted verbatim in §6 and §7, ready to paste after review.
 
 **Vocabulary.** The investigation prompt and this file's name say *correspondence*.
-`01-terminology.md` §3 retires that word for **parents** (A11.1), so the text below says
+`docs/terminology.md` §3 retires that word for **parents** (A11.1), so the text below says
 parents, the code says `dissolve_parents` / `ParentPair`, and only the filename keeps the
 prompt's word.
 
@@ -781,7 +781,7 @@ care how they are produced."* The passages below contradict it.
 | T4.10: "selects a tier: native … work-key synthesis … or declared unsupported" | the tier vocabulary leaks into the task's acceptance | "reports parents for `dissolve` through the keyed resolver, for `aggregate` and `collapse_to_centerline` through the tools' own tables; probes at construction only for the oracle the conformance suite may use" |
 
 One naming point outside A14: the prompt's `dissolve_correspondence` is `dissolve_parents` in
-the code, per `01-terminology.md` §3.
+the code, per `docs/terminology.md` §3.
 
 ---
 

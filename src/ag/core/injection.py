@@ -8,7 +8,7 @@ The toolbox lives in `ports` and `core` may not import it, yet `@operation` must
 it as a parameter kind. Inverting the arrow settles it: the toolbox module imports this,
 `@operation` asks `issubclass(hint, Injected)`, and the toolbox's name never appears in
 `core`. Nothing here imports anything, because every layer above `core` is allowed to
-depend on it. ADR-0014.
+depend on it. ADR-0020 OP-D11.
 """
 
 from __future__ import annotations

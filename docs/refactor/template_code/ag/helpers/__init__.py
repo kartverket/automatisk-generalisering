@@ -1,4 +1,4 @@
-"""TEMPLATE — NOT YET WRITTEN. Target package: `src/ag/helpers/`. ADR-0005.
+"""TEMPLATE — NOT YET WRITTEN. Target package: `src/ag/helpers/`. ADR-0018 AR-4.
 
 Reusable, object-agnostic, scale-agnostic functions that compose port calls. Called
 only from inside operations, never named in a stage, never scheduled.

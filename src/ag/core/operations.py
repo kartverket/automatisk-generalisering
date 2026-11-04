@@ -17,7 +17,7 @@ Why: an operation sees handles, one config and the ports the runtime injects, an
 nothing about where or on what it runs; that ignorance is what lets one function serve
 every scale and run under any adapter. Reading the declaration off the signature means no
 identifier is written twice, so a renamed parameter is a type error at every declaration
-site rather than a pod-time failure. ADR-0011, ADR-0014.
+site rather than a pod-time failure. ADR-0020 OP-1, OP-2.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ CONFIG_PARAM = "config"
 
 Why: classified by name, unlike the injected parameters, because a config's type differs
 per operation and the name is the only handle available. The injected kinds are each one
-type, so they are matched on it. ADR-0014.
+type, so they are matched on it. ADR-0020 OP-D10.
 """
 
 OperationFn: TypeAlias = Callable[..., None]
@@ -78,7 +78,7 @@ class OperationCall:
     no halo here: both are stage concerns, and an operation must behave identically either
     way. `injected` is keyed by type and carries the name so that `core` never names the
     toolbox, adding a kind changes nothing here, and the parameter name stops being
-    load-bearing. ADR-0014.
+    load-bearing. ADR-0020 OP-D15.
     """
 
     operation: OperationName
@@ -197,7 +197,7 @@ def operation[**P](fn: Callable[P, None]) -> OperationDeclaration[P]:
     and any injected argument.
 
     Why: all of it fires while the pipeline module is being imported, which is CI or
-    orchestrator startup, rather than in a pod three hours in. ADR-0011.
+    orchestrator startup, rather than in a pod three hours in. ADR-0020 OP-D7.
     """
     return OperationDeclaration(fn=fn)
 
@@ -210,7 +210,7 @@ def _classify(*, fn: Callable[..., object], signature: inspect.Signature) -> _Sh
     receives resolved objects and asks `issubclass(hint, Injected)`; without
     `include_extras` the `Annotated` metadata would be stripped and no handle would
     classify. The `isinstance(hint, type)` guard is load-bearing: `In` and `Out` resolve
-    to `Annotated[...]`, which is not a type, and `issubclass` raises on it. ADR-0014.
+    to `Annotated[...]`, which is not a type, and `issubclass` raises on it. ADR-0020 OP-D12.
     """
     name = fn.__name__
     hints = get_type_hints(fn, include_extras=True)

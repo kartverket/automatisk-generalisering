@@ -87,7 +87,7 @@ already settled it.
 
 Nothing, currently. The one standing exception — no `Toolbox`, operations naming arcpy
 tools in `NotImplementedError` strings — is closed: `ports/` exists, every operation
-calls it, and `@operation` admits `Toolbox` as a fifth parameter kind via ADR-0014.
+calls it, and `@operation` admits `Toolbox` as a fifth parameter kind via ADR-0020 OP-2.
 
 Two things this pass discovered that the documents did not have, both now written
 back into them rather than left here:
@@ -108,9 +108,9 @@ back into them rather than left here:
 | the layering in 03-architecture §4.1 holds | `.importlinter` |
 | a misspelled parameter fails at import, not in a pod | `tests/unit/test_road_operations.py` |
 | a string annotation still classifies as injected | `tests/unit/test_operation_classification.py` |
-| the De Morgan rewrite ADR-0001 depends on | `tests/unit/test_predicates.py` |
+| the De Morgan rewrite ADR-0019 PC-2 depends on | `tests/unit/test_predicates.py` |
 | every operation runs to completion against the ports | `tools/run_example.py`, last section |
-| tuning resolves by reading, not computing (ADR-0013) | `tools/dump_tuning.py` |
+| tuning resolves by reading, not computing (ADR-0020 OP-4) | `tools/dump_tuning.py` |
 
 ## Conventions
 

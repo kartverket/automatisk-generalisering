@@ -17,6 +17,16 @@ from custom_tools.general_tools import custom_arcpy, file_utilities, param_utils
 from env_setup import environment_setup
 from file_manager.work_file_manager import PartitionWorkFileManager
 
+import logging
+
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PreparedInput:
@@ -560,7 +570,7 @@ class PartitionIterator:
         ]
 
         if not in_features:
-            print("No input features available for creating partitions.")
+            logger.info("No input features available for creating partitions.")
             return
 
         arcpy.cartography.CreateCartographicPartitions(
@@ -569,7 +579,7 @@ class PartitionIterator:
             feature_count=element_limit,
             partition_method=self.partition_method.value,
         )
-        print(f"Created partition feature: {self.partition_feature}")
+        logger.info(f"Created partition feature: {self.partition_feature}")
 
     def _total_partition_load(self) -> int:
         """
@@ -630,7 +640,7 @@ class PartitionIterator:
             total_load = self._total_partition_load()
             max_partition_load = max(max_partition_load, total_load)
 
-            print(
+            logger.info(
                 f"\nCounting objects for Partition: {partition_id}\n"
                 f"Current total found: {total_load}\n"
                 f"Current maximum found: {max_partition_load}"
@@ -668,7 +678,7 @@ class PartitionIterator:
 
         while True:
             attempts += 1
-            print(
+            logger.info(
                 f"\n\nAttempt {attempts}: Testing candidate feature_count = {candidate}"
             )
             self._create_cartographic_partitions(element_limit=candidate)
@@ -676,15 +686,17 @@ class PartitionIterator:
 
             if self.max_partition_count == previous_partitions:
                 candidate -= int(max_allowed * 0.01)
-                print(f"Stable partition count. Reducing candidate to {candidate}")
+                logger.info(
+                    f"Stable partition count. Reducing candidate to {candidate}"
+                )
                 continue
 
             previous_partitions = self.max_partition_count
             max_objects_found = self._count_maximum_objects_in_partition()
 
-            print(f" -> Max objects found in a partition: {max_objects_found}")
+            logger.info(f" -> Max objects found in a partition: {max_objects_found}")
             if max_objects_found <= max_allowed:
-                print(f"Selected feature_count: {candidate}")
+                logger.info(f"Selected feature_count: {candidate}")
                 self.final_partition_feature_count = candidate
                 return candidate
 
@@ -713,7 +725,7 @@ class PartitionIterator:
         """Deletes multiple feature classes or files from a list."""
         for file_path in file_paths:
             file_utilities.delete_feature(input_feature=file_path)
-            print(f"Deleted file: {file_path}")
+            logger.info(f"Deleted file: {file_path}")
 
     def create_dummy_features(self) -> None:
         """
@@ -1486,7 +1498,7 @@ class PartitionIterator:
         total_str = str(timedelta(seconds=int(total_runtime)))
         estimate_str = str(timedelta(seconds=int(estimate_remaining)))
 
-        print(f"\n[{now_str}] Runtime: {total_str} | Remaining: {estimate_str}")
+        logger.info(f"\n[{now_str}] Runtime: {total_str} | Remaining: {estimate_str}")
 
     def resolve_injected_io_for_methods(
         self,
@@ -1796,7 +1808,7 @@ class PartitionIterator:
                 )
 
                 error_message = str(e)
-                print(f"Attempt {attempt} failed with error: {error_message}")
+                logger.info(f"Attempt {attempt} failed with error: {error_message}")
 
                 if partition_id not in self.error_log:
                     self.error_log[partition_id] = {
@@ -1808,7 +1820,7 @@ class PartitionIterator:
                 self.error_log[partition_id]["Error Messages"][attempt] = error_message
 
                 if attempt == max_retries:
-                    print("Max retries reached.")
+                    logger.info("Max retries reached.")
                     self.write_documentation(name="error_log", dict_data=self.error_log)
 
                     raise
@@ -1948,14 +1960,14 @@ class PartitionIterator:
                     in_features=extracted_path,
                     out_feature_class=final_output_path,
                 )
-                print(f"Created final output for {object_key}:{tag}")
+                logger.info(f"Created final output for {object_key}:{tag}")
             else:
                 arcpy.management.Append(
                     inputs=extracted_path,
                     target=final_output_path,
                     schema_type="NO_TEST",
                 )
-                print(f"Appended to final output for {object_key}:{tag}")
+                logger.info(f"Appended to final output for {object_key}:{tag}")
 
         finally:
             self.work_file_manager_temp_files.delete_created_files()
@@ -1995,19 +2007,19 @@ class PartitionIterator:
 
         for object_key, tag_dict in self.output_catalog.items():
             for tag, final_output_path in tag_dict.items():
-                print(f"Cleaning fields in: {final_output_path}")
+                logger.info(f"Cleaning fields in: {final_output_path}")
                 file_utilities.delete_fields_if_exist(
                     final_output_path, fields_to_delete
                 )
 
         for prepared in self._processing_items():
-            print(f"Cleaning fields in processing input: {prepared.active_path}")
+            logger.info(f"Cleaning fields in processing input: {prepared.active_path}")
             file_utilities.delete_fields_if_exist(
                 prepared.active_path, fields_to_delete
             )
 
     def _reset_iteration_state(self, partition_id: int) -> None:
-        print(
+        logger.info(
             f"\nProcessing Partition: {partition_id} out of {self.max_partition_count}"
         )
         self.iteration_start_time = time.time()
@@ -2110,16 +2122,18 @@ class PartitionIterator:
         self._reset_documentation_dir()
         self.write_documentation(name="output_catalog", dict_data=self.output_catalog)
 
-        print("\nStarting Data Preparation...")
+        logger.info("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
         self.create_dummy_features()
         self.write_documentation(name="input_catalog", dict_data=self.input_catalog)
 
         if self.use_custom_partition_feature:
-            print("\nUsing custom partition feature; skipping partition creation...")
+            logger.info(
+                "\nUsing custom partition feature; skipping partition creation..."
+            )
         else:
-            print("\nCreating Cartographic Partitions...")
+            logger.info("\nCreating Cartographic Partitions...")
             self.final_partition_feature_count = (
                 self._find_partition_size()
                 if self.run_partition_optimization
@@ -2129,7 +2143,7 @@ class PartitionIterator:
                 element_limit=self.final_partition_feature_count
             )
 
-        print("\nStarting on Partition Iteration...")
+        logger.info("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self._finalize_and_write_overview_catalog()
 

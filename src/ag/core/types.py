@@ -99,21 +99,52 @@ PipelineKey: TypeAlias = tuple[Scale, ObjectName]
 
 
 class DataType(Enum):
-    """What kind of dataset a handle names."""
+    """What kind of dataset a handle or a data object names.
+
+    Whether a dataset is spatial is read from here and never declared: a feature class
+    and a raster are spatial, a table and a symbology file are not. Fan-out partitions a
+    stage's spatial inputs and sends the non-spatial ones whole, so a declaration of
+    mostly spatial data pays nothing for the distinction. `SYMBOLOGY` is a `.lyrx` file,
+    a symbology blueprint with no rows that arcpy tools such as resolve road conflicts
+    take as an input. It is its own member rather than a generic file kind so that the
+    next file kind gets its own decision.
+    """
 
     FEATURE_CLASS = "feature_class"
     TABLE = "table"
     RASTER = "raster"
+    SYMBOLOGY = "symbology"
+
+    @property
+    def spatial(self) -> bool:
+        """Whether data of this kind has an extent that partitioning can cut."""
+        return self in (DataType.FEATURE_CLASS, DataType.RASTER)
 
 
 class InputRole(Enum):
-    """How fan-out treats a stage input.
+    """Whether a stage input's rows may become stage output.
 
-    `PROCESSING` inputs determine partition extents and drive fan-in: centre-in features
-    are kept, the rest discarded. `CONTEXT` inputs are selected within the halo radius to
-    inform the operation and are not carried into the output. A non-spatial lookup table
-    is `CONTEXT` in the operative sense: replicated to every pod, not partitioned, not in
-    the output.
+    Declared per stage input, not per object: the same water layer is `PROCESSING` in the
+    stage that generalises it and `CONTEXT` in the stage that moves buildings away from
+    it. Only rows originating from `PROCESSING` inputs may become stage outputs, and stage
+    outputs are the only data that leaves a stage. A `CONTEXT` row may affect an output
+    and never becomes one; an intermediate built from `CONTEXT` rows is legal inside the
+    stage and never crosses its boundary. This is the stage-level rule. The port-level
+    `subject` and `context` of the row-shape grammar are related to it, not the same
+    thing: a port subject may be fed from a `CONTEXT` input, and a port context from a
+    `PROCESSING`-derived intermediate.
+
+    Fan-out reads the role together with the input's `DataType.spatial`:
+
+    - spatial `PROCESSING`: partitioned, with halo overlap; fan-in keeps the centre-in
+      rows and discards the rest.
+    - spatial `CONTEXT`: filtered to within the stage's context radius of any
+      `PROCESSING` row (the intersecting rows at 0 m), then partitioned with the same
+      overlap.
+    - non-spatial `CONTEXT`: a lookup table or a symbology file, sent whole to every pod
+      and written once at a shared key.
+    - non-spatial `PROCESSING`: rejected where the stage input is declared; there is
+      nothing to partition.
 
     Why: declared for fan-out's benefit, not the operation's. An operation never learns
     which of its inputs was partitioned.

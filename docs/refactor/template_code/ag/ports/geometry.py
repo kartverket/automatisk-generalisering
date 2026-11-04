@@ -1,6 +1,6 @@
 """TEMPLATE — not shipped. Target module: `src/ag/ports/geometry.py`.
 
-The `Geometry` value type. ADR-0004.
+The `Geometry` value type. ADR-0019 PC-4.
 
 WHY A VALUE TYPE AND NOT A CURSOR
 

@@ -15,7 +15,7 @@ Why: ports and adapters import this module and nothing else in `core` except typ
 injection and errors, which keeps "a port sees handles only" an import contract rather than
 a convention. The markers stay `TypeAlias` statements: a PEP 695 `type` statement wraps
 the alias in a `TypeAliasType`, which hides the `Annotated` metadata from `get_origin`, and
-nothing would classify. A unit test pins that. ADR-0003, ADR-0011, ADR-0014.
+nothing would classify. A unit test pins that. ADR-0019 PC-D3, ADR-0020 OP-D3, OP-D11.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ class ScratchHandle:
     (name, data_type, namespace) with `path` excluded, so a materialised copy equals the
     declaration it came from and the stage entry point can look one up by the other.
     `namespace` is in the comparison so that two stages' `final` handles are different
-    values; without it every structure keyed by handle conflates them. ADR-0011.
+    values; without it every structure keyed by handle conflates them. ADR-0020 OP-D8.
     """
 
     name: str = ""
@@ -189,7 +189,7 @@ class ScratchScope(Injected):
     equality and would otherwise conflate them. Identity equality (`eq=False`) because a
     scope is a live allocator bound to one call, not a value, and it counts the labels it
     has issued. Inherits `Injected` so `@operation` recognises it with no name
-    convention. ADR-0014.
+    convention. ADR-0020 OP-D13.
     """
 
     namespace: str
@@ -278,5 +278,5 @@ so a parameter with no default would make every declaration site a type error fo
 an argument it must not supply. The sentinel lets the runtime signature require a scope
 while the declaration signature does not; the entry point replaces it, and passing it at a
 declaration site is rejected. A real scope rather than None, so the type is honest and a
-missed injection fails with a sentence at the first `scratch(...)` call. ADR-0014.
+missed injection fails with a sentence at the first `scratch(...)` call. ADR-0020 OP-D13.
 """

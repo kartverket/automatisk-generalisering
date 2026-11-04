@@ -98,7 +98,7 @@ declaration is evaluated at import. See validation.py for what necessarily waits
 plan, and stage_entry.py for the one sweep that can only happen in the pod.
 
 The argument for why this replaced a hand-written factory per operation lives in
-docs/refactor/decisions/0011-operation-decorator-and-handle-namespaces.md.
+docs/decisions/0020-operations.md.
 """
 
 from __future__ import annotations
@@ -256,7 +256,7 @@ class ScratchScope(Injected):
 
     INHERITS `Injected` so @operation recognises it without a name convention and
     without a special case - the same mechanism that admits `Toolbox`, which lives in
-    `ports/` where `core/` cannot reach it. ADR-0014.
+    `ports/` where `core/` cannot reach it. ADR-0020 OP-2.
 
     A helper tool receives a scope exactly the way an operation does - derive
     downward. A helper never learns its own trail, so it stays reusable from
@@ -340,7 +340,7 @@ overwrites it, and passing one at a declaration site is rejected.
 
 A real ScratchScope rather than None, so the type is honest and a missed injection
 fails loudly at the first scratch(...) call rather than as an AttributeError.
-`ports.toolbox.NOT_INJECTED` is the same construction for the same reason. ADR-0014.
+`ports.toolbox.NOT_INJECTED` is the same construction for the same reason. ADR-0020 OP-2.
 """
 
 
@@ -350,7 +350,7 @@ CONFIG_PARAM = "config"
 Classified BY NAME, unlike the injected parameters, and the asymmetry is deliberate:
 a config's TYPE differs per operation - ThinRoadConfig, SnapConfig, SimplifyConfig -
 so there is nothing to match against and the name is the only handle available.
-`ScratchScope` and `Toolbox` are each one type, so they are matched on it. ADR-0014.
+`ScratchScope` and `Toolbox` are each one type, so they are matched on it. ADR-0020 OP-2.
 """
 
 
@@ -382,7 +382,7 @@ is a NameError at import rather than a type-checker complaint.
 THAT IS ALSO WHAT MAKES `Toolbox` CLASSIFIABLE. It resolves in the operation module,
 which imports it; `core/` receives the resolved class and asks whether it subclasses
 `Injected`, so the name never has to exist in `core/` - where importing it would be a
-cycle. ADR-0014.
+cycle. ADR-0020 OP-2.
 """
 
 
@@ -425,7 +425,7 @@ class OperationCall:
     follow, and the third is a bug this replaced:
 
       core/ never names `Toolbox`. It lives in ports/, which core may not import
-      (ADR-0014), so a `toolbox_param` field here would put a ports word in a core
+      (ADR-0020 OP-2), so a `toolbox_param` field here would put a ports word in a core
       dataclass and invite someone to type it.
 
       adding a kind changes nothing here. The entry point supplies whatever it knows
@@ -553,7 +553,7 @@ def _classify(
     OPERATION MODULE's namespace, which imports `Toolbox` normally. So this function
     receives an already-resolved class object and asks `issubclass(hint, Injected)`
     about it. The name `Toolbox` never appears in `core/`, which is the whole point
-    of the marker (ADR-0014), and `from __future__ import annotations` in any module
+    of the marker (ADR-0020 OP-2), and `from __future__ import annotations` in any module
     involved does not change it.
     """
     name = fn.__name__

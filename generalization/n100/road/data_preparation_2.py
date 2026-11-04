@@ -62,6 +62,9 @@ from data_orchestrator.data_names import DataNames as dn
 from composition_configs.logic_config import RoadRampsConfig
 from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
+from typing import Callable
+from custom_tools.general_tools.integrate_diff import IntegrateDiff
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 if require("SELECT_STUDY_AREA") == "False":
@@ -73,7 +76,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Kvitsøy')"
+    AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -96,7 +99,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
                 f"{WorkFileManager._build_file_counter}"
             )
 
-    steps: list[tuple[str, object]] = [
+    steps: list[tuple[str, Callable]] = [
         (
             "data_selection_and_validation",
             lambda: data_selection_and_validation(
@@ -189,6 +192,23 @@ def data_selection_and_validation(
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
+
+    # run integrate diff on all inputs
+    IntegrateDiff(
+        Road_N100.data_selection___nvdb_roads___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___vegsperring___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___railroad___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___begrensningskurve___n100_road.value
+    ).run_integration()
+    IntegrateDiff(
+        Road_N100.data_selection___admin_boundary___n100_road.value
+    ).run_integration()
 
 
 def reclassify_medium():
@@ -868,6 +888,7 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
     )
 
     # --- Symbology specs -------------------------------------------------------
+    symbology_resolve_road_roads = data_orc.get_symbology("resolve_road_roads")
     symbology_samferdsel = data_orc.get_symbology("samferdsel")
     symbology_begrensnings_kurve_line = data_orc.get_symbology(
         "begrensnings_kurve_line"
@@ -876,9 +897,9 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=symbology_samferdsel,
+            input_lyrx=symbology_resolve_road_roads,
             grouped_lyrx=True,
-            target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
+            target_layer_name="N100_ResolveRoad_road_symbol",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,

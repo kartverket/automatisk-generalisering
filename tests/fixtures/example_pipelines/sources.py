@@ -67,11 +67,9 @@ ADMIN_AREAS = ExternalSource(
     scale=Scale.RAW,
     location="gs://kv-source/admin/areas.gdb",
     classification=Classification.CLOUD_OK,
-    data_type=DataType.TABLE,
 )
-"""Municipality and county attributes. Non-spatial, so CONTEXT in the operative
-sense: replicated whole to every pod, written once at a shared key rather than K
-times."""
+"""Municipality and county polygons. Spatial CONTEXT where it is read: filtered to the
+halo of the stage's PROCESSING roads, then partitioned with the same overlap."""
 
 MATRIKKEL = ExternalSource(
     dataset="Matrikkel",
@@ -89,5 +87,5 @@ MUNICIPALITY_CODES = ExternalSource(
     classification=Classification.CLOUD_OK,
     data_type=DataType.TABLE,
 )
-"""A small lookup table. Shows the unpartitioned-context transfer shape at its
-cheapest: a few hundred rows written once and read by all K workers."""
+"""A small lookup table. Shows the non-spatial CONTEXT transfer at its cheapest: a few
+hundred rows written once and read by all K workers."""

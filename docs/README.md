@@ -8,3 +8,5 @@ today.
 | [setup/](setup/index.md) | environment and IDE setup | CURRENT |
 | [contributing/](contributing/index.md) | code style, docstrings, [setup and toolchain](contributing/toolchain.md), [testing](contributing/testing.md), the [Python target](contributing/python-version.md) | CURRENT |
 | [developer_reference/](developer_reference/index.md) | how the legacy packages are organised and run | CURRENT; each file retires when the package it describes is deleted |
+| [decisions/](decisions/README.md) | the architecture decision records, one per theme, the source of truth for direction | CURRENT |
+| [terminology.md](terminology.md) | the vocabulary: every project-specific term, its definition, and which document is authoritative on it | TARGET until the identifiers exist in `src/ag/`, as its header says |

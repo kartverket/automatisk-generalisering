@@ -12,7 +12,7 @@ reason that module gives: fan-out writes partition i's payload where worker i wi
 look, and worker i writes its output where fan-in will look, so three components
 independently compute the same name. A client that also built paths would be a fourth.
 
-TRANSPORT OF ARCHIVED LOGS REUSES THIS. That is why there is no log port (ADR-0006).
+TRANSPORT OF ARCHIVED LOGS REUSES THIS. That is why there is no log port (ADR-0018 AR-4).
 """
 
 from __future__ import annotations

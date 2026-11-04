@@ -43,7 +43,7 @@ def run_operations(stage: Stage, sfm: ScratchFileManager, tb: Toolbox) -> None:
     express.
 
     ONE TOOLBOX FOR THE WHOLE STAGE, assembled by the caller - `runtime/` is a
-    composition root and the only layer that may choose an adapter (ADR-0008). It is
+    composition root and the only layer that may choose an adapter (ADR-0020 OP-3). It is
     a parameter rather than something built here so that the K-invariance harness and
     a laptop test can drive this function with fakes and no special-casing: that is
     what makes `tests/invariance/` a primary adapter rather than a mock

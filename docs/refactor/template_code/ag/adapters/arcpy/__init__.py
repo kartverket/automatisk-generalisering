@@ -1,7 +1,7 @@
 """TEMPLATE — PARTIAL. Target package: `src/ag/adapters/arcpy/`.
 
 The arcpy adapter. Only `predicates.py` exists so far, and it is the half that needs
-no arcpy: the De Morgan rewrite that makes ADR-0001's predicate algebra expressible
+no arcpy: the De Morgan rewrite that makes ADR-0019 PC-2's predicate algebra expressible
 against a tool that can only invert at a leaf.
 
 Still to write: `session.py` (the one lazily-bound `import arcpy` in the whole system,

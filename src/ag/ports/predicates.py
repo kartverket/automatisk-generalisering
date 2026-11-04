@@ -33,7 +33,7 @@ its workspace type, and admits expressions no adapter can compile; `Attr.raw` ke
 string form available, greppable, and counted by a static test. A `Spatial` leaf carries a
 handle inside a value, outside any `In` or `Out` annotation: no handle check sees it, which
 is deliberate, and which handles it may name is an open question of the record.
-ADR-0001 and ADR-0015.
+ADR-0019 PC-2 and PC-3.
 """
 
 from __future__ import annotations

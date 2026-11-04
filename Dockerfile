@@ -1,5 +1,5 @@
 # Use a small Python base image
-FROM ghcr.io/kartverket/arcpy-linux:12.0 AS base
+FROM ghcr.io/kartverket/arcpy-linux:12.1 AS base
 
 # Set working directory
 WORKDIR /app

@@ -73,7 +73,7 @@ def download_scality_folder(
             file_path=str(local_path),
         )
 
-        print(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
+        logger.info(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
 
 
 def upload_results_to_scality(
@@ -105,7 +105,7 @@ def upload_results_to_scality(
         base_dir=local_path.name,
     )
 
-    print(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
+    logger.info(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
 
     client.fput_object(
         bucket_name=bucket_name,
@@ -114,7 +114,7 @@ def upload_results_to_scality(
         content_type="application/zip",
     )
 
-    print("ZIP upload completed.")
+    logger.info("ZIP upload completed.")
 
 
 def check_uid_gid():
@@ -164,9 +164,19 @@ def pipeline_n10_arealdekke(args: argparse.Namespace) -> None:
     # run_n10_arealdekke()
 
 
+def pipeline_n100_buildings(
+    args: argparse.Namespace, checkpoint: ScalityPipelineCheckpoint | None = None
+) -> None:
+    from generalization.n100.building.building_main import main as run_n100_buildings
+
+    logger.info("Starting pipeline for %s", args)
+    run_n100_buildings(checkpoint=checkpoint)
+
+
 DISPATCH: Dict[Tuple[str, str], Callable[[argparse.Namespace], None]] = {
     ("n100", "road"): pipeline_n100_road,
     ("n10", "arealdekke"): pipeline_n10_arealdekke,
+    ("n100", "building"): pipeline_n100_buildings,
 }
 
 
@@ -236,22 +246,30 @@ def main():
     checkpoint = ScalityPipelineCheckpoint(
         client=s3,
         bucket_name=bucket_name,
-        gdb_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb"),
+        gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),
+        namespace=f"{args.scale}_{args.obj}",
     )
     handler(args, checkpoint=checkpoint)
 
     if os.environ.get("AREA"):
         object_name = (
-            f"outputs/{args.scale}_{args.obj}_{os.environ.get('AREA')}/road.gdb.zip"
+            f"outputs/{args.scale}_{args.obj}_{os.environ.get('AREA')}/output.gdb.zip"
         )
     else:
-        object_name = f"outputs/{args.scale}_{args.obj}/road.gdb.zip"
+        object_name = f"outputs/{args.scale}_{args.obj}/output.gdb.zip"
     upload_results_to_scality(
         client=s3,
         bucket_name=bucket_name,
-        local_path=Path("/tmp/GIS_Files/ag_outputs/n100/road.gdb/"),
+        local_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb/"),
         object_name=object_name,
     )
+    if args.scale == "n100" and args.obj == "building":
+        upload_results_to_scality(
+            client=s3,
+            bucket_name=bucket_name,
+            local_path=Path("/tmp/GIS_Files/ag_outputs/n100/final_outputs.gdb/"),
+            object_name=f"outputs/{args.scale}_{args.obj}/final_outputs.gdb.zip",
+        )
 
 
 if __name__ == "__main__":

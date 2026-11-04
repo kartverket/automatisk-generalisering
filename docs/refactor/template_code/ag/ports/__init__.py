@@ -17,13 +17,13 @@ implementation. Otherwise it is a helper or an adapter detail. A distinct capabi
 that shares an existing conversation is a METHOD, not a file - which is the test
 `TableOps.exists` passes and a `DescribeOps` would fail.
 
-    ADR-0002   three geoprocessing ports rather than one or many
-    ADR-0003   ScratchHandle, not DataObject, at the port boundary
-    ADR-0004   Geometry as a value type; no cursor in the port
-    ADR-0006   logging is not a port. Do not add a LogPort.
-    ADR-0007   ports are Protocol, not ABC
-    ADR-0008   Toolbox passed explicitly, not ambient
-    ADR-0014   how @operation recognises the parameters the runtime injects
+    ADR-0018 AR-2   three geoprocessing ports rather than one or many
+    ADR-0019 PC-1   ScratchHandle, not DataObject, at the port boundary
+    ADR-0019 PC-4   Geometry as a value type; no cursor in the port
+    ADR-0018 AR-4   logging is not a port. Do not add a LogPort.
+    ADR-0018 AR-3   ports are Protocol, not ABC
+    ADR-0020 OP-3   Toolbox passed explicitly, not ambient
+    ADR-0020 OP-2   how @operation recognises the parameters the runtime injects
 
 PORTS ARE `Protocol`, NOT `ABC`, so adapters satisfy them structurally and the
 dependency arrow never reverses - an adapter imports the port, and the port knows

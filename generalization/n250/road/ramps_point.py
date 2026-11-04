@@ -3,7 +3,6 @@ import os
 from collections import defaultdict
 
 import arcpy
-from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
@@ -114,9 +113,7 @@ def split_polyline_at_index(
     """
     points = polyline.getPart(0)
     sharp_index = None
-    for i in tqdm(
-        range(1, len(points) - 1), desc="Analysing points", colour="yellow", leave=False
-    ):
+    for i in range(1, len(points) - 1):
         a, b, c = points[i - 1 : i + 2]
         angle = calculate_angle(a, b, c)
         if angle < angle_tolerance or angle > 360 - angle_tolerance:
@@ -388,9 +385,7 @@ def merge_ramps() -> None:
                 end_points[key_e] += 1
 
     valid_end_points = set()
-    for pnt in tqdm(
-        end_points, desc="Fetching valid endpoints", colour="yellow", leave=False
-    ):
+    for pnt in end_points:
         if end_points[pnt] > 2:
             valid_end_points.add(pnt)
 
@@ -401,9 +396,7 @@ def merge_ramps() -> None:
     )
 
     with arcpy.da.InsertCursor(point_fc, ["SHAPE@"]) as cursor:
-        for x, y in tqdm(
-            valid_end_points, desc="Adding points", colour="yellow", leave=False
-        ):
+        for x, y in valid_end_points:
             point = arcpy.Point(x, y)
             point_geom = arcpy.PointGeometry(point, spatial_ref)
             cursor.insertRow([point_geom])
@@ -477,9 +470,7 @@ def merge_ramps() -> None:
         "Double": "DOUBLE",
         "Date": "DATE",
     }
-    for field_name, field_type in tqdm(
-        attr_fields, desc="Updating attributes", colour="yellow", leave=False
-    ):
+    for field_name, field_type in attr_fields:
         string = variants[field_type]
         if string == "TEXT":
             arcpy.management.AddField(
@@ -504,7 +495,7 @@ def merge_ramps() -> None:
     with arcpy.da.UpdateCursor(
         intermediate_fc, ["SHAPE@"] + [f[0] for f in attr_fields]
     ) as cursor:
-        for row_orig in tqdm(cursor, desc="Updating attributes", leave=False):
+        for row_orig in cursor:
             ramp_geom = row_orig[0]
             update = defaultdict(set)
             for road_row in road_attrs:

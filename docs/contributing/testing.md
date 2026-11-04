@@ -157,6 +157,8 @@ changes.
 
 The pre-commit hook `break-once-check` runs the preflight only, `--check`: every needle
 matches and every target collects, with no edit. A renamed test or an edited guard then
-fails on the commit that causes it, not at the next lift. If a wider measure of suite
+fails on the commit that causes it, not at the next lift. A typing guard is evidenced like an
+import contract: a test runs pyright on a fixture it writes, so the break is a case. If a wider
+measure of suite
 strength is ever wanted, that is an automated mutation tool run occasionally over
 `src/ag/core`, not more hand-written cases.

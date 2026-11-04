@@ -3,5 +3,5 @@
 
 Membership test: the function is decorated with `@operation`, or it is the frozen config
 class or a private helper of one. Modules here never import `ag.core.data_objects`,
-`ag.core.pipeline`, `sources` or `products` (ADR-0003).
+`ag.core.pipeline`, `sources` or `products` (ADR-0019 PC-D1).
 """

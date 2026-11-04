@@ -7,6 +7,7 @@ import arcpy
 
 from composition_configs import logic_config
 from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools.lyrx_compatibility_check import LyrxCompatibilityChecker
 from composition_configs import logic_config
 from file_manager import WorkFileManager
 
@@ -79,6 +80,12 @@ class ResolveRoadConflicts:
     def apply_symbology(self) -> None:
         for r in self.records:
             if r.spec.grouped_lyrx:
+                LyrxCompatibilityChecker(
+                    lyrx_file=r.spec.input_lyrx,
+                    feature_class_or_layer=r.line_copy,
+                    wfm=self.wfm,
+                    layer_names=[r.spec.target_layer_name],
+                ).check_compatibility()
                 custom_arcpy.apply_symbology(
                     input_layer=r.line_copy,
                     in_symbology_layer=r.spec.input_lyrx,
@@ -87,6 +94,11 @@ class ResolveRoadConflicts:
                     target_layer_name=r.spec.target_layer_name,
                 )
             else:
+                LyrxCompatibilityChecker(
+                    lyrx_file=r.spec.input_lyrx,
+                    feature_class_or_layer=r.line_copy,
+                    wfm=self.wfm,
+                ).check_compatibility()
                 custom_arcpy.apply_symbology(
                     input_layer=r.line_copy,
                     in_symbology_layer=r.spec.input_lyrx,
