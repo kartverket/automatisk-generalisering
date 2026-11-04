@@ -9,7 +9,7 @@ first four declarations, `support/dataset_schema.py`, `support/geometry_values.p
 whole-second date rule in `adapters/_shared/field_values.py`, the unit tests on the fake
 engine `tests/support/fake_arcpy.py`, `tests/static/test_capabilities.py`, ADR-0019
 Direction 5, PC-D17's precision clause, PC-D27, PC-5 with PC-D28 and PC-D29, A14.1 in the
-moved form and B29) by `python -m tools.break_once arcpy_adapter`, whose case table is
+moved form and B30) by `python -m tools.break_once arcpy_adapter`, whose case table is
 `tools/break_once/cases/arcpy_adapter.py` (A30). Every guard broken once, with the covering
 tests failing, then restored; `git status` showed the mutated files unchanged after the run,
 and the set's suite was green after the last restore. No engine ran in this PR: every test is
@@ -425,4 +425,4 @@ environment once B23 is settled, beside W1 to W6 of the session evidence:
 - The write direction of the WKB codec: with the builders of the next pull request.
 - `ParentsUnavailableError` has no raiser yet: every method the record names honours
   `parents=`, and the next `MINT` method decides.
-- Holes in multipolygon members: B29.
+- Holes in multipolygon members: B30.

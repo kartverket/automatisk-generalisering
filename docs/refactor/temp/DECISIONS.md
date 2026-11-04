@@ -2592,7 +2592,7 @@ tool, and whether the session environment's implicit reprojection of tool output
 a second line or is turned off once ingest conforms every input.
 `destination:` the ingest task and the session docstring when decided.
 
-**B29. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
+**B30. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
 `Geometry` holds one ring per member of a multi kind, so a multipolygon member with holes, a
 lake with islands arriving as one row, is refused on read with `PortContractError` and is
 reachable only after `explode_multipart`, which yields one polygon with its holes per row.

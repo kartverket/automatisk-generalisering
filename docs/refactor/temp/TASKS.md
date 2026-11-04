@@ -1892,7 +1892,7 @@ after, assert equality. Acceptance: fails when a method is compiled to write its
 
 **(1c) Holed members.** A lake with islands stored as one multipart row runs through
 `explode_multipart` before any read, and the children read back as polygons with their holes;
-whether the value type gains a nested member form is B29.
+whether the value type gains a nested member form is B30.
 
 **(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
 `memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
