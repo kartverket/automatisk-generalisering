@@ -36,15 +36,20 @@ def _cell(point: Point, size: float) -> Cell:
     return math.floor(point[0] / size), math.floor(point[1] / size)
 
 
-def _point_segment_distance(point: Point, segment: Segment) -> float:
+def _project(point: Point, segment: Segment) -> tuple[float, Point]:
+    """Return the fraction along `segment` and the point on it closest to `point`."""
     x, y = point
     x1, y1, x2, y2 = segment
     dx, dy = x2 - x1, y2 - y1
     length_sq = dx * dx + dy * dy
     if length_sq == 0.0:
-        return math.hypot(x - x1, y - y1)
+        return 0.0, (x1, y1)
     t = max(0.0, min(1.0, ((x - x1) * dx + (y - y1) * dy) / length_sq))
-    return math.hypot(x - (x1 + t * dx), y - (y1 + t * dy))
+    return t, (x1 + t * dx, y1 + t * dy)
+
+
+def _point_segment_distance(point: Point, segment: Segment) -> float:
+    return math.dist(point, _project(point, segment)[1])
 
 
 def _segment_intersection(a: Segment, b: Segment) -> tuple[float, Point] | None:
@@ -68,6 +73,10 @@ def _reverse_segments(segments: list[Segment]) -> list[Segment]:
     return [(x2, y2, x1, y1) for x1, y1, x2, y2 in reversed(segments)]
 
 
+def _drop_empty(segments: list[Segment]) -> list[Segment]:
+    return [s for s in segments if (s[0], s[1]) != (s[2], s[3])]
+
+
 @dataclass
 class _Line:
     segments: list[Segment]
@@ -76,7 +85,9 @@ class _Line:
 
 
 @dataclass(frozen=True)
-class _Crossing:
+class _Cut:
+    """Where to cut a dangling line; `shared_ramp_ids` is empty for a plain junction."""
+
     other_oid: int
     segment_index: int
     point: Point
@@ -88,7 +99,7 @@ class _Crossing:
 class _Split:
     oid: int
     point: Point
-    dangle_at_start: bool
+    dangle_point: Point
 
 
 @dataclass
@@ -140,6 +151,12 @@ class _SegmentIndex:
                         yield entry
 
     def has_within(self, point: Point, ignore: Set[int]) -> bool:
+        return next(self._within(point, ignore), None) is not None
+
+    def oids_within(self, point: Point, ignore: Set[int]) -> set[int]:
+        return set(self._within(point, ignore))
+
+    def _within(self, point: Point, ignore: Set[int]) -> Iterator[int]:
         for entry in self._cells.get(_cell(point, _INDEX_CELL_SIZE_M), ()):
             oid, segment = entry
             if (
@@ -147,8 +164,7 @@ class _SegmentIndex:
                 and entry not in self._dead
                 and _point_segment_distance(point, segment) <= self._tolerance
             ):
-                return True
-        return False
+                yield oid
 
 
 class _NodeIndex:
@@ -194,10 +210,42 @@ class _EndpointGraph:
         for segment in line.segments:
             self._segments.add(oid, segment)
 
-    def remove_line(self, oid: int) -> None:
-        self._segments.kill(oid, self.lines[oid].segments)
+    def connected_end_nodes(
+        self, oid: int, segments: list[Segment], end_nodes: list[int]
+    ) -> list[int]:
+        """End nodes of every other line connected to `segments` or `end_nodes` of `oid`.
+
+        A line is connected if it shares an end node, ends on `segments`, or has
+        one of `end_nodes` on its interior.
+        """
+        ignore = {oid}
+        connected: set[int] = set()
+        for node in end_nodes:
+            connected |= self.node_lines[node]
+            connected |= self._segments.oids_within(self.nodes.xy[node], ignore)
+        for segment in segments:
+            for other_oid, _ in self._segments.candidates(segment):
+                if other_oid == oid or other_oid in connected:
+                    continue
+                if any(
+                    _point_segment_distance(self.nodes.xy[node], segment)
+                    <= _SNAP_TOLERANCE_M
+                    for node in self.line_nodes[other_oid]
+                ):
+                    connected.add(other_oid)
+        connected.discard(oid)
+        return sorted({node for other in connected for node in self.line_nodes[other]})
+
+    def remove_line(self, oid: int) -> list[int]:
+        """Remove the line and return the end nodes of the lines connected to it."""
+        line = self.lines[oid]
+        affected = self.connected_end_nodes(
+            oid, line.segments, list(self.line_nodes[oid])
+        )
+        self._segments.kill(oid, line.segments)
         for node in self.line_nodes.pop(oid):
             self.node_lines[node].discard(oid)
+        return affected
 
     def _degree(self, node: int) -> int:
         # A closed line has both ends on the node.
@@ -212,55 +260,85 @@ class _EndpointGraph:
             return False
         return not self._segments.has_within(self.nodes.xy[node], self.node_lines[node])
 
-    def find_crossing(self, oid: int, dangle_node: int) -> _Crossing | None:
-        """First crossing, from the dangle, with a road of another medium and a shared ramp id."""
+    def find_cut(self, oid: int, dangle_node: int) -> _Cut | None:
+        """First junction or ramp crossing along the line, walking from the dangle.
+
+        A junction is another line's endpoint on the line, or a crossing with a road of
+        the same medium. A ramp crossing is a crossing with a road of another medium
+        that shares a ramp id; it wins a tie with a junction.
+        """
         line = self.lines[oid]
-        if not line.medium or not line.ramp_ids:
-            return None
         oriented = (
             line.segments
             if self.line_nodes[oid][0] == dangle_node
             else _reverse_segments(line.segments)
         )
         ends = [(oriented[0][0], oriented[0][1]), (oriented[-1][2], oriented[-1][3])]
+        no_ramp_ids: frozenset[str] = frozenset()
         for index, segment in enumerate(oriented):
-            best: tuple[float, _Crossing] | None = None
+            # (fraction, priority, point, other oid, shared ramp ids)
+            hits: list[tuple[float, int, Point, int, frozenset[str]]] = []
+            seen_oids: set[int] = set()
             for other_oid, other_segment in self._segments.candidates(segment):
-                other = self.lines.get(other_oid)
-                if other_oid == oid or other is None:
+                if other_oid == oid:
                     continue
-                shared = line.ramp_ids & other.ramp_ids
-                if not other.medium or other.medium == line.medium or not shared:
+                other = self.lines[other_oid]
+                shared = frozenset(line.ramp_ids & other.ramp_ids)
+                is_ramp_crossing = bool(
+                    line.medium
+                    and other.medium
+                    and other.medium != line.medium
+                    and shared
+                )
+                if is_ramp_crossing or other.medium == line.medium:
+                    hit = _segment_intersection(segment, other_segment)
+                    if hit is not None:
+                        fraction, point = hit
+                        if is_ramp_crossing:
+                            hits.append((fraction, 0, point, other_oid, shared))
+                        else:
+                            hits.append((fraction, 1, point, other_oid, no_ramp_ids))
+                if other_oid in seen_oids:
                     continue
-                hit = _segment_intersection(segment, other_segment)
-                if hit is None:
-                    continue
-                fraction, point = hit
-                if any(math.dist(point, end) < _SNAP_TOLERANCE_M for end in ends):
-                    continue
-                if best is None or fraction < best[0]:
-                    best = (
-                        fraction,
-                        _Crossing(
-                            other_oid=other_oid,
-                            segment_index=index,
-                            point=point,
-                            shared_ramp_ids=frozenset(shared),
-                            oriented_segments=tuple(oriented),
-                        ),
-                    )
-            if best is not None:
-                return best[1]
+                seen_oids.add(other_oid)
+                for node in self.line_nodes[other_oid]:
+                    xy = self.nodes.xy[node]
+                    fraction, point = _project(xy, segment)
+                    if math.dist(xy, point) <= _SNAP_TOLERANCE_M:
+                        hits.append((fraction, 1, point, other_oid, no_ramp_ids))
+            hits = [
+                hit
+                for hit in hits
+                if all(math.dist(hit[2], end) >= _SNAP_TOLERANCE_M for end in ends)
+            ]
+            if hits:
+                _, _, point, other_oid, shared = min(
+                    hits, key=lambda hit: (hit[0], hit[1])
+                )
+                return _Cut(
+                    other_oid=other_oid,
+                    segment_index=index,
+                    point=point,
+                    shared_ramp_ids=shared,
+                    oriented_segments=tuple(oriented),
+                )
         return None
 
-    def split_line(self, oid: int, dangle_node: int, crossing: _Crossing) -> _Split:
-        """Cut off the dangle side at `crossing`; the kept part takes the crossed road's medium."""
-        line, other = self.lines[oid], self.lines[crossing.other_oid]
+    def split_line(
+        self, oid: int, dangle_node: int, cut: _Cut
+    ) -> tuple[_Split, list[int]]:
+        """Cut off the dangle side at `cut`; at a ramp crossing the kept part takes the crossed road's medium.
+
+        Returns the split and the end nodes of the lines connected to the cut-off side.
+        """
+        line = self.lines[oid]
         start, end = self.line_nodes[oid]
-        px, py = crossing.point
-        oriented = crossing.oriented_segments
-        _, _, x2, y2 = oriented[crossing.segment_index]
-        kept = [(px, py, x2, y2), *oriented[crossing.segment_index + 1 :]]
+        px, py = cut.point
+        oriented = cut.oriented_segments
+        x1, y1, x2, y2 = oriented[cut.segment_index]
+        kept = _drop_empty([(px, py, x2, y2), *oriented[cut.segment_index + 1 :]])
+        cut_off = _drop_empty([*oriented[: cut.segment_index], (x1, y1, px, py)])
+        affected = self.connected_end_nodes(oid, cut_off, [dangle_node])
 
         self._segments.kill(oid, line.segments)
         line.segments = kept
@@ -268,17 +346,20 @@ class _EndpointGraph:
             self._segments.add(oid, segment)
 
         far = end if start == dangle_node else start
-        cut_node = self.nodes.find_or_add(crossing.point)
+        cut_node = self.nodes.find_or_add(cut.point)
         self.node_lines[dangle_node].discard(oid)
-        self.line_nodes[oid] = (far, cut_node)
+        self.line_nodes[oid] = (cut_node, far)
         self.node_lines[cut_node].add(oid)
 
-        line.medium = other.medium
-        line.ramp_ids -= crossing.shared_ramp_ids
-        other.ramp_ids -= crossing.shared_ramp_ids
-        return _Split(
-            oid=oid, point=crossing.point, dangle_at_start=start == dangle_node
+        if cut.shared_ramp_ids:
+            other = self.lines[cut.other_oid]
+            line.medium = other.medium
+            line.ramp_ids -= cut.shared_ramp_ids
+            other.ramp_ids -= cut.shared_ramp_ids
+        split = _Split(
+            oid=oid, point=cut.point, dangle_point=self.nodes.xy[dangle_node]
         )
+        return split, affected
 
 
 def _parse_ramp_ids(value: object) -> set[str]:
@@ -335,7 +416,6 @@ def _remove_in_waves(
 ) -> _WaveResult:
     """Remove or split dangling lines wave by wave, recording the dangle nodes per wave."""
     result = _WaveResult(removed_oids=[], splits=[], ramp_changed=set(), waves=[])
-    split_oids: set[int] = set()
     no_ignore: frozenset[int] = frozenset()
 
     wave = [
@@ -347,32 +427,34 @@ def _remove_in_waves(
         if not wave:
             break
         acted: list[int] = []
-        exposed: list[int] = []
+        exposed: dict[int, None] = {}
+
+        def expose(nodes: list[int]) -> None:
+            for candidate in nodes:
+                if candidate not in exposed and graph.is_dangle(candidate):
+                    exposed[candidate] = None
+
         for node in wave:
             if not graph.is_dangle(node):
                 continue
             (oid,) = graph.node_lines[node]
-            # A split line keeps its original geometry in the edits, so it is not cut again.
-            if oid in split_oids:
-                continue
             acted.append(node)
-            crossing = graph.find_crossing(oid, node)
-            if crossing is not None:
-                result.splits.append(graph.split_line(oid, node, crossing))
-                result.ramp_changed.add(crossing.other_oid)
-                split_oids.add(oid)
+            cut = graph.find_cut(oid, node)
+            if cut is not None:
+                split, affected = graph.split_line(oid, node, cut)
+                result.splits.append(split)
+                if cut.shared_ramp_ids:
+                    result.ramp_changed.add(cut.other_oid)
+                expose(affected)
                 continue
-            start, end = graph.line_nodes[oid]
-            graph.remove_line(oid)
+            affected = graph.remove_line(oid)
             result.removed_oids.append(oid)
-            other = end if start == node else start
-            if other not in exposed and graph.is_dangle(other):
-                exposed.append(other)
+            expose(affected)
         result.waves.append(acted)
         logger.info(
             "Dangle removal iteration %d: %d dangles handled", iteration, len(acted)
         )
-        wave = exposed
+        wave = list(exposed)
     else:
         logger.warning("Dangle removal stopped at max_iterations=%d", max_iterations)
 
@@ -413,7 +495,10 @@ def _cut_shape(shape: Any, split: _Split) -> tuple[Any, Any]:
     along = shape.queryPointAndDistance(cut_point)[1]
     before = shape.segmentAlongLine(0, along)
     after = shape.segmentAlongLine(along, shape.length)
-    return (before, after) if split.dangle_at_start else (after, before)
+    first, last = shape.firstPoint, shape.lastPoint
+    start_gap = math.dist(split.dangle_point, (first.X, first.Y))
+    end_gap = math.dist(split.dangle_point, (last.X, last.Y))
+    return (before, after) if start_gap <= end_gap else (after, before)
 
 
 def _write_attributes(
@@ -430,7 +515,9 @@ def _apply_edits(
 ) -> None:
     """Delete removed lines, cut split lines and update ramp ids; removed parts go to `removed_fc`."""
     removed = set(result.removed_oids)
-    splits = {split.oid: split for split in result.splits}
+    splits: dict[int, list[_Split]] = defaultdict(list)
+    for split in result.splits:
+        splits[split.oid].append(split)
     if not (removed or splits or result.ramp_changed):
         return
 
@@ -448,9 +535,11 @@ def _apply_edits(
                 removed_rows.append(row[1:])
                 cursor.deleteRow()
             elif oid in splits:
-                dangle_piece, kept_piece = _cut_shape(row[1], splits[oid])
-                removed_rows.append([dangle_piece, *row[2:]])
-                row[1] = kept_piece
+                shape = row[1]
+                for split in splits[oid]:
+                    dangle_piece, shape = _cut_shape(shape, split)
+                    removed_rows.append([dangle_piece, *row[2:]])
+                row[1] = shape
                 _write_attributes(row, index, graph.lines[oid], set_medium=True)
                 cursor.updateRow(row)
             elif oid in result.ramp_changed:
@@ -469,19 +558,24 @@ def remove_new_dangles(
     max_iterations: int = 20,
     dangle_iterations_prefix: str | None = None,
 ) -> int:
-    """Remove ramp dangles from `lines_fc`, then the dangles each removal exposes.
+    """Remove ramp dangles from `lines_fc`, then dangles on the lines connected to each removal.
 
     Dangles come from an endpoint graph of the `VegSenterlinje` lines: a dangle is an
     endpoint with one line attached that no other line passes through. The starting
-    dangles are those on `typeveg = 'rampe'` lines in `ramp_reference_fc`. Removing a
-    line can expose a new dangle at its other end, so removal repeats in waves until
-    no dangle is left.
+    dangles are those on `typeveg = 'rampe'` lines in `ramp_reference_fc`. After a
+    line or a cut-off piece is removed, both ends of every line connected to it are
+    checked, and any dangle there is handled in the next wave, even one that existed
+    before the run. A line is connected if it shares an end node with the removed
+    geometry, ends on it, or has the removed geometry end on its interior. Removal
+    repeats in waves until no dangle is left.
 
-    A dangling line that crosses another road with a different medium and a shared
-    `ramp_id` is not removed whole: it is cut at the first such crossing, the dangle
-    side goes to `removed_fc`, and the kept part takes the crossed road's medium. The
-    shared ids are removed from `ramp_id` on both the kept part and the crossed road.
-    A line that has been cut is not processed again.
+    A dangling line is not removed whole if, walking from the dangle, it reaches a
+    junction (another line's endpoint, or a crossing with a road of the same medium)
+    or a ramp crossing (a road of another medium sharing a `ramp_id`). It is cut at
+    the first one and the dangle side goes to `removed_fc`. At a ramp crossing the
+    kept part takes the crossed road's medium, and the shared ids are removed from
+    `ramp_id` on both the kept part and the crossed road. A line can be cut again
+    if its kept part later dangles.
 
     Args:
         lines_fc: Line feature class edited in place.
