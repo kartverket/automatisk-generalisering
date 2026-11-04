@@ -20,10 +20,26 @@ tests.support.cases module
    :show-inheritance:
    :undoc-members:
 
+tests.support.fake\_arcpy module
+--------------------------------
+
+.. automodule:: tests.support.fake_arcpy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.support.memory module
 ---------------------------
 
 .. automodule:: tests.support.memory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.support.wkb module
+------------------------
+
+.. automodule:: tests.support.wkb
    :members:
    :show-inheritance:
    :undoc-members:

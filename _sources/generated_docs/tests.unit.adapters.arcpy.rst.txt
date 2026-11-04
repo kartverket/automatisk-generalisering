@@ -4,10 +4,58 @@ tests.unit.adapters.arcpy package
 Submodules
 ----------
 
+tests.unit.adapters.arcpy.conftest module
+-----------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.conftest
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.arcpy.test\_dataset\_schema module
+------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_dataset_schema
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.arcpy.test\_geometry\_ops module
+----------------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_geometry_ops
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.arcpy.test\_geometry\_values module
+-------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_geometry_values
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.arcpy.test\_predicate\_compiler module
+----------------------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_predicate_compiler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.unit.adapters.arcpy.test\_session module
 ----------------------------------------------
 
 .. automodule:: tests.unit.adapters.arcpy.test_session
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.adapters.arcpy.test\_table\_ops module
+-------------------------------------------------
+
+.. automodule:: tests.unit.adapters.arcpy.test_table_ops
    :members:
    :show-inheritance:
    :undoc-members:
