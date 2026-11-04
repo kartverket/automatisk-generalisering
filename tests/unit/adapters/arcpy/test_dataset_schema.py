@@ -6,7 +6,11 @@ from __future__ import annotations
 import pytest
 
 from ag.adapters.arcpy.session import ArcpySession
-from ag.adapters.arcpy.support.dataset_schema import declared_field, describe
+from ag.adapters.arcpy.support.dataset_schema import (
+    FIELD_TYPES,
+    declared_field,
+    describe,
+)
 from ag.core.types import DataType
 from ag.ports.attributes import Field, FieldType
 from ag.ports.errors import EngineError, PortContractError
@@ -92,6 +96,10 @@ def test_a_describe_failure_is_an_engine_error_naming_the_call(
         describe(session, "missing")
     assert caught.value.context.tool == "Describe"
     assert isinstance(caught.value.__cause__, RuntimeError)
+
+
+def test_the_engine_type_names_are_the_expected_spellings() -> None:
+    assert set(FIELD_TYPES) == {"SmallInteger", "Integer", "Double", "String", "Date"}
 
 
 def test_an_empty_engine_name_is_not_an_engine_field(

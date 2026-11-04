@@ -5,10 +5,14 @@ What: `FakeEngine`, a `ModuleType` that the unit tests install as `arcpy` throug
 engine; `FakeDataset`, what it holds per path; `seed`, which writes an engine-neutral
 case to it with the port's field types mapped to the engine's names.
 
-How: rows are dicts keyed by field name and by the two cursor tokens, `OID@` and
-`SHAPE@WKB`. A search cursor over an unknown name raises `RuntimeError`, as the engine's
-is expected to; a tool records its keyword arguments, raises `FakeExecuteError` when
-`failures` names it, and otherwise does the least that lets the adapter continue: the
+How: rows are dicts keyed by field name and by the adapter's two cursor tokens, which
+are imported, as the engine's type names are, so the fake spells nothing of the adapter's
+twice; the engine's strings are the marked run's to confirm. A toolbox is a namespace
+whose attributes are the tools, the structure `run_tool` resolves a dotted name against,
+and a tool records itself under that path. A search cursor over an unknown name raises
+`RuntimeError`, as the engine's is expected to; a tool records its keyword arguments,
+raises `FakeExecuteError` when `failures` names it, and otherwise does the least that
+lets the adapter continue: the
 select tools copy every row and keep the clause, the explode tool writes the children
 `children` scripts for each parent, or one child per row, and adds the fields named in
 `reference_fields`, `ORIG_FID` unless a test says otherwise. Nothing here evaluates SQL
@@ -22,19 +26,13 @@ from dataclasses import dataclass, field
 from types import ModuleType, SimpleNamespace, TracebackType
 from typing import Self
 
-from ag.ports.attributes import FieldType
+from ag.adapters.arcpy.support.dataset_schema import FIELD_TYPES, OID_TOKEN
+from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
 
-OID = "OID@"
-WKB = "SHAPE@WKB"
-ENGINE_TYPES = {
-    FieldType.SHORT: "SmallInteger",
-    FieldType.LONG: "Integer",
-    FieldType.DOUBLE: "Double",
-    FieldType.TEXT: "String",
-    FieldType.DATE: "Date",
-}
+ENGINE_TYPES = {port: engine for engine, port in FIELD_TYPES.items()}
+"""The port's field types to the engine's names: the adapter's own table, inverted."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -85,7 +83,7 @@ class FakeDataset:
         return found
 
     def next_oid(self) -> int:
-        taken = [int(str(row[OID])) for row in self.rows]
+        taken = [int(str(row[OID_TOKEN])) for row in self.rows]
         return max(taken, default=0) + 1
 
 
@@ -116,7 +114,7 @@ class _SearchCursor:
         for row in self._dataset.rows:
             if (
                 self._engine.fail_at_row is not None
-                and row[OID] == self._engine.fail_at_row
+                and row[OID_TOKEN] == self._engine.fail_at_row
             ):
                 raise RuntimeError("The cursor failed mid-read.")
             yield tuple(row[name] for name in self._names)
@@ -141,9 +139,23 @@ class _InsertCursor:
     def insertRow(self, row: Sequence[object]) -> int:
         oid = self._dataset.next_oid()
         self._dataset.rows.append(
-            {OID: oid, **dict(zip(self._names, row, strict=True))}
+            {OID_TOKEN: oid, **dict(zip(self._names, row, strict=True))}
         )
         return oid
+
+
+class _Toolbox(SimpleNamespace):
+    """One engine toolbox: each attribute is a tool recorded as `<toolbox>.<Tool>`."""
+
+    def __init__(
+        self, engine: FakeEngine, name: str, **bodies: Callable[..., None]
+    ) -> None:
+        super().__init__(
+            **{
+                tool: engine.recorder(f"{name}.{tool}", body)
+                for tool, body in bodies.items()
+            }
+        )
 
 
 class FakeEngine(ModuleType):
@@ -166,17 +178,16 @@ class FakeEngine(ModuleType):
         self.da = SimpleNamespace(
             SearchCursor=self._search_cursor, InsertCursor=self._insert_cursor
         )
-        self.management = SimpleNamespace(
-            MultipartToSinglepart=self._tool(
-                "management.MultipartToSinglepart", self._explode
-            ),
-            CreateTable=self._tool("management.CreateTable", self._create_table),
-            AddField=self._tool("management.AddField", self._add_field),
-            DeleteField=self._tool("management.DeleteField", self._delete_field),
+        self.management = _Toolbox(
+            self,
+            "management",
+            MultipartToSinglepart=self._explode,
+            CreateTable=self._create_table,
+            AddField=self._add_field,
+            DeleteField=self._delete_field,
         )
-        self.analysis = SimpleNamespace(
-            Select=self._tool("analysis.Select", self._select),
-            TableSelect=self._tool("analysis.TableSelect", self._select),
+        self.analysis = _Toolbox(
+            self, "analysis", Select=self._select, TableSelect=self._select
         )
 
     def GetMessages(self) -> str:
@@ -222,7 +233,11 @@ class FakeEngine(ModuleType):
     def tool_names(self) -> list[str]:
         return [name for name, _ in self.calls]
 
-    def _tool(self, name: str, body: Callable[..., None]) -> Callable[..., FakeResult]:
+    def recorder(
+        self, name: str, body: Callable[..., None]
+    ) -> Callable[..., FakeResult]:
+        """`body` as a tool recorded under `name`, the path `run_tool` resolves."""
+
         def tool(**arguments: object) -> FakeResult:
             self.calls.append((name, arguments))
             if name in self.failures:
@@ -241,11 +256,13 @@ class FakeEngine(ModuleType):
             fields.append(FakeField(name, "Integer"))
         output = FakeDataset("FeatureClass", fields, epsg=source.epsg)
         for row in source.rows:
-            parent = int(str(row[OID]))
-            for shape in scripted.get(parent, [row[WKB]]):
-                child = {k: v for k, v in row.items() if k not in (OID, WKB)}
-                child[OID] = output.next_oid()
-                child[WKB] = shape
+            parent = int(str(row[OID_TOKEN]))
+            for shape in scripted.get(parent, [row[WKB_TOKEN]]):
+                child = {
+                    k: v for k, v in row.items() if k not in (OID_TOKEN, WKB_TOKEN)
+                }
+                child[OID_TOKEN] = output.next_oid()
+                child[WKB_TOKEN] = shape
                 for name in self.reference_fields:
                     child[name] = parent
                 output.rows.append(child)
@@ -272,7 +289,7 @@ class FakeEngine(ModuleType):
         target = str(arguments.get("out_feature_class", arguments.get("out_table")))
         output = FakeDataset(source.data_type, [*source.fields], epsg=source.epsg)
         for row in source.rows:
-            output.rows.append({**row, OID: output.next_oid()})
+            output.rows.append({**row, OID_TOKEN: output.next_oid()})
         self.datasets[target] = output
 
 
@@ -285,9 +302,9 @@ def seed(engine: FakeEngine, case: DatasetCase, *, path: str) -> FakeDataset:
     data_type = "FeatureClass" if schema.geometry_crs is not None else "Table"
     dataset = FakeDataset(data_type, fields)
     for position, row in enumerate(case.rows, start=1):
-        values: dict[str, object] = {**row.attributes, OID: position}
+        values: dict[str, object] = {**row.attributes, OID_TOKEN: position}
         if data_type == "FeatureClass":
-            values[WKB] = None if row.geometry is None else to_wkb(row.geometry)
+            values[WKB_TOKEN] = None if row.geometry is None else to_wkb(row.geometry)
         dataset.rows.append(values)
     engine.datasets[path] = dataset
     return dataset

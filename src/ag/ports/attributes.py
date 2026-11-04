@@ -23,9 +23,9 @@ of the identifier-or-value test. ADR-0020 OP-D1."""
 AttributeValue: TypeAlias = int | float | str | datetime | None
 """What a cell can hold: exactly the `FieldType` members, plus None for a null.
 
-A `DATE` field holds a date and a time, carried as a naive `datetime` in the workspace's
-own convention, because that is what the engine stores and returns; a date-only value is a
-`datetime` at midnight. The engine's date-only, time-only and timestamp-offset field
+A `DATE` field holds a date and a time, carried as a naive `datetime` to the whole second
+in the workspace's own convention, because the port carries dates to the whole second; a
+date-only value is a `datetime` at midnight. The engine's date-only, time-only and timestamp-offset field
 types (ArcGIS Pro 3.2 and later) are not represented, because no pipeline declares one; an
 adapter that reads such a field raises `PortContractError` naming the field, rather than
 coerce a `date`, a `time` or an aware `datetime` into this union.

@@ -1,14 +1,15 @@
 # Slice 1b evidence: the ArcPy adapter's first methods
 
-**Status:** EVIDENCE, 2026-11-02. Produced for the second pull request of slice 1b (the
+**Status:** EVIDENCE, 2026-11-04. Produced for the second pull request of slice 1b (the
 capability record `ports/capabilities.py` and `capabilities()` in each adapter package, the
 row-shape reader `declared_rows`, the shared `adapters/_shared/preconditions.py`, the stub's
 first four declarations, `support/dataset_schema.py`, `support/geometry_values.py`,
 `support/predicate_compiler.py`, the group modules `geometry_ops/selection.py`,
-`geometry_ops/shape.py` and `table_ops/row_io.py` with their composed classes, the unit tests
-on the fake engine `tests/support/fake_arcpy.py`, `tests/static/test_capabilities.py`,
-ADR-0019 Direction 5, PC-D27, PC-5 with PC-D28 and PC-D29, and A14.1 in the moved form) by
-`python -m tools.break_once arcpy_adapter`, whose case table is
+`geometry_ops/shape.py` and `table_ops/row_io.py` with their composed classes, the
+whole-second date rule in `adapters/_shared/field_values.py`, the unit tests on the fake
+engine `tests/support/fake_arcpy.py`, `tests/static/test_capabilities.py`, ADR-0019
+Direction 5, PC-D17's precision clause, PC-D27, PC-5 with PC-D28 and PC-D29, A14.1 in the
+moved form and B29) by `python -m tools.break_once arcpy_adapter`, whose case table is
 `tools/break_once/cases/arcpy_adapter.py` (A30). Every guard broken once, with the covering
 tests failing, then restored; `git status` showed the mutated files unchanged after the run,
 and the set's suite was green after the last restore. No engine ran in this PR: every test is
@@ -52,7 +53,7 @@ FAILED tests/unit/adapters/arcpy/test_dataset_schema.py::test_an_unrepresentable
 1 failed in 0.02s
 ```
 
-### W1: a non-planar type code accepted
+### V1: a non-planar type code accepted
 
 File: `src/ag/adapters/arcpy/support/geometry_values.py`. Edit: `if code not in _KINDS:` -> `if False:`.
 
@@ -70,7 +71,7 @@ FAILED tests/unit/adapters/arcpy/test_geometry_values.py::test_what_the_port_can
 2 failed in 0.02s
 ```
 
-### W2: a multipolygon member with holes flattened instead of refused
+### V2: a multipolygon member with holes flattened instead of refused
 
 File: `src/ag/adapters/arcpy/support/geometry_values.py`. Edit: `if len(member) > 1:` -> `if False:`.
 
@@ -137,6 +138,24 @@ FAILED tests/unit/adapters/arcpy/test_predicate_compiler.py::test_the_clause[not
 2 failed in 0.02s
 ```
 
+### P4: a sub-second date accepted by the shared rule, so one adapter truncates
+
+File: `src/ag/adapters/_shared/field_values.py`. Edit: `if value.microsecond:` -> `if False:`.
+
+Targets: test_a_sub_second_date_is_refused_not_truncated, test_check_refuses_what_the_adapter_cannot_evaluate[sub-second-date], test_a_row_that_does_not_fit_the_schema_is_refused[sub-second-date]. Baseline: passed.
+
+Result: **FAILED as expected** (exit 1)
+
+```
+>       with pytest.raises(PortContractError, match=r"replace\(microsecond=0\)"):
+E       Failed: DID NOT RAISE PortContractError
+>       with pytest.raises(PortContractError, match=reason):
+FAILED tests/unit/adapters/arcpy/test_predicate_compiler.py::test_a_sub_second_date_is_refused_not_truncated
+FAILED tests/unit/adapters/fakes/memory/test_predicate_eval.py::test_check_refuses_what_the_adapter_cannot_evaluate[sub-second-date]
+FAILED tests/unit/adapters/fakes/memory/test_store.py::test_a_row_that_does_not_fit_the_schema_is_refused[sub-second-date]
+3 failed in 0.03s
+```
+
 ### S1: select compiles without checking the predicate
 
 File: `src/ag/adapters/arcpy/geometry_ops/selection.py`. Edit: `check(where, dataset=dataset)` -> `pass`.
@@ -149,7 +168,7 @@ Result: **FAILED as expected** (exit 1)
 >       with pytest.raises(PortContractError):
 E       Failed: DID NOT RAISE PortContractError
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_a_bad_predicate_is_refused_before_any_tool_runs
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### S2: select does not check its paths
@@ -164,7 +183,7 @@ Result: **FAILED as expected** (exit 1)
 >       with pytest.raises(PortContractError, match="both name"):
 E       Failed: DID NOT RAISE PortContractError
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_select_refuses_an_output_on_the_input_path
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### X1: a null shape reaches the tool
@@ -180,7 +199,7 @@ Result: **FAILED as expected** (exit 1)
 E       Failed: DID NOT RAISE EmptyGeometryError
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_explode_refuses_a_null_shape_before_the_tool_whether_or_not_parents_asked
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_an_empty_shape_counts_as_null
-2 failed in 0.03s
+2 failed in 0.02s
 ```
 
 ### X2: a table input and shared paths accepted
@@ -200,7 +219,7 @@ E               RuntimeError: A column was specified that does not exist. [SHAPE
                 f"arcpy: {what} failed: {error}",
 E           ag.ports.errors.EngineError: arcpy: SearchCursor failed: A column was specified that does not exist. [SHAPE@WKB]
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_explode_refuses_a_table_and_handles_on_one_path
-1 failed in 0.04s
+1 failed in 0.03s
 ```
 
 ### X3: the reference field assumed instead of found: any added field accepted
@@ -215,7 +234,7 @@ Result: **FAILED as expected** (exit 1)
 >       with pytest.raises(EngineError, match="one reference field was expected") as caught:
 E       Failed: DID NOT RAISE EngineError
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_a_tool_that_adds_two_fields_is_an_engine_error
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### X4: the output's own engine fields counted as added
@@ -231,7 +250,7 @@ Result: **FAILED as expected** (exit 1)
 >           raise EngineError(
 E           ag.ports.errors.EngineError: arcpy: management.MultipartToSinglepart added ['Shape_Length', 'ORIG_FID'] to 'exploded'; one reference field was expected.
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_the_reference_diff_ignores_the_output_engine_fields
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### X5: the reference field kept on the output
@@ -248,7 +267,7 @@ E       AssertionError: assert ['management....ToSinglepart'] == ['management...
 E         Right contains one more item: 'management.DeleteField'
 E         Use -v to get more diff
 FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_explode_without_parents_runs_the_tool_and_drops_the_reference
-1 failed in 0.03s
+1 failed in 0.02s
 ```
 
 ### R1: read_rows opens the cursor on an unchecked field
@@ -281,11 +300,26 @@ Result: **FAILED as expected** (exit 1)
 E               RuntimeError: The cursor failed mid-read.
 >       assert [found.render() for found in findings] == []
 E       assert ["table_ops/r...sion's guard"] == []
-E         Left contains one more item: "table_ops/row_io.py:58: [arcpy-session-only] `arcpy` is referenced outside the session's guard"
+E         Left contains one more item: "table_ops/row_io.py:61: [arcpy-session-only] `arcpy` is referenced outside the session's guard"
 E         Use -v to get more diff
 FAILED tests/unit/adapters/arcpy/test_table_ops.py::test_a_cursor_failure_mid_read_leaves_as_an_engine_error
 FAILED tests/static/test_source_scans.py::test_tree_is_clean[adapters-arcpy]
 2 failed in 0.04s
+```
+
+### R3: a sub-second date read through and truncated on the next write
+
+File: `src/ag/adapters/arcpy/table_ops/row_io.py`. Edit: `if isinstance(value, datetime) and value.microsecond:` -> `if False:`.
+
+Targets: test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row. Baseline: passed.
+
+Result: **FAILED as expected** (exit 1)
+
+```
+>       with pytest.raises(PortContractError, match="'roads' row 1: 'surveyed' holds"):
+E       Failed: DID NOT RAISE PortContractError
+FAILED tests/unit/adapters/arcpy/test_table_ops.py::test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row
+1 failed in 0.02s
 ```
 
 ### C1: the record leaves out a method the adapter honours parents for
@@ -298,9 +332,9 @@ Result: **FAILED as expected** (exit 1)
 
 ```
 >       assert build().parents_for == expected
-E       assert frozenset() == {<function Ge...7edffeb8cd60>}
+E       assert frozenset() == {<function Ge...7352d6218d60>}
 E         Extra items in the right set:
-E         <function GeometryOps.explode_multipart at 0x7edffeb8cd60>
+E         <function GeometryOps.explode_multipart at 0x7352d6218d60>
 E         Use -v to get more diff
 FAILED tests/static/test_capabilities.py::test_the_record_names_every_mint_method_the_adapter_implements_and_no_other[arcpy]
 1 failed in 0.04s
@@ -309,7 +343,7 @@ FAILED tests/static/test_capabilities.py::test_the_record_names_every_mint_metho
 ### After the last restore
 
 ```
-231 passed in 2.57s
+235 passed in 2.55s
 ```
 
 ## By hand
@@ -323,11 +357,19 @@ pass the pyright hook. Dropping `Shape` from `ArcpyGeometryOps`'s bases on a scr
 reported `"explode_multipart" is not present` on the assignment, and the runtime matrix test
 reported the method implemented by no group; both restored.
 
-### The row-shape needles
+### The case tables after the needle edits
 
 `tools/break_once/cases/row_shape.py` matches the decorator's `setattr(fn, _ATTRIBUTE, ...)`
-line; `python -m tools.break_once row_shape --check` reports `17 cases in 1 set(s); needles
-match, targets collect`, and the full preflight reports 159 cases in 8 sets.
+line and `cases/memory_adapter.py` the shared `distinct_paths`:
+
+```
+$ uv run --locked --extra dev python -m tools.break_once row_shape --check
+break-it-once: 17 cases in 1 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --check
+break-it-once: 19 cases in 1 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once --check
+break-it-once: 161 cases in 8 set(s); needles match, targets collect
+```
 
 ## Carried to the first run under the engine
 
@@ -340,7 +382,8 @@ environment once B23 is settled, beside W1 to W6 of the session evidence:
 - **W8** The date literal `date 'YYYY-MM-DD HH:MM:SS'` is accepted by the memory workspace as
   by a file geodatabase; `AddFieldDelimiters` answers with double quotes for both.
 - **W9** `Describe` reports `lengthFieldName` and `areaFieldName` as empty strings where a
-  feature class has no such field, and the exception class for a path that does not exist.
+  feature class has no such field; the type names it reports for the five field types are
+  the spellings `FIELD_TYPES` holds; and the exception class for a path that does not exist.
 - **W10** `analysis.Select` and `analysis.TableSelect` take the keyword names the adapter
   passes, and their output carries the input's declared fields and no other.
 - **W11** `management.MultipartToSinglepart` keeps a GlobalID field as it is, adds no field
@@ -351,8 +394,26 @@ environment once B23 is settled, beside W1 to W6 of the session evidence:
   for Z and M geometry, which the dataset-level refusal should make unreachable.
 - **W13** An insert cursor accepts `SHAPE@WKB` bytes, which is what the `.gdb` builders of the
   next pull request rely on.
-- **W14** The timing of one guard around a streamed cursor against the bare cursor, and of
-  the WKB parse per row, on the `read_rows` timing run.
+- **W14** On the `read_rows` timing run: one guard around a streamed cursor against the bare
+  cursor; the WKB parse per row; `Describe`'s time per call on a file geodatabase and on the
+  memory workspace, against a budget of a few hundred calls per stage; and the null-shape
+  pre-pass of `explode_multipart` against the tool's own time on the timing dataset. Within
+  one call no path is described twice and a cache across calls goes stale on every write, so
+  if `Describe` proves costly the lever is a narrower read of the output's field list, not a
+  cache.
+- **W15** The reference field holds the input's `OBJECTID` values: on a `.gdb` input whose
+  `OBJECTID`s are non-dense after deletes, `select` then `explode_multipart`, the `PARENT_ID`s
+  are the pre-call index set and the input's index set is unchanged. This is the conformance
+  case of T4.11 (1a), run as such in the next pull request.
+- **W16** The `dataType` strings `Describe` reports for a feature class and a table in the
+  memory workspace; `_DATA_TYPES` maps `FeatureClass` and `Table` only.
+- **W17** The `hasZ` and `hasM` flags of every production source, since the refusal reads the
+  dataset's flag and not its values.
+- **W18** The precision a file geodatabase date field holds and whether a date literal with a
+  fraction is accepted; and whether any production source's date fields return sub-second
+  values, the editor-tracking fields in particular. The port carries dates to the whole
+  second either way; the read side refuses a fraction rather than truncate it, and
+  truncation can replace the refusal in one function if sources carry fractions.
 
 ## Deferred by name
 
@@ -364,3 +425,4 @@ environment once B23 is settled, beside W1 to W6 of the session evidence:
 - The write direction of the WKB codec: with the builders of the next pull request.
 - `ParentsUnavailableError` has no raiser yet: every method the record names honours
   `parents=`, and the next `MINT` method decides.
+- Holes in multipolygon members: B29.

@@ -9,14 +9,16 @@ import pytest
 
 from ag.adapters.arcpy.geometry_ops import ArcpyGeometryOps
 from ag.adapters.arcpy.session import ArcpySession
+from ag.adapters.arcpy.support.dataset_schema import OID_TOKEN
+from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN, geometry_from_wkb
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports import CHILD_ID, PARENT_ID, Attr, Comparison
 from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
 from ag.ports.geometry import Geometry, GeometryKind
-from tests.support.cases import lookup, parts, roads
-from tests.support.fake_arcpy import OID, WKB, FakeEngine, FakeField, seed
-from tests.support.wkb import to_wkb
+from tests.support.cases import CRS, lookup, parts, roads
+from tests.support.fake_arcpy import FakeEngine, FakeField, seed
+from tests.support.wkb import multipolygon_with_hole, to_wkb
 
 
 def handle(path: str, data_type: DataType = DataType.FEATURE_CLASS) -> ScratchHandle:
@@ -155,7 +157,7 @@ def test_explode_with_parents_writes_the_pairs_in_native_indices(
         (3, 6),
         (4, 7),
     ]
-    assert [row[OID] for row in children] == [1, 2, 3, 4, 5, 6, 7]
+    assert [row[OID_TOKEN] for row in children] == [1, 2, 3, 4, 5, 6, 7]
     assert "ORIG_FID" not in engine.datasets["exploded"].rows[0]
 
 
@@ -190,6 +192,32 @@ def test_the_reference_diff_ignores_the_output_engine_fields(
     )
     assert engine.datasets["exploded"].length_name == "Shape_Length"
     assert engine.calls[-1][1] == {"in_table": "exploded", "drop_field": "ORIG_FID"}
+
+
+def test_a_multipart_polygon_with_holes_explodes_to_polygons_with_their_holes(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, parts(), path="lakes")
+    lake = engine.datasets["lakes"].rows[0]
+    lake[WKB_TOKEN] = multipolygon_with_hole()
+    holed = Geometry(
+        GeometryKind.POLYGON,
+        (
+            ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0)),
+            ((1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)),
+        ),
+        CRS,
+    )
+    engine.children["lakes"] = {1: [to_wkb(holed)]}
+    ArcpyGeometryOps(session=session).explode_multipart(
+        input=handle("lakes"),
+        output=handle("islands"),
+        parents=handle("ws/pairs", DataType.TABLE),
+    )
+    assert engine.tool_names()[0] == "management.MultipartToSinglepart"
+    child = engine.datasets["islands"].rows[0]
+    assert geometry_from_wkb(child[WKB_TOKEN], crs=CRS, where="row") == holed
+    assert engine.datasets["ws/pairs"].rows[0][PARENT_ID] == 1
 
 
 def test_a_tool_that_adds_two_fields_is_an_engine_error(
@@ -227,7 +255,9 @@ def test_an_empty_shape_counts_as_null(
     engine: FakeEngine, session: ArcpySession
 ) -> None:
     seed(engine, parts(), path="parts")
-    engine.datasets["parts"].rows[0][WKB] = b"\x01\x02\x00\x00\x00\x00\x00\x00\x00"
+    engine.datasets["parts"].rows[0][WKB_TOKEN] = (
+        b"\x01\x02\x00\x00\x00\x00\x00\x00\x00"
+    )
     with pytest.raises(EmptyGeometryError) as caught:
         ArcpyGeometryOps(session=session).explode_multipart(
             input=handle("parts"), output=handle("exploded")

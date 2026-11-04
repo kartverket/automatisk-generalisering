@@ -5,7 +5,9 @@ not carry: the fields whose engine type has no `FieldType`, by name and engine t
 every field name the engine reports; and the engine's own field names, the native
 index, the shape, and the length and area it maintains. `describe(session, path)` builds
 it inside the session's guard; `declared_field(dataset, name)` is the one lookup that
-`read_rows` and the predicate compiler share.
+`read_rows` and the predicate compiler share. `OID_TOKEN` is the cursor token for the
+native index, and `FIELD_TYPES` the engine's type names against the port's, each spelled
+here and nowhere else.
 
 How: the engine's `SmallInteger`, `Integer`, `Double`, `String` and `Date` map to the
 five `FieldType` members. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
@@ -43,7 +45,7 @@ from ag.ports.errors import PortContractError
 from ag.ports.geometry import CRS
 from ag.ports.table_ops import Schema
 
-_FIELD_TYPES: Mapping[str, FieldType] = MappingProxyType(
+FIELD_TYPES: Mapping[str, FieldType] = MappingProxyType(
     {
         "SmallInteger": FieldType.SHORT,
         "Integer": FieldType.LONG,
@@ -53,6 +55,9 @@ _FIELD_TYPES: Mapping[str, FieldType] = MappingProxyType(
     }
 )
 """Engine field type to the port's; anything else is unrepresentable."""
+
+OID_TOKEN = "OID@"
+"""The cursor token for a row's native index."""
 
 _DATA_TYPES: Mapping[str, DataType] = MappingProxyType(
     {"FeatureClass": DataType.FEATURE_CLASS, "Table": DataType.TABLE}
@@ -116,7 +121,7 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
     for name, engine_type, length in raw.fields:
         if name in engine_fields:
             continue
-        field_type = _FIELD_TYPES.get(engine_type)
+        field_type = FIELD_TYPES.get(engine_type)
         if field_type is None:
             unrepresentable[name] = engine_type
         elif field_type is FieldType.TEXT:

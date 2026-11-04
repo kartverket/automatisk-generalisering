@@ -5,6 +5,7 @@ ADR-0018 AR-D23, ADR-0019 PC-D22."""
 from __future__ import annotations
 
 from collections.abc import Generator
+from datetime import datetime
 
 import pytest
 
@@ -108,6 +109,21 @@ def test_a_cursor_failure_mid_read_leaves_as_an_engine_error(
         next(iterator)
     assert caught.value.context.tool == "SearchCursor"
     assert engine.cursors_closed == 1
+
+
+def test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    engine.datasets["roads"].rows[1]["surveyed"] = datetime(2015, 1, 6, 7, 11, 36, 500)
+    rows = iter(
+        ArcpyTableOps(session=session).read_rows(
+            input=handle("roads"), fields=("surveyed",)
+        )
+    )
+    next(rows)
+    with pytest.raises(PortContractError, match="'roads' row 1: 'surveyed' holds"):
+        next(rows)
 
 
 def test_a_cell_of_an_unknown_type_is_an_adapter_defect_not_wrapped(

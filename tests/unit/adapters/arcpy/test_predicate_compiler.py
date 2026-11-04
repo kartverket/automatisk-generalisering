@@ -119,6 +119,14 @@ def test_a_like_pattern_is_held_to_the_type_and_not_the_length(
     )
 
 
+def test_a_sub_second_date_is_refused_not_truncated(dataset: DescribedDataset) -> None:
+    with pytest.raises(PortContractError, match=r"replace\(microsecond=0\)"):
+        check(
+            Attr.cmp("surveyed", Comparison.GE, datetime(2024, 1, 1, 0, 0, 0, 500000)),
+            dataset=dataset,
+        )
+
+
 def test_a_bool_never_reaches_the_compiler() -> None:
     with pytest.raises(ValueError, match="is a bool"):
         Attr.cmp("rank", Comparison.EQ, True)

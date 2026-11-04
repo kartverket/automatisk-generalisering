@@ -23,7 +23,11 @@ import os
 from ag.adapters._shared.preconditions import distinct_paths
 from ag.adapters.arcpy._base import ArcpyPortBase
 from ag.adapters.arcpy.session import ArcpySession
-from ag.adapters.arcpy.support.dataset_schema import DescribedDataset, describe
+from ag.adapters.arcpy.support.dataset_schema import (
+    OID_TOKEN,
+    DescribedDataset,
+    describe,
+)
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN, is_null_shape
 from ag.core.errors import ErrorContext
 from ag.core.handles import ScratchHandle
@@ -33,8 +37,6 @@ from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
 
 _EXPLODE = "management.MultipartToSinglepart"
-_OID_TOKEN = "OID@"
-"""The cursor token for a row's native index."""
 
 
 class Shape(ArcpyPortBase):
@@ -76,7 +78,7 @@ def _refuse_null_shapes(session: ArcpySession, *, path: str) -> None:
     with session.guard("SearchCursor"):
         import arcpy
 
-        with arcpy.da.SearchCursor(path, (_OID_TOKEN, WKB_TOKEN)) as cursor:
+        with arcpy.da.SearchCursor(path, (OID_TOKEN, WKB_TOKEN)) as cursor:
             for index, shape in cursor:
                 if is_null_shape(shape):
                     nulls.append(_as_index(index))
@@ -119,7 +121,7 @@ def _read_pairs(
     with session.guard("SearchCursor"):
         import arcpy
 
-        with arcpy.da.SearchCursor(path, (reference, _OID_TOKEN)) as cursor:
+        with arcpy.da.SearchCursor(path, (reference, OID_TOKEN)) as cursor:
             for parent, child in cursor:
                 pairs.append((_as_index(parent), _as_index(child)))
     return pairs
@@ -155,5 +157,5 @@ def _as_index(value: object) -> int:
     if isinstance(value, int):
         return value
     raise TypeError(
-        f"{value!r} is not a native index; the cursor token was {_OID_TOKEN}."
+        f"{value!r} is not a native index; the cursor token was {OID_TOKEN}."
     )

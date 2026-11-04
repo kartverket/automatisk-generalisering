@@ -2591,3 +2591,11 @@ ingest step needs them outside the ArcPy adapter, since the CRS also crosses the
 tool, and whether the session environment's implicit reprojection of tool outputs stays as
 a second line or is turned off once ingest conforms every input.
 `destination:` the ingest task and the session docstring when decided.
+
+**B29. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
+`Geometry` holds one ring per member of a multi kind, so a multipolygon member with holes, a
+lake with islands arriving as one row, is refused on read with `PortContractError` and is
+reachable only after `explode_multipart`, which yields one polygon with its holes per row.
+Open: whether `parts` gains a nested form for such a member, or the read-after-explode rule
+is the contract.
+`destination:` `ports/geometry.py` when decided.

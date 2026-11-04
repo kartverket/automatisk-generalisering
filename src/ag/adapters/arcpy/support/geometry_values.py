@@ -10,7 +10,9 @@ so the conversion touches no engine object and is tested without one (ADR-0018 A
 A polygon's rings are kept in WKB order, exterior first, closed as the engine writes
 them; nothing depends on ring orientation. A multi kind becomes one part per member, so
 a multipolygon member with more than one ring is refused: `Geometry` holds one ring per
-member of a multi kind and cannot carry its holes. Any other type code, the curve codes,
+member of a multi kind and cannot carry its holes. A multipart polygon with holes, a lake
+with islands arriving as one row, is read after `explode_multipart`, which yields one
+polygon with its holes per row, and not before. Any other type code, the curve codes,
 the Z, M and ZM codes and the extended-WKB flags, is refused as well: the port carries
 planar simple features and the dataset was already held to that before any row was
 read. A refusal is a `PortContractError` naming the row through `where`. An empty

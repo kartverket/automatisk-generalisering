@@ -11,6 +11,7 @@ from __future__ import annotations
 from ..engine import Case, tests_in
 
 ROOT_INIT = "src/ag/adapters/arcpy/__init__.py"
+FIELD_VALUES = "src/ag/adapters/_shared/field_values.py"
 SCHEMA = "src/ag/adapters/arcpy/support/dataset_schema.py"
 CODEC = "src/ag/adapters/arcpy/support/geometry_values.py"
 COMPILER = "src/ag/adapters/arcpy/support/predicate_compiler.py"
@@ -25,6 +26,8 @@ T_COMPILER = f"{UNIT}/test_predicate_compiler.py"
 T_GEOMETRY = f"{UNIT}/test_geometry_ops.py"
 T_TABLE = f"{UNIT}/test_table_ops.py"
 T_CAPABILITIES = "tests/static/test_capabilities.py"
+T_MEMORY_EVAL = "tests/unit/adapters/fakes/memory/test_predicate_eval.py"
+T_MEMORY_STORE = "tests/unit/adapters/fakes/memory/test_store.py"
 T_SCANS = "tests/static/test_source_scans.py"
 
 REFUSES = f"{T_COMPILER}::test_check_refuses_before_anything_compiles"
@@ -51,14 +54,14 @@ CASES: tuple[Case, ...] = (
         ),
     ),
     Case(
-        "W1",
+        "V1",
         "a non-planar type code accepted",
         CODEC,
         (("        if code not in _KINDS:\n", "        if False:\n"),),
         (f"{CODEC_REFUSES}[z]", f"{CODEC_REFUSES}[circular-string]"),
     ),
     Case(
-        "W2",
+        "V2",
         "a multipolygon member with holes flattened instead of refused",
         CODEC,
         (("            if len(member) > 1:\n", "            if False:\n"),),
@@ -94,6 +97,17 @@ CASES: tuple[Case, ...] = (
         COMPILER,
         (("            if not values:\n", "            if False:\n"),),
         (f"{CLAUSE}[empty-in]", f"{CLAUSE}[not-empty-in]"),
+    ),
+    Case(
+        "P4",
+        "a sub-second date accepted by the shared rule, so one adapter truncates",
+        FIELD_VALUES,
+        (("    if value.microsecond:\n", "    if False:\n"),),
+        (
+            f"{T_COMPILER}::test_a_sub_second_date_is_refused_not_truncated",
+            f"{T_MEMORY_EVAL}::test_check_refuses_what_the_adapter_cannot_evaluate[sub-second-date]",
+            f"{T_MEMORY_STORE}::test_a_row_that_does_not_fit_the_schema_is_refused[sub-second-date]",
+        ),
     ),
     Case(
         "S1",
@@ -194,6 +208,20 @@ CASES: tuple[Case, ...] = (
         (
             f"{T_TABLE}::test_a_cursor_failure_mid_read_leaves_as_an_engine_error",
             f"{T_SCANS}::test_tree_is_clean[adapters-arcpy]",
+        ),
+    ),
+    Case(
+        "R3",
+        "a sub-second date read through and truncated on the next write",
+        ROW_IO,
+        (
+            (
+                "    if isinstance(value, datetime) and value.microsecond:\n",
+                "    if False:\n",
+            ),
+        ),
+        (
+            f"{T_TABLE}::test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row",
         ),
     ),
     Case(

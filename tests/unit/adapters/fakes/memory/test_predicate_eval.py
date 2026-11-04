@@ -129,6 +129,10 @@ def test_like_wildcards(pattern: str, row: Row, expected: Truth) -> None:
         (Attr.cmp("name", Comparison.EQ, "x" * 21), "holds at most 20"),
         (Attr.cmp("rank", Comparison.LIKE, "1%"), "matches text only"),
         (Attr.cmp("surveyed", Comparison.GT, "2024"), "is not a datetime"),
+        (
+            Attr.cmp("surveyed", Comparison.GT, datetime(2024, 1, 1, 0, 0, 0, 1)),
+            r"replace\(microsecond=0\)",
+        ),
         (Attr.raw("rank > 1"), "compiles no CQL"),
         (Intersects(memory_handle("other")), "computes no geometry"),
         (~(Attr.cmp("rank", Comparison.EQ, 1) & Attr.raw("x")), "compiles no CQL"),
@@ -143,6 +147,7 @@ def test_like_wildcards(pattern: str, row: Row, expected: Truth) -> None:
         "text-too-long",
         "like-on-a-number",
         "str-on-date",
+        "sub-second-date",
         "raw",
         "spatial",
         "raw-nested",
