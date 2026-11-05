@@ -8,7 +8,6 @@ import numpy as np
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from data_orchestrator.datasets import DatasetNamespace
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import FieldNames, MediumAlias
@@ -197,7 +196,6 @@ def creafte_wfm_gdbs(wfm: WorkFileManager) -> dict:
     simplified_fc = wfm.build_file_path(file_name="simplified_fc", file_type="gdb")
     water_fc = wfm.build_file_path(file_name="water_fc", file_type="gdb")
     other_area_fc = wfm.build_file_path(file_name="other_area_fc", file_type="gdb")
-    area_fc = wfm.build_file_path(file_name="area_fc", file_type="gdb")
     water_buffer_fc = wfm.build_file_path(file_name="water_buffer_fc", file_type="gdb")
     other_area_dissolved_fc = wfm.build_file_path(
         file_name="other_area_dissolved_fc", file_type="gdb"
@@ -218,7 +216,6 @@ def creafte_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "simplified_fc": simplified_fc,
         "water_fc": water_fc,
         "other_area_fc": other_area_fc,
-        "area_fc": area_fc,
         "water_buffer_fc": water_buffer_fc,
         "other_area_dissolved_fc": other_area_dissolved_fc,
         "point_fc": point_fc,
@@ -278,64 +275,37 @@ def pre_processing(road_fc: str, files: dict) -> None:
     )
 
 
-def data_selection(files: dict, area_selection: str, area: DatasetNamespace) -> None:
+def data_selection(files: dict, arealdekke_fc: str) -> None:
     """
     Selects the relevant data and stores it in feature classes.
 
     Args:
         files (dict): Dictionary with the featureclasses to be created
-        area_selection (str): An SQL-query for choice of area
-        area (DatasetNamespace): The area dataset namespace
+        arealdekke_fc (str): The land use (ArealdekkeFlate_N10) selected for the run
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=area.ArealdekkeFlate_N10,
+        input_layer=arealdekke_fc,
         expression=f"OBJTYPE IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["water_fc"],
         selection_type="NEW_SELECTION",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=area.ArealdekkeFlate_N10,
+        input_layer=arealdekke_fc,
         expression=f"OBJTYPE NOT IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["other_area_fc"],
-        selection_type="NEW_SELECTION",
-    )
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=area.AdminFlate_N50,
-        expression=area_selection,
-        output_name=files["area_fc"],
         selection_type="NEW_SELECTION",
     )
 
 
 def create_analysis_layers(files: dict) -> None:
     """
-    Select data i prefered area, creates buffers, dissolves the data, and creates line features.
+    Creates buffers, dissolves the data, and creates line features.
 
     Args:
         files (dict): Dictionary with the featureclasses to be created
     """
-    water_lyr = "water_lyr"
-    other_area_lyr = "other_area_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files["water_fc"], out_layer=water_lyr
-    )
-    arcpy.management.SelectLayerByLocation(
-        in_layer=water_lyr,
-        overlap_type="INTERSECT",
-        select_features=files["area_fc"],
-        selection_type="NEW_SELECTION",
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=files["other_area_fc"], out_layer=other_area_lyr
-    )
-    arcpy.management.SelectLayerByLocation(
-        in_layer=other_area_lyr,
-        overlap_type="INTERSECT",
-        select_features=files["area_fc"],
-        selection_type="NEW_SELECTION",
-    )
     arcpy.analysis.Buffer(
-        in_features=water_lyr,
+        in_features=files["water_fc"],
         out_feature_class=files["water_buffer_fc"],
         buffer_distance_or_field=BUFFER_DIST,
         line_side="FULL",
@@ -343,7 +313,7 @@ def create_analysis_layers(files: dict) -> None:
         dissolve_option="ALL",
     )
     arcpy.management.Dissolve(
-        in_features=other_area_lyr,
+        in_features=files["other_area_fc"],
         out_feature_class=files["other_area_dissolved_fc"],
         dissolve_field=[],
         multi_part="SINGLE_PART",
@@ -352,7 +322,6 @@ def create_analysis_layers(files: dict) -> None:
         in_features=files["other_area_dissolved_fc"],
         out_feature_class=files["area_line_fc"],
     )
-    delete_feature_layers([water_lyr, other_area_lyr])
 
 
 def endpoints_of(geom: arcpy.Geometry, num: int = 3) -> tuple:
@@ -737,8 +706,7 @@ def delete_feature_layers(layers: list) -> None:
 def remove_road_points_in_water(
     road_fc: str,
     output_fc: str,
-    area_selection: str,
-    area: DatasetNamespace,
+    arealdekke_fc: str,
 ) -> None:
     """
     Moves vertices from road_fc that are located within a specific value from water, and prepares the
@@ -748,8 +716,7 @@ def remove_road_points_in_water(
     Args:
         road_fc (str): The road input feature class
         output_fc (str): Path to the new feature class that should contain the modified output data
-        area_selection (str): A SQL-query selecting the prefered area
-        area (DatasetNamespace): The area dataset namespace
+        arealdekke_fc (str): The land use (ArealdekkeFlate_N10) selected for the run
     """
     working_fc = Road_N100.road_cleaning__n100_road.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -758,7 +725,7 @@ def remove_road_points_in_water(
     files = creafte_wfm_gdbs(wfm=wfm)
 
     pre_processing(road_fc=road_fc, files=files)
-    data_selection(files=files, area_selection=area_selection, area=area)
+    data_selection(files=files, arealdekke_fc=arealdekke_fc)
     create_analysis_layers(files=files)
 
     points_to_keep = collect_important_points(files=files)

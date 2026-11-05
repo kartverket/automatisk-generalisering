@@ -11,7 +11,6 @@ from typing import (
 )
 
 from composition_configs import type_defs
-from paths import require
 
 
 @dataclass
@@ -229,6 +228,6 @@ class MethodEntriesConfig:
 class PartitionRunConfig:
     max_elements_per_partition: int
     context_radius_meters: int
-    run_partition_optimization: bool = require("SELECT_STUDY_AREA")
+    run_partition_optimization: bool = False
     partition_method: PartitionMethod = PartitionMethod.FEATURES
     object_id_column: str = "OBJECTID"

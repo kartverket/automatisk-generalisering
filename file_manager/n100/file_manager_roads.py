@@ -20,6 +20,7 @@ major_road_crossings = "major_road_crossings"
 vegsperring_file = "vegsperring"
 road_cleaning = "road_cleaning"
 ramps_file = "ramps"
+fan_in_file = "fan_in"
 
 """
 first_generalization = "first_generalization"
@@ -89,6 +90,11 @@ class Road_N100(Enum):
     data_selection___admin_boundary___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
         description="admin_boundary",
+    )
+
+    data_selection___arealdekke_n10___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="arealdekke_n10",
     )
 
     data_selection___begrensningskurve___n100_road = (
@@ -525,6 +531,70 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="thin_road_output_2",
+        )
+    )
+
+    data_preparation___thin_road_run_1_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_1_output",
+        )
+    )
+
+    data_preparation___thin_road_run_2_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_2_output",
+        )
+    )
+
+    data_preparation___thin_road_run_2_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_run_2_partition_root",
+        )
+    )
+
+    thin_road_run_2_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_road_run_2_docu",
+    )
+
+    data_preparation___thin_road_consensus___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_consensus",
+        )
+    )
+
+    data_preparation___thin_sti_run_1_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_1_output",
+        )
+    )
+
+    data_preparation___thin_sti_run_2_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_2_output",
+        )
+    )
+
+    data_preparation___thin_sti_run_2_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_run_2_partition_root",
+        )
+    )
+
+    thin_sti_run_2_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_sti_run_2_docu",
+    )
+
+    data_preparation___thin_sti_consensus___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_sti_consensus",
         )
     )
 
@@ -978,6 +1048,26 @@ class Road_N100(Enum):
 
     road_cleaning_output__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=road_cleaning, description="road_cleaning_output"
+    )
+
+    # ========================================
+    #                                FAN IN
+    # ========================================
+
+    fan_in___root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="root"
+    )
+
+    fan_in___road_output___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="road_output"
+    )
+
+    fan_in___unclaimed___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="unclaimed"
+    )
+
+    fan_in___unmatched___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=fan_in_file, description="unmatched"
     )
 
 

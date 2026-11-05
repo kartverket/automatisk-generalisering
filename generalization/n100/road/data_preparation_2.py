@@ -67,11 +67,30 @@ from custom_tools.general_tools.integrate_diff import IntegrateDiff
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-if require("SELECT_STUDY_AREA") == "False":
-    SELECT_STUDY_AREA = False
-else:
-    SELECT_STUDY_AREA = True
+# SELECT_STUDY_AREA: "True" selects the AREA municipalities, "False" runs on the global
+# data, "Partition" runs the partition PARTITION_INDEX of the fan-out partition feature.
+STUDY_AREA_MODE = require("SELECT_STUDY_AREA")
+if STUDY_AREA_MODE not in ("True", "False", "Partition"):
+    raise ValueError(
+        f"SELECT_STUDY_AREA must be True, False or Partition, got {STUDY_AREA_MODE!r}"
+    )
+SELECT_STUDY_AREA = STUDY_AREA_MODE == "True"
+SELECT_PARTITION = STUDY_AREA_MODE == "Partition"
 
+if SELECT_PARTITION:
+    try:
+        PARTITION_INDEX = int(require("PARTITION_INDEX"))
+    except ValueError:
+        raise ValueError(
+            f"PARTITION_INDEX must be an integer, got {os.environ['PARTITION_INDEX']!r}"
+        ) from None
+elif os.environ.get("PARTITION_INDEX") is not None:
+    raise ValueError(
+        f"PARTITION_INDEX is only valid with SELECT_STUDY_AREA=Partition, "
+        f"got SELECT_STUDY_AREA={STUDY_AREA_MODE}"
+    )
+else:
+    PARTITION_INDEX = None
 
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
@@ -81,6 +100,14 @@ SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
+
+# Halo around a fan-out partition that a partition run selects its inputs within.
+FAN_OUT_HALO_M = 25_000
+
+# Temporary: thin roads runs twice with different partition sizes and context radii,
+# (max_elements_per_partition, context_radius_meters), and a road is only dropped
+# when both runs drop it. This damps the variance from differing context at seams.
+THIN_ROAD_RUNS = ((75_000, 7_000), (45_000, 10_000))
 
 
 @timing_decorator
@@ -123,9 +150,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
         ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
         (
             "pre_resolve_road_conflicts",
-            lambda: pre_resolve_road_conflicts(
-                area_selection=AREA_SELECTOR, area_data=area_data
-            ),
+            pre_resolve_road_conflicts,
         ),
         ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
         (
@@ -166,6 +191,7 @@ def data_selection_and_validation(
     area: DatasetNamespace = data_orc.get_dataset(dn.area)
     road: DatasetNamespace = data_orc.get_dataset(dn.road)
     railway: DatasetNamespace = data_orc.get_dataset(dn.railway)
+    partitioning: DatasetNamespace = data_orc.get_dataset(dn.partitioning)
 
     selector = StudyAreaSelector(
         input_output_file_dict={
@@ -174,10 +200,16 @@ def data_selection_and_validation(
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
             area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
+            area.ArealdekkeFlate_N10: Road_N100.data_selection___arealdekke_n10___n100_road.value,
         },
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
         select_local=SELECT_STUDY_AREA,
+        partition_feature=(
+            partitioning.road_partitions_fan_out if SELECT_PARTITION else None
+        ),
+        partition_index=PARTITION_INDEX,
+        halo_m=FAN_OUT_HALO_M,
     )
 
     selector.run()
@@ -232,6 +264,7 @@ def run_thin_roads(
     docu_path: type_defs.SubdirectoryPath,
     min_length_m: int,
     feature_count,
+    context_radius_m: int = SEARCH_DISTANCE,
     special_selection_sql=None,
 ):
     road = "road"
@@ -292,7 +325,8 @@ def run_thin_roads(
 
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
-        context_radius_meters=SEARCH_DISTANCE,
+        context_radius_meters=context_radius_m,
+        run_partition_optimization=False,
     )
 
     partition_thin_roads = PartitionIterator(
@@ -304,6 +338,84 @@ def run_thin_roads(
         ),
     )
     partition_thin_roads.run()
+
+
+def run_consensus_thin_roads(
+    input_feature: str,
+    run_files: list[tuple[str, str, type_defs.SubdirectoryPath]],
+    consensus_feature: str,
+    output_feature: str,
+    min_length_m: int,
+) -> None:
+    """
+    What:
+        Runs thin roads once per THIN_ROAD_RUNS setting on the same input, and keeps
+        every input road that any run kept, so a road is only dropped when all runs
+        drop it.
+
+    How:
+        ThinRoadNetwork dissolves its output, so its rows are not the input rows.
+        The geometry is unchanged, so an input road counts as kept by a run when it
+        shares a line segment with that run's output. The kept roads are dissolved
+        with intersections into output_feature, as a single run's output is.
+
+    Args:
+        run_files: Per run, the partition root file, the run output and the
+            documentation directory, in the order of THIN_ROAD_RUNS.
+        consensus_feature: The kept input roads before the dissolve.
+    """
+    for (max_elements, context_radius_m), (root_file, run_output, docu_path) in zip(
+        THIN_ROAD_RUNS, run_files, strict=True
+    ):
+        run_thin_roads(
+            input_feature=input_feature,
+            partition_root_file=root_file,
+            output_feature=run_output,
+            docu_path=docu_path,
+            min_length_m=min_length_m,
+            feature_count=max_elements,
+            context_radius_m=context_radius_m,
+        )
+
+    input_layer = "thin_roads_consensus_input"
+    arcpy.management.MakeFeatureLayer(in_features=input_feature, out_layer=input_layer)
+    try:
+        for index, (_, run_output, _) in enumerate(run_files):
+            result = arcpy.management.SelectLayerByLocation(
+                in_layer=input_layer,
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=run_output,
+                selection_type="NEW_SELECTION",
+            )
+            print(f"Thin roads run {index + 1} kept {result.getOutput(2)} roads")
+
+        kept_count = 0
+        for index, (_, run_output, _) in enumerate(run_files):
+            result = arcpy.management.SelectLayerByLocation(
+                in_layer=input_layer,
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=run_output,
+                selection_type="NEW_SELECTION" if index == 0 else "ADD_TO_SELECTION",
+            )
+            kept_count = int(result.getOutput(2))
+        # A selection of nothing would be read as every road by CopyFeatures.
+        if kept_count == 0:
+            raise RuntimeError(f"No thin roads run kept any road of {input_feature}")
+        print(
+            f"Thin roads consensus kept {kept_count} of "
+            f"{file_utilities.count_objects(input_layer=input_feature)} roads"
+        )
+        arcpy.management.CopyFeatures(
+            in_features=input_layer, out_feature_class=consensus_feature
+        )
+    finally:
+        arcpy.management.Delete(input_layer)
+
+    run_dissolve_with_intersections(
+        input_line_feature=consensus_feature,
+        output_processed_feature=output_feature,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
 
 
 def calculate_boarder_road_hierarchy(
@@ -438,7 +550,6 @@ def ramp_partition():
 
 @timing_decorator
 def admin_boarder():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
         expression="OBJTYPE IN ('Riksgrense', 'AvtaltAvgrensningslinje')",
@@ -641,13 +752,23 @@ def thin_roads():
         output_road=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
     )
 
-    run_thin_roads(
+    run_consensus_thin_roads(
         input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        run_files=[
+            (
+                Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_road_run_1_output___n100_road.value,
+                Road_N100.thin_road_docu___n100_road.value,
+            ),
+            (
+                Road_N100.data_preparation___thin_road_run_2_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_road_run_2_output___n100_road.value,
+                Road_N100.thin_road_run_2_docu___n100_road.value,
+            ),
+        ],
+        consensus_feature=Road_N100.data_preparation___thin_road_consensus___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.thin_road_docu___n100_road.value,
         min_length_m=1400,
-        feature_count=OBJECT_LIMIT,
     )
 
 
@@ -691,13 +812,23 @@ def thin_sti_and_forest_roads():
         code_block=sti_and_forest_hierarchy,
     )
 
-    run_thin_roads(
+    run_consensus_thin_roads(
         input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+        run_files=[
+            (
+                Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_sti_run_1_output___n100_road.value,
+                Road_N100.thin_sti_docu___n100_road.value,
+            ),
+            (
+                Road_N100.data_preparation___thin_sti_run_2_partition_root___n100_road.value,
+                Road_N100.data_preparation___thin_sti_run_2_output___n100_road.value,
+                Road_N100.thin_sti_run_2_docu___n100_road.value,
+            ),
+        ],
+        consensus_feature=Road_N100.data_preparation___thin_sti_consensus___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        docu_path=Road_N100.thin_sti_docu___n100_road.value,
         min_length_m=1800,
-        feature_count=OBJECT_LIMIT,
     )
 
 
@@ -768,12 +899,11 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace):
+def pre_resolve_road_conflicts():
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
-        area_selection=area_selection,
-        area=area_data,
+        arealdekke_fc=Road_N100.data_selection___arealdekke_n10___n100_road.value,
     )
 
     split_polyline_featureclass(
@@ -811,7 +941,6 @@ def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace)
 
 
 def resolve_road_conflicts(data_orc: InputDataOrchestrator):
-
     road_hierarchy = """def Reclass(vegklasse, typeveg):
         if typeveg in ('bilferje', 'ramps'):
             return 0
@@ -973,7 +1102,6 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
 
 def final_output():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.dam__cleaned_roads__n100_road.value,
         expression="typeveg IN ('bilferje', 'passasjerferje')",
