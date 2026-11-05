@@ -5,9 +5,9 @@ holding each child's parent native index. That field is found by diffing the out
 field names against the input's, the engine's own fields left out, rather than assumed
 by name, since what the tool calls it when the name is taken is the engine's business;
 exactly one added field is expected, and anything else is an `EngineError`. The pairs
-are read from it against the output's native index and written as a table when
-`parents` is given; the field is then dropped on every call, so the output's schema is
-the input's whether or not parents were asked for. A null or empty shape is refused with
+are read from it against the output's native index and written as the port's parents
+table through the support writer when `parents` is given; the field is then dropped on
+every call, so the output's schema is the input's whether or not parents were asked for. A null or empty shape is refused with
 `EmptyGeometryError` before the tool runs, with its native indices in the context, and a
 table input is a contract error, since it has no geometry to explode. ADR-0017 RS-D16.
 
@@ -28,6 +28,7 @@ from ag.adapters.arcpy.support.dataset_schema import (
     DescribedDataset,
     describe,
 )
+from ag.adapters.arcpy.support.dataset_writer import create_table, insert_rows
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN, is_null_shape
 from ag.core.errors import ErrorContext
 from ag.core.handles import ScratchHandle
@@ -35,6 +36,7 @@ from ag.core.types import DataType
 from ag.ports.attributes import FieldName
 from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
+from ag.ports.table_ops import PARENTS_SCHEMA
 
 _EXPLODE = "management.MultipartToSinglepart"
 
@@ -130,26 +132,9 @@ def _read_pairs(
 def _write_pairs(
     session: ArcpySession, *, path: str, pairs: list[tuple[int, int]]
 ) -> None:
-    """Creates the parents table with the port's two columns and fills it."""
-    workspace, name = _split(path)
-    session.run_tool("management.CreateTable", out_path=workspace, out_name=name)
-    for column in (PARENT_ID, CHILD_ID):
-        session.run_tool(
-            "management.AddField", in_table=path, field_name=column, field_type="LONG"
-        )
-    with session.guard("InsertCursor"):
-        import arcpy
-
-        with arcpy.da.InsertCursor(path, (PARENT_ID, CHILD_ID)) as cursor:
-            for pair in pairs:
-                cursor.insertRow(pair)
-
-
-def _split(path: str) -> tuple[str, str]:
-    """A dataset path as (workspace, name), on either separator, as the engine joins
-    them; the workspace keeps the separators it was given."""
-    cut = max(path.rfind("/"), path.rfind("\\"))
-    return path[:cut], path[cut + 1 :]
+    """Creates the parents table with the port's schema and fills it."""
+    create_table(session, path=path, fields=PARENTS_SCHEMA.fields)
+    insert_rows(session, path=path, tokens=(PARENT_ID, CHILD_ID), rows=pairs)
 
 
 def _as_index(value: object) -> int:

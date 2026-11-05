@@ -61,6 +61,8 @@ tests/
                    matrix, arcpy-blocked import guard, terminology-matches-code
   conformance/     one module per port method group, parametrized over adapters; the
                    in-memory adapter always, ArcPy under the marker
+  engine/          the adapters' expectations of their engines, one package per engine
+                   (arcpy/); every test marked; never imports the engine itself
   goldens/         recorded artifacts and their replay tests
   invariance/      K = 4 against K = 16, local processes; ArcPy
   smoke/           one real stage end to end; ArcPy
@@ -77,7 +79,7 @@ tests_legacy/      the tests of the legacy packages
 | tests | pre-commit and CI (both runners) | ArcGIS Pro environment | the image |
 |---|---|---|---|
 | unit, static, conformance under the in-memory adapter | yes | yes | yes |
-| conformance under ArcPy, goldens that replay the engine, invariance, smoke | never | yes, on request | yes, gating image promotion (later) |
+| conformance under ArcPy, `engine/`, goldens that replay the engine, invariance, smoke | never | yes, on request | yes, gating image promotion (later) |
 | `tests_legacy/` | never | by hand | never |
 
 Neither GitHub runner has ArcPy, on purpose: an `import arcpy` anywhere outside the adapter
@@ -101,12 +103,14 @@ importable. The auto-skip is for bare manual runs only.
 
 ## Running the ArcPy tests
 
-They run under an interpreter that has ArcPy. No test carries the `arcpy` marker yet; the
-first ones arrive with the ArcPy adapter, and how that run gets `ag` and the pinned pytest
-beside ArcPy is open until then (B23 in the design record; the checks never run from the
-Pro environment either way). `pytest -m arcpy` runs the marked tests only; a bare `pytest`
-in that environment runs everything. Later the same tests run in the Linux image, where the
-conformance suite gates image promotion.
+They run under an interpreter that has ArcPy. The marked tests are the ArcPy parameter of
+`tests/conformance/` and every test under `tests/engine/`; how that run gets `ag` and the
+pinned pytest beside ArcPy is B23 in the design record, settled on the first run and
+recorded here (the checks never run from the Pro environment either way). `pytest -m arcpy`
+runs the marked tests only; a bare `pytest` in that environment runs everything, the unit
+tests on the fake engine beside the marked ones, since the adapter imports the engine
+inside the function that reaches it and the unit fixture installs its fake per test. Later
+the same tests run in the Linux image, where the conformance suite gates image promotion.
 
 ## `tests_legacy/`
 

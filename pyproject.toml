@@ -179,6 +179,7 @@ testpaths = [
     "tests/unit",
     "tests/static",
     "tests/conformance",
+    "tests/engine",
     "tests/goldens",
     "tests/invariance",
     "tests/smoke",

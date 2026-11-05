@@ -13,7 +13,7 @@ from ag.adapters.arcpy.support.geometry_values import (
 from ag.ports.errors import PortContractError
 from ag.ports.geometry import Geometry, GeometryKind
 from tests.support import wkb
-from tests.support.cases import CRS, parts
+from tests.support.cases import CRS
 
 SQUARE = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0))
 HOLE = ((1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0))
@@ -21,7 +21,12 @@ KINDS = [
     Geometry.point(1.5, 2.5, crs=CRS),
     Geometry.linestring(((0.0, 0.0), (1.0, 1.0), (2.0, 0.0)), crs=CRS),
     Geometry(GeometryKind.POLYGON, (SQUARE, HOLE), CRS),
-    *(row.geometry for row in parts().rows if row.geometry is not None),
+    Geometry(GeometryKind.MULTIPOINT, (((0.0, 2.0),), ((1.0, 2.0),)), CRS),
+    Geometry(
+        GeometryKind.MULTILINESTRING,
+        (((0.0, 1.0), (1.0, 1.0)), ((2.0, 1.0), (3.0, 1.0))),
+        CRS,
+    ),
     Geometry(GeometryKind.MULTIPOLYGON, (SQUARE, HOLE), CRS),
 ]
 

@@ -27,12 +27,16 @@ from types import ModuleType, SimpleNamespace, TracebackType
 from typing import Self
 
 from ag.adapters.arcpy.support.dataset_schema import FIELD_TYPES, OID_TOKEN
+from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
 
 ENGINE_TYPES = {port: engine for engine, port in FIELD_TYPES.items()}
-"""The port's field types to the engine's names: the adapter's own table, inverted."""
+"""The port's field types to the engine's Describe names: the adapter's own table, inverted."""
+
+ADDED_TYPES = {ADD_FIELD_TYPES[port]: engine for engine, port in FIELD_TYPES.items()}
+"""The AddField vocabulary to the Describe names, through the adapter's two tables."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -201,8 +205,8 @@ class FakeEngine(ModuleType):
     def _insert_cursor(self, path: str, names: Sequence[str]) -> _InsertCursor:
         return _InsertCursor(self, path, names)
 
-    def SpatialReference(self, epsg: int) -> tuple[str, int]:
-        return ("sr", epsg)
+    def SpatialReference(self, epsg: int) -> SimpleNamespace:
+        return SimpleNamespace(factoryCode=epsg)
 
     def AddFieldDelimiters(self, datasource: str, field: str) -> str:
         if "AddFieldDelimiters" in self.failures:
@@ -271,9 +275,16 @@ class FakeEngine(ModuleType):
     def _create_table(self, *, out_path: str, out_name: str) -> None:
         self.datasets[f"{out_path}/{out_name}"] = FakeDataset("Table", [])
 
-    def _add_field(self, *, in_table: str, field_name: str, field_type: str) -> None:
+    def _add_field(
+        self,
+        *,
+        in_table: str,
+        field_name: str,
+        field_type: str,
+        field_length: int | None = None,
+    ) -> None:
         self.dataset(in_table).fields.append(
-            FakeField(field_name, {"LONG": "Integer"}[field_type])
+            FakeField(field_name, ADDED_TYPES[field_type], field_length or 0)
         )
 
     def _delete_field(self, *, in_table: str, drop_field: str) -> None:

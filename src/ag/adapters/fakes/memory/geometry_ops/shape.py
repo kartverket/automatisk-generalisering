@@ -3,11 +3,11 @@
 How: a multi kind yields one row per part, each the single kind over that one part with
 the input row's attributes; a single kind yields its row unchanged. The pairs are the
 input row's native index against the index the store assigned to each child, written as
-a table when `parents` is given and not built otherwise. A null geometry is refused
-before anything is written, and a table input is a contract error, since it has no
-geometry to explode. Limit: `Geometry.parts` holds one ring per member of a multi kind,
-so a multipolygon member with holes is not representable and never reaches this method
-as one row. ADR-0017 RS-D16.
+the port's parents table when `parents` is given and not built otherwise. A null
+geometry is refused before anything is written, and a table input is a contract error,
+since it has no geometry to explode. Limit: `Geometry.parts` holds one ring per member
+of a multi kind, so a multipolygon member with holes is not representable and never
+reaches this method as one row. ADR-0017 RS-D16.
 """
 
 from __future__ import annotations
@@ -20,23 +20,16 @@ from ag.adapters.fakes.memory.store import Dataset
 from ag.core.errors import ErrorContext
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
-from ag.ports.attributes import Field, FieldType
 from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, PortContractError
 from ag.ports.geometry import Geometry, GeometryKind
-from ag.ports.table_ops import Row, Schema
+from ag.ports.table_ops import PARENTS_SCHEMA, Row
 
 _SINGLE_KIND = {
     GeometryKind.MULTIPOINT: GeometryKind.POINT,
     GeometryKind.MULTILINESTRING: GeometryKind.LINESTRING,
     GeometryKind.MULTIPOLYGON: GeometryKind.POLYGON,
 }
-
-PARENTS_SCHEMA = Schema(
-    fields=(Field(PARENT_ID, FieldType.LONG), Field(CHILD_ID, FieldType.LONG)),
-    data_type=DataType.TABLE,
-)
-"""The schema of a parents table: both native indices, as `LONG`."""
 
 
 class Shape(MemoryPortBase):
