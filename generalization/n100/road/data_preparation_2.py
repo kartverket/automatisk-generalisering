@@ -169,7 +169,7 @@ def data_selection_and_validation(
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            road.elveg_and_sti_liten: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            road.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
             road.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
