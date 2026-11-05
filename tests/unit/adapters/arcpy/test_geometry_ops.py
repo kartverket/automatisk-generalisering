@@ -156,7 +156,7 @@ def test_explode_with_parents_writes_the_pairs_in_native_indices(
     assert "ORIG_FID" not in engine.datasets["exploded"].rows[0]
 
 
-def test_explode_finds_the_reference_by_diff_when_orig_fid_is_taken(
+def test_explode_refuses_an_input_that_already_has_the_reference_field(
     engine: FakeEngine, session: ArcpySession
 ) -> None:
     case = multilines()
@@ -164,17 +164,14 @@ def test_explode_finds_the_reference_by_diff_when_orig_fid_is_taken(
     engine.datasets["parts"].fields.append(FakeField("ORIG_FID", "Integer"))
     for row in engine.datasets["parts"].rows:
         row["ORIG_FID"] = 99
-    engine.reference_fields = ["ORIG_FID_1"]
-    ArcpyGeometryOps(session=session).explode_multipart(
-        input=handle("parts"),
-        output=handle("exploded"),
-        parents=handle("ws/pairs", DataType.TABLE),
-    )
-    assert engine.calls[-1][1] == {"in_table": "exploded", "drop_field": "ORIG_FID_1"}
-    output = engine.datasets["exploded"]
-    assert [f.name for f in output.fields] == ["name", "ORIG_FID"]
-    assert all(row["ORIG_FID"] == 99 for row in output.rows)
-    assert [r[PARENT_ID] for r in engine.datasets["ws/pairs"].rows] == [1, 2, 3]
+    with pytest.raises(PortContractError, match="ORIG_FID"):
+        ArcpyGeometryOps(session=session).explode_multipart(
+            input=handle("parts"),
+            output=handle("exploded"),
+            parents=handle("ws/pairs", DataType.TABLE),
+        )
+    assert engine.calls == []
+    assert engine.cursors_opened == 0
 
 
 def test_the_reference_diff_ignores_the_output_engine_fields(

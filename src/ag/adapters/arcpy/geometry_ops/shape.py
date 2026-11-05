@@ -1,10 +1,12 @@
 """The dataset-shape group of the ArcPy `GeometryOps`: `explode_multipart`.
 
 How: the engine's multipart-to-singlepart tool writes one row per part and adds a field
-holding each child's parent native index. That field is found by diffing the output's
-field names against the input's, the engine's own fields left out, rather than assumed
-by name, since what the tool calls it when the name is taken is the engine's business;
-exactly one added field is expected, and anything else is an `EngineError`. The pairs
+holding each child's parent native index. An input that already carries a field of that
+name is refused before the tool runs: the tool then writes its reference into the
+existing field and adds nothing, which would change the output's attributes silently.
+The added field is found by diffing the output's field names against the input's, the
+engine's own fields left out, so a tool that adds anything else is caught: exactly one
+added field is expected, and anything else is an `EngineError`. The pairs
 are read from it against the output's native index and written as the port's parents
 table through the support writer when `parents` is given; the field is then dropped on
 every call, so the output's schema is the input's whether or not parents were asked for. A null or empty shape is refused with
@@ -12,9 +14,9 @@ every call, so the output's schema is the input's whether or not parents were as
 table input is a contract error, since it has no geometry to explode. ADR-0017 RS-D16.
 
 Confirmed on the engine: the tool keeps the declared fields, drops a GlobalID field, which
-is unrepresentable and so outside the output's schema either way, and adds no field but
-the reference. Expected and not yet confirmed: what it does when `ORIG_FID` is already
-a field of the input.
+is unrepresentable and so outside the output's schema either way, adds no field but the
+reference, and when the input already has a field of the reference's name writes into it
+and adds nothing.
 """
 
 from __future__ import annotations
@@ -40,6 +42,8 @@ from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
 from ag.ports.table_ops import PARENTS_SCHEMA
 
 _EXPLODE = "management.MultipartToSinglepart"
+_REFERENCE = "ORIG_FID"
+"""The field the tool writes each child's parent native index to."""
 
 
 class Shape(ArcpyPortBase):
@@ -61,6 +65,13 @@ class Shape(ArcpyPortBase):
             raise PortContractError(
                 f"{source!r} is a {before.schema.data_type.value} and has no geometry to "
                 "explode; explode_multipart takes a feature class.",
+                context=ErrorContext(handle=source),
+            )
+        if _REFERENCE in before.all_fields:
+            raise PortContractError(
+                f"{source!r} has a field named {_REFERENCE!r}, which {_EXPLODE} writes "
+                "its parent reference into instead of adding one; rename the field "
+                "before exploding.",
                 context=ErrorContext(handle=source),
             )
         _refuse_null_shapes(self._session, path=source)

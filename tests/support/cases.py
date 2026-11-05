@@ -197,9 +197,13 @@ def points() -> DatasetCase:
 
 
 def polygons() -> DatasetCase:
-    """A square with a hole and a two-member multipolygon, in that order."""
+    """A square with a hole and a two-member multipolygon, in that order.
+
+    Rings are in the orientation an engine reads through well-known binary, exterior
+    counter-clockwise and hole clockwise, so a round trip returns the value as written.
+    """
     square = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0))
-    hole = ((1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0))
+    hole = ((1.0, 1.0), (1.0, 2.0), (2.0, 2.0), (2.0, 1.0), (1.0, 1.0))
     east = ((6.0, 0.0), (7.0, 0.0), (7.0, 1.0), (6.0, 1.0), (6.0, 0.0))
     west = ((8.0, 0.0), (9.0, 0.0), (9.0, 1.0), (8.0, 1.0), (8.0, 0.0))
     return DatasetCase(

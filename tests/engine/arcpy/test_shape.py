@@ -1,9 +1,10 @@
 """What `shape.py` expects of the multipart-to-singlepart tool, and the holed lake.
 
 What: the tool drops a GlobalID field, keeps the declared fields and adds the reference; when
-`ORIG_FID` is taken the reference gets another name and the diff finds it; a multipart
-polygon with holes is refused on read as one row and, after `explode_multipart`, reads
-back as polygons with their holes. ADR-0017 RS-D16, ADR-0019 PC-D25.
+`ORIG_FID` is already a field the tool writes into it and adds nothing, so such an input
+is refused before the tool runs; a multipart polygon with holes is refused on read as one
+row and, after `explode_multipart`, reads back as polygons with their holes. ADR-0017
+RS-D16, ADR-0019 PC-D25.
 """
 
 from __future__ import annotations
@@ -16,11 +17,11 @@ from ag.adapters.arcpy.support.dataset_writer import add_fields, insert_rows
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.types import DataType
-from ag.ports import CHILD_ID, PARENT_ID, Field, FieldType, Geometry, GeometryKind
+from ag.ports import CHILD_ID, PARENT_ID, Field, FieldType, GeometryKind
 from ag.ports.errors import PortContractError
 from tests.engine.arcpy.conftest import Pro
 from tests.support import wkb
-from tests.support.cases import CRS, multilines, multilines_children, polygons
+from tests.support.cases import multilines, polygons
 
 pytestmark = pytest.mark.arcpy
 
@@ -53,23 +54,22 @@ def test_the_tool_drops_a_global_id_field_and_keeps_the_declared_ones(pro: Pro) 
     assert _parents(pro, "pairs") == set(seeded.indices)
 
 
-def test_the_reference_is_found_by_diff_when_orig_fid_is_taken(pro: Pro) -> None:
+def test_an_input_that_already_has_the_reference_field_is_refused_before_the_tool(
+    pro: Pro,
+) -> None:
     seeded = pro.seed(multilines())
     path = str(seeded.handle.path)
     add_fields(pro.session, path=path, fields=(Field("ORIG_FID", FieldType.LONG),))
-    output = pro.handle("exploded")
-    ArcpyGeometryOps(session=pro.session).explode_multipart(
-        input=seeded.handle, output=output, parents=pro.handle("pairs", DataType.TABLE)
+    with pytest.raises(PortContractError, match="ORIG_FID"):
+        ArcpyGeometryOps(session=pro.session).explode_multipart(
+            input=seeded.handle,
+            output=pro.handle("exploded"),
+            parents=pro.handle("pairs", DataType.TABLE),
+        )
+    assert describe(pro.session, path).schema.fields == (
+        *polygons().schema.fields,
+        Field("ORIG_FID", FieldType.LONG),
     )
-    assert (
-        describe(pro.session, str(output.path)).schema.fields
-        == describe(pro.session, path).schema.fields
-    )
-    assert _parents(pro, "pairs") == set(seeded.indices)
-    children = ArcpyTableOps(session=pro.session).read_rows(
-        input=output, fields=("name",)
-    )
-    assert len(list(children)) == sum(len(g) for g in multilines_children().values())
 
 
 def test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_them(
@@ -95,13 +95,8 @@ def test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_
         for row in table_ops.read_rows(input=islands, fields=("name",))
         if row.attributes["name"] == "lake"
     ]
-    assert lakes == [
-        Geometry(
-            GeometryKind.POLYGON,
-            (
-                ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0)),
-                ((1.0, 1.0), (2.0, 1.0), (2.0, 2.0), (1.0, 2.0), (1.0, 1.0)),
-            ),
-            CRS,
-        )
-    ]
+    assert all(g is not None and g.kind is GeometryKind.POLYGON for g in lakes)
+    assert {g.parts for g in lakes if g is not None} == {
+        (wkb.LAKE_OUTER, wkb.LAKE_ISLAND),
+        (wkb.LAKE_NEIGHBOUR,),
+    }

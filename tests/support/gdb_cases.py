@@ -21,7 +21,7 @@ from ag.core.types import DataType
 from ag.ports.table_ops import Row, Schema
 from tests.support.arcpy import gdb
 from tests.support.cases import DatasetCase, Seeded
-from tests.support.wkb import to_wkb
+from tests.support.wkb import oriented, to_wkb
 
 NAMESPACE = "tests.support.gdb_cases"
 
@@ -37,7 +37,9 @@ def handle_at(
 
 def cells_of(schema: Schema, rows: tuple[Row, ...]) -> list[tuple[object, ...]]:
     """The rows as cell tuples in the schema's field order, a feature class with the
-    geometry as well-known binary, or None, in the last cell."""
+    geometry as well-known binary, or None, in the last cell; polygon rings are oriented
+    as the engine reads them, which the cases already are, so a value reads back as
+    written."""
     names = [field.name for field in schema.fields]
     cells: list[tuple[object, ...]] = []
     for row in rows:
@@ -45,7 +47,7 @@ def cells_of(schema: Schema, rows: tuple[Row, ...]) -> list[tuple[object, ...]]:
         if schema.data_type is DataType.TABLE:
             cells.append(attributes)
         else:
-            shape = None if row.geometry is None else to_wkb(row.geometry)
+            shape = None if row.geometry is None else to_wkb(oriented(row.geometry))
             cells.append((*attributes, shape))
     return cells
 

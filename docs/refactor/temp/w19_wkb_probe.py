@@ -105,7 +105,7 @@ def main() -> None:
     session = open_session()
     directory = tempfile.mkdtemp(prefix="w19_")
     workspace = gdb.file_gdb(session, directory=directory, name="probe")
-    schema = Schema(fields=(Field("name", FieldType.TEXT, 10),), geometry_crs=CRS)
+    schema = Schema(fields=(Field("name", FieldType.TEXT, 30),), geometry_crs=CRS)
     shapes: dict[str, bytes] = {
         "single_ccw": polygon(SQUARE_CCW),
         "single_cw": polygon(reverse(SQUARE_CCW)),

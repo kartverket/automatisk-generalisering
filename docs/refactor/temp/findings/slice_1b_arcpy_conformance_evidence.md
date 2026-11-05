@@ -111,17 +111,78 @@ The seven failures and what was done with each, under the rule below:
 
 | test | observed | disposition |
 |---|---|---|
-| `test_read_rows_round_trips_each_geometry_kind[arcpy-polygons]` | the square with a hole read back as a two-member `MULTIPOLYGON`, one ring each; the two-member case matched | not yet settled: both rings were written counter-clockwise, and whether the engine lost the hole on orientation or exports every polygon as a multipolygon is what `docs/refactor/temp/w19_wkb_probe.py` asks; W19 for polygons is open until it runs |
+| `test_read_rows_round_trips_each_geometry_kind[arcpy-polygons]` | the square with a hole read back as a two-member `MULTIPOLYGON`, one ring each; the two-member case matched | settled by the probe below: ring orientation; the case and the write side are oriented |
 | `test_describe_of_a_missing_dataset_is_an_engine_error` | `OSError: "<path>" does not exist`, left unwrapped | fixed here: an exact `OSError` joins the guard's catch set with the no-drain rule; the fake's Describe raises it; unit tests pin both the wrap and that a subclass passes |
 | `test_a_date_with_a_fraction_is_held_to_the_second_by_the_engine_or_refused` | 12:00:00.5 read back as 12:00:01 | the engine rounds a fraction to the second; the test now pins that, and `read_rows` returns the stored value; the read-side refusal cannot fire on file geodatabase data (W18) |
 | `test_a_write_cursor_on_a_dataset_held_by_a_read_cursor_is_an_engine_error` | the insert succeeded | W3's provocation refuted; test and helper removed; no `RuntimeError` after engine work found, the drain rule stands unrefuted and the session docstring says so |
 | `test_the_tool_keeps_a_global_id_field_and_adds_only_the_reference` | the output has no GlobalID field; the declared fields match | the tool drops GlobalID; test and `shape.py` docstring state it; nothing in the adapter depended on it |
-| `test_the_reference_is_found_by_diff_when_orig_fid_is_taken` | the tool added no field: the output's `ORIG_FID` is the input's | not yet settled: whether the tool wrote the parents into the existing field is what the probe reads; the adapter's response, a refusal before the tool, needs a break-once case and so the architect's request |
-| `test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_them` | `read_rows` did not refuse | the same orientation question as the first row: `multipolygon_with_hole()` writes both rings counter-clockwise |
+| `test_the_reference_is_found_by_diff_when_orig_fid_is_taken` | the tool added no field | settled by the probe below: the tool writes into the existing field; `shape.py` refuses such an input before the tool; the test asserts the refusal |
+| `test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_them` | `read_rows` did not refuse | settled by the probe below: orientation, and a one-member multipolygon is stored as a polygon; the shape is now two members, oriented |
 
-After these fixes: 497 unit tests pass, 34 deselected, pyright and the scans clean, the
-break-once needles match. The three unsettled tests stay in the tree until the probe has
-run; they must pass or go before the commit point.
+After these fixes and the probe's: 497 unit tests pass, 34 deselected, pyright and the
+scans clean, the break-once needles match. The marked run is to be repeated on the image
+before the commit point; every marked test is expected to pass.
+
+### The probe, 2026-11-05
+
+Image digest `arcpy-linux@sha256:eb53667b7b73076f3eb3e7547b3d35c94aa79fdd6afe5a002959f28d484f4575`,
+a local build of the source pushed as `ghcr.io/kartverket/arcpy-linux:12.1`.
+`docs/refactor/temp/w19_wkb_probe.py`, run as
+`python docs/refactor/temp/w19_wkb_probe.py` with `src` and the root on the path, writes
+five polygons and the test encoder's shape, reads them back and explodes them, then runs
+the multipart tool over an input that already has `ORIG_FID`. A first attempt failed on
+the probe's own 10-character name field, which showed one more cursor class on the way:
+an over-long text in an insert cursor is an exact `RuntimeError`
+(`The row contains a bad value. [Field length exceeded ...]`), wrapped by the guard.
+
+```
+== written ==                              == read back as SHAPE@WKB ==
+single_ccw   type 3 rings=1 [CCW]          type 3 POLYGON rings=1 [CCW]
+single_cw    type 3 rings=1 [CW]           None
+hole_esri    type 3 rings=2 [CW, CCW]      type 3 POLYGON rings=2 [CCW, CW]
+hole_ogc     type 3 rings=2 [CCW, CW]      type 3 POLYGON rings=2 [CCW, CW]
+hole_same    type 3 rings=2 [CCW, CCW]     type 6 MULTIPOLYGON members=2, one ring each [CCW]; [CCW]
+encoder      type 6 members=1 rings=2 [CCW, CCW]   type 6 MULTIPOLYGON members=2, one ring each
+== children of MultipartToSinglepart ==
+single_cw    parent=2 None; every holed input: one child, type 3 rings=2 [CCW, CW]
+== ORIG_FID already a field ==
+output fields: ['OBJECTID', 'Shape', 'name', 'ORIG_FID', 'Shape_Length']
+output rows (OID@, name, ORIG_FID): (1, a, 1) (2, b, 2) (3, b, 2) (4, b, 2) (5, e, 3) (6, e, 3)
+input ORIG_FID values after the tool: 99, 99, 99
+```
+
+What it settles:
+
+- **W19, polygons.** A single polygon exports as type 3 and a multipolygon as type 6, as
+  lines export as 2 and 5 (the image run). Kinds round-trip; the codec stands and the
+  `polygons` id of the kind test passes once the case is oriented.
+- **Ring orientation is semantic on write.** The engine reads a WKB ring's role from its
+  orientation, not its position: exterior counter-clockwise, hole clockwise. Two
+  counter-clockwise rings become two exterior members; a lone clockwise ring becomes an
+  empty shape; a clockwise exterior with a counter-clockwise hole is repaired by area.
+  On read the engine writes exterior counter-clockwise and holes clockwise. So the write
+  side orients: `tests/support/wkb.py` gains `oriented`, the builders' glue applies it,
+  `polygons()` and `multipolygon_with_hole()` are written in that orientation, and
+  `TableOps.write_rows` inherits the step. Nothing in the codec or the port changes.
+- **A one-member multipolygon is stored as a polygon** and exports as type 3. "A lake with
+  islands arriving as one row" therefore means a multipolygon with two or more members,
+  one of them holed; `multipolygon_with_hole()` is now that shape, and T4.11 (1c) reads:
+  refused as one row, and after `explode_multipart` the children are the holed polygon
+  and its neighbour, each type 3 with its rings.
+- **`ORIG_FID` taken.** The tool writes its parent reference into the existing field and
+  adds nothing: the output's `ORIG_FID` holds the parents, the input's 99 is gone from the
+  output. `shape.py` refuses such an input before the tool runs, with `PortContractError`
+  naming the field, so the output's attributes are never changed silently; the diff that
+  finds the added field stays as the check that the tool added exactly one. This is a new
+  guard and needs a break-once case; the exact case text is in the end-of-task report
+  and waits on the architect's request to edit `tools/break_once/cases/arcpy_adapter.py`.
+
+B-item candidate for the architect, beside the `write_rows` geometry-type item: whether
+ring orientation is part of the `Geometry` contract (a value is canonical, exterior
+counter-clockwise and holes clockwise, and a round trip is identity) or an adapter
+concern at the boundary (the write side orients, and a value may come back with its rings
+reversed). PC-D25 says adapters convert at the boundary; the codec's "nothing depends on
+ring orientation" holds on read only.
 
 ### The Pro run
 
@@ -169,12 +230,12 @@ architect. No `xfail` and no `skip` anywhere but the conftest's marker skip.
 | W3 a `RuntimeError` after engine work | tried as a write cursor under a held read cursor: the engine allowed the write (image run); the test is removed and W3 recorded as unrefuted | the drain rule |
 | W4 the environment read back | `test_session.py::test_the_environment_reads_back_as_applied`, against `ENVIRONMENT` as committed (EPSG 25833, 0.1 m, 0.01 m, overwrite on) | `_apply` |
 | W5 the probe module under the Pro interpreter | by hand: open `src/ag/adapters/arcpy/session.py` under the Pro interpreter in the editor and confirm the stub applies | `pyproject.toml` |
-| W6 the cursor exception classes | `test_session.py`: the missing-field and bad-clause tests, `type(error.__cause__) is RuntimeError`; the lock is W3 | the catch set |
+| W6 the cursor exception classes | `test_session.py`: the missing-field and bad-clause tests, `type(error.__cause__) is RuntimeError`, passed on the image; an over-long text in an insert cursor is the same class (the probe); the lock is W3 | the catch set |
 | W7 `LIKE` semantics | conformance `test_like_is_case_sensitive_with_percent_and_underscore_as_its_wildcards`; the memory workspace in `test_memory_workspace.py` | the compiler |
 | W8 the date literal, the delimiters | conformance `test_a_date_comparison_selects_to_the_whole_second`; the memory workspace in `test_memory_workspace.py` | the compiler |
 | W9 Describe's names and spellings; the missing path | conformance round trips (`test_read_rows_round_trips_every_field_type`, every seed), passed on the image; `test_dataset_schema.py::test_describe_of_a_missing_dataset_is_an_engine_error`: `OSError`, now in the catch set | `FIELD_TYPES`, the catch set |
 | W10 the select tools' keywords and output fields | conformance `test_select_*` | `selection.py` |
-| W11 GlobalID kept; `ORIG_FID` taken | `test_shape.py`: GlobalID is dropped by the tool (image run); `ORIG_FID` taken makes the tool add nothing, response pending the probe | the diff in `shape.py` |
+| W11 GlobalID kept; `ORIG_FID` taken | `test_shape.py`: GlobalID is dropped by the tool (image run); with `ORIG_FID` already a field the tool writes into it and adds nothing (probe), so `shape.py` refuses that input | the diff in `shape.py` |
 | W12 null, empty and curve shapes | null: conformance `roads()` round trip; empty: `test_row_io.py::test_an_empty_shape_arrives_as_none_or_an_empty_wkb_and_reads_as_null`; curves: by hand, second pull request | the codec |
 | W13 the insert cursor takes `SHAPE@WKB` | every seed of a feature class | the builders |
 | W14 timing | second pull request | |
@@ -182,7 +243,7 @@ architect. No `xfail` and no `skip` anywhere but the conftest's marker skip.
 | W16 the memory workspace's `dataType` strings | `test_memory_workspace.py::test_describe_reports_a_memory_feature_class_and_table_as_the_port_sees_them` | `_DATA_TYPES` |
 | W17 `hasZ`/`hasM` of production sources | by hand, over the production sources | |
 | W18 date precision | `test_row_io.py::test_a_date_with_a_fraction_is_rounded_to_the_second_by_the_engine`: a file geodatabase holds seconds and the engine rounds (image run); production sources by hand | read-side truncation, a contract question |
-| W19 (new) the WKB code for single-part lines and polygons: 2 and 3, or a one-member 5 and 6 | conformance `test_read_rows_round_trips_each_geometry_kind`, one id per kind: lines and points round-trip as written (image run); polygons open, see `w19_wkb_probe.py` | the codec; which outcome the contract accepts is the architect's |
+| W19 (new) the WKB code for single-part lines and polygons: 2 and 3, or a one-member 5 and 6 | conformance `test_read_rows_round_trips_each_geometry_kind`, one id per kind: lines and points round-trip as written (image run); polygons as type 3 and multipolygons as type 6 (probe); ring orientation is semantic on write, see the probe | the codec: no change |
 | W20 (new) the output kind of exploding a multipoint class, and whether the tool takes a one-member multipoint | conformance partition test, id `points` | the memory adapter's `_single_parts` or the contract |
 | W21 (new) `CreateFeatureclass` takes the EPSG code as `spatial_reference`, and mixed-separator paths (`C:\...\x.gdb/name`) are accepted | every seed of a feature class | the builders; `SpatialReference` into the stub if not |
 
