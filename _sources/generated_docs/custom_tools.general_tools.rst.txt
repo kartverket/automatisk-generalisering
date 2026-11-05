@@ -12,10 +12,26 @@ custom\_tools.general\_tools.append\_features module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.create\_partition\_features module
+---------------------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.create_partition_features
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.custom\_arcpy module
 -------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.custom_arcpy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+custom\_tools.general\_tools.fan\_in\_partitions module
+-------------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.fan_in_partitions
    :members:
    :show-inheritance:
    :undoc-members:
