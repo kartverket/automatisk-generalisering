@@ -288,13 +288,13 @@ def data_selection(files: dict, area_selection: str, area: DatasetNamespace) -> 
         area (DatasetNamespace): The area dataset namespace
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=area.ArealdekkeFlate_N10,
+        input_layer=Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
         expression=f"OBJTYPE IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["water_fc"],
         selection_type="NEW_SELECTION",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=area.ArealdekkeFlate_N10,
+        input_layer=Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
         expression=f"OBJTYPE NOT IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["other_area_fc"],
         selection_type="NEW_SELECTION",

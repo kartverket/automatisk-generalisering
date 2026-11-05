@@ -6,11 +6,12 @@ Make it in such a way that we can reuse the logic to handle other similar cases 
 Sitations where the dangle is one of the roads part of the crossroad then we convert the crossroad to a T cross in the same medium.
 """
 
+import heapq
 import logging
 import math
 import os
 from collections import defaultdict
-from collections.abc import Iterator, Set
+from collections.abc import Callable, Iterable, Iterator, Sequence, Set
 from dataclasses import dataclass, field
 from typing import Any, TypeAlias
 
@@ -26,10 +27,11 @@ Cell: TypeAlias = tuple[int, int]
 _SNAP_TOLERANCE_M = 1.0
 _RAMP_MATCH_TOLERANCE_M = 1.0
 _INDEX_CELL_SIZE_M = 25.0
+_MAX_FALSE_LOOP_PERIMETER_M = 500
 _MEDIUM_FIELD = "medium"
 _RAMP_ID_FIELD = "ramp_id"
 _RAMP_WHERE_CLAUSE = "typeveg = 'rampe'"
-_REMOVABLE_WHERE_CLAUSE = "objtype = 'VegSenterlinje'"
+_REMOVABLE_WHERE_CLAUSE = None
 
 
 def _cell(point: Point, size: float) -> Cell:
@@ -77,6 +79,29 @@ def _drop_empty(segments: list[Segment]) -> list[Segment]:
     return [s for s in segments if (s[0], s[1]) != (s[2], s[3])]
 
 
+def _segment_length(segment: Segment) -> float:
+    return math.dist((segment[0], segment[1]), (segment[2], segment[3]))
+
+
+def _length(segments: Sequence[Segment]) -> float:
+    return sum(_segment_length(segment) for segment in segments)
+
+
+def _distance_along(segments: Sequence[Segment], point: Point) -> float:
+    """Length along `segments` to where `point` projects onto the closest segment."""
+    best_gap = math.inf
+    best_along = 0.0
+    walked = 0.0
+    for segment in segments:
+        fraction, projected = _project(point, segment)
+        gap = math.dist(point, projected)
+        segment_length = _segment_length(segment)
+        if gap < best_gap:
+            best_gap, best_along = gap, walked + fraction * segment_length
+        walked += segment_length
+    return best_along
+
+
 @dataclass
 class _Line:
     segments: list[Segment]
@@ -108,6 +133,16 @@ class _WaveResult:
     splits: list[_Split]
     ramp_changed: set[int]
     waves: list[list[int]]
+
+
+def _is_ramp_crossing(line: _Line, other: _Line) -> bool:
+    """True if `other` is a road of another medium sharing a ramp id with `line`."""
+    return bool(
+        line.medium
+        and other.medium
+        and other.medium != line.medium
+        and line.ramp_ids & other.ramp_ids
+    )
 
 
 class _SegmentIndex:
@@ -260,12 +295,201 @@ class _EndpointGraph:
             return False
         return not self._segments.has_within(self.nodes.xy[node], self.node_lines[node])
 
-    def find_cut(self, oid: int, dangle_node: int) -> _Cut | None:
+    def _far_node(self, oid: int, node: int) -> int:
+        start, end = self.line_nodes[oid]
+        return end if start == node else start
+
+    def _shortest_path(
+        self,
+        starts: Iterable[int],
+        start_cost: float,
+        blocked: Set[int],
+        max_cost: float,
+        closing_cost: Callable[[int], float | None],
+    ) -> list[int] | None:
+        """Lines in order on the shortest path from `starts` to a node that closes a loop within `max_cost`.
+
+        `closing_cost` gives the cost left to close the loop at a node, or None if the
+        node does not close it. The walk never continues past a closing node.
+        """
+        best: dict[int, float] = {}
+        heap: list[tuple[float, int]] = []
+        for node in starts:
+            best[node] = start_cost
+            heapq.heappush(heap, (start_cost, node))
+        previous: dict[int, tuple[int, int]] = {}
+        while heap:
+            cost, node = heapq.heappop(heap)
+            if cost > max_cost:
+                return None
+            if cost > best[node]:
+                continue
+            extra = closing_cost(node)
+            if extra is not None:
+                if cost + extra <= max_cost:
+                    path: list[int] = []
+                    while node in previous:
+                        node, via = previous[node]
+                        path.append(via)
+                    return path[::-1]
+                continue
+            for next_oid in self.node_lines[node]:
+                if next_oid in blocked:
+                    continue
+                far = self._far_node(next_oid, node)
+                next_cost = cost + _length(self.lines[next_oid].segments)
+                if next_cost < best.get(far, math.inf):
+                    best[far] = next_cost
+                    previous[far] = (node, next_oid)
+                    heapq.heappush(heap, (next_cost, far))
+        return None
+
+    def _attachment_nodes(self, loop: Set[int], hub: int) -> set[int]:
+        """Nodes other than `hub` where lines outside `loop` touch it."""
+        loop_nodes = {node for oid in loop for node in self.line_nodes[oid]}
+        attached: set[int] = set()
+        for node in loop_nodes - {hub}:
+            if self.node_lines[node] - loop or self._segments.has_within(
+                self.nodes.xy[node], loop | self.node_lines[node]
+            ):
+                attached.add(node)
+        for oid in loop:
+            for segment in self.lines[oid].segments:
+                for other_oid, _ in self._segments.candidates(segment):
+                    if other_oid in loop:
+                        continue
+                    for node in self.line_nodes[other_oid]:
+                        if (
+                            node not in loop_nodes
+                            and _point_segment_distance(self.nodes.xy[node], segment)
+                            <= _SNAP_TOLERANCE_M
+                        ):
+                            attached.add(node)
+        return attached
+
+    def pendant_loop(self, node: int, max_perimeter: float) -> list[int] | None:
+        """Lines in order around the loop through `node`, if it is a small loop hanging off the network.
+
+        `node` must have two line ends and no line through it, the shortest loop
+        through it must have a perimeter within `max_perimeter`, and other lines may
+        touch the loop at one node at most.
+        """
+        lines = self.node_lines[node]
+        if self._degree(node) != 2 or self._segments.has_within(
+            self.nodes.xy[node], lines
+        ):
+            return None
+        if len(lines) == 1:
+            (ring,) = lines
+            if _length(self.lines[ring].segments) > max_perimeter:
+                return None
+            cycle = [ring]
+        else:
+            first, second = sorted(lines)
+            second_far = self._far_node(second, node)
+            second_length = _length(self.lines[second].segments)
+            path = self._shortest_path(
+                starts=[self._far_node(first, node)],
+                start_cost=_length(self.lines[first].segments),
+                blocked=lines,
+                max_cost=max_perimeter,
+                closing_cost=lambda n: second_length if n == second_far else None,
+            )
+            if path is None:
+                return None
+            cycle = [first, *path, second]
+        if len(self._attachment_nodes(set(cycle), node)) > 1:
+            return None
+        return cycle
+
+    def has_ramp_crossing(self, oid: int) -> bool:
+        line = self.lines[oid]
+        for segment in line.segments:
+            for other_oid, other_segment in self._segments.candidates(segment):
+                if (
+                    other_oid != oid
+                    and _is_ramp_crossing(line, self.lines[other_oid])
+                    and _segment_intersection(segment, other_segment) is not None
+                ):
+                    return True
+        return False
+
+    def loop_lines_to_remove(self, hub: int, cycle: list[int]) -> list[int]:
+        """Lines of the pendant loop `cycle` at `hub` to remove.
+
+        If the loop has ramp crossings, the side holding the first one, from `hub` to
+        where the loop meets the network, is kept so that crossing is handled as a
+        ramp crossing once `hub` dangles; the other side is removed with its crossings.
+        """
+        crossing = next(
+            (i for i, oid in enumerate(cycle) if self.has_ramp_crossing(oid)), None
+        )
+        if crossing is None or len(cycle) == 1:
+            return cycle
+        attachments = self._attachment_nodes(set(cycle), hub)
+        nodes = [hub]
+        for oid in cycle:
+            nodes.append(self._far_node(oid, nodes[-1]))
+        # An isolated loop, or one attached on a line interior, is split in the middle.
+        split = next(
+            (i for i in range(1, len(cycle)) if nodes[i] in attachments),
+            len(cycle) // 2,
+        )
+        return cycle[split:] if crossing < split else cycle[:split]
+
+    def false_loop_oids(
+        self,
+        oid: int,
+        oriented: Sequence[Segment],
+        hit_point: Point,
+        other_oid: int,
+        max_perimeter: float,
+    ) -> set[int] | None:
+        """Lines of the shortest loop from `other_oid` back onto `oid`, if its perimeter is within `max_perimeter`.
+
+        The perimeter is the length of the loop lines plus the stretch of `oid`
+        between the two contact points.
+        """
+        other_length = _length(self.lines[other_oid].segments)
+        start, end = self.line_nodes[other_oid]
+        if start == end:
+            return {other_oid} if other_length <= max_perimeter else None
+
+        hit_along = _distance_along(oriented, hit_point)
+
+        def closing_cost(node: int) -> float | None:
+            xy = self.nodes.xy[node]
+            if any(
+                _point_segment_distance(xy, segment) <= _SNAP_TOLERANCE_M
+                for segment in oriented
+            ):
+                return abs(_distance_along(oriented, xy) - hit_along)
+            return None
+
+        # A crossing hit starts from both ends at full length, which only overstates the loop.
+        path = self._shortest_path(
+            starts=[
+                node
+                for node in (start, end)
+                if math.dist(self.nodes.xy[node], hit_point) > _SNAP_TOLERANCE_M
+            ],
+            start_cost=other_length,
+            blocked={oid, other_oid},
+            max_cost=max_perimeter,
+            closing_cost=closing_cost,
+        )
+        return None if path is None else {*path, other_oid}
+
+    def find_cut(
+        self, oid: int, dangle_node: int, max_loop_perimeter: float
+    ) -> _Cut | None:
         """First junction or ramp crossing along the line, walking from the dangle.
 
         A junction is another line's endpoint on the line, or a crossing with a road of
         the same medium. A ramp crossing is a crossing with a road of another medium
-        that shares a ramp id; it wins a tie with a junction.
+        that shares a ramp id; it wins a tie with a junction. A junction on a loop back
+        onto the line with perimeter within `max_loop_perimeter` is a false junction and
+        is skipped.
         """
         line = self.lines[oid]
         oriented = (
@@ -275,6 +499,7 @@ class _EndpointGraph:
         )
         ends = [(oriented[0][0], oriented[0][1]), (oriented[-1][2], oriented[-1][3])]
         no_ramp_ids: frozenset[str] = frozenset()
+        false_loops: dict[int, bool] = {}
         for index, segment in enumerate(oriented):
             # (fraction, priority, point, other oid, shared ramp ids)
             hits: list[tuple[float, int, Point, int, frozenset[str]]] = []
@@ -283,18 +508,13 @@ class _EndpointGraph:
                 if other_oid == oid:
                     continue
                 other = self.lines[other_oid]
-                shared = frozenset(line.ramp_ids & other.ramp_ids)
-                is_ramp_crossing = bool(
-                    line.medium
-                    and other.medium
-                    and other.medium != line.medium
-                    and shared
-                )
+                is_ramp_crossing = _is_ramp_crossing(line, other)
                 if is_ramp_crossing or other.medium == line.medium:
                     hit = _segment_intersection(segment, other_segment)
                     if hit is not None:
                         fraction, point = hit
                         if is_ramp_crossing:
+                            shared = frozenset(line.ramp_ids & other.ramp_ids)
                             hits.append((fraction, 0, point, other_oid, shared))
                         else:
                             hits.append((fraction, 1, point, other_oid, no_ramp_ids))
@@ -311,10 +531,19 @@ class _EndpointGraph:
                 for hit in hits
                 if all(math.dist(hit[2], end) >= _SNAP_TOLERANCE_M for end in ends)
             ]
-            if hits:
-                _, _, point, other_oid, shared = min(
-                    hits, key=lambda hit: (hit[0], hit[1])
-                )
+            for _, priority, point, other_oid, shared in sorted(
+                hits, key=lambda hit: (hit[0], hit[1])
+            ):
+                if priority == 1:
+                    if other_oid not in false_loops:
+                        false_loops[other_oid] = (
+                            self.false_loop_oids(
+                                oid, oriented, point, other_oid, max_loop_perimeter
+                            )
+                            is not None
+                        )
+                    if false_loops[other_oid]:
+                        continue
                 return _Cut(
                     other_oid=other_oid,
                     segment_index=index,
@@ -412,7 +641,10 @@ def _build_ramp_index(ramp_reference_fc: str) -> _SegmentIndex:
 
 
 def _remove_in_waves(
-    graph: _EndpointGraph, ramp_index: _SegmentIndex, max_iterations: int
+    graph: _EndpointGraph,
+    ramp_index: _SegmentIndex,
+    max_iterations: int,
+    max_loop_perimeter: float,
 ) -> _WaveResult:
     """Remove or split dangling lines wave by wave, recording the dangle nodes per wave."""
     result = _WaveResult(removed_oids=[], splits=[], ramp_changed=set(), waves=[])
@@ -431,25 +663,34 @@ def _remove_in_waves(
 
         def expose(nodes: list[int]) -> None:
             for candidate in nodes:
-                if candidate not in exposed and graph.is_dangle(candidate):
+                if candidate not in exposed and (
+                    graph.is_dangle(candidate)
+                    or graph.pendant_loop(candidate, max_loop_perimeter) is not None
+                ):
                     exposed[candidate] = None
 
         for node in wave:
-            if not graph.is_dangle(node):
-                continue
-            (oid,) = graph.node_lines[node]
-            acted.append(node)
-            cut = graph.find_cut(oid, node)
-            if cut is not None:
-                split, affected = graph.split_line(oid, node, cut)
-                result.splits.append(split)
-                if cut.shared_ramp_ids:
-                    result.ramp_changed.add(cut.other_oid)
+            if graph.is_dangle(node):
+                (oid,) = graph.node_lines[node]
+                acted.append(node)
+                cut = graph.find_cut(oid, node, max_loop_perimeter)
+                if cut is not None:
+                    split, affected = graph.split_line(oid, node, cut)
+                    result.splits.append(split)
+                    if cut.shared_ramp_ids:
+                        result.ramp_changed.add(cut.other_oid)
+                else:
+                    affected = graph.remove_line(oid)
+                    result.removed_oids.append(oid)
                 expose(affected)
                 continue
-            affected = graph.remove_line(oid)
-            result.removed_oids.append(oid)
-            expose(affected)
+            cycle = graph.pendant_loop(node, max_loop_perimeter)
+            if cycle is None:
+                continue
+            acted.append(node)
+            for loop_oid in graph.loop_lines_to_remove(node, cycle):
+                expose(graph.remove_line(loop_oid))
+                result.removed_oids.append(loop_oid)
         result.waves.append(acted)
         logger.info(
             "Dangle removal iteration %d: %d dangles handled", iteration, len(acted)
@@ -557,6 +798,7 @@ def remove_new_dangles(
     removed_fc: str,
     max_iterations: int = 20,
     dangle_iterations_prefix: str | None = None,
+    max_false_loop_perimeter: float = _MAX_FALSE_LOOP_PERIMETER_M,
 ) -> int:
     """Remove ramp dangles from `lines_fc`, then dangles on the lines connected to each removal.
 
@@ -575,7 +817,12 @@ def remove_new_dangles(
     the first one and the dangle side goes to `removed_fc`. At a ramp crossing the
     kept part takes the crossed road's medium, and the shared ids are removed from
     `ramp_id` on both the kept part and the crossed road. A line can be cut again
-    if its kept part later dangles.
+    if its kept part later dangles. A junction where a loop of lines leaves and
+    rejoins the dangling line (a P shape) is skipped if the loop perimeter is at most
+    `max_false_loop_perimeter`. A loop of at most that perimeter left hanging at a
+    node after a removal, touched by other lines at one node at most, is removed
+    like a dangle. If that loop has ramp crossings, the side with the first one is
+    kept and then handled from the dangle, so only that crossing becomes a T cross.
 
     Args:
         lines_fc: Line feature class edited in place.
@@ -584,6 +831,8 @@ def remove_new_dangles(
         max_iterations: Safety limit for the number of waves.
         dangle_iterations_prefix: If set, the dangles removed in each wave are
             saved permanently as `<prefix>_ite1`, `<prefix>_ite2`, ...
+        max_false_loop_perimeter: Largest loop perimeter in metres treated as a
+            false junction; 0 disables the check.
 
     Returns:
         Total number of removed lines.
@@ -592,7 +841,9 @@ def remove_new_dangles(
 
     graph = _build_graph(lines_fc)
     ramp_index = _build_ramp_index(ramp_reference_fc)
-    result = _remove_in_waves(graph, ramp_index, max_iterations)
+    result = _remove_in_waves(
+        graph, ramp_index, max_iterations, max_false_loop_perimeter
+    )
 
     if dangle_iterations_prefix:
         spatial_reference = arcpy.Describe(lines_fc).spatialReference
@@ -623,7 +874,7 @@ if __name__ == "__main__":
 
     environment_setup.main()
 
-    src = r"C:\temp\291026\road.gdb\ramps___generalized_ramps___n100_road"
+    src = Road_N100.ramps__generalized_ramps__n100_road.value
     test_lines = (
         f"{src}_dangle_test"  # scratch copy, the permanent file stays untouched
     )
@@ -632,7 +883,7 @@ if __name__ == "__main__":
     arcpy.management.CopyFeatures(src, test_lines)
     removed = remove_new_dangles(
         lines_fc=test_lines,
-        ramp_reference_fc=r"C:\temp\291026\road.gdb\data_preparation___road_single_part_2___n100_road",
+        ramp_reference_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         removed_fc=test_removed,
         dangle_iterations_prefix=f"{src}_dangle_test",
     )

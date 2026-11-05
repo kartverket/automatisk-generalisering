@@ -65,6 +65,11 @@ from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 from typing import Callable
 from custom_tools.general_tools.integrate_diff import IntegrateDiff
 
+
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 if require("SELECT_STUDY_AREA") == "False":
@@ -76,7 +81,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Ringerike')"
+    AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
@@ -174,6 +179,7 @@ def data_selection_and_validation(
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
             area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
+            area.ArealdekkeFlate_N10: Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
         },
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
