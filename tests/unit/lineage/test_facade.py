@@ -5,7 +5,7 @@ out because the form of `GraphOps` is open (ADR-0018 AR-D7), and every member of
 walked: a call through the facade leaves a store in the same state as the direct call on
 a store seeded the same way, native indices and the parents table included, with the
 same returned rows. The walked set is pinned, so a broken discovery step cannot pass as
-an empty walk. The hooks see a `PortCall` carrying the Protocol's own `__row_shape__`,
+an empty walk. The hooks see a `PortCall` carrying the Protocol's own row shape,
 not one on the adapter (ADR-0017 RS-D10), and the whole call as keyword arguments
 (ADR-0019 PC-D4); `before` runs before the port writes, `after` after, and not at all
 when the port raises. A public name on the adapter but off the Protocol is not reachable
@@ -40,7 +40,7 @@ from ag.ports import Attr, Comparison, Predicate
 from ag.ports.cartographic_ops import CartographicOps
 from ag.ports.errors import PortContractError
 from ag.ports.geometry_ops import GeometryOps
-from ag.ports.row_shape import Cardinality, Ids, Rows, row_shape
+from ag.ports.row_shape import Cardinality, Ids, Rows, declared_rows, row_shape
 from ag.ports.table_ops import TableOps
 from ag.ports.toolbox import Toolbox
 from tests.support.cases import DatasetCase, parts, roads
@@ -181,7 +181,7 @@ def test_the_hooks_see_the_call_with_the_protocols_rows_in_order() -> None:
     expected = PortCall(
         protocol=GeometryOps,
         method="select",
-        rows=getattr(GeometryOps.select, "__row_shape__"),
+        rows=declared_rows(GeometryOps.select) or {},
         kwargs={"input": seeded.handle, "where": where, "output": output},
     )
     assert before_seen == [expected]
@@ -214,8 +214,8 @@ def test_the_rows_come_from_the_protocol_and_not_from_the_adapter() -> None:
     facade.select(
         input=seeded.handle, where=Attr.is_null("rank"), output=memory_handle("o")
     )
-    assert seen[0].rows == getattr(GeometryOps.select, "__row_shape__")
-    assert seen[0].rows != getattr(Decorated.select, "__row_shape__")
+    assert seen[0].rows == declared_rows(GeometryOps.select)
+    assert seen[0].rows != declared_rows(Decorated.select)
 
 
 def test_after_is_not_called_when_the_port_raises() -> None:

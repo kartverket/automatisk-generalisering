@@ -1115,12 +1115,11 @@ prefer synthesis on size — an adapter-internal decision.
 care how they are produced.* That sentence of A14 stands; the rest is restated without the tier
 vocabulary.
 
-- **The capability record names methods, not mechanisms.** The adapter publishes, at construction,
-  the set of methods declared `ids=MINT` for which it can honour `parents=` (A11.15). How it does
-  so is adapter-internal and not in the record. `validate()` receives the record as data (A14's
-  no-exemption argument stands) and fails a stage that uses a lineage-bearing handle with a `MINT`
-  method the record does not name — subject to B14, which records that plan time cannot yet see
-  which port methods an operation calls.
+- **The capability record and the refusal** moved to ADR-0019 PC-D28 and PC-D29 (2026-11-02).
+- **The plan-time check.** `validate()` receives the record as data (A14's no-exemption argument
+  stands) and fails a stage that uses a lineage-bearing handle with a `MINT` method the record
+  does not name — subject to B14, which records that plan time cannot yet see which port methods
+  an operation calls.
 - **The native references engines provide, corrected.** `ORIG_FID` from `MultipartToSinglepart`
   and `SplitLineAtPoint`; `FID_<input>` from `Intersect`, not `ORIG_FID`; nothing from
   `PairwiseClip` and `PairwiseErase`, so `clip` and `difference` stamp a work key on a copy of the
@@ -1134,10 +1133,9 @@ vocabulary.
 - **Unkeyed spatial reconstruction stays rejected.** Prefer an unavailable method to a silently
   wrong one. B17's keyed resolver is not that: it is handed only its own key's parts and the
   resolver rejects a cross-key pair.
-- **An adapter that cannot honour `parents=` for a method raises** `ParentsUnavailableError` from
-  `ports/errors.py` (T2.4); it never returns an empty table.
 
-`destination:` `adapters/arcpy/` package docstring; `02-runtime.md` §8 (the plan-time check, with
+`destination:` ADR-0019 PC-5 (the record and the refusal, moved); `adapters/arcpy/` package
+docstring (the native references, with T4.10); `02-runtime.md` §8 (the plan-time check, with
 B14's caveat).
 
 ## A15. Scope, cost, session lifetime
@@ -2593,3 +2591,11 @@ ingest step needs them outside the ArcPy adapter, since the CRS also crosses the
 tool, and whether the session environment's implicit reprojection of tool outputs stays as
 a second line or is turned off once ingest conforms every input.
 `destination:` the ingest task and the session docstring when decided.
+
+**B30. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
+`Geometry` holds one ring per member of a multi kind, so a multipolygon member with holes, a
+lake with islands arriving as one row, is refused on read with `PortContractError` and is
+reachable only after `explode_multipart`, which yields one polygon with its holes per row.
+Open: whether `parts` gains a nested form for such a member, or the read-after-explode rule
+is the contract.
+`destination:` `ports/geometry.py` when decided.

@@ -782,8 +782,10 @@ which is why T1.4 is started early and left in flight rather than blocking.
 **status:** port half done, slice 1a, 2026-10-07: `Attr.cmp`, `Attr.in_`, `Attr.is_null`,
 `Attr.raw` and the leaf types in `ports/predicates.py`, the pinned call-site count in
 `tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0019 PC-3.
-Remaining: the adapter compile with identifier quoting (slice 1b) and the three call-site
-rewrites in the example fixtures (slice 1c).
+The adapter compile landed in slice 1b, 2026-11-02: `adapters/arcpy/support/predicate_compiler.py`,
+attribute leaves to a WHERE clause with identifier quoting through the engine's own rule; the
+spatial leaf is not compiled yet. Remaining: the three call-site rewrites in the example fixtures
+(slice 1c).
 *(merged: the A17.4 and A17.7 call-site fixes)*
 
 **what done means**
@@ -1832,7 +1834,10 @@ removed.
 
 ## 32. T4.10 — Adapter parents capability
 
-**status:** not started
+**status:** record published, slice 1b, 2026-11-02: `ports/capabilities.py`, `capabilities()` in
+each adapter package, one member `explode_multipart`, pinned by `tests/static/test_capabilities.py`;
+A14.1's record and refusal moved to ADR-0019 PC-D28 and PC-D29. The per-method sources and the
+plan-time check remain.
 
 **what done means** The arcpy adapter honours `parents=` (A11.15) on every method it names in its
 capability record, and publishes that record at construction as a set of method names declared
@@ -1884,6 +1889,10 @@ suite passes on the 3.6 image and on 3.7 with the same code.
 **(1a) Native-index stability.** One case asserts that a `MINT` method leaves its `input` handle's
 native indices unchanged across the call (A9.2), on every adapter: read the index set before and
 after, assert equality. Acceptance: fails when a method is compiled to write its input in place.
+
+**(1c) Holed members.** A lake with islands stored as one multipart row runs through
+`explode_multipart` before any read, and the children read back as polygons with their holes;
+whether the value type gains a nested member form is B30.
 
 **(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
 `memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
