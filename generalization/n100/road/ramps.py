@@ -3251,6 +3251,13 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
     config = core_config.WorkFileConfig(root_file=input_points_fc)
     wfm = WorkFileManager(config=config)
     files = create_wfm_gdbs_2(wfm=wfm)
+    if arcpy.Exists(input_points_fc):
+        if arcpy.management.GetCount(input_points_fc)[0] == 0:
+            if arcpy.Exists(output_points_fc):
+                arcpy.management.Delete(output_points_fc)
+            return
+    else:
+        return
     arcpy.management.CopyFeatures(input_roads_fc, files["copy_of_roads"])
     if not arcpy.Exists(input_points_fc):
         wfm.delete_created_files()
