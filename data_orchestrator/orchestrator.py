@@ -4,6 +4,7 @@ import arcpy
 
 from pathlib import Path
 
+from data_orchestrator.data_names import DataNames as dn
 from data_orchestrator.data_reader import DataReader
 from data_orchestrator.data_validator import DataValidator
 
@@ -29,19 +30,19 @@ class InputDataOrchestrator:
         symbology (dict): A dictionary to store the fetched symbology files
     """
 
-    def __init__(self, map_scale: str, pipeline: str):
+    def __init__(self, map_scale: dn, pipeline: dn):
         """
         Initialize the class and control that the path has the expected structure.
         If not, throw an error with details on what is missing or extra.
 
         Args:
-            map_scale (str): The map scale to fetch data for, e.g. "n100"
-            pipeline (str): The pipeline to use for data processing
+            map_scale (dn): The map scale to fetch data for, e.g. dn.scale_n100
+            pipeline (dn): The pipeline to use for data processing
 
         """
         # Sets parameters
-        self.map_scale: str = map_scale.lower()
-        self.pipeline: str = pipeline.lower()
+        self.map_scale: dn = map_scale
+        self.pipeline: dn = pipeline
 
         # Validates the expected / required folder and file
         # structure for the given map scale and pipeline
@@ -100,7 +101,7 @@ class InputDataOrchestrator:
             DatasetNamespace: An object exposing feature classes as attributes
         """
         dataset_name = dataset_name.upper()
-        data: DatasetNamespace = self.datasets.get(dataset_name)
+        data: DatasetNamespace | None = self.datasets.get(dataset_name)
         if data is None:
             raise KeyError(f"Dataset '{dataset_name}' not found in orchestrator.")
         return data
@@ -146,12 +147,3 @@ class InputDataOrchestrator:
             raise RuntimeError(f"Missing symbologies found: {missing}")
 
         self.symbology = content
-
-
-if __name__ == "__main__":
-    data_orc = InputDataOrchestrator(map_scale="n100", pipeline="road")
-
-    for key, value in data_orc.datasets.items():
-        print(f"Dataset: {key}\nFeatures: {value}\n")
-
-    print(data_orc.datasets["ROAD"].elveg_and_sti)

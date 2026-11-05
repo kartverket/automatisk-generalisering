@@ -77,7 +77,7 @@ if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
     AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
-SCALE = "n100"
+SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
@@ -88,7 +88,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
     environment_setup.main()
     arcpy.env.referenceScale = 100000
 
-    data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.road)
+    data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.object_veg_sti)
     area_data = data_orc.get_dataset(dn.area)
     building_data = data_orc.get_dataset(dn.building)
 

@@ -218,12 +218,13 @@ def create_intersections_of_roundabouts() -> None:
     road_fc = data_files["input"]
     roundabout_fc = data_files["roundabout"]
     cleaned_road_fc = data_files["cleaned_road"]
+    road_lyr = "road_lyr"
 
     arcpy.management.CopyFeatures(road_fc, cleaned_road_fc)
 
     spatial_ref = arcpy.Describe(cleaned_road_fc).SpatialReference
 
-    arcpy.management.MakeFeatureLayer(cleaned_road_fc, "road_lyr")
+    arcpy.management.MakeFeatureLayer(cleaned_road_fc, road_lyr)
 
     roundabouts = [
         (oid, geom, number)
@@ -238,18 +239,18 @@ def create_intersections_of_roundabouts() -> None:
     for r_id, r_geom, r_number in roundabouts:
         temp_geom = arcpy.management.CopyFeatures(r_geom, temp_roundabout)
         arcpy.management.SelectLayerByLocation(
-            in_layer="road_lyr",
+            in_layer=road_lyr,
             overlap_type="INTERSECT",
             select_features=temp_geom,
             selection_type="NEW_SELECTION",
         )
         arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view="road_lyr",
+            in_layer_or_view=road_lyr,
             selection_type="SUBSET_SELECTION",
             where_clause="objtype = 'VegSenterlinje'",
         )
         with arcpy.da.SearchCursor(
-            "road_lyr", ["OID@", "SHAPE@", "typeveg", "medium", "vegnummer"]
+            road_lyr, ["OID@", "SHAPE@", "typeveg", "medium", "vegnummer"]
         ) as cursor:
             for oid, geom, road_type, medium, vegnummer in cursor:
                 oid_geom_pairs[r_id].append(
@@ -261,8 +262,7 @@ def create_intersections_of_roundabouts() -> None:
     changed = {}
     centroids = []
 
-    for key in oid_geom_pairs:
-        to_edit = oid_geom_pairs[key]
+    for key, to_edit in oid_geom_pairs.items():
         for i in range(len(to_edit)):
             if to_edit[i][2] in changed:
                 to_edit[i][3] = changed[to_edit[i][2]]
@@ -294,14 +294,4 @@ def create_intersections_of_roundabouts() -> None:
         for centroid in centroids:
             insert.insertRow([centroid])
 
-    """ Deletes intermediate files during the process
-    for layer in [roundabout_fc, centroid_fc]:
-        if arcpy.Exists(layer):
-            arcpy.management.Delete(layer)
-    # """
-
     print("Successfully created intersections of roundabouts!\n")
-
-
-if __name__ == "__main__":
-    generalize_roundabouts()
