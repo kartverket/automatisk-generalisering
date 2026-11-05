@@ -88,10 +88,7 @@ PIPELINE_INPUT = {
             ],
             dn.building: [dn.AnleggsLinje_N50],
             dn.railway: [dn.Bane_N50],
-            dn.road: [
-                "elveg_and_sti_liten",
-                dn.vegsperring,
-            ],  # [dn.elveg_and_sti, dn.vegsperring],
+            dn.road: [dn.elveg_and_sti, dn.vegsperring],
         },
     },
     dn.scale_n250: {

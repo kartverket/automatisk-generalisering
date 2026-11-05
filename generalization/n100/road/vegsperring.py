@@ -15,6 +15,16 @@ DATA_FILES = {
     "veg_uten_bom": Road_N100.vegsperring__veg_uten_bom__n100_road.value,
 }
 
+BLOCKING_TYPES = [
+    "betongkjegle",
+    "bomMedAutomatiskÅpner",
+    "låstBom",
+    "newJersey",
+    "steinblokk",
+]
+
+VALID_FUNCTIONALITIES = ["bussluse", "ulåstSperring"]
+
 """
 Documentation of the development process:
 
@@ -62,10 +72,20 @@ def remove_roadblock(data: DatasetNamespace):
         in_features=output, out_layer=road_lyr, where_clause="medium = 'T'"
     )
 
+    # Create layer with roadblocks of interest
+    function_sql = ", ".join([f"'{t}'" for t in VALID_FUNCTIONALITIES])
+    type_sql = ", ".join([f"'{f}'" for f in BLOCKING_TYPES])
+    roadblock_lyr = "roadblocks_of_interest_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=roadblock_fc,
+        out_layer=roadblock_lyr,
+        where_clause=f"FUNKSJON NOT IN ({function_sql}) OR TYPE IN ({type_sql})",
+    )
+
     # Create near table with connections to roadblocks
     near_table = r"in_memory/near_table"
     arcpy.analysis.GenerateNearTable(
-        in_features=roadblock_fc,
+        in_features=roadblock_lyr,
         near_features=road_lyr,
         out_table=near_table,
         search_radius="2 Meters",
