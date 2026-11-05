@@ -10,7 +10,7 @@ are imported, as the engine's type names are, so the fake spells nothing of the 
 twice; the engine's strings are the marked run's to confirm. A toolbox is a namespace
 whose attributes are the tools, the structure `run_tool` resolves a dotted name against,
 and a tool records itself under that path. A search cursor over an unknown name raises
-`RuntimeError`, as the engine's is expected to; a tool records its keyword arguments,
+`RuntimeError` and Describe of an unknown path `OSError`, as the engine's do; a tool records its keyword arguments,
 raises `FakeExecuteError` when `failures` names it, and otherwise does the least that
 lets the adapter continue: the
 select tools copy every row and keep the clause, the explode tool writes the children
@@ -215,7 +215,9 @@ class FakeEngine(ModuleType):
         return f'"{field}"'
 
     def Describe(self, path: str) -> SimpleNamespace:
-        dataset = self.dataset(path)
+        dataset = self.datasets.get(path)
+        if dataset is None:
+            raise OSError(f'"{path}" does not exist')
         return SimpleNamespace(
             dataType=dataset.data_type,
             fields=[*dataset.engine_fields(), *dataset.fields],

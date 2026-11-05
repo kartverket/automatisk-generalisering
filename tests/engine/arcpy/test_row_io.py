@@ -1,7 +1,9 @@
 """What `row_io.py` and the WKB codec expect of the engine's cursors: an empty shape
-arrives as None or as an empty well-known binary and reads as a null geometry; a date
-written with a fraction is either held to the second by the engine or refused by
-`read_rows`, never truncated by the adapter. ADR-0019 PC-D17, PC-D25.
+arrives as None or as an empty well-known binary and reads as a null geometry; a file
+geodatabase holds dates to the second and the engine rounds a fraction written to it
+(12:00:00.5 arrives as 12:00:01), so the read-side refusal of a fraction cannot fire on
+such data and the port's write-side refusal is what keeps a value from being changed.
+ADR-0019 PC-D17, PC-D25.
 """
 
 from __future__ import annotations
@@ -13,7 +15,6 @@ import pytest
 from ag.adapters.arcpy.support.dataset_writer import insert_rows
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN, is_null_shape
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
-from ag.ports.errors import PortContractError
 from tests.engine.arcpy.conftest import Pro
 from tests.support import wkb
 from tests.support.cases import multilines, roads
@@ -42,7 +43,7 @@ def test_an_empty_shape_arrives_as_none_or_an_empty_wkb_and_reads_as_null(
     assert [row.geometry for row in rows if row.attributes["name"] == "z"] == [None]
 
 
-def test_a_date_with_a_fraction_is_held_to_the_second_by_the_engine_or_refused(
+def test_a_date_with_a_fraction_is_rounded_to_the_second_by_the_engine(
     pro: Pro,
 ) -> None:
     seeded = pro.seed(roads())
@@ -55,17 +56,12 @@ def test_a_date_with_a_fraction_is_held_to_the_second_by_the_engine_or_refused(
     )
     cells = pro.read_cells(path=path, tokens=("surveyed",), where="\"name\" = 'frac'")
     (stored,) = cells[0]
-    assert isinstance(stored, datetime), stored
-    ops = ArcpyTableOps(session=pro.session)
-    if stored.microsecond == 0:
-        found = [
-            row
-            for row in ops.read_rows(input=seeded.handle, fields=("name", "surveyed"))
-            if row.attributes["name"] == "frac"
-        ]
-        assert [row.attributes["surveyed"] for row in found] == [
-            datetime(2024, 1, 1, 12)
-        ]
-    else:
-        with pytest.raises(PortContractError, match="sub-second"):
-            list(ops.read_rows(input=seeded.handle, fields=("name", "surveyed")))
+    assert stored == datetime(2024, 1, 1, 12, 0, 1), stored
+    found = [
+        row
+        for row in ArcpyTableOps(session=pro.session).read_rows(
+            input=seeded.handle, fields=("name", "surveyed")
+        )
+        if row.attributes["name"] == "frac"
+    ]
+    assert [row.attributes["surveyed"] for row in found] == [stored]

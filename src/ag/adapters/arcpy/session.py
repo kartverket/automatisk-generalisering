@@ -12,14 +12,16 @@ and names vendor exceptions, and every other engine call in the adapter runs ins
 How: `run_tool` resolves a dotted name on the engine, calls it with keyword arguments
 inside `guard`, logs the messages the result object carries, and returns the result. A
 caller that needs a tool's output reads it through an accessor added here, never by
-touching the engine. `guard` wraps two classes: the engine's `ExecuteError`, and an exact
-`RuntimeError`, the class the engine's cursors are expected to raise for a missing field
-or a locked dataset. An `AgError`, an adapter defect such as `KeyError`, and a
-`RuntimeError` subclass pass through unchanged. On `ExecuteError` the tool ran, so the
-engine's message buffer is its messages and is drained into the context; an exact
-`RuntimeError` is taken to mean the call did not reach a tool, so the buffer, which
-belongs to whatever ran last, is left out. The first run under the engine confirms or
-corrects the catch set and the drain rule.
+touching the engine. `guard` wraps three classes: the engine's `ExecuteError`; an exact
+`RuntimeError`, the class the engine's cursors raise for a missing field or a bad where
+clause; and an exact `OSError`, the class `Describe` raises for a path that does not
+exist. An `AgError`, an adapter defect such as `KeyError`, and a subclass of either exact
+class pass through unchanged. On `ExecuteError` the tool ran, so the engine's message
+buffer is its messages and is drained into the context; the two exact classes mean the
+call did not reach a tool, so the buffer, which belongs to whatever ran last, is left
+out. The catch set and the cursor classes are confirmed on the engine; no engine call
+that surfaces a `RuntimeError` after a tool ran has been found, so the drain rule stands
+unrefuted.
 
 Why: the session applies the project environment standard, output coordinate system,
 XY tolerance and XY resolution, so that every product is in it (ADR-0021 ST-D25). The
@@ -137,8 +139,13 @@ def open_session() -> ArcpySession:
 def _is_engine_error(
     error: BaseException, execute_error: type[BaseException], /
 ) -> bool:
-    """Whether `guard` wraps `error`: the vendor class, or an exact `RuntimeError`."""
-    return isinstance(error, execute_error) or type(error) is RuntimeError
+    """Whether `guard` wraps `error`: the vendor class, an exact `RuntimeError` or an exact
+    `OSError`."""
+    return (
+        isinstance(error, execute_error)
+        or type(error) is RuntimeError
+        or type(error) is OSError
+    )
 
 
 def _resolve(engine: ModuleType, name: str, /) -> Callable[..., _ToolResult]:

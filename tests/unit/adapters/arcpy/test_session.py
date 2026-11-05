@@ -4,8 +4,8 @@ What: the environment is applied once on construction, reads back as applied, an
 failure there is an `EngineError`; a tool resolves by dotted name and passes keyword arguments and its result
 through; a tool failure and a guarded engine failure leave as `EngineError` from the
 original, with the tool and its messages; the buffer is drained on the vendor class only;
-an `AgError`, an adapter defect and a `RuntimeError` subclass pass through (ADR-0018
-AR-D23). Blank message lines are dropped on both paths.
+an exact `OSError` is wrapped as an exact `RuntimeError` is; an `AgError`, an adapter
+defect and a subclass of either pass through (ADR-0018 AR-D23). Blank message lines are dropped on both paths.
 
 How: `FakeEngine` subclasses `ModuleType`, as the real engine is one, declaring the names
 the session resolves on it. No test here is marked: nothing touches ArcPy.
@@ -237,6 +237,26 @@ def test_a_runtime_error_inside_the_guard_carries_no_stale_buffer() -> None:
 
     assert info.value.context.tool_messages == ("locked",)
     assert engine.reads == 0
+
+
+def test_an_exact_os_error_inside_the_guard_carries_no_stale_buffer() -> None:
+    engine = FakeEngine(buffer="stale")
+    session = ArcpySession(engine=engine)
+
+    with pytest.raises(EngineError) as info:
+        with session.guard("Describe"):
+            raise OSError('"x" does not exist')
+
+    assert info.value.context.tool_messages == ('"x" does not exist',)
+    assert engine.reads == 0
+
+
+def test_an_os_error_subclass_inside_the_guard_passes_through() -> None:
+    session = ArcpySession(engine=FakeEngine())
+
+    with pytest.raises(FileNotFoundError):
+        with session.guard("Describe"):
+            raise FileNotFoundError("adapter defect")
 
 
 def test_an_ag_error_inside_the_guard_passes_through() -> None:

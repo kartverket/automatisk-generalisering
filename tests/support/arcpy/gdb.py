@@ -6,7 +6,7 @@ What: `file_gdb`, a file geodatabase through the engine's tool; `GEOMETRY_TYPES`
 `seed`, a dataset created from a port `Schema` and filled from cell tuples, returning the
 native indices in row order; `indices`, a dataset's native indices; `read_cells`, one
 search cursor's rows as cell tuples; `delete_rows`, chosen rows removed so that a native
-index is non-dense; `hold_cursor`, a search cursor kept open across other calls.
+index is non-dense.
 
 How: a table goes through the adapter's own `create_table`; a feature class through
 `management.CreateFeatureclass` with the geometry type of the rows' kind, then the
@@ -21,15 +21,14 @@ and `GEOMETRY_TYPES` live here until the adapter writes feature classes itself t
 `TableOps.write_rows` (ADR-0019 PC-D22); the builders then call that and this copy goes.
 
 Why: no port method writes yet, and the engine-neutral cases need an engine dataset. The
-probes, `read_cells` with a bad token or clause and `hold_cursor` around a write, provoke
-the cursor failures the session's guard is expected to wrap, which no port path reaches
-because every field is checked before a cursor opens (ADR-0018 AR-D23).
+probe, `read_cells` with a bad token or clause, provokes the cursor failures the session's
+guard wraps, which no port path reaches because every field is checked before a cursor
+opens (ADR-0018 AR-D23).
 """
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from types import MappingProxyType
 
 from ag.adapters.arcpy.session import ArcpySession
@@ -153,17 +152,6 @@ def delete_rows(session: ArcpySession, *, path: str, indices: Collection[int]) -
             for row in cursor:
                 if _as_index(row[0]) in indices:
                     cursor.deleteRow()
-
-
-@contextmanager
-def hold_cursor(session: ArcpySession, *, path: str) -> Iterator[None]:
-    """Keeps a search cursor on `path` open for the block, so that a write inside it
-    meets whatever lock the engine takes."""
-    with session.guard("SearchCursor"):
-        import arcpy
-
-        with arcpy.da.SearchCursor(path, (OID_TOKEN,)):
-            yield
 
 
 def _epsg(crs: CRS) -> int:

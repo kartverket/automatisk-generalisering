@@ -11,7 +11,6 @@ opened per test, so every test starts from the environment standard freshly appl
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -61,11 +60,6 @@ class Pro:
         from tests.support.arcpy import gdb
 
         return gdb.read_cells(self.session, path=path, tokens=tokens, where=where)
-
-    def hold_cursor(self, *, path: str) -> AbstractContextManager[None]:
-        from tests.support.arcpy import gdb
-
-        return gdb.hold_cursor(self.session, path=path)
 
 
 @pytest.fixture

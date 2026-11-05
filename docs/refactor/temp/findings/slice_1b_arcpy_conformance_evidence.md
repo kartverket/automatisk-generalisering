@@ -78,9 +78,55 @@ graph_ops`), so a `Schema` there would import upward. The constant sits in
 RS-D16; the memory adapter imports it and the ArcPy adapter writes it through the support
 writer. `lint-imports`: 24 kept, 0 broken.
 
-## The Pro run
+## The engine runs
 
-To be pasted by the architect. The environment is B23; the two candidates to try on one
+### The image run, 2026-11-05
+
+Run by the architect from WSL in the project's image, `arcpy-linux:12.1` built locally from
+the same source as `ghcr.io/kartverket/arcpy-linux:12.1` (digest to be recorded). Python
+3.13.17, ArcPy 12.1; `import arcpy` works in the bare image without `startserver.sh`, which
+answers T4.11's licence question for the image route: no activation step. The pinned pytest
+went into a target folder, never into the image's environment:
+
+```
+docker run --rm -v "$PWD":/work:ro -w /work \
+  -e PYTHONPATH=/work/src:/tmp/pt -e PYTHONDONTWRITEBYTECODE=1 arcpy-linux:12.1 \
+  bash -c 'pip install --quiet --no-cache-dir --target /tmp/pt pytest==9.1.1 &&
+           python -m pytest tests/conformance tests/engine -m arcpy -ra -p no:cacheprovider'
+collected 56 items / 21 deselected / 35 selected
+7 failed, 28 passed, 21 deselected in 51.90s
+```
+
+A first attempt without the two roots named failed at collection: `-m arcpy` collects every
+`testpaths` root and `tests/static/test_import_contracts.py` imports `importlinter`, which
+the image lacks. The marked run names its roots wherever the dev tools are absent.
+
+Passed: every conformance case but one (`select`, `LIKE`, the date literal, the table form,
+both partitions, the non-dense input through `explode_multipart` and `select`, the null
+shape, the table input, every field type, the kinds `roads`, `multilines`, `multipoints`,
+`points`); the memory workspace (W16, W7, W8); the empty shape (W12); W1, W2, W4, W6.
+Every seed worked, so W13 and W21 (the EPSG code as `spatial_reference`) hold on Linux.
+
+The seven failures and what was done with each, under the rule below:
+
+| test | observed | disposition |
+|---|---|---|
+| `test_read_rows_round_trips_each_geometry_kind[arcpy-polygons]` | the square with a hole read back as a two-member `MULTIPOLYGON`, one ring each; the two-member case matched | not yet settled: both rings were written counter-clockwise, and whether the engine lost the hole on orientation or exports every polygon as a multipolygon is what `docs/refactor/temp/w19_wkb_probe.py` asks; W19 for polygons is open until it runs |
+| `test_describe_of_a_missing_dataset_is_an_engine_error` | `OSError: "<path>" does not exist`, left unwrapped | fixed here: an exact `OSError` joins the guard's catch set with the no-drain rule; the fake's Describe raises it; unit tests pin both the wrap and that a subclass passes |
+| `test_a_date_with_a_fraction_is_held_to_the_second_by_the_engine_or_refused` | 12:00:00.5 read back as 12:00:01 | the engine rounds a fraction to the second; the test now pins that, and `read_rows` returns the stored value; the read-side refusal cannot fire on file geodatabase data (W18) |
+| `test_a_write_cursor_on_a_dataset_held_by_a_read_cursor_is_an_engine_error` | the insert succeeded | W3's provocation refuted; test and helper removed; no `RuntimeError` after engine work found, the drain rule stands unrefuted and the session docstring says so |
+| `test_the_tool_keeps_a_global_id_field_and_adds_only_the_reference` | the output has no GlobalID field; the declared fields match | the tool drops GlobalID; test and `shape.py` docstring state it; nothing in the adapter depended on it |
+| `test_the_reference_is_found_by_diff_when_orig_fid_is_taken` | the tool added no field: the output's `ORIG_FID` is the input's | not yet settled: whether the tool wrote the parents into the existing field is what the probe reads; the adapter's response, a refusal before the tool, needs a break-once case and so the architect's request |
+| `test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_them` | `read_rows` did not refuse | the same orientation question as the first row: `multipolygon_with_hole()` writes both rings counter-clockwise |
+
+After these fixes: 497 unit tests pass, 34 deselected, pyright and the scans clean, the
+break-once needles match. The three unsettled tests stay in the tree until the probe has
+run; they must pass or go before the commit point.
+
+### The Pro run
+
+To be run by the architect when a Windows Pro environment is at hand; the image run above
+is the gate's environment and this one the divergence detector. The environment is B23; the two candidates to try on one
 Windows machine, from the repository root, with `<pro>` the Pro interpreter
 (`C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3\python.exe` on the team's machines):
 
@@ -120,23 +166,23 @@ architect. No `xfail` and no `skip` anywhere but the conftest's marker skip.
 |---|---|---|
 | W1 misspelt keyword after a success | `engine/arcpy/test_session.py::test_a_misspelt_keyword_after_a_successful_tool_is_a_type_error_unwrapped` | `run_tool` |
 | W2 a failure's own lines | `test_session.py::test_a_tool_failure_after_a_success_carries_its_own_messages` | the drain rule |
-| W3 a `RuntimeError` after engine work | `test_session.py::test_a_write_cursor_on_a_dataset_held_by_a_read_cursor_is_an_engine_error`; if the engine allows the write, the test is removed and W3 recorded as unrefuted | the drain rule |
+| W3 a `RuntimeError` after engine work | tried as a write cursor under a held read cursor: the engine allowed the write (image run); the test is removed and W3 recorded as unrefuted | the drain rule |
 | W4 the environment read back | `test_session.py::test_the_environment_reads_back_as_applied`, against `ENVIRONMENT` as committed (EPSG 25833, 0.1 m, 0.01 m, overwrite on) | `_apply` |
 | W5 the probe module under the Pro interpreter | by hand: open `src/ag/adapters/arcpy/session.py` under the Pro interpreter in the editor and confirm the stub applies | `pyproject.toml` |
 | W6 the cursor exception classes | `test_session.py`: the missing-field and bad-clause tests, `type(error.__cause__) is RuntimeError`; the lock is W3 | the catch set |
 | W7 `LIKE` semantics | conformance `test_like_is_case_sensitive_with_percent_and_underscore_as_its_wildcards`; the memory workspace in `test_memory_workspace.py` | the compiler |
 | W8 the date literal, the delimiters | conformance `test_a_date_comparison_selects_to_the_whole_second`; the memory workspace in `test_memory_workspace.py` | the compiler |
-| W9 Describe's names and spellings; the missing path | conformance round trips (`test_read_rows_round_trips_every_field_type`, every seed); `test_dataset_schema.py::test_describe_of_a_missing_dataset_is_an_engine_error` | `FIELD_TYPES`, the catch set |
+| W9 Describe's names and spellings; the missing path | conformance round trips (`test_read_rows_round_trips_every_field_type`, every seed), passed on the image; `test_dataset_schema.py::test_describe_of_a_missing_dataset_is_an_engine_error`: `OSError`, now in the catch set | `FIELD_TYPES`, the catch set |
 | W10 the select tools' keywords and output fields | conformance `test_select_*` | `selection.py` |
-| W11 GlobalID kept; `ORIG_FID` taken | `test_shape.py`, the first two tests | the diff in `shape.py` |
+| W11 GlobalID kept; `ORIG_FID` taken | `test_shape.py`: GlobalID is dropped by the tool (image run); `ORIG_FID` taken makes the tool add nothing, response pending the probe | the diff in `shape.py` |
 | W12 null, empty and curve shapes | null: conformance `roads()` round trip; empty: `test_row_io.py::test_an_empty_shape_arrives_as_none_or_an_empty_wkb_and_reads_as_null`; curves: by hand, second pull request | the codec |
 | W13 the insert cursor takes `SHAPE@WKB` | every seed of a feature class | the builders |
 | W14 timing | second pull request | |
 | W15 the non-dense input | conformance `test_a_mint_method_on_a_non_dense_input_reports_the_pre_call_indices_unchanged`, `explode_multipart` directly and `select` on the same input | A9.2's line |
 | W16 the memory workspace's `dataType` strings | `test_memory_workspace.py::test_describe_reports_a_memory_feature_class_and_table_as_the_port_sees_them` | `_DATA_TYPES` |
 | W17 `hasZ`/`hasM` of production sources | by hand, over the production sources | |
-| W18 date precision | `test_row_io.py::test_a_date_with_a_fraction_is_held_to_the_second_by_the_engine_or_refused`; production sources by hand | read-side truncation, a contract question |
-| W19 (new) the WKB code for single-part lines and polygons: 2 and 3, or a one-member 5 and 6 | conformance `test_read_rows_round_trips_each_geometry_kind`, one id per kind | the codec; which outcome the contract accepts is the architect's |
+| W18 date precision | `test_row_io.py::test_a_date_with_a_fraction_is_rounded_to_the_second_by_the_engine`: a file geodatabase holds seconds and the engine rounds (image run); production sources by hand | read-side truncation, a contract question |
+| W19 (new) the WKB code for single-part lines and polygons: 2 and 3, or a one-member 5 and 6 | conformance `test_read_rows_round_trips_each_geometry_kind`, one id per kind: lines and points round-trip as written (image run); polygons open, see `w19_wkb_probe.py` | the codec; which outcome the contract accepts is the architect's |
 | W20 (new) the output kind of exploding a multipoint class, and whether the tool takes a one-member multipoint | conformance partition test, id `points` | the memory adapter's `_single_parts` or the contract |
 | W21 (new) `CreateFeatureclass` takes the EPSG code as `spatial_reference`, and mixed-separator paths (`C:\...\x.gdb/name`) are accepted | every seed of a feature class | the builders; `SpatialReference` into the stub if not |
 

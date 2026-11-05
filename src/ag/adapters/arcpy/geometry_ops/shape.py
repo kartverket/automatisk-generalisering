@@ -11,9 +11,10 @@ every call, so the output's schema is the input's whether or not parents were as
 `EmptyGeometryError` before the tool runs, with its native indices in the context, and a
 table input is a contract error, since it has no geometry to explode. ADR-0017 RS-D16.
 
-Expected of the engine, confirmed by the first run under it: the tool keeps a GlobalID
-field as it is, adds no field but the reference, and names the reference differently
-when `ORIG_FID` is already taken.
+Confirmed on the engine: the tool keeps the declared fields, drops a GlobalID field, which
+is unrepresentable and so outside the output's schema either way, and adds no field but
+the reference. Expected and not yet confirmed: what it does when `ORIG_FID` is already
+a field of the input.
 """
 
 from __future__ import annotations

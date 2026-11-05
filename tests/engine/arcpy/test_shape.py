@@ -1,6 +1,6 @@
 """What `shape.py` expects of the multipart-to-singlepart tool, and the holed lake.
 
-What: the tool keeps a GlobalID field as it is and adds no field but the reference; when
+What: the tool drops a GlobalID field, keeps the declared fields and adds the reference; when
 `ORIG_FID` is taken the reference gets another name and the diff finds it; a multipart
 polygon with holes is refused on read as one row and, after `explode_multipart`, reads
 back as polygons with their holes. ADR-0017 RS-D16, ADR-0019 PC-D25.
@@ -37,7 +37,7 @@ def _parents(pro: Pro, path: str) -> set[int]:
     return found
 
 
-def test_the_tool_keeps_a_global_id_field_and_adds_only_the_reference(pro: Pro) -> None:
+def test_the_tool_drops_a_global_id_field_and_keeps_the_declared_ones(pro: Pro) -> None:
     seeded = pro.seed(multilines())
     path = str(seeded.handle.path)
     pro.session.run_tool("management.AddGlobalIDs", in_datasets=path)
@@ -49,7 +49,7 @@ def test_the_tool_keeps_a_global_id_field_and_adds_only_the_reference(pro: Pro) 
     )
     after = describe(pro.session, str(output.path))
     assert after.schema.fields == before.schema.fields
-    assert dict(after.unrepresentable) == dict(before.unrepresentable)
+    assert dict(after.unrepresentable) == {}
     assert _parents(pro, "pairs") == set(seeded.indices)
 
 

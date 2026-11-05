@@ -4,9 +4,10 @@ environment read back. ADR-0018 AR-D23, ADR-0021 ST-D25.
 What: a misspelt keyword after a successful tool is a `TypeError` left unwrapped; a tool
 failure after a success carries its own lines and not the earlier tool's; the
 environment reads back as `ENVIRONMENT`; a cursor on a missing field or a bad clause
-fails inside the guard as an exact `RuntimeError`, so the guard wraps it; a write cursor
-on a dataset another cursor holds does the same. An exception of another class leaves
-unwrapped, and the failure then shows its type.
+fails inside the guard as an exact `RuntimeError`, so the guard wraps it. An exception
+of another class leaves unwrapped, and the failure then shows its type. A write cursor on
+a dataset another cursor holds was tried as W3's provocation and succeeded on the engine,
+so no test holds it: no `RuntimeError` after engine work has been found.
 """
 
 from __future__ import annotations
@@ -15,7 +16,6 @@ import pytest
 
 from ag.adapters.arcpy.session import ENVIRONMENT
 from ag.adapters.arcpy.support.dataset_schema import OID_TOKEN
-from ag.adapters.arcpy.support.dataset_writer import insert_rows
 from ag.ports.errors import EngineError
 from tests.engine.arcpy.conftest import Pro
 from tests.support.cases import roads
@@ -75,16 +75,4 @@ def test_a_cursor_with_a_bad_where_clause_is_an_engine_error_from_an_exact_runti
             tokens=(OID_TOKEN,),
             where='"no_such_field" = 1',
         )
-    assert type(caught.value.__cause__) is RuntimeError, type(caught.value.__cause__)
-
-
-def test_a_write_cursor_on_a_dataset_held_by_a_read_cursor_is_an_engine_error(
-    pro: Pro,
-) -> None:
-    seeded = pro.seed(roads())
-    path = str(seeded.handle.path)
-    with pro.hold_cursor(path=path):
-        with pytest.raises(EngineError) as caught:
-            insert_rows(pro.session, path=path, tokens=("name",), rows=[("held",)])
-    assert caught.value.context.tool == "InsertCursor"
     assert type(caught.value.__cause__) is RuntimeError, type(caught.value.__cause__)
