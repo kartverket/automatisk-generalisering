@@ -92,11 +92,7 @@ elif os.environ.get("PARTITION_INDEX") is not None:
 else:
     PARTITION_INDEX = None
 
-# Temporary: AREA_SELECTOR is also read by remove_road_points_in_water, which would
-# otherwise limit global and partition runs to the default municipalities.
-if not SELECT_STUDY_AREA:
-    AREA_SELECTOR = "1=1"
-elif os.environ.get("AREA"):
+if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
     AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
@@ -154,9 +150,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
         ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
         (
             "pre_resolve_road_conflicts",
-            lambda: pre_resolve_road_conflicts(
-                area_selection=AREA_SELECTOR, area_data=area_data
-            ),
+            pre_resolve_road_conflicts,
         ),
         ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
         (
@@ -206,6 +200,7 @@ def data_selection_and_validation(
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
             area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
+            area.ArealdekkeFlate_N10: Road_N100.data_selection___arealdekke_n10___n100_road.value,
         },
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
@@ -555,7 +550,6 @@ def ramp_partition():
 
 @timing_decorator
 def admin_boarder():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
         expression="OBJTYPE IN ('Riksgrense', 'AvtaltAvgrensningslinje')",
@@ -905,12 +899,11 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace):
+def pre_resolve_road_conflicts():
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
-        area_selection=area_selection,
-        area=area_data,
+        arealdekke_fc=Road_N100.data_selection___arealdekke_n10___n100_road.value,
     )
 
     split_polyline_featureclass(
@@ -948,7 +941,6 @@ def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace)
 
 
 def resolve_road_conflicts(data_orc: InputDataOrchestrator):
-
     road_hierarchy = """def Reclass(vegklasse, typeveg):
         if typeveg in ('bilferje', 'ramps'):
             return 0
@@ -1110,7 +1102,6 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
 
 def final_output():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.dam__cleaned_roads__n100_road.value,
         expression="typeveg IN ('bilferje', 'passasjerferje')",

@@ -35,11 +35,14 @@ class StudyAreaSelector:
         self.selecting_feature = f"{self.selecting_file}_selection"
         self.working_files_list.append(self.selecting_feature)
 
-        custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=self.selecting_file,
-            expression=self.selecting_sql_expression,
-            output_name=self.selecting_feature,
-        )
+        if self.selecting_sql_expression is None:
+            self.selecting_feature = self.selecting_file
+        else:
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.selecting_file,
+                expression=self.selecting_sql_expression,
+                output_name=self.selecting_feature,
+            )
 
         for input_file, output_file in self.input_output_file_dict.items():
             custom_arcpy.select_location_and_make_permanent_feature(
