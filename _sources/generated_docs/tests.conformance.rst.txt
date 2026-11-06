@@ -1,6 +1,33 @@
 tests.conformance package
 =========================
 
+Submodules
+----------
+
+tests.conformance.conftest module
+---------------------------------
+
+.. automodule:: tests.conformance.conftest
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.conformance.test\_geometry\_ops module
+--------------------------------------------
+
+.. automodule:: tests.conformance.test_geometry_ops
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.conformance.test\_table\_ops module
+-----------------------------------------
+
+.. automodule:: tests.conformance.test_table_ops
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

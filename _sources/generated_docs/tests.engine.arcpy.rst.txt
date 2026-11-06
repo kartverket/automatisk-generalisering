@@ -1,0 +1,61 @@
+tests.engine.arcpy package
+==========================
+
+Submodules
+----------
+
+tests.engine.arcpy.conftest module
+----------------------------------
+
+.. automodule:: tests.engine.arcpy.conftest
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.engine.arcpy.test\_dataset\_schema module
+-----------------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_dataset_schema
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.engine.arcpy.test\_memory\_workspace module
+-------------------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_memory_workspace
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.engine.arcpy.test\_row\_io module
+---------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_row_io
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.engine.arcpy.test\_session module
+---------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_session
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.engine.arcpy.test\_shape module
+-------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_shape
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.engine.arcpy
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,6 +1,17 @@
 tests.support.arcpy package
 ===========================
 
+Submodules
+----------
+
+tests.support.arcpy.gdb module
+------------------------------
+
+.. automodule:: tests.support.arcpy.gdb
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

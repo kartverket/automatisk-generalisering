@@ -28,6 +28,14 @@ tests.support.fake\_arcpy module
    :show-inheritance:
    :undoc-members:
 
+tests.support.gdb\_cases module
+-------------------------------
+
+.. automodule:: tests.support.gdb_cases
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.support.memory module
 ---------------------------
 
