@@ -87,10 +87,9 @@ A developer on Windows uses two interpreters, each for one purpose.
   ever touches `.venv`, whichever interpreter an editor or a shell has selected.
 - Commits are made from a shell where `uv` is on `PATH`; which interpreter the shell has
   active does not matter, because the hooks run through uv.
-- The environment for `pytest -m arcpy` is B23 in the design record, settled on the first
-  marked run: the marked tests are the ArcPy half of the conformance suite and
-  `tests/engine/`, and they need `ag` and the pinned pytest beside ArcPy
-  ([testing and checks](testing.md)).
+- `pytest -m arcpy` runs in the project's image with the `dev` extra's closure exported
+  from `uv.lock`; the command is in [testing and checks](testing.md). The Pro interpreter
+  route is untried (B23 in the design record).
 
 ## Running legacy scripts
 

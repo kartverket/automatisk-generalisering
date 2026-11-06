@@ -784,8 +784,11 @@ which is why T1.4 is started early and left in flight rather than blocking.
 `tests/static/test_attr_raw_count.py` (pinned at 0), A2.1 to A2.3 struck into ADR-0019 PC-3.
 The adapter compile landed in slice 1b, 2026-11-02: `adapters/arcpy/support/predicate_compiler.py`,
 attribute leaves to a WHERE clause with identifier quoting through the engine's own rule; the
-spatial leaf is not compiled yet. Remaining: the three call-site rewrites in the example fixtures
-(slice 1c).
+spatial leaf is not compiled yet. Confirmed on the engine 2026-11-05
+(`ghcr.io/kartverket/arcpy-linux:12.1`): `LIKE` is case-sensitive with `%` and `_` as its
+wildcards, the date literal and the identifier quoting hold, in a file geodatabase and in the
+memory workspace (W7, W8, W10 in the conformance evidence). Remaining: the three call-site
+rewrites in the example fixtures (slice 1c).
 *(merged: the A17.4 and A17.7 call-site fixes)*
 
 **what done means**
@@ -1874,7 +1877,18 @@ resulting capability record as an argument — data, not a call. No exemption ne
 
 ## 33. T4.11 — Adapter conformance suite
 
-**status:** not started
+**status:** running, slice 1b. (1a), (1c) and the `MINT` case for `explode_multipart` ran
+green on the image `ghcr.io/kartverket/arcpy-linux:12.1` on 2026-11-05: `tests/conformance/`
+over both adapters and `tests/engine/arcpy/`, 34 marked tests, evidence in
+`temp/findings/slice_1b_arcpy_conformance_evidence.md`; no test was removed for a contract
+question. (1b), (2) and (3) wait on their methods.
+
+**follow-up (`write_rows`):** when `TableOps.write_rows` lands, `CreateFeatureclass` and
+`GEOMETRY_TYPES` (`tests/support/arcpy/gdb.py`) and `oriented` (`tests/support/wkb.py`) move
+into the adapter's write side, the builders call `write_rows`, and those test copies are
+deleted. `to_wkb` stays in `tests/support/wkb.py` as the independent oracle the codec is
+tested against. How `write_rows` learns a feature class's geometry type is B31; whether ring
+orientation is the port's contract or the write side's concern is B32.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.
@@ -1919,16 +1933,15 @@ promotion**: run in the freshly built Linux image, triggered by image rebuilds a
 divergence detector, and in the image under Docker. It is not a pre-commit hook, for the same
 reason it is not CI.
 
-**Open: licence activation.** Whether running the image needs a Pro licence activated, and where
-that happens, decides whether the promotion gate can run automatically or needs a licensed runner.
-Record the answer here when known.
+**Licence activation:** settled at image build (2026-11-05). The test run needs no step of its
+own, so the promotion gate can run wherever the image runs.
 
 **files touched** `template_code/tests/` — adapter conformance path TBD. Tests carry the `arcpy`
 pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5.
+**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5, B31, B32.
 
 **doc migration** none.
 

@@ -1,6 +1,6 @@
 # Slice 1b evidence: the engine run, first pull request
 
-**Status:** EVIDENCE IN PROGRESS, 2026-11-04. For the third pull request of slice 1b, cut in
+**Status:** EVIDENCE, 2026-11-05 (the marked run green on the image). For the third pull request of slice 1b, cut in
 two with the architect: this one holds the `.gdb` builders (`tests/support/arcpy/gdb.py`,
 `tests/support/gdb_cases.py`), the conformance suite over both adapters
 (`tests/conformance/`), the engine-expectation tests (`tests/engine/arcpy/`), the support
@@ -10,10 +10,10 @@ session's `read_environment`, `PARENTS_SCHEMA` in `ports/table_ops.py`, the stub
 type, and B23. The second holds `tools/time_read_rows.py` with W14, and every code change a
 W-item forces that no test here needs.
 
-No engine ran in WSL, where this file was written: every output below is from the sandbox
-without ArcPy. The marked tests have not run. The architect runs them under ArcGIS Pro and
-pastes the output into the section "The Pro run" below; nothing in this file claims an
-engine result it has not been shown.
+This file was written in WSL without ArcPy; every engine result below was run by the
+architect in the project's image and pasted, and nothing here claims an engine result it
+has not been shown. The image is `ghcr.io/kartverket/arcpy-linux:12.1`, the gate's
+environment by T4.11; the Windows Pro run is the divergence detector and has not run.
 
 ## What the batch adds, and why it needs no break-once case
 
@@ -82,11 +82,14 @@ writer. `lint-imports`: 24 kept, 0 broken.
 
 ### The image run, 2026-11-05
 
-Run by the architect from WSL in the project's image, `arcpy-linux:12.1` built locally from
-the same source as `ghcr.io/kartverket/arcpy-linux:12.1` (digest to be recorded). Python
-3.13.17, ArcPy 12.1; `import arcpy` works in the bare image without `startserver.sh`, which
-answers T4.11's licence question for the image route: no activation step. The pinned pytest
-went into a target folder, never into the image's environment:
+Run by the architect from WSL in the project's image, `ghcr.io/kartverket/arcpy-linux:12.1`
+(the first runs on a local build of the same source, the final run after pulling the
+registry image; digest `sha256:eb53667b7b73076f3eb3e7547b3d35c94aa79fdd6afe5a002959f28d484f4575`).
+Python 3.13.17, ArcPy 12.1; the image needs no setup step for the tests. The pinned pytest
+went into a target folder, never into the image's environment. The run below pinned pytest
+alone, and its closure came unpinned: the session line reports `pluggy-1.7.0` where
+`uv.lock` pins `pluggy==1.6.0`. The documented command on `testing.md` exports the `dev`
+extra's closure from the lock and installs it with `--no-deps`, so nothing resolves:
 
 ```
 docker run --rm -v "$PWD":/work:ro -w /work \
@@ -120,13 +123,29 @@ The seven failures and what was done with each, under the rule below:
 | `test_a_multipart_polygon_with_holes_is_refused_as_one_row_and_explodes_with_them` | `read_rows` did not refuse | settled by the probe below: orientation, and a one-member multipolygon is stored as a polygon; the shape is now two members, oriented |
 
 After these fixes and the probe's: 497 unit tests pass, 34 deselected, pyright and the
-scans clean, the break-once needles match. The marked run is to be repeated on the image
-before the commit point; every marked test is expected to pass.
+scans clean, the break-once needles match. The marked run repeated on the image,
+2026-11-05, with the same command:
+
+```
+collected 55 items / 21 deselected / 34 selected
+tests/conformance/test_geometry_ops.py ............
+tests/conformance/test_table_ops.py .........
+tests/engine/arcpy/test_dataset_schema.py .
+tests/engine/arcpy/test_memory_workspace.py ..
+tests/engine/arcpy/test_row_io.py ..
+tests/engine/arcpy/test_session.py .....
+tests/engine/arcpy/test_shape.py ...
+34 passed, 21 deselected in 50.78s
+```
+
+Thirty-four, not thirty-five: W3's test is gone. No test was removed for a contract
+question, so T4.11's status names none. The bare run with both buckets in one session,
+the conftest-interplay check, has not run yet.
 
 ### The probe, 2026-11-05
 
-Image digest `arcpy-linux@sha256:eb53667b7b73076f3eb3e7547b3d35c94aa79fdd6afe5a002959f28d484f4575`,
-a local build of the source pushed as `ghcr.io/kartverket/arcpy-linux:12.1`.
+Image `ghcr.io/kartverket/arcpy-linux:12.1`, digest
+`sha256:eb53667b7b73076f3eb3e7547b3d35c94aa79fdd6afe5a002959f28d484f4575`.
 `docs/refactor/temp/w19_wkb_probe.py`, run as
 `python docs/refactor/temp/w19_wkb_probe.py` with `src` and the root on the path, writes
 five polygons and the test encoder's shape, reads them back and explodes them, then runs
@@ -256,9 +275,14 @@ holes is refused by the member check in `geometry_values.py`, so T4.11 (1c) fail
 candidate responses, collapsing a one-member multi to its single kind or accepting the
 engine's kind in the contract, are the architect's to choose.
 
-## Record edits waiting on the run
+## Record edits
 
-Each with a per-item summary first: T4.11's status (the halves that ran, and any test
+Applied 2026-11-06 on the architect's agreement to the per-item summaries: T4.11's status,
+licence line and `write_rows` follow-up; T2.1's status; B23 closed; B31 and B32 opened;
+`testing.md`'s table and "Running the ArcPy tests" with the pinned command; `toolchain.md`'s
+bullet; the contract line in `ports/table_ops.py`. Waiting: A9.2's own landing line in
+`DECISIONS.md`, a locked item presented separately; the break-once case X6. As listed before
+the run: T4.11's status (the halves that ran, and any test
 removed with the question it waits on); T2.1's status (the compile confirmed by W7, W8 and
 W10); B23 closed with the environment that worked; `testing.md`'s "Running the ArcPy tests"
 with the command; A9.2's contract line in `ports/table_ops.py` with what W15 showed; T4.11

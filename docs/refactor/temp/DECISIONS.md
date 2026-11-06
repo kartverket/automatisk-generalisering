@@ -2517,7 +2517,15 @@ and its docstring named `CreateFileGDB`, which `staging/` may not call; no A-ite
 method covered it (`findings/template_review.md` §4, §7). Options were (a) a `TableOps` method,
 (b) a callable injected into the manager by `runtime/`, (c) lazy creation by the adapter.
 
-**B23. The environment for `pytest -m arcpy`.** Opened 2026-10-09, due with slice 1b, when
+**B23. The environment for `pytest -m arcpy`.** *Closed 2026-11-05.* The marked tests run in
+the image, `ghcr.io/kartverket/arcpy-linux:12.1`, which is the gate's environment (T4.11): the
+`dev` extra's closure is exported from `uv.lock` and installed with `--no-deps` into a target
+folder, `src` and that folder go on `PYTHONPATH`, nothing is installed into the image's own
+environment, and the command names `tests/conformance` and `tests/engine`, since the static
+tests import the dev tools at collection. The command is on `docs/contributing/testing.md`,
+the authority. The Windows Pro interpreter route is untried and is a divergence check, not
+the gate; its expected shape is (b) below with the same exported closure. As opened:
+Opened 2026-10-09, due with slice 1b, when
 the first `arcpy`-marked tests (the conformance cases and the timing run) land. The run
 needs two things beside ArcPy: `ag` importable, and pytest at the version `pyproject.toml`
 pins. The team runs the default `arcgispro-py3` environment at a non-standard location
@@ -2597,5 +2605,28 @@ a second line or is turned off once ingest conforms every input.
 lake with islands arriving as one row, is refused on read with `PortContractError` and is
 reachable only after `explode_multipart`, which yields one polygon with its holes per row.
 Open: whether `parts` gains a nested form for such a member, or the read-after-explode rule
-is the contract.
+is the contract. The first engine run adds: a one-member multipolygon is stored as a polygon,
+so the one-row shape is a multipolygon with two or more members, one of them holed.
+`destination:` `ports/geometry.py` when decided.
+
+**B31. The geometry type of a feature class written through the port.** Opened 2026-11-06
+with the `.gdb` builders. `Schema` carries fields, data type and CRS; the engine's create
+tool needs a geometry type, which the builders derive from the rows' kinds, test-side, in
+`tests/support/arcpy/gdb.py`. Open: how `write_rows` (PC-D22) learns it, a `Schema` field or
+inference from the rows, with the empty dataset undecided; and whether `MemoryStore.write`
+refuses what every engine refuses, one geometry type per feature class, which is what let a
+mixed-kind case pass as engine-neutral until the first engine run.
+`destination:` `ports/table_ops.py` and the store when decided.
+
+**B32. Ring orientation at the port boundary.** Opened 2026-11-06 with the first engine run.
+The engine reads a WKB ring's role from its orientation, not from its position: exterior
+counter-clockwise, hole clockwise. Two counter-clockwise rings become two exterior members,
+and a lone clockwise ring becomes an empty shape, which is silent geometry loss on write. On
+read the engine returns exterior counter-clockwise and holes clockwise, so a clockwise input
+round-trips as written through the in-memory adapter and reversed through ArcPy unless one
+side canonicalises. Today the test-side writer orients (`tests/support/wkb.py`, `oriented`)
+and the codec keeps rings as the engine writes them. Open: whether orientation is part of the
+`Geometry` contract, a value canonical and a round trip identity on every adapter, or an
+adapter concern at the boundary (PC-D25), the write side orienting and a value allowed to
+come back with its rings reversed.
 `destination:` `ports/geometry.py` when decided.

@@ -83,6 +83,10 @@ class TableOps(Protocol):
     Every handle parameter carries a direction marker, and every output declares its row
     shape on the method; a method that returns values and writes no handle is outside
     the row-shape grammar and is listed as such by the check over the surface. ADR-0017.
+
+    A native index a port method reports, as the columns of a parents table do, is valid
+    until its dataset is next written: a method reads its input's indices as they are and
+    never rewrites them, and an output's indices are its own.
     """
 
     def read_rows(self, *, input: In, fields: tuple[FieldName, ...]) -> Iterable[Row]:

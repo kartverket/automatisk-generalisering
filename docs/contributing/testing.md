@@ -78,7 +78,8 @@ tests_legacy/      the tests of the legacy packages
 
 | tests | pre-commit and CI (both runners) | ArcGIS Pro environment | the image |
 |---|---|---|---|
-| unit, static, conformance under the in-memory adapter | yes | yes | yes |
+| unit, conformance under the in-memory adapter | yes | yes | yes |
+| static | yes | no: they run pyright and the hooks' tools | no: the same |
 | conformance under ArcPy, `engine/`, goldens that replay the engine, invariance, smoke | never | yes, on request | yes, gating image promotion (later) |
 | `tests_legacy/` | never | by hand | never |
 
@@ -103,14 +104,32 @@ importable. The auto-skip is for bare manual runs only.
 
 ## Running the ArcPy tests
 
-They run under an interpreter that has ArcPy. The marked tests are the ArcPy parameter of
-`tests/conformance/` and every test under `tests/engine/`; how that run gets `ag` and the
-pinned pytest beside ArcPy is B23 in the design record, settled on the first run and
-recorded here (the checks never run from the Pro environment either way). `pytest -m arcpy`
-runs the marked tests only; a bare `pytest` in that environment runs everything, the unit
-tests on the fake engine beside the marked ones, since the adapter imports the engine
-inside the function that reaches it and the unit fixture installs its fake per test. Later
-the same tests run in the Linux image, where the conformance suite gates image promotion.
+The marked tests are the ArcPy parameter of `tests/conformance/` and every test under
+`tests/engine/`. They run in the project's image, `ghcr.io/kartverket/arcpy-linux:12.1`,
+where the conformance suite gates image promotion. The image has ArcPy and none of the dev
+tools, so the run brings the `dev` extra with it at `uv.lock`'s versions and names the two
+roots, because the static tests import the dev tools at collection. From the repository
+root in WSL, with the repository on the Linux filesystem:
+
+```
+uv export --locked --extra dev --no-emit-project --no-hashes -o /tmp/ag-dev-pins.txt
+docker run --rm -i -v "$PWD":/work:ro -w /work \
+  -e PYTHONPATH=/work/src:/tmp/pt -e PYTHONDONTWRITEBYTECODE=1 \
+  ghcr.io/kartverket/arcpy-linux:12.1 \
+  bash -c 'cat > /tmp/pins.txt &&
+           pip install -q --no-cache-dir --no-deps --target /tmp/pt -r /tmp/pins.txt &&
+           python -m pytest tests/conformance tests/engine -m arcpy -ra -p no:cacheprovider' \
+  < /tmp/ag-dev-pins.txt
+```
+
+`--no-deps` with the whole exported closure means pip resolves nothing: every package is at
+the lock's version, or the import fails. Nothing is installed into the image's own
+environment, the mount is read-only, and the geodatabases land under pytest's temporary
+directory in the container. The same command without `-m arcpy` and with `tests/unit` added
+runs the unit tests on the fake engine beside the marked ones in one session: the adapter
+imports the engine inside the function that reaches it, and the unit fixture installs its
+fake per test. The Windows Pro interpreter is a divergence check, not the gate, and that
+route is untried; B23 in the design record records how the environment was settled.
 
 ## `tests_legacy/`
 
