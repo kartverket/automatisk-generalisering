@@ -347,6 +347,10 @@ next written**. Backends differ — GeoPackage rowid is stable, Postgres `ctid` 
 so this is a real contract line, not a passthrough.
 `destination:` `ports/table_ops.py`.
 
+> *Landed 2026-11-06* in `ports/table_ops.py`, the `TableOps` docstring. The docstring is
+> the authority; the non-dense OBJECTID case that showed it is in
+> `temp/findings/slice_1b_arcpy_conformance_evidence.md`.
+
 **A9.3** `work_key` is a flat allocator — `work_key_001`, `work_key_002` — not a
 `ScratchScope`-style trail. The divergence is principled: a scratch dataset's leaf name is a
 literal *because a human reads it in a scratch dump*; a work-key name is read by nobody outside

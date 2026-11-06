@@ -15,18 +15,42 @@ architect in the project's image and pasted, and nothing here claims an engine r
 has not been shown. The image is `ghcr.io/kartverket/arcpy-linux:12.1`, the gate's
 environment by T4.11; the Windows Pro run is the divergence detector and has not run.
 
-## What the batch adds, and why it needs no break-once case
+## The one new guard, broken once
 
-No new guard: `create_table`, `add_fields` and `insert_rows` carry no port rule of their own
-(PC-D26's row checks arrive with `write_rows`); `read_environment` reads back and refuses
-nothing but a unit it cannot parse, which is an adapter defect; the stub's `UpdateCursor`
-adds a declared name, and `tests/static/test_arcpy_stub.py` pins refused lines, not
-declared ones. The existing cases still match:
+The batch itself added no guard: `create_table`, `add_fields` and `insert_rows` carry no port
+rule of their own (PC-D26's row checks arrive with `write_rows`); `read_environment` refuses
+nothing but a unit it cannot parse, which is an adapter defect; the stub's `UpdateCursor` adds
+a declared name, and `tests/static/test_arcpy_stub.py` pins refused lines, not declared ones.
+The probe then forced one guard, the refusal of an input that already carries the reference
+field, and it has its case, X6 in `tools/break_once/cases/arcpy_adapter.py`, run 2026-11-06
+by `python -m tools.break_once arcpy_adapter`; `git status` showed the mutated file unchanged
+after the run.
 
 ```
-$ uv run --locked --extra dev python -m tools.break_once --check
-break-it-once: 161 cases in 8 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --check
+break-it-once: 20 cases in 1 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --out report.md
+break-it-once: 20 cases, 0 unexpected
 ```
+
+### X6: an input that already has the reference field accepted
+
+File: `src/ag/adapters/arcpy/geometry_ops/shape.py`. Edit: `if _REFERENCE in before.all_fields:` -> `if False:`.
+
+Targets: test_explode_refuses_an_input_that_already_has_the_reference_field. Baseline: passed.
+
+Result: **FAILED as expected** (exit 1)
+
+```
+>           ArcpyGeometryOps(session=session).explode_multipart(
+>           raise EngineError(
+E           ag.ports.errors.EngineError: arcpy: management.MultipartToSinglepart added [] to 'exploded'; one reference field was expected.
+FAILED tests/unit/adapters/arcpy/test_geometry_ops.py::test_explode_refuses_an_input_that_already_has_the_reference_field
+1 failed in 0.02s
+```
+
+The other nineteen cases of the set failed as expected as before (the methods evidence);
+after the last restore: `235 passed in 2.60s`.
 
 ## By hand, in WSL
 
@@ -139,8 +163,25 @@ tests/engine/arcpy/test_shape.py ...
 ```
 
 Thirty-four, not thirty-five: W3's test is gone. No test was removed for a contract
-question, so T4.11's status names none. The bare run with both buckets in one session,
-the conftest-interplay check, has not run yet.
+question, so T4.11's status names none.
+
+The bare run with both buckets in one session, 2026-11-06, with the `dev` extra's closure
+exported from `uv.lock` and installed with `--no-deps` (the session line then reports
+`pluggy-1.6.0`, the lock's version): the unit tests on the fake engine, the conformance suite
+under both adapters and the engine tests, one process, no `sys.modules` interplay between the
+fake and the real engine:
+
+```
+docker run --rm -i -v "$PWD":/work:ro -w /work -e PYTHONPATH=/work/src:/tmp/pt \
+  -e PYTHONDONTWRITEBYTECODE=1 ghcr.io/kartverket/arcpy-linux:12.1 \
+  bash -c 'cat > /tmp/pins.txt && pip install -q --no-cache-dir --no-deps --target /tmp/pt -r /tmp/pins.txt &&
+           python -m pytest tests/unit tests/conformance tests/engine -q -p no:cacheprovider' < /tmp/ag-dev-pins.txt
+397 passed in 59.11s
+```
+
+This is the handoff's fourth open question answered: the unit fixture installs its fake per
+test and the adapter imports the engine inside the function that reaches it, so a marked
+test and a unit test in one session each get the right module.
 
 ### The probe, 2026-11-05
 
@@ -280,9 +321,9 @@ engine's kind in the contract, are the architect's to choose.
 Applied 2026-11-06 on the architect's agreement to the per-item summaries: T4.11's status,
 licence line and `write_rows` follow-up; T2.1's status; B23 closed; B31 and B32 opened;
 `testing.md`'s table and "Running the ArcPy tests" with the pinned command; `toolchain.md`'s
-bullet; the contract line in `ports/table_ops.py`. Waiting: A9.2's own landing line in
-`DECISIONS.md`, a locked item presented separately; the break-once case X6. As listed before
-the run: T4.11's status (the halves that ran, and any test
+bullet; the contract line in `ports/table_ops.py`. A9.2's landing line in `DECISIONS.md` and the
+break-once case X6 followed on 2026-11-06 with the architect's approval. As listed before the
+run: T4.11's status (the halves that ran, and any test
 removed with the question it waits on); T2.1's status (the compile confirmed by W7, W8 and
 W10); B23 closed with the environment that worked; `testing.md`'s "Running the ArcPy tests"
 with the command; A9.2's contract line in `ports/table_ops.py` with what W15 showed; T4.11
