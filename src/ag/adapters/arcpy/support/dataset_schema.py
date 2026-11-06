@@ -6,8 +6,8 @@ every field name the engine reports; and the engine's own field names, the nativ
 index, the shape, and the length and area it maintains. `describe(session, path)` builds
 it inside the session's guard; `declared_field(dataset, name)` is the one lookup that
 `read_rows` and the predicate compiler share. `OID_TOKEN` is the cursor token for the
-native index, and `FIELD_TYPES` the engine's type names against the port's, each spelled
-here and nowhere else.
+native index, and `FIELD_TYPES` and `DATA_TYPES` the engine's type names against the port's,
+each spelled here and nowhere else.
 
 How: the engine's `SmallInteger`, `Integer`, `Double`, `String` and `Date` map to the
 five `FieldType` members. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
@@ -59,7 +59,7 @@ FIELD_TYPES: Mapping[str, FieldType] = MappingProxyType(
 OID_TOKEN = "OID@"
 """The cursor token for a row's native index."""
 
-_DATA_TYPES: Mapping[str, DataType] = MappingProxyType(
+DATA_TYPES: Mapping[str, DataType] = MappingProxyType(
     {"FeatureClass": DataType.FEATURE_CLASS, "Table": DataType.TABLE}
 )
 """Engine `dataType` to the port's; anything else is not a dataset a port method takes."""
@@ -95,7 +95,7 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
     """The dataset at `path`, as the port sees it; refused if it is not a table or feature
     class, carries Z or M, or has no EPSG code."""
     raw = _read(session, path)
-    data_type = _DATA_TYPES.get(raw.data_type)
+    data_type = DATA_TYPES.get(raw.data_type)
     if data_type is None:
         raise PortContractError(
             f"{path!r} is a {raw.data_type}, not a table or a feature class.",

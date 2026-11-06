@@ -7,11 +7,13 @@ on hand-built rings. No engine: the stages that reach one are read in the eviden
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from collections.abc import Iterator
 
 import pytest
 
+from ag.ports.errors import PortContractError
 from ag.ports.geometry import Geometry, GeometryKind
 from tests.support import wkb
 from tools.engine import time_read_rows as timing
@@ -88,6 +90,56 @@ def test_an_interrupt_is_a_result_and_the_iterator_is_closed() -> None:
     assert result.status == "interrupted"
     assert result.rows == 5
     assert rows.closed
+
+
+class Raising:
+    """A generator that raises `error` after `before` rows and records its close."""
+
+    def __init__(self, error: Exception, *, before: int) -> None:
+        self.error = error
+        self.before = before
+        self.closed = False
+
+    def __iter__(self) -> Iterator[object]:
+        try:
+            yield from range(self.before)
+            raise self.error
+        finally:
+            self.closed = True
+
+
+@pytest.mark.parametrize(
+    ("error", "status"),
+    [
+        pytest.param(ValueError("cell value 42 at (1.0, 2.0)"), "failed", id="defect"),
+        pytest.param(
+            PortContractError("row 3 holds 'a value'"), "refused", id="refusal"
+        ),
+    ],
+)
+def test_an_exception_mid_pass_is_a_result_that_names_its_class_only(
+    error: Exception, status: str
+) -> None:
+    rows = Raising(error, before=3)
+    result = timing.run_pass(
+        iter(rows), cap_seconds=1_000.0, batch_rows=50, clock=Clock(1.0)
+    )
+    assert (result.status, result.rows, result.error) == (
+        status,
+        3,
+        type(error).__name__,
+    )
+    assert "42" not in json.dumps(result.__dict__)
+    assert "a value" not in json.dumps(result.__dict__)
+    assert rows.closed
+
+
+def test_a_failure_line_carries_the_class_and_never_the_message() -> None:
+    assert timing.failure(ValueError("cell value 42")) == {
+        "status": "failed",
+        "error": "ValueError",
+    }
+    assert timing.failure(PortContractError("row 3"))["status"] == "refused"
 
 
 def test_closing_the_oriented_wrapper_closes_the_port_rows_beneath_it() -> None:

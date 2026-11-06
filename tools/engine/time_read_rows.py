@@ -33,7 +33,8 @@ selectable with `--only`:
 Every timed pass is capped by `--cap-seconds`, writes one line per `--batch-rows` rows
 with the current RSS, closes its iterator explicitly so the cursor's lock is released
 before the next pass, and ends with a line whose status is `complete`, `capped`,
-`interrupted` or `refused`. All four are results and the exit code is 0. A rate is also
+`interrupted`, `refused` for a port refusal by design, or `failed` for any other
+exception, an adapter defect included. All five are results and the exit code is 0. A rate is also
 projected to the full table and to a partition of 36,407 rows, which is the rate scaled
 by that count and not a measured partition. The peak RSS is written once at the end.
 
@@ -70,7 +71,12 @@ from typing import TextIO
 
 from ag.adapters.arcpy.geometry_ops import ArcpyGeometryOps
 from ag.adapters.arcpy.session import ArcpySession, open_session
-from ag.adapters.arcpy.support.dataset_schema import FIELD_TYPES, OID_TOKEN, describe
+from ag.adapters.arcpy.support.dataset_schema import (
+    DATA_TYPES,
+    FIELD_TYPES,
+    OID_TOKEN,
+    describe,
+)
 from ag.adapters.arcpy.support.geometry_values import (
     WKB_TOKEN,
     geometry_from_wkb,
@@ -80,6 +86,7 @@ from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.errors import AgError
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
+from ag.ports.attributes import FieldType
 from ag.ports.geometry import Geometry, GeometryKind, Ring
 from ag.ports.table_ops import Row
 
@@ -90,6 +97,8 @@ STAGES = ("preflight", "copies", "explode", "reads", "describe")
 NAMESPACE = "tools.engine.time_read_rows"
 SEQUENCE = "bare, variants, variants reversed, bare, per token set"
 _REFERENCE = "ORIG_FID"
+"""Restates `shape.py`'s private name, as the two tool names in the explode stage
+restate its tool spellings, until those gain public names (proposed with this batch)."""
 _SELECT_ROWS = 1_000
 """Rows in each fresh output the Describe stage creates; the clause names the OID field."""
 
@@ -141,6 +150,8 @@ class PassResult:
     status: str
     rows: int
     elapsed_s: float
+    error: str | None = None
+    """The exception class of a refused or failed pass; never its message."""
 
     @property
     def rows_per_s(self) -> float | None:
@@ -163,6 +174,7 @@ def run_pass(
     """
     count = 0
     status = "complete"
+    error: str | None = None
     start = clock()
     try:
         for _ in rows:
@@ -176,9 +188,13 @@ def run_pass(
                     break
     except KeyboardInterrupt:
         status = "interrupted"
+    except AgError as refusal:
+        status, error = "refused", type(refusal).__name__
+    except Exception as defect:
+        status, error = "failed", type(defect).__name__
     finally:
         close_iterator(rows)
-    return PassResult(status=status, rows=count, elapsed_s=clock() - start)
+    return PassResult(status=status, rows=count, elapsed_s=clock() - start, error=error)
 
 
 def close_iterator(rows: Iterator[object]) -> None:
@@ -205,7 +221,7 @@ class RawDescribe:
 
     @property
     def is_feature_class(self) -> bool:
-        return self.data_type == "FeatureClass"
+        return DATA_TYPES.get(self.data_type) is DataType.FEATURE_CLASS
 
 
 def raw_describe(session: ArcpySession, path: str) -> RawDescribe:
@@ -215,7 +231,7 @@ def raw_describe(session: ArcpySession, path: str) -> RawDescribe:
         import arcpy
 
         described = arcpy.Describe(path)
-        feature_class = described.dataType == "FeatureClass"
+        feature_class = DATA_TYPES.get(described.dataType) is DataType.FEATURE_CLASS
         engine_fields = {described.OIDFieldName}
         if feature_class:
             engine_fields |= {
@@ -319,7 +335,11 @@ def shape_stats(value: object) -> ShapeStats:
 
 @dataclass(frozen=True)
 class _Walk:
-    """Counts rings, vertices and holed multipolygon members in one planar WKB value."""
+    """Counts rings, vertices and holed multipolygon members in one planar WKB value.
+
+    Independent of the adapter's codec on purpose: the walk classifies the codes the codec
+    refuses, Z, M and curves, and must not share its refusals.
+    """
 
     data: bytes
 
@@ -552,7 +572,11 @@ class Run:
 
     @property
     def date_fields(self) -> tuple[str, ...]:
-        return tuple(name for name, kind in self.raw.fields if kind == "Date")
+        return tuple(
+            name
+            for name, kind in self.raw.fields
+            if FIELD_TYPES.get(kind) is FieldType.DATE
+        )
 
     @property
     def fields(self) -> tuple[str, ...]:
@@ -572,7 +596,20 @@ class Run:
             name=name, data_type=data_type, namespace=NAMESPACE
         ).materialize(f"{workspace}/{name}")
 
+    stage: str = ""
+    """The stage running, for the start line written before every tool call."""
+
     def timed_tool(self, name: str, /, **arguments: object) -> float:
+        """Runs a tool and returns its seconds; a `start` line goes out first, so a run
+        killed during a long tool call shows where it stopped."""
+        inputs = {
+            key: value
+            for key, value in arguments.items()
+            if key in ("in_features", "inputs", "in_table", "template")
+        }
+        self.log.write(
+            "start", dataset=self.name, stage=self.stage, tool=name, **inputs
+        )
         start = time.perf_counter()
         self.session.run_tool(name, **arguments)
         return time.perf_counter() - start
@@ -621,6 +658,12 @@ class Run:
     def copies(self) -> None:
         if not self.raw.is_feature_class:
             return
+        try:
+            self.make_copies()
+        except Exception as error:
+            self.log.write("copy", dataset=self.name, **failure(error))
+
+    def make_copies(self) -> None:
         source = self.options.dataset
         if self.raw.has_z or self.raw.has_m:
             target = f"{self.workspace}/{self.name}_2d"
@@ -700,10 +743,8 @@ class Run:
             start = time.perf_counter()
             line["prepass_nulls"] = self.prepass(source)
             line["prepass_s"] = round(time.perf_counter() - start, 3)
-        except AgError as error:
-            self.log.write(
-                "explode", **line, status="refused", error=type(error).__name__
-            )
+        except Exception as error:
+            self.log.write("explode", **line, **failure(error))
             return
         start = time.perf_counter()
         try:
@@ -712,9 +753,10 @@ class Run:
             )
             line["port_total_s"] = round(time.perf_counter() - start, 3)
             line["port_status"] = "complete"
-        except AgError as error:
-            line["port_status"] = "refused"
-            line["port_error"] = type(error).__name__
+        except Exception as error:
+            port = failure(error)
+            line["port_status"] = port["status"]
+            line["port_error"] = port["error"]
         self.log.write("explode", **line, status="complete")
         if self.walked.rows_with_holed_members:
             self.read_path = out_bare
@@ -739,7 +781,7 @@ class Run:
             return
         self.token_set("attributes", fields, variants=())
         variants = ("codec", "port")
-        if self.raw.shape_type == "Polygon":
+        if self.raw.shape_type == "Polygon":  # the engine's string, W23, until B31
             variants = ("codec", "port", "orient")
         self.token_set("geometry", fields, variants=variants)
 
@@ -785,21 +827,22 @@ class Run:
 
         try:
             rows = self.variant_rows(variant, path=path, tokens=tokens, fields=fields)
-            result = run_pass(
-                rows,
-                cap_seconds=self.options.cap_seconds,
-                batch_rows=self.options.batch_rows,
-                on_batch=batch,
-            )
-        except AgError as error:
-            self.log.write("end", **line, status="refused", error=type(error).__name__)
+        except Exception as error:
+            self.log.write("end", **line, **failure(error))
             return
+        result = run_pass(
+            rows,
+            cap_seconds=self.options.cap_seconds,
+            batch_rows=self.options.batch_rows,
+            on_batch=batch,
+        )
         rate = result.rows_per_s
         total = self.walked.rows
         self.log.write(
             "end",
             **line,
             status=result.status,
+            error=result.error,
             rows=result.rows,
             elapsed_s=round(result.elapsed_s, 3),
             rows_per_s=rounded(rate, 1),
@@ -837,10 +880,8 @@ class Run:
             line["memory_fresh"] = self.describe_fresh(outputs)
             if outputs:
                 line["memory_repeat"] = self.describe_repeat(outputs[0])
-        except AgError as error:
-            self.log.write(
-                "describe", **line, status="refused", error=type(error).__name__
-            )
+        except Exception as error:
+            self.log.write("describe", **line, **failure(error))
             return
         self.log.write("describe", **line, status="complete")
 
@@ -870,6 +911,13 @@ class Run:
 
     def describe_fresh(self, outputs: Sequence[str]) -> dict[str, float | int | None]:
         return timing_summary([self.timed_describe(path) for path in outputs])
+
+
+def failure(error: Exception) -> dict[str, object]:
+    """The status and class of an exception, never its message: `refused` for a port
+    refusal by design, `failed` for anything else."""
+    status = "refused" if isinstance(error, AgError) else "failed"
+    return {"status": status, "error": type(error).__name__}
 
 
 def rounded(value: float | None, digits: int = 3) -> float | None:
@@ -931,17 +979,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             partition_rows=PARTITION_ROWS,
             environment=str(session.environment),
         )
+        stages: dict[str, Callable[[], None]] = {
+            "preflight": run.preflight,
+            "copies": run.copies,
+            "explode": run.explode,
+            "reads": run.reads,
+            "describe": run.describe_stage,
+        }
         try:
-            if "preflight" in options.stages:
-                run.preflight()
-            if "copies" in options.stages:
-                run.copies()
-            if "explode" in options.stages:
-                run.explode()
-            if "reads" in options.stages:
-                run.reads()
-            if "describe" in options.stages and not run.interrupted:
-                run.describe_stage()
+            for stage in STAGES:
+                if stage in options.stages and not run.interrupted:
+                    run.stage = stage
+                    stages[stage]()
         except KeyboardInterrupt:
             log.write("end", dataset=name, status="interrupted", stage="outside a pass")
         finally:
