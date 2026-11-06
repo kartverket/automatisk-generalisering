@@ -16,7 +16,7 @@ checks are:
 | `ruff check` | pyflakes, import order and `SLF001` on `src/ag/generalization/`; on the legacy packages `F401` and `I001` are held back and a per-file baseline applies ([setup and toolchain](toolchain.md)) |
 | `pyright` | strict type checking of `src/`, `tests/`, `tools/` |
 | `lint-imports` | the import contracts in `.importlinter` |
-| `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py`; engine reach-through outside the ArcPy session's guard under `ag/adapters/arcpy/` and `tests/support/arcpy/` |
+| `tools/scan_sources.py` | environment reads outside `ag/runtime/env.py`; imports by string outside `ag/runtime/stage_ref.py`; engine reach-through outside the ArcPy session's guard under `ag/adapters/arcpy/`, `tests/support/arcpy/` and `tools/engine/` |
 | `pytest -m "not arcpy"` | every test that does not need ArcPy |
 | `python -m tools.break_once --check` | the break-it-once case tables still match the source and their tests still exist (see below) |
 | `check_consistency.py`, `check_terminology.py` | the design record's internal consistency |
@@ -121,6 +121,11 @@ docker run --rm -i -v "$PWD":/work:ro -w /work \
            python -m pytest tests/conformance tests/engine -m arcpy -ra -p no:cacheprovider' \
   < /tmp/ag-dev-pins.txt
 ```
+
+A tool that needs the engine and is not a test lives in `tools/engine/`, the third root
+under the constrained stub and the scan, and runs in the same image with `src` on the
+path and no dev tools; `tools/engine/time_read_rows.py` is the first, and its commands are
+in the evidence file of the run that used it.
 
 `--no-deps` with the whole exported closure means pip resolves nothing: every package is at
 the lock's version, or the import fails. Nothing is installed into the image's own

@@ -138,8 +138,8 @@ available at all (WSL, no Pro interpreter) gets no completion in the legacy pack
 stop: pyright does not check them, so it is that one unresolved-import diagnostic and
 nothing else. The fix is not to widen the constrained stub and not to add a `stubPath` to
 `pyproject.toml`; either would apply a stub to code it was never written for. In
-`src/ag/adapters/arcpy/` and `tests/support/arcpy/` the editor shows the constrained ArcPy
-stub whichever interpreter is selected: a tool call, an `arcpy.env` access or
+`src/ag/adapters/arcpy/`, `tests/support/arcpy/` and `tools/engine/` the editor shows the
+constrained ArcPy stub whichever interpreter is selected: a tool call, an `arcpy.env` access or
 `arcpy.ExecuteError` is an error there, exactly as in the hooks. A submodule import such as
 `import arcpy.management` is not held by the stub: under `.venv` it is an unresolved import;
 under the Pro interpreter it is expected to resolve past the stub to ArcPy itself, which the
@@ -147,7 +147,9 @@ first run under the engine confirms; the source scan refuses that form on both. 
 is never to widen the stub for the editor's sake: a tool goes through `session.run_tool`, and
 a non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same pull
 request. Elsewhere in `src/ag`, `tests/` and `tools/`, ArcPy is not importable at all, which
-is what CI relies on.
+is what CI relies on; an engine-touching tool goes under `tools/engine/`, whose execution
+environment in `pyproject.toml` sits before the root one, since pyright applies the first
+environment whose root contains the file.
 
 **Formatting by hand:** `tools/format.sh` sorts imports and formats the whole repository with
 the pinned ruff through uv. On Windows, run it from Git Bash or run its two commands directly.

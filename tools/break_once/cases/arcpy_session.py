@@ -9,6 +9,7 @@ from ..engine import Case, tests_in
 SESSION = "src/ag/adapters/arcpy/session.py"
 BASE = "src/ag/adapters/arcpy/_base.py"
 SUPPORT = "tests/support/arcpy/__init__.py"
+TOOLS = "tools/engine/__init__.py"
 SCANNER = "tools/scan_sources.py"
 STUB = "stubs/arcpy_constrained/arcpy/__init__.pyi"
 T_SESSION = "tests/unit/adapters/arcpy/test_session.py"
@@ -33,6 +34,13 @@ CASES: tuple[Case, ...] = (
         SUPPORT,
         (("", REFERENCE_PROBE),),
         tests_in(T_SCANS, "test_tree_is_clean[tests-support-arcpy]"),
+    ),
+    Case(
+        "S9",
+        "the same reference in the engine-tools root",
+        TOOLS,
+        (("", REFERENCE_PROBE),),
+        tests_in(T_SCANS, "test_tree_is_clean[tools-engine]"),
     ),
     Case(
         "S3",

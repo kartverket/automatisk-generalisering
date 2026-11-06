@@ -3,8 +3,9 @@
 What: three rules, each over the roots that `SCOPES` assigns it. `environment-read`:
 no environment read outside `ag/runtime/env.py`. `import-by-string`: no `importlib`,
 `runpy` or `__import__` outside `ag/runtime/stage_ref.py`. `arcpy-session-only`: under
-the ArcPy adapter and the engine-touching test support, the engine is reached through
-the session module or inside its guard, and never behind the constrained stub's back.
+the ArcPy adapter, the engine-touching test support and the engine tools, the engine is
+reached through the session module or inside its guard, and never behind the constrained
+stub's back.
 
 How: parses every module under a scope's root with `ast`. The first two rules match
 imports, attribute access on the `os` module and the `__import__` name. The third
@@ -99,6 +100,10 @@ SCOPES: dict[str, Scope] = {
     ),
     "tests-support-arcpy": Scope(
         root=REPO / "tests" / "support" / "arcpy",
+        rules=frozenset({ARCPY_SESSION_ONLY, IMPORT_BY_STRING}),
+    ),
+    "tools-engine": Scope(
+        root=REPO / "tools" / "engine",
         rules=frozenset({ARCPY_SESSION_ONLY, IMPORT_BY_STRING}),
     ),
 }
