@@ -59,6 +59,12 @@ def main(
         out_feature_class=output_roads_fc,
     )
     arcpy.management.Append([files["new_lines"]], output_roads_fc)
+    if (
+        not arcpy.Exists(files["potential_points"])
+        or arcpy.management.GetCount(files["potential_points"]).getOutput(0) == 0
+    ):
+        wfm.delete_created_files()
+        return
     arcpy.management.CopyFeatures(
         in_features=files["potential_points"],
         out_feature_class=output_points_fc,
@@ -3129,7 +3135,7 @@ def _sort_rampids_by_avg_vegklasse(
 
     def avg_vegklasse(endpoints):
         values = [
-            endpoint_data_map.get(e["endpoint_oid"], {}).get("vegklasse", 0)
+            endpoint_data_map.get(e["endpoint_oid"], {}).get("vegklasse") or 0
             for e in endpoints
         ]
         return sum(values) / len(values) if values else 0
@@ -3240,6 +3246,9 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
     wfm = WorkFileManager(config=config)
     files = create_wfm_gdbs_2(wfm=wfm)
     arcpy.management.CopyFeatures(input_roads_fc, files["copy_of_roads"])
+    if not arcpy.Exists(files["potential_points"]):
+        wfm.delete_created_files()
+        return
     arcpy.management.CopyFeatures(input_points_fc, files["copy_of_points"])
 
     explode_roads(files=files)
@@ -3257,6 +3266,9 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
         fields="Shape",
         xy_tolerance="5 Meters",
     )
+    if not arcpy.Exists(files["potential_points_part2"]):
+        wfm.delete_created_files()
+        return
     arcpy.management.CopyFeatures(
         in_features=files["potential_points_part2"],
         out_feature_class=output_points_fc,
