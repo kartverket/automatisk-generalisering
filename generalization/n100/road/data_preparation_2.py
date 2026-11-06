@@ -439,7 +439,7 @@ def ramp_partition():
 
     run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=35_000,
-        context_radius_meters=500,
+        context_radius_meters=1000,
         run_partition_optimization=False,
     )
 

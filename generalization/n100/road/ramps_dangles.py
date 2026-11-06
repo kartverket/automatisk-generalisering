@@ -28,6 +28,7 @@ _SNAP_TOLERANCE_M = 1.0
 _RAMP_MATCH_TOLERANCE_M = 1.0
 _INDEX_CELL_SIZE_M = 25.0
 _MAX_FALSE_LOOP_PERIMETER_M = 500
+_MAX_REMOVAL_ENDPOINT_DISTANCE_M = 500
 _MEDIUM_FIELD = "medium"
 _RAMP_ID_FIELD = "ramp_id"
 _RAMP_WHERE_CLAUSE = "typeveg = 'rampe'"
@@ -650,30 +651,45 @@ def _remove_in_waves(
     result = _WaveResult(removed_oids=[], splits=[], ramp_changed=set(), waves=[])
     no_ignore: frozenset[int] = frozenset()
 
-    wave = [
-        node
+    wave = {
+        node: {xy}
         for node, xy in enumerate(graph.nodes.xy)
         if graph.is_dangle(node) and ramp_index.has_within(xy, no_ignore)
-    ]
+    }
     for iteration in range(1, max_iterations + 1):
         if not wave:
             break
         acted: list[int] = []
-        exposed: dict[int, None] = {}
+        exposed: dict[int, set[Point]] = {}
 
-        def expose(nodes: list[int]) -> None:
+        def expose(nodes: list[int], origins: set[Point]) -> None:
             for candidate in nodes:
-                if candidate not in exposed and (
+                if (
                     graph.is_dangle(candidate)
                     or graph.pendant_loop(candidate, max_loop_perimeter) is not None
                 ):
-                    exposed[candidate] = None
+                    exposed.setdefault(candidate, set()).update(origins)
 
-        for node in wave:
+        for node, origins in wave.items():
             if graph.is_dangle(node):
                 (oid,) = graph.node_lines[node]
-                acted.append(node)
                 cut = graph.find_cut(oid, node, max_loop_perimeter)
+                endpoint = (
+                    cut.point
+                    if cut is not None
+                    else graph.nodes.xy[graph._far_node(oid, node)]
+                )
+                dangle_point = graph.nodes.xy[node]
+                eligible_origins = {
+                    origin
+                    for origin in origins
+                    if math.dist(origin, dangle_point)
+                    <= _MAX_REMOVAL_ENDPOINT_DISTANCE_M
+                    and math.dist(origin, endpoint) <= _MAX_REMOVAL_ENDPOINT_DISTANCE_M
+                }
+                if not eligible_origins:
+                    continue
+                acted.append(node)
                 if cut is not None:
                     split, affected = graph.split_line(oid, node, cut)
                     result.splits.append(split)
@@ -682,20 +698,20 @@ def _remove_in_waves(
                 else:
                     affected = graph.remove_line(oid)
                     result.removed_oids.append(oid)
-                expose(affected)
+                expose(affected, eligible_origins)
                 continue
             cycle = graph.pendant_loop(node, max_loop_perimeter)
             if cycle is None:
                 continue
             acted.append(node)
             for loop_oid in graph.loop_lines_to_remove(node, cycle):
-                expose(graph.remove_line(loop_oid))
+                expose(graph.remove_line(loop_oid), origins)
                 result.removed_oids.append(loop_oid)
         result.waves.append(acted)
         logger.info(
             "Dangle removal iteration %d: %d dangles handled", iteration, len(acted)
         )
-        wave = list(exposed)
+        wave = exposed
     else:
         logger.warning("Dangle removal stopped at max_iterations=%d", max_iterations)
 
@@ -823,6 +839,9 @@ def remove_new_dangles(
     node after a removal, touched by other lines at one node at most, is removed
     like a dangle. If that loop has ramp crossings, the side with the first one is
     kept and then handled from the dangle, so only that crossing becomes a T cross.
+    Open removal paths are limited to 500 metres of straight-line distance from the
+    starting ramp dangle to the prospective endpoint. Pendant loops remain limited
+    by their perimeter.
 
     Args:
         lines_fc: Line feature class edited in place.
