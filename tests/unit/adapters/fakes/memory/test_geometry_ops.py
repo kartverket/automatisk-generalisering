@@ -13,12 +13,21 @@ from __future__ import annotations
 import pytest
 
 from ag.adapters.fakes.memory.geometry_ops import MemoryGeometryOps
-from ag.adapters.fakes.memory.geometry_ops.shape import PARENTS_SCHEMA
 from ag.adapters.fakes.memory.store import MemoryStore
 from ag.core.types import DataType
 from ag.ports import CHILD_ID, PARENT_ID, Attr, Comparison, Intersects, Predicate, Row
 from ag.ports.errors import EmptyGeometryError, PortContractError
-from tests.support.cases import lookup, parts, parts_children, roads
+from ag.ports.geometry import Geometry
+from ag.ports.table_ops import PARENTS_SCHEMA
+from tests.support.cases import (
+    DatasetCase,
+    lookup,
+    multilines,
+    multilines_children,
+    multipoints,
+    multipoints_children,
+    roads,
+)
 from tests.support.memory import memory_handle, seed
 
 
@@ -121,12 +130,12 @@ def test_select_refuses_an_output_on_the_input_path() -> None:
 
 def test_explode_without_parents_writes_the_children_and_nothing_else() -> None:
     store = MemoryStore()
-    case = parts()
+    case = multilines()
     seeded = seed(store, case)
     output = memory_handle("exploded")
     MemoryGeometryOps(store=store).explode_multipart(input=seeded.handle, output=output)
     children = store.read(output)
-    expected = parts_children()
+    expected = multilines_children()
     assert children.schema == case.schema
     assert len(children.rows) == sum(len(g) for g in expected.values())
     assert {row.geometry for row in children.rows.values()} == set().union(
@@ -138,9 +147,18 @@ def test_explode_without_parents_writes_the_children_and_nothing_else() -> None:
     )
 
 
-def test_parents_pairs_match_the_expected_partition_through_native_indices() -> None:
+Children = dict[int, frozenset[Geometry]]
+PARTITIONS: list[tuple[DatasetCase, Children]] = [
+    (multilines(), multilines_children()),
+    (multipoints(), multipoints_children()),
+]
+
+
+@pytest.mark.parametrize(("case", "children_of"), PARTITIONS, ids=["lines", "points"])
+def test_parents_pairs_match_the_expected_partition_through_native_indices(
+    case: DatasetCase, children_of: Children
+) -> None:
     store = MemoryStore()
-    case = parts()
     seeded = seed(store, case)
     output = memory_handle("exploded")
     parents = memory_handle("pairs", DataType.TABLE)
@@ -150,7 +168,7 @@ def test_parents_pairs_match_the_expected_partition_through_native_indices() -> 
     children = store.read(output).rows
     pair_rows = store.read(parents).rows
     pairs = {_pair(row) for row in pair_rows.values()}
-    expected = parts_children()
+    expected = children_of
     assert store.read(parents).schema == PARENTS_SCHEMA
     assert len(pair_rows) == len(pairs) == len(children)
     for position, geometries in expected.items():
@@ -167,7 +185,7 @@ def test_explode_leaves_the_input_index_unchanged_and_the_next_write_reassigns_i
     None
 ):
     store = MemoryStore()
-    case = parts()
+    case = multilines()
     seeded = seed(store, case)
     MemoryGeometryOps(store=store).explode_multipart(
         input=seeded.handle,
@@ -210,7 +228,7 @@ def test_explode_refuses_a_table_input() -> None:
 
 def test_explode_refuses_two_handles_on_one_path() -> None:
     store = MemoryStore()
-    seeded = seed(store, parts())
+    seeded = seed(store, multilines())
     ops = MemoryGeometryOps(store=store)
     with pytest.raises(PortContractError, match="both name"):
         ops.explode_multipart(input=seeded.handle, output=seeded.handle)

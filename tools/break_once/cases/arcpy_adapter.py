@@ -153,6 +153,16 @@ CASES: tuple[Case, ...] = (
         tests_in(T_GEOMETRY, "test_explode_refuses_a_table_and_handles_on_one_path"),
     ),
     Case(
+        "X6",
+        "an input that already has the reference field accepted",
+        SHAPE,
+        (("        if _REFERENCE in before.all_fields:\n", "        if False:\n"),),
+        tests_in(
+            T_GEOMETRY,
+            "test_explode_refuses_an_input_that_already_has_the_reference_field",
+        ),
+    ),
+    Case(
         "X3",
         "the reference field assumed instead of found: any added field accepted",
         SHAPE,

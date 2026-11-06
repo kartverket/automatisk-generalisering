@@ -43,7 +43,7 @@ from ag.ports.geometry_ops import GeometryOps
 from ag.ports.row_shape import Cardinality, Ids, Rows, declared_rows, row_shape
 from ag.ports.table_ops import TableOps
 from ag.ports.toolbox import Toolbox
-from tests.support.cases import DatasetCase, parts, roads
+from tests.support.cases import DatasetCase, multilines, roads
 from tests.support.memory import memory_handle, seed
 
 WALKED: dict[str, type] = {
@@ -100,7 +100,7 @@ SCENARIOS: dict[tuple[type, str], Scenario] = {
         outputs=("output",),
     ),
     (GeometryOps, "explode_multipart"): Scenario(
-        case=parts,
+        case=multilines,
         arguments=lambda handle: {
             "input": handle,
             "output": memory_handle("exploded"),

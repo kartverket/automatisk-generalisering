@@ -1,12 +1,16 @@
 """Engine-neutral fixture cases: the rows a test seeds, and what it expects back.
 
 What: `DatasetCase`, a schema and its rows under a name; the cases the tests share, as
-functions so every test gets fresh values; `parts_children`, the geometries each row of
-the multipart case explodes to, keyed by the row's 1-based position.
+functions so every test gets fresh values; the `*_children` functions, the geometries
+each row of a multipart case explodes to, keyed by the row's 1-based position; `Seeded`,
+what a seed produced, whichever store or engine produced it.
 
-Why: the same case runs under the in-memory adapter now and under an engine once the
-conformance suite exists, so nothing here names an engine or a store, and nothing assumes
-the order an engine writes rows in.
+Why: the same case runs under the in-memory adapter and under an engine in the
+conformance suite, so nothing here names an engine or a store, and nothing assumes the
+order an engine writes rows in. A case holds one engine geometry type, point, multipoint,
+line or polygon, because a feature class holds one: a line case may mix single and
+multipart lines, a polygon case single and multipart polygons, a multipoint case member
+counts, and nothing mixes families.
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports import Field, FieldType, Geometry, GeometryKind, Row, Schema
 
@@ -27,6 +32,18 @@ class DatasetCase:
     name: str
     schema: Schema
     rows: tuple[Row, ...]
+
+
+@dataclass(frozen=True)
+class Seeded:
+    """What a seed produced: the handle, and the native index of each row in order."""
+
+    handle: ScratchHandle
+    indices: tuple[int, ...]
+
+    def index_of(self, position: int) -> int:
+        """The native index of the row at 1-based `position` in the case."""
+        return self.indices[position - 1]
 
 
 def roads() -> DatasetCase:
@@ -80,12 +97,15 @@ def roads() -> DatasetCase:
     )
 
 
-def parts() -> DatasetCase:
-    """A line, a three-part multiline, a two-part multipoint and a point, in that order."""
-    schema = Schema(fields=(Field("name", FieldType.TEXT, 5),), geometry_crs=CRS)
+def _named() -> Schema:
+    return Schema(fields=(Field("name", FieldType.TEXT, 5),), geometry_crs=CRS)
+
+
+def multilines() -> DatasetCase:
+    """A line, a three-part multiline and a two-part multiline, in that order."""
     return DatasetCase(
-        name="parts",
-        schema=schema,
+        name="multilines",
+        schema=_named(),
         rows=(
             Row({"name": "a"}, Geometry.linestring(((0.0, 0.0), (1.0, 0.0)), crs=CRS)),
             Row(
@@ -101,16 +121,19 @@ def parts() -> DatasetCase:
                 ),
             ),
             Row(
-                {"name": "c"},
-                Geometry(GeometryKind.MULTIPOINT, (((0.0, 2.0),), ((1.0, 2.0),)), CRS),
+                {"name": "e"},
+                Geometry(
+                    GeometryKind.MULTILINESTRING,
+                    (((6.0, 1.0), (7.0, 1.0)), ((8.0, 1.0), (9.0, 1.0))),
+                    CRS,
+                ),
             ),
-            Row({"name": "d"}, Geometry.point(0.0, 3.0, crs=CRS)),
         ),
     )
 
 
-def parts_children() -> dict[int, frozenset[Geometry]]:
-    """The child geometries each row of `parts()` explodes to, by 1-based position.
+def multilines_children() -> dict[int, frozenset[Geometry]]:
+    """The child geometries each row of `multilines()` explodes to, by 1-based position.
 
     Keyed by input row and unordered, so a test matches it through the pairs table and
     the two datasets' native indices and assumes nothing about the order an engine
@@ -126,10 +149,71 @@ def parts_children() -> dict[int, frozenset[Geometry]]:
             }
         ),
         3: frozenset(
+            {
+                Geometry.linestring(((6.0, 1.0), (7.0, 1.0)), crs=CRS),
+                Geometry.linestring(((8.0, 1.0), (9.0, 1.0)), crs=CRS),
+            }
+        ),
+    }
+
+
+def multipoints() -> DatasetCase:
+    """A two-part multipoint and a one-member multipoint, in that order."""
+    return DatasetCase(
+        name="multipoints",
+        schema=_named(),
+        rows=(
+            Row(
+                {"name": "c"},
+                Geometry(GeometryKind.MULTIPOINT, (((0.0, 2.0),), ((1.0, 2.0),)), CRS),
+            ),
+            Row(
+                {"name": "d"}, Geometry(GeometryKind.MULTIPOINT, (((0.0, 3.0),),), CRS)
+            ),
+        ),
+    )
+
+
+def multipoints_children() -> dict[int, frozenset[Geometry]]:
+    """The child geometries each row of `multipoints()` explodes to, by 1-based position."""
+    return {
+        1: frozenset(
             {Geometry.point(0.0, 2.0, crs=CRS), Geometry.point(1.0, 2.0, crs=CRS)}
         ),
-        4: frozenset({Geometry.point(0.0, 3.0, crs=CRS)}),
+        2: frozenset({Geometry.point(0.0, 3.0, crs=CRS)}),
     }
+
+
+def points() -> DatasetCase:
+    """Two single points."""
+    return DatasetCase(
+        name="points",
+        schema=_named(),
+        rows=(
+            Row({"name": "p"}, Geometry.point(0.0, 4.0, crs=CRS)),
+            Row({"name": "q"}, Geometry.point(1.0, 4.0, crs=CRS)),
+        ),
+    )
+
+
+def polygons() -> DatasetCase:
+    """A square with a hole and a two-member multipolygon, in that order.
+
+    Rings are in the orientation an engine reads through well-known binary, exterior
+    counter-clockwise and hole clockwise, so a round trip returns the value as written.
+    """
+    square = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0))
+    hole = ((1.0, 1.0), (1.0, 2.0), (2.0, 2.0), (2.0, 1.0), (1.0, 1.0))
+    east = ((6.0, 0.0), (7.0, 0.0), (7.0, 1.0), (6.0, 1.0), (6.0, 0.0))
+    west = ((8.0, 0.0), (9.0, 0.0), (9.0, 1.0), (8.0, 1.0), (8.0, 0.0))
+    return DatasetCase(
+        name="polygons",
+        schema=_named(),
+        rows=(
+            Row({"name": "s"}, Geometry(GeometryKind.POLYGON, (square, hole), CRS)),
+            Row({"name": "t"}, Geometry(GeometryKind.MULTIPOLYGON, (east, west), CRS)),
+        ),
+    )
 
 
 def lookup() -> DatasetCase:

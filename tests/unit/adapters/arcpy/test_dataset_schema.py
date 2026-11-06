@@ -95,7 +95,7 @@ def test_a_describe_failure_is_an_engine_error_naming_the_call(
     with pytest.raises(EngineError) as caught:
         describe(session, "missing")
     assert caught.value.context.tool == "Describe"
-    assert isinstance(caught.value.__cause__, RuntimeError)
+    assert type(caught.value.__cause__) is OSError
 
 
 def test_the_engine_type_names_are_the_expected_spellings() -> None:

@@ -8,12 +8,10 @@ assuming the numbering.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from ag.adapters.fakes.memory.store import MemoryStore
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
-from tests.support.cases import DatasetCase
+from tests.support.cases import DatasetCase, Seeded
 
 NAMESPACE = "tests.support.memory"
 
@@ -25,18 +23,6 @@ def memory_handle(
     return ScratchHandle(
         name=name, data_type=data_type, namespace=NAMESPACE
     ).materialize(f"memory:/{name}")
-
-
-@dataclass(frozen=True)
-class Seeded:
-    """What a seed produced: the handle, and the native index of each row in order."""
-
-    handle: ScratchHandle
-    indices: tuple[int, ...]
-
-    def index_of(self, position: int) -> int:
-        """The native index of the row at 1-based `position` in the case."""
-        return self.indices[position - 1]
 
 
 def seed(store: MemoryStore, case: DatasetCase) -> Seeded:

@@ -1,8 +1,9 @@
 """The ArcPy session: the one module of the adapter that runs tools.
 
 What: `ArcpySession` executes a tool by name through `run_tool`, applies the project
-environment standard to `arcpy.env` once on construction, and names the vendor exception
-class; `guard` turns an engine failure in any other engine call into `EngineError`.
+environment standard to `arcpy.env` once on construction, reads it back through
+`read_environment`, and names the vendor exception class; `guard` turns an engine failure
+in any other engine call into `EngineError`.
 `open_session` is the composition root's way in: it is the one place under the adapter
 that imports `arcpy`. The session module alone executes tools, holds engine-global state
 and names vendor exceptions, and every other engine call in the adapter runs inside
@@ -11,14 +12,16 @@ and names vendor exceptions, and every other engine call in the adapter runs ins
 How: `run_tool` resolves a dotted name on the engine, calls it with keyword arguments
 inside `guard`, logs the messages the result object carries, and returns the result. A
 caller that needs a tool's output reads it through an accessor added here, never by
-touching the engine. `guard` wraps two classes: the engine's `ExecuteError`, and an exact
-`RuntimeError`, the class the engine's cursors are expected to raise for a missing field
-or a locked dataset. An `AgError`, an adapter defect such as `KeyError`, and a
-`RuntimeError` subclass pass through unchanged. On `ExecuteError` the tool ran, so the
-engine's message buffer is its messages and is drained into the context; an exact
-`RuntimeError` is taken to mean the call did not reach a tool, so the buffer, which
-belongs to whatever ran last, is left out. The first run under the engine confirms or
-corrects the catch set and the drain rule.
+touching the engine. `guard` wraps three classes: the engine's `ExecuteError`; an exact
+`RuntimeError`, the class the engine's cursors raise for a missing field or a bad where
+clause; and an exact `OSError`, the class `Describe` raises for a path that does not
+exist. An `AgError`, an adapter defect such as `KeyError`, and a subclass of either exact
+class pass through unchanged. On `ExecuteError` the tool ran, so the engine's message
+buffer is its messages and is drained into the context; the two exact classes mean the
+call did not reach a tool, so the buffer, which belongs to whatever ran last, is left
+out. The catch set and the cursor classes are confirmed on the engine; no engine call
+that surfaces a `RuntimeError` after a tool ran has been found, so the drain rule stands
+unrefuted.
 
 Why: the session applies the project environment standard, output coordinate system,
 XY tolerance and XY resolution, so that every product is in it (ADR-0021 ST-D25). The
@@ -87,6 +90,13 @@ class ArcpySession:
         """The values applied to the engine on construction."""
         return self._environment
 
+    def read_environment(self) -> Environment:
+        """The engine-global values as the engine holds them now, read under the guard;
+        equal to `environment` when the engine honoured what was applied. Engine-global
+        state is reached through the session only, so this is where it is read back."""
+        with self.guard("environment"):
+            return _read(self._engine)
+
     @contextmanager
     def guard(self, what: str, /) -> Iterator[None]:
         """Turns an engine failure inside the block into `EngineError`; `what` names
@@ -129,8 +139,13 @@ def open_session() -> ArcpySession:
 def _is_engine_error(
     error: BaseException, execute_error: type[BaseException], /
 ) -> bool:
-    """Whether `guard` wraps `error`: the vendor class, or an exact `RuntimeError`."""
-    return isinstance(error, execute_error) or type(error) is RuntimeError
+    """Whether `guard` wraps `error`: the vendor class, an exact `RuntimeError` or an exact
+    `OSError`."""
+    return (
+        isinstance(error, execute_error)
+        or type(error) is RuntimeError
+        or type(error) is OSError
+    )
 
 
 def _resolve(engine: ModuleType, name: str, /) -> Callable[..., _ToolResult]:
@@ -150,6 +165,26 @@ def _apply(engine: ModuleType, environment: Environment, /) -> None:
     env.outputCoordinateSystem = spatial_reference(environment.output_epsg)
     env.XYTolerance = f"{environment.xy_tolerance_m} Meters"
     env.XYResolution = f"{environment.xy_resolution_m} Meters"
+
+
+def _read(engine: ModuleType, /) -> Environment:
+    """The engine's global settings as an `Environment`; a length in any unit but metres
+    is a `ValueError`, since `_apply` writes metres and nothing else should."""
+    env = getattr(engine, "env")
+    return Environment(
+        output_epsg=int(env.outputCoordinateSystem.factoryCode),
+        xy_tolerance_m=_metres(env.XYTolerance),
+        xy_resolution_m=_metres(env.XYResolution),
+        overwrite_output=bool(env.overwriteOutput),
+    )
+
+
+def _metres(text: object, /) -> float:
+    """A length the engine formats as `<value> Meters`."""
+    value, unit = str(text).split()
+    if unit != "Meters":
+        raise ValueError(f"{text!r} is not a length in metres.")
+    return float(value)
 
 
 def _lines(text: str, /) -> tuple[str, ...]:

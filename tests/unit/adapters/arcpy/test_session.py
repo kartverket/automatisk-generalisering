@@ -1,11 +1,11 @@
 """The ArcPy session on a fake engine: construction, `run_tool` and `guard`.
 
-What: the environment is applied once on construction and a failure there is an
-`EngineError`; a tool resolves by dotted name and passes keyword arguments and its result
+What: the environment is applied once on construction, reads back as applied, and a
+failure there is an `EngineError`; a tool resolves by dotted name and passes keyword arguments and its result
 through; a tool failure and a guarded engine failure leave as `EngineError` from the
 original, with the tool and its messages; the buffer is drained on the vendor class only;
-an `AgError`, an adapter defect and a `RuntimeError` subclass pass through (ADR-0018
-AR-D23). Blank message lines are dropped on both paths.
+an exact `OSError` is wrapped as an exact `RuntimeError` is; an `AgError`, an adapter
+defect and a subclass of either pass through (ADR-0018 AR-D23). Blank message lines are dropped on both paths.
 
 How: `FakeEngine` subclasses `ModuleType`, as the real engine is one, declaring the names
 the session resolves on it. No test here is marked: nothing touches ArcPy.
@@ -76,9 +76,9 @@ class FakeEngine(ModuleType):
         self.reads += 1
         return self.buffer
 
-    def SpatialReference(self, epsg: int) -> tuple[str, int]:
+    def SpatialReference(self, epsg: int) -> SimpleNamespace:
         self.spatial_references.append(epsg)
-        return ("sr", epsg)
+        return SimpleNamespace(factoryCode=epsg)
 
 
 class Delete:
@@ -110,10 +110,25 @@ def test_construction_applies_the_environment_once() -> None:
 
     assert session.environment is ENVIRONMENT
     assert env.overwriteOutput is True
-    assert env.outputCoordinateSystem == ("sr", 25833)
+    assert env.outputCoordinateSystem.factoryCode == 25833
     assert env.XYTolerance == "0.1 Meters"
     assert env.XYResolution == "0.01 Meters"
     assert engine.spatial_references == [25833]
+
+
+def test_the_environment_reads_back_as_applied() -> None:
+    session = ArcpySession(engine=FakeEngine())
+
+    assert session.read_environment() == ENVIRONMENT
+
+
+def test_a_length_in_another_unit_is_an_adapter_defect_not_wrapped() -> None:
+    env = SimpleNamespace()
+    session = ArcpySession(engine=FakeEngine(env=env))
+    env.XYTolerance = "0.1 Feet"
+
+    with pytest.raises(ValueError, match="metres"):
+        session.read_environment()
 
 
 def test_an_environment_failure_on_construction_is_an_engine_error() -> None:
@@ -222,6 +237,26 @@ def test_a_runtime_error_inside_the_guard_carries_no_stale_buffer() -> None:
 
     assert info.value.context.tool_messages == ("locked",)
     assert engine.reads == 0
+
+
+def test_an_exact_os_error_inside_the_guard_carries_no_stale_buffer() -> None:
+    engine = FakeEngine(buffer="stale")
+    session = ArcpySession(engine=engine)
+
+    with pytest.raises(EngineError) as info:
+        with session.guard("Describe"):
+            raise OSError('"x" does not exist')
+
+    assert info.value.context.tool_messages == ('"x" does not exist',)
+    assert engine.reads == 0
+
+
+def test_an_os_error_subclass_inside_the_guard_passes_through() -> None:
+    session = ArcpySession(engine=FakeEngine())
+
+    with pytest.raises(FileNotFoundError):
+        with session.guard("Describe"):
+            raise FileNotFoundError("adapter defect")
 
 
 def test_an_ag_error_inside_the_guard_passes_through() -> None:

@@ -1,19 +1,22 @@
 """The dataset-shape group of the ArcPy `GeometryOps`: `explode_multipart`.
 
 How: the engine's multipart-to-singlepart tool writes one row per part and adds a field
-holding each child's parent native index. That field is found by diffing the output's
-field names against the input's, the engine's own fields left out, rather than assumed
-by name, since what the tool calls it when the name is taken is the engine's business;
-exactly one added field is expected, and anything else is an `EngineError`. The pairs
-are read from it against the output's native index and written as a table when
-`parents` is given; the field is then dropped on every call, so the output's schema is
-the input's whether or not parents were asked for. A null or empty shape is refused with
+holding each child's parent native index. An input that already carries a field of that
+name is refused before the tool runs: the tool then writes its reference into the
+existing field and adds nothing, which would change the output's attributes silently.
+The added field is found by diffing the output's field names against the input's, the
+engine's own fields left out, so a tool that adds anything else is caught: exactly one
+added field is expected, and anything else is an `EngineError`. The pairs
+are read from it against the output's native index and written as the port's parents
+table through the support writer when `parents` is given; the field is then dropped on
+every call, so the output's schema is the input's whether or not parents were asked for. A null or empty shape is refused with
 `EmptyGeometryError` before the tool runs, with its native indices in the context, and a
 table input is a contract error, since it has no geometry to explode. ADR-0017 RS-D16.
 
-Expected of the engine, confirmed by the first run under it: the tool keeps a GlobalID
-field as it is, adds no field but the reference, and names the reference differently
-when `ORIG_FID` is already taken.
+Confirmed on the engine: the tool keeps the declared fields, drops a GlobalID field, which
+is unrepresentable and so outside the output's schema either way, adds no field but the
+reference, and when the input already has a field of the reference's name writes into it
+and adds nothing.
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ from ag.adapters.arcpy.support.dataset_schema import (
     DescribedDataset,
     describe,
 )
+from ag.adapters.arcpy.support.dataset_writer import create_table, insert_rows
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN, is_null_shape
 from ag.core.errors import ErrorContext
 from ag.core.handles import ScratchHandle
@@ -35,8 +39,11 @@ from ag.core.types import DataType
 from ag.ports.attributes import FieldName
 from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
+from ag.ports.table_ops import PARENTS_SCHEMA
 
 _EXPLODE = "management.MultipartToSinglepart"
+_REFERENCE = "ORIG_FID"
+"""The field the tool writes each child's parent native index to."""
 
 
 class Shape(ArcpyPortBase):
@@ -58,6 +65,13 @@ class Shape(ArcpyPortBase):
             raise PortContractError(
                 f"{source!r} is a {before.schema.data_type.value} and has no geometry to "
                 "explode; explode_multipart takes a feature class.",
+                context=ErrorContext(handle=source),
+            )
+        if _REFERENCE in before.all_fields:
+            raise PortContractError(
+                f"{source!r} has a field named {_REFERENCE!r}, which {_EXPLODE} writes "
+                "its parent reference into instead of adding one; rename the field "
+                "before exploding.",
                 context=ErrorContext(handle=source),
             )
         _refuse_null_shapes(self._session, path=source)
@@ -130,26 +144,9 @@ def _read_pairs(
 def _write_pairs(
     session: ArcpySession, *, path: str, pairs: list[tuple[int, int]]
 ) -> None:
-    """Creates the parents table with the port's two columns and fills it."""
-    workspace, name = _split(path)
-    session.run_tool("management.CreateTable", out_path=workspace, out_name=name)
-    for column in (PARENT_ID, CHILD_ID):
-        session.run_tool(
-            "management.AddField", in_table=path, field_name=column, field_type="LONG"
-        )
-    with session.guard("InsertCursor"):
-        import arcpy
-
-        with arcpy.da.InsertCursor(path, (PARENT_ID, CHILD_ID)) as cursor:
-            for pair in pairs:
-                cursor.insertRow(pair)
-
-
-def _split(path: str) -> tuple[str, str]:
-    """A dataset path as (workspace, name), on either separator, as the engine joins
-    them; the workspace keeps the separators it was given."""
-    cut = max(path.rfind("/"), path.rfind("\\"))
-    return path[:cut], path[cut + 1 :]
+    """Creates the parents table with the port's schema and fills it."""
+    create_table(session, path=path, fields=PARENTS_SCHEMA.fields)
+    insert_rows(session, path=path, tokens=(PARENT_ID, CHILD_ID), rows=pairs)
 
 
 def _as_index(value: object) -> int:
