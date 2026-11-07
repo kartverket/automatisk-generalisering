@@ -124,8 +124,10 @@ docker run --rm -i -v "$PWD":/work:ro -w /work \
 
 A tool that needs the engine and is not a test lives in `tools/engine/`, the third root
 under the constrained stub and the scan, and runs in the same image with `src` on the
-path and no dev tools; `tools/engine/time_read_rows.py` is the first, and its commands are
-in the evidence file of the run that used it.
+path and no dev tools, as a module (`python -m tools.engine.<tool>`), since the engine
+writes into `__main__` on import; the root's docstring says what it writes.
+`tools/engine/time_read_rows.py` is the first, and its commands are in the evidence file
+of the run that used it.
 
 `--no-deps` with the whole exported closure means pip resolves nothing: every package is at
 the lock's version, or the import fails. Nothing is installed into the image's own

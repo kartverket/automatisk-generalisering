@@ -45,10 +45,17 @@ exception class, the dataset name and the variant, and never the message.
 
 How: the engine is reached as the adapter reaches it, `arcpy` imported inside the
 function that uses it, under `session.guard`, and every tool through `run_tool`
-(ADR-0018 AR-D23). Run inside the ArcPy image with `src` on the path:
+(ADR-0018 AR-D23). Run inside the ArcPy image from the repository root, with `src` on
+the path, as a module:
 
-    python tools/engine/time_read_rows.py --dataset <gdb>/<name> --workdir <dir>
+    python -m tools.engine.time_read_rows --dataset <gdb>/<name> --workdir <dir>
         --image <digest> [--fields a,b,c] [--cap-seconds 1200] [--only preflight reads]
+
+As a module and not as a file, because the engine writes into `__main__` on import: it
+adds `math`, `numpy`, `sys`, `time` and `arcpy` there and rebinds `datetime` to the
+module, so a script whose own code is `__main__` loses the class it imported the moment
+the session opens (observed on the image, 2026-11-06). The guarded block at the end
+imports this module and runs `main` there, where the engine's writes do not reach.
 """
 
 from __future__ import annotations
@@ -1009,7 +1016,7 @@ def interrupt_on_sigterm() -> None:
 
 def parse(argv: Sequence[str] | None) -> Options:
     parser = argparse.ArgumentParser(
-        prog="python tools/engine/time_read_rows.py",
+        prog="python -m tools.engine.time_read_rows",
         description="Times TableOps.read_rows against a bare cursor on one dataset.",
     )
     parser.add_argument("--dataset", required=True, help="<gdb>/<name>, on the copy")
@@ -1039,4 +1046,8 @@ def parse(argv: Sequence[str] | None) -> Options:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # The engine writes into `__main__` on import; the run happens in the imported
+    # module, whose namespace it does not touch. See the module docstring.
+    from . import time_read_rows as tool
+
+    sys.exit(tool.main())

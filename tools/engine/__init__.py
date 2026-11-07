@@ -9,4 +9,9 @@ engine-touching tool needs a root of its own. This one has its execution environ
 `pyproject.toml`, under the stub, and its own scope in `tools/scan_sources.py`, so a tool
 is held to the same rule as the adapter and the engine-touching test support. Nothing
 here imports from `tests/`: a tool outlives a test layout.
+
+A tool here runs as a module, `python -m tools.engine.<tool>`, and its guarded block
+imports the module and calls `main` there. The engine writes into `__main__` on import,
+adding `math`, `numpy`, `sys`, `time` and `arcpy` and rebinding `datetime` to the
+module, so code that runs in `__main__` and opens the session loses the names it bound.
 """

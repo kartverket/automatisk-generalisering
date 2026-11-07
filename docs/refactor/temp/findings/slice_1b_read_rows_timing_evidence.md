@@ -1,7 +1,8 @@
 # Slice 1b evidence: the `read_rows` timing run, second pull request, batch 1
 
-**Status:** PREPARED, 2026-11-06. The tool, its root and the run commands are in place; no
-engine result is recorded yet. Batch 1 of the second pull request of slice 1b: the timing
+**Status:** EVIDENCE, 2026-11-06 (the three runs complete on the image). The tool, its
+root and the run commands are in place; the three datasets and the probe have run, and
+the logs are under `docs/refactor/temp/logs/`. Batch 1 of the second pull request of slice 1b: the timing
 run (`tools/engine/time_read_rows.py`), W14, the by-hand items W12, W17 and W18, and their
 records. Batch 2, B31 and B32, is a later session on the same branch.
 
@@ -87,9 +88,13 @@ The sources sit on the named volume `gis_files`, mounted read-only; the working 
 tool outputs and the logs go on a second named volume. The copies are made with `cp -a`
 from inside the image so the raw data is never opened for writing.
 
+The volume's root holds `ag_inputs/`, so it mounts at `/data`. The image runs as uid 150
+and a fresh named volume belongs to root, so the volume is given to that user once.
+
 ```
 docker volume create ag_timing
-docker run --rm -v gis_files:/data/ag_inputs:ro -v ag_timing:/timing \
+docker run --rm -v ag_timing:/timing alpine chown 150:150 /timing
+docker run --rm -v gis_files:/data:ro -v ag_timing:/timing \
   ghcr.io/kartverket/arcpy-linux:12.1 \
   bash -c 'mkdir -p /timing/copies /timing/run &&
            cp -a /data/ag_inputs/raw_data/building.gdb /timing/copies/ &&
@@ -115,7 +120,7 @@ DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
 run() {  # run <name> <dataset> [tool arguments...]
   docker run -d --name "ag_timing_$1" -v "$PWD":/work:ro -w /work -v ag_timing:/timing \
     -e PYTHONPATH=/work/src -e PYTHONDONTWRITEBYTECODE=1 "$IMAGE" \
-    python tools/engine/time_read_rows.py --dataset "$2" --workdir /timing/run \
+    python -m tools.engine.time_read_rows --dataset "$2" --workdir /timing/run \
       --cap-seconds 600 --image "$DIGEST" "${@:3}"
 }
 run points   /timing/copies/building.gdb/BygningsPunkt_N10  --only preflight copies reads describe
@@ -177,28 +182,282 @@ cap can drop to 300 s on the lines after the first two runs show stable rates.
 To be pasted per dataset from the JSONL: the header, the preflight and walk lines, the
 copy lines, the explode line, the end line of every pass, the describe line and the peak.
 
-### BygningsPunkt_N10 (points)
+### BygningsPunkt_N10 (points), 2026-11-06
 
-Pending.
+Log `20261106_173656_read_rows.jsonl`, image digest `sha256:7159dec...`, Python 3.13.17,
+run with `--cap-seconds 30 --select-count 5 --describe-repeats 20` as the smoke test;
+every pass completed under the cap, so this is the points run, with the Describe stage at
+a fifth of the counts the full command uses. Fields read: `subtypekode`, `objtype`,
+`malemetode` (Integer, String, Integer). The source is planar, EPSG 25833, no Z or M, 14
+declared fields, none unrepresentable, so no copy was needed and every pass read the
+source copy.
 
-### ArealdekkeFlate_N10 (polygons)
+Preflight walk, 4.26 s over 1,167,072 rows: every shape planar, one vertex, no nulls.
+Date fields (non-null / with a time of day / with a sub-second part):
 
-Pending.
+| field | non-null | time of day | sub-second |
+|---|---|---|---|
+| `datafangstdato` | 1,167,072 | 3,134 | 365 |
+| `created_date` | 202,005 | 202,005 | 24,456 |
+| `last_edited_date` | 371,619 | 371,619 | 44,778 |
+| `merknadsdato` | 62 | 2 | 0 |
 
-### fkb_vann_grense (lines)
+Explode, the tool bare against the port, on the same input:
 
-Pending.
+| part | seconds |
+|---|---|
+| `MultipartToSinglepart` bare | 11.76 |
+| Describe before | 0.05 |
+| null pre-pass | 1.49 |
+| Describe after | 0.05 |
+| `DeleteField` of the reference | 4.64 |
+| sum of the parts the port adds | 6.23 |
+| `explode_multipart` total | 15.50 |
 
-### The W12 probe
+The port's total less the bare tool is 3.7 s, under the sum of parts, because the second
+tool run was warm; the sum of parts is the overhead figure, and `DeleteField` is two
+thirds of it.
 
-Pending: `python docs/refactor/temp/w12_curve_probe.py` in the image, with `src` and the
-root on the path.
+Reads, 1,167,072 rows each, every status `complete`, RSS 814.6 MB on every line, peak
+847.9 MB:
+
+| token set | variant | position | seconds | rows/s | partition of 36,407 rows |
+|---|---|---|---|---|---|
+| attributes | bare | 0 | 0.62 | 1,891,161 | 0.019 s |
+| geometry | bare | 0 | 0.84 | 1,394,028 | 0.026 s |
+| geometry | codec | 1 | 2.59 | 450,162 | 0.081 s |
+| geometry | port | 2 | 4.09 | 285,559 | 0.127 s |
+| geometry | port | 3 | 4.19 | 278,455 | 0.131 s |
+| geometry | codec | 4 | 2.64 | 441,688 | 0.082 s |
+| geometry | bare | 5 | 0.85 | 1,368,387 | 0.027 s |
+
+Order did not matter: the two bare passes and the two codec passes agree within 3%, the
+two port passes within 3%. Over the bare cursor the codec adds 1.8 s per 1.17M points and
+the rest of `_rows` adds another 1.5 s; the port reads a partition-sized set of points in
+about 0.13 s, 0.10 s of it added over the bare cursor, against A15.7's minute.
+
+Describe (seconds per call):
+
+| where | n | min | median | max |
+|---|---|---|---|---|
+| file geodatabase, repeated on one path | 20 | 0.037 | 0.038 | 0.049 |
+| file geodatabase, first Describe of a fresh Select output | 5 | 0.040 | 0.041 | 0.046 |
+| memory, fresh | 5 | 0.0005 | 0.0006 | 0.001 |
+| memory, repeated | 20 | 0.0004 | 0.0004 | 0.0006 |
+
+`analysis.Select` of 1,000 rows took 0.35 s per output in the file geodatabase and 0.13 s
+in memory. Describe sits at 0.04 s on a file geodatabase, fresh or warm, a tenth of the
+agreed band's upper edge; a few hundred calls per stage cost seconds.
+
+**W18, refuted on the sources.** The walk read sub-second parts from a file geodatabase:
+24,456 of `created_date`'s values and 365 of `datafangstdato`'s carry microseconds. PR A
+showed the engine rounds a fraction it is given to the second; these values arrived with
+their fraction, so the sources hold more than seconds and the read-side refusal in
+`row_io.py` fires on any read that names such a field. It did not fire here because the
+three fields read are not dates. A contract question for the architect: refuse, as today,
+or truncate on read (ADR-0019 PC-D17), given that the project's own use of dates is at day
+accuracy. A second points run with `--fields created_date,datafangstdato,objtype` shows the
+refusal path and is cheap.
+
+#### The date-field pass on points, 2026-11-06
+
+Log `20261106_174853_read_rows.jsonl`, `--fields created_date,datafangstdato,objtype
+--only preflight reads --cap-seconds 30`. The bare and codec passes completed over
+1,167,072 rows (the bare geometry pass at 976k rows/s, the codec at 378k). Both port
+passes ended `refused` with `PortContractError` after 5,071 rows, 0.04 s in: the first
+row whose `created_date` carries a sub-second part. The refusal is the one `row_io.py`
+raises for a sub-second date, and the class alone was logged. So a production read that
+names an editor-tracking date field refuses today; which way PC-D17 goes is the
+architect's.
+
+### ArealdekkeFlate_N10 (polygons), 2026-11-06
+
+Log `20261106_190141_read_rows.jsonl`, every stage, `--cap-seconds 600`, default Describe
+counts; no pass reached the cap. Fields read: `subtypekode`, `objtype`, `vannbr`. An
+earlier start, `20261106_175420`, was stopped after five passes with `docker stop` when
+the machine had to move; its lines agree with the rerun and it is not used.
+
+Preflight, planar, EPSG 25833, no Z or M, 13 declared fields, none unrepresentable. The
+walk took 83.7 s over 3,044,617 rows: 85 null shapes, no holed multipolygon member in the
+set, rings per row mean 1.62 (p95 2, max 5,014), vertices per row mean 110 (p50 28, p95
+286, max 172,086). Date fields: `created_date` 1,658,886 non-null, all with a time of day,
+181,237 with a sub-second part; `last_edited_date` 3,044,617 non-null, 353,221 sub-second;
+`merknadsdato` 28, none. The copy without null shapes, `CopyFeatures` plus the update
+cursor, took 138.1 s and deleted 85 rows; every pass below read that copy.
+
+Explode on the copy, 3,044,532 rows:
+
+| part | seconds |
+|---|---|
+| `MultipartToSinglepart` bare | 87.3 |
+| Describe before | 0.06 |
+| null pre-pass | 76.1 |
+| Describe after | 0.06 |
+| `DeleteField` of the reference | 15.8 |
+| sum of the parts the port adds | 92.0 |
+| `explode_multipart` total | 183.9 |
+
+The port doubles the tool's time at this size, and the pre-pass is the bulk of it: a
+full `SHAPE@WKB` cursor over the input before the tool runs, 87% of the tool's own time
+on polygons of 110 vertices on average. Scaled to a partition of 36,407 rows the parts
+sum to 1.1 s, against A15.7's minute. The cross-check, total less bare tool, is 96.6 s.
+
+Reads, 3,044,532 rows each, every status `complete`:
+
+| token set | variant | position | seconds | rows/s | partition of 36,407 rows |
+|---|---|---|---|---|---|
+| attributes | bare | 0 | 2.49 | 1,224,854 | 0.030 s |
+| geometry | bare | 0 | 66.88 | 45,522 | 0.800 s |
+| geometry | codec | 1 | 152.14 | 20,012 | 1.819 s |
+| geometry | port | 2 | 164.80 | 18,474 | 1.971 s |
+| geometry | orient | 3 | 175.40 | 17,357 | 2.097 s |
+| geometry | orient | 4 | 182.48 | 16,685 | 2.182 s |
+| geometry | port | 5 | 162.32 | 18,757 | 1.941 s |
+| geometry | codec | 6 | 158.39 | 19,222 | 1.894 s |
+| geometry | bare | 7 | 66.12 | 46,046 | 0.791 s |
+
+Pairs agree within 4%. Over the bare cursor the codec adds 1.1 s per partition and the
+rest of `_rows` 0.1 s; the port reads a partition-sized set of these polygons in about
+2.0 s, 1.2 s of it added over the bare cursor. **B32's price:** the signed-area check of
+every ring adds 10.6 s and 20.2 s over the two port passes it follows, 0.13 to 0.24 s per
+partition, 6 to 12% of the port pass; against A15.7's minute it is cheap, and batch 2's
+condition is met. RSS held between 835 and 854 MB across every pass; the peak of 1,604 MB
+belongs to the tools of the copy and explode stages.
+
+Describe (seconds per call):
+
+| where | n | min | median | max |
+|---|---|---|---|---|
+| file geodatabase, repeated on one path | 300 | 0.035 | 0.040 | 0.060 |
+| file geodatabase, first Describe of a fresh Select output | 100 | 0.071 | 0.087 | 0.217 |
+| memory, fresh | 100 | 0.0005 | 0.0005 | 0.0008 |
+| memory, repeated | 300 | 0.0004 | 0.0005 | 0.0007 |
+
+`analysis.Select` of 1,000 rows took 0.61 s per output in the file geodatabase and 0.24 s
+in memory. A fresh output's first Describe is twice a warm one, at 0.09 s; the agreed band
+holds.
+
+### fkb_vann_grense (lines), 2026-11-06
+
+Log `20261106_203203_read_rows.jsonl`, `--only preflight copies reads describe`,
+`--cap-seconds 600`; no pass reached the cap. Fields read: `objtype`, `lokalid`,
+`navnerom`, all String.
+
+Preflight: **hasZ true**, no M, EPSG 25833, 21 declared fields, none unrepresentable. The
+walk took 166.9 s over 14,695,279 rows, every shape planar with one ring, vertices per
+row mean 35.4 (p50 13, p95 128, max 24,024), no nulls. Date fields: `datafangstdato` and
+`verifiseringsdato` carry no time of day; `oppdateringsdato` 14,695,279 non-null, all with
+a time of day, 1,485,862 with a sub-second part.
+
+**W17 and W22.** The source carries Z, so the port's `describe` refuses it, and the 2D
+copy was made: `CreateFeatureclass` with the source as template and `has_z="DISABLED"`,
+then `Append` with `schema_type="NO_TEST"`, 457.4 s for 14.7M rows, and the copy reads
+back `hasZ` false, `hasM` false, EPSG 25833 as the source. W22 holds: the route drops Z
+through tools alone. The walk of the copy, 143.3 s, counted the same rings and vertices
+as the walk of the source, which shows a second thing: `SHAPE@WKB` of a Z feature class
+exported planar codes and 16-byte points on all 14.7M rows, so the engine drops Z on WKB
+export as it drops curves. The codec can never see Z; the Describe-level refusal
+(PC-D27) is the only guard, and it is the right one.
+
+Reads on the 2D copy, 14,695,279 rows each, every status `complete`:
+
+| token set | variant | position | seconds | rows/s | partition of 36,407 rows |
+|---|---|---|---|---|---|
+| attributes | bare | 0 | 18.39 | 799,233 | 0.046 s |
+| geometry | bare | 0 | 121.61 | 120,838 | 0.301 s |
+| geometry | codec | 1 | 268.80 | 54,671 | 0.666 s |
+| geometry | port | 2 | 295.16 | 49,788 | 0.731 s |
+| geometry | port | 3 | 303.48 | 48,423 | 0.752 s |
+| geometry | codec | 4 | 275.72 | 53,299 | 0.683 s |
+| geometry | bare | 5 | 111.47 | 131,834 | 0.276 s |
+
+Pairs agree within 9% (the two bare passes), 3% otherwise. The port reads a
+partition-sized set of these lines in about 0.74 s, 0.45 s of it added over the bare
+cursor, 0.38 s of that the codec. RSS held between 818 and 822 MB across 14.7M rows
+streamed seven times; the peak of 1,274 MB belongs to the Append.
+
+Describe (seconds per call):
+
+| where | n | min | median | max |
+|---|---|---|---|---|
+| file geodatabase, repeated on one path | 300 | 0.072 | 0.080 | 0.159 |
+| file geodatabase, first Describe of a fresh Select output | 100 | 0.109 | 0.129 | 0.225 |
+| memory, fresh | 100 | 0.0006 | 0.0007 | 0.0015 |
+| memory, repeated | 300 | 0.0005 | 0.0006 | 0.0014 |
+
+`analysis.Select` of 1,000 rows took 0.73 s per output in the file geodatabase and 0.29 s
+in memory. Describe on this 14.7M-row class is twice the polygons' figure, 0.08 s warm
+and 0.13 s fresh, still inside the band.
+
+### The W12 probe, 2026-11-06
+
+Run by the architect in the image, digest `sha256:7159decd0b00fc3ab152a000e66e8709b0816f38e1da5f69f8ae40963a858a61`
+(a newer build than PR A's `sha256:eb53667b...`; the tag is the same):
+
+```
+$ python docs/refactor/temp/w12_curve_probe.py
+file gdb     hasCurves=True pointCount=2 wkb=planar rings=1 vertices=2 bytes=45
+memory       hasCurves=True pointCount=2 wkb=planar rings=1 vertices=2 bytes=45
+```
+
+The engine neither densifies the curve nor exports a curve code: `SHAPE@WKB` of a
+buffered point, a true circle, is a planar polygon of one ring and two vertices, 45 bytes,
+in both workspaces. The codec accepts it as a polygon, so a curve is silent geometry loss
+on read, and nothing in the WKB tells the preflight a curve was there: its `shapes.curve`
+count stays zero whatever the sources hold. Detecting a curve needs the geometry object's
+`hasCurves` through `SHAPE@`, a stub name and a per-row cost, or a densify of the working
+copy before any read. Which, and whether the port refuses or densifies, is a contract
+question for the architect; this batch records it and the W-item table says so.
+
+### The engine writes into `__main__` on import, 2026-11-06
+
+The smoke test crashed on its first log line with `module 'datetime' has no attribute
+'now'` although the tool imports the class. The image's interpreter and the import are
+sound; the engine rebinds names in `__main__` when it is imported:
+
+```
+$ python -c "from datetime import datetime; before = dict(globals()); import arcpy; ..."
+added ['arcpy', 'before', 'math', 'numpy', 'sys', 'time']
+changed ['datetime']
+datetime is now <class 'module'> <module 'datetime' from '/opt/miniconda3/envs/arcgis/lib/python3.13/datetime.py'>
+```
+
+So a script that is `__main__`, binds `datetime` from the class and then opens the session
+loses the class. The tool now runs as a module and its guarded block imports the module
+and calls `main` there, where the engine does not write; `tools/engine/__init__.py` states
+the rule. The same applies to every pipeline entry point under the `__main__` guard once
+one opens the session: a finding for the architect, candidate for a detail under
+ADR-0018 AR-D23 or the session docstring, not decided here.
 
 ## What the numbers decide
 
-- The rate per row and the 36,407-row projection per dataset, with the vertex figures
-  beside each. The projection is partition 18 of the road stage input scaled from a rate;
-  this run does not read that partition.
+Partition-sized figures, 36,407 rows scaled from the rates, vertex means beside them. The
+projection is partition 18 of the road stage input scaled from a rate; no run read that
+partition.
+
+| dataset | vertices per row, mean | bare cursor | `read_rows` | added by the port | of which the codec |
+|---|---|---|---|---|---|
+| points | 1 | 0.03 s | 0.13 s | 0.10 s | 0.06 s |
+| lines | 35 | 0.30 s | 0.74 s | 0.45 s | 0.38 s |
+| polygons | 110 | 0.80 s | 1.96 s | 1.16 s | 1.06 s |
+
+- **Streaming stands.** `read_rows` reads a partition of the heaviest source in two
+  seconds and the full 14.7M-row lines class in five minutes, with memory flat; slice 3's
+  lineage-aware pipe can stream `Row` values and needs no columnar read beside it.
+- **A15.7 holds** for the one port method measured: `explode_multipart` adds 1.1 s per
+  partition over the bare tool on the polygons, nearly all of it the null pre-pass. The
+  pre-pass is the lever if it ever matters, not the DeleteField.
+- **B32's price is cheap:** 0.13 to 0.24 s per partition of polygons, 6 to 12% of the
+  port pass; batch 2 may put canonical orientation into `Geometry`.
+- **The codec is the port's cost.** On every set the codec is most of what the port adds
+  (60% on points, 85% on lines, 90% on polygons); `_attribute`, the `Row` and the per-row
+  `where` string are the rest. An attributes-only port read on a feature class would cost
+  about the bare attributes pass plus that remainder: on polygons 0.03 s plus 0.1 s
+  against 1.96 s, on lines 0.05 s plus 0.07 s against 0.74 s. That is the price of the
+  attributes-only question, for the architect.
+- **Describe is cheap everywhere measured:** 0.04 to 0.08 s warm and 0.09 to 0.13 s on a
+  fresh output in a file geodatabase, under a millisecond in memory; hundreds of calls per
+  stage cost seconds, inside the agreed band.
 - A15.7's minute is "time added over the bare tool": the port's overhead is the port pass
   against the bare pass of the same process, not the port's time alone. For
   `explode_multipart`, the overhead is the sum of the parts the explode line measures one
@@ -220,16 +479,29 @@ root on the path.
 
 | item | where | status |
 |---|---|---|
-| W12 curves | preflight `shapes.curve` per source; the probe for densification | pending |
-| W14 timing | the reads, explode and describe stages | pending |
-| W17 hasZ/hasM of the sources | preflight line per source | pending |
-| W18 date fields of the sources | preflight `date_fields` per source | pending |
-| W22 (new) the 2D copy through CreateFeatureclass and Append drops Z and M | copy line, `copy_has_z`, `copy_has_m` | pending |
-| W23 (new) the engine's `shapeType` strings | preflight `shape_type`; Point, Polyline and Polygon expected here, Multipoint not in these sources | pending |
+| W12 curves | the probe: neither densified nor a curve code, the arc's two vertices as a planar ring; the preflight's `shapes.curve` cannot see a curve | observed, contract question open |
+| W14 timing | the reads, explode and describe stages | done on all three sets, above |
+| W17 hasZ/hasM of the sources | preflight line per source | points and polygons: no Z, no M; lines: Z, no M; WKB export drops Z, so the Describe refusal is the only guard |
+| W18 date fields of the sources | preflight `date_fields`: every set holds sub-second parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal fired on the date-field pass | observed on all three, contract question open |
+| W22 (new) the 2D copy through CreateFeatureclass and Append drops Z and M | copy line of the lines run: `copy_has_z` false, 457 s for 14.7M rows | holds |
+| W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources | three of four observed |
+
+## Findings for the architect, not decided here
+
+- A curve is silent geometry loss through `SHAPE@WKB` (W12 above).
+- The engine writes into `__main__` on import (above); entry points that open the session
+  are exposed.
+- `read_rows` has no attributes-only pass on a feature class (above).
+- The sources hold sub-second date values, so the read-side refusal fires on production
+  data (W18 above, and the date-field pass).
+- `SHAPE@WKB` drops Z as it drops curves (the lines run); the Describe-level refusal is
+  the only Z guard and stands.
+- `explode_multipart`'s null pre-pass costs 87% of the tool's own time on polygons; fine
+  at partition size, the lever if a stage ever explodes a whole source.
 
 ## Record edits
 
-To be presented as per-item summaries once the run has numbers: T4.11's status; the
-W-items above into the methods evidence table where they close; the B-item for the
-destinations that name the design documents; the PR description with the rates.
-A15.7 stays as it is.
+To be presented as per-item summaries: T4.11's status (the timing run done, the W-items
+closed or open as above); the B-item for the destinations that name the design documents
+(B33, parked by the architect); the PR description with the partition table above. A15.7
+stays as it is. The logs under `docs/refactor/temp/logs/` are staged with this file.
