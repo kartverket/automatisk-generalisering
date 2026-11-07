@@ -77,6 +77,11 @@ from types import FrameType
 from typing import TextIO
 
 from ag.adapters.arcpy.geometry_ops import ArcpyGeometryOps
+from ag.adapters.arcpy.geometry_ops.shape import (
+    DELETE_FIELD_TOOL,
+    EXPLODE_TOOL,
+    REFERENCE_FIELD,
+)
 from ag.adapters.arcpy.session import ArcpySession, open_session
 from ag.adapters.arcpy.support.dataset_schema import (
     DATA_TYPES,
@@ -103,9 +108,6 @@ PARTITION_ROWS = 36_407
 STAGES = ("preflight", "copies", "explode", "reads", "describe")
 NAMESPACE = "tools.engine.time_read_rows"
 SEQUENCE = "bare, variants, variants reversed, bare, per token set"
-_REFERENCE = "ORIG_FID"
-"""Restates `shape.py`'s private name, as the two tool names in the explode stage
-restate its tool spellings, until those gain public names (proposed with this batch)."""
 _SELECT_ROWS = 1_000
 """Rows in each fresh output the Describe stage creates; the clause names the OID field."""
 
@@ -733,7 +735,7 @@ class Run:
         try:
             line["tool_s"] = round(
                 self.timed_tool(
-                    "management.MultipartToSinglepart",
+                    EXPLODE_TOOL,
                     in_features=source,
                     out_feature_class=out_bare,
                 ),
@@ -742,7 +744,7 @@ class Run:
             line["describe_after_s"] = round(self.timed_describe(out_bare), 3)
             line["delete_field_s"] = round(
                 self.timed_tool(
-                    "management.DeleteField", in_table=out_bare, drop_field=_REFERENCE
+                    DELETE_FIELD_TOOL, in_table=out_bare, drop_field=REFERENCE_FIELD
                 ),
                 3,
             )

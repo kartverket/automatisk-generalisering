@@ -1881,7 +1881,9 @@ resulting capability record as an argument — data, not a call. No exemption ne
 green on the image `ghcr.io/kartverket/arcpy-linux:12.1` on 2026-11-05: `tests/conformance/`
 over both adapters and `tests/engine/arcpy/`, 34 marked tests, evidence in
 `temp/findings/slice_1b_arcpy_conformance_evidence.md`; no test was removed for a contract
-question. (1b), (2) and (3) wait on their methods.
+question. (1b), (2) and (3) wait on their methods. The `read_rows` timing run ran
+2026-11-06 on the three raw sets (W14 done; W12, W17, W18, W22, W23 as the evidence file
+states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`.
 
 **follow-up (`write_rows`):** when `TableOps.write_rows` lands, `CreateFeatureclass` and
 `GEOMETRY_TYPES` (`tests/support/arcpy/gdb.py`) and `oriented` (`tests/support/wkb.py`) move

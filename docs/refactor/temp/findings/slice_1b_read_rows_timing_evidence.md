@@ -34,23 +34,21 @@ an exception class, never a message, because the port's own errors embed cell va
 - `DATA_TYPES` in `dataset_schema.py` is public, so the tool reads the engine's data type
   through the adapter's own map instead of restating the string.
 
-### Proposed, not applied: public names in `shape.py`
+### Public names in `shape.py`, applied 2026-11-07 on the architect's request
 
-The tool restates three spellings of `shape.py`: the reference field `ORIG_FID`, the
-multipart tool and the DeleteField tool. The project rule is one constant or an object
-reference, and the point of the measurement is that it times the adapter's own method, so
-the tool should import them. Giving them public names changes two break-once needles in
-`tools/break_once/cases/arcpy_adapter.py`, an explicit-request file, so this waits on the
-architect naming it:
+The tool restated three spellings of `shape.py`: the reference field, the multipart tool
+and the DeleteField tool. The project rule is one constant or an object reference, and
+the measurement must time the adapter's own method, so `shape.py` now exports
+`EXPLODE_TOOL`, `REFERENCE_FIELD` and `DELETE_FIELD_TOOL` and the tool imports them. The
+two break-once needles that carried the old spellings, X5 and X6 in
+`tools/break_once/cases/arcpy_adapter.py`, follow the source; the set rerun:
 
-- `shape.py`: `_EXPLODE` becomes `EXPLODE_TOOL`, `_REFERENCE` becomes `REFERENCE_FIELD`,
-  and `DELETE_FIELD_TOOL = "management.DeleteField"` joins them; the call at the end of
-  `explode_multipart` uses it.
-- `arcpy_adapter.py`: X6's needle `if _REFERENCE in before.all_fields:` becomes
-  `if REFERENCE_FIELD in before.all_fields:`; the needle holding
-  `"management.DeleteField", in_table=target, drop_field=reference` becomes
-  `DELETE_FIELD_TOOL, in_table=target, drop_field=reference`.
-- The tool imports the three and drops its own `_REFERENCE`.
+```
+$ uv run --locked --extra dev python -m tools.break_once --check
+break-it-once: 163 cases in 8 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --out report.md
+break-it-once: 20 cases, 0 unexpected       (X5, X6: FAILED as expected; 237 passed after the last restore)
+```
 - `docs/refactor/temp/w12_curve_probe.py`, the by-hand half of W12 that the sources
   cannot answer: whether `SHAPE@WKB` densifies a true curve or exports a curve code.
 
@@ -274,8 +272,8 @@ architect's.
 
 Log `20261106_190141_read_rows.jsonl`, every stage, `--cap-seconds 600`, default Describe
 counts; no pass reached the cap. Fields read: `subtypekode`, `objtype`, `vannbr`. An
-earlier start the same day was stopped after five passes with `docker stop` when the
-machine had to move; its lines agreed with the rerun, and its log was not kept.
+earlier start, `20261106_175420`, was stopped after five passes with `docker stop` when
+the machine had to move; its lines agree with the rerun and it is not used.
 
 Preflight, planar, EPSG 25833, no Z or M, 13 declared fields, none unrepresentable. The
 walk took 83.7 s over 3,044,617 rows: 85 null shapes, no holed multipolygon member in the
@@ -426,8 +424,20 @@ So a script that is `__main__`, binds `datetime` from the class and then opens t
 loses the class. The tool now runs as a module and its guarded block imports the module
 and calls `main` there, where the engine does not write; `tools/engine/__init__.py` states
 the rule. The same applies to every pipeline entry point under the `__main__` guard once
-one opens the session: a finding for the architect, candidate for a detail under
-ADR-0018 AR-D23 or the session docstring, not decided here.
+one opens the session. Not decided in this batch; the two candidate responses, for the
+architect:
+
+- (a) the convention the tool uses: every entry point that opens the session runs as a
+  module and its guarded block imports the module and calls `main` there. Cost: a rule
+  to know and a run form to follow, `python -m`; nothing in code guards it.
+- (b) containment in the session: `open_session` snapshots `__main__`'s namespace around
+  the first engine import and restores what the import added or rebound, so the effect
+  stays with the module that owns the engine's global state (ADR-0018 AR-D23), and it is
+  unit-testable on the fake. Cost: a few lines in `session.py` and a guard case. It relies
+  on the session's import being the process's first engine import, which holds today:
+  every `import arcpy` under `src/` and `tests/support/arcpy/` sits inside a function
+  that takes a session, the unit tests install a fake, and the two hits under
+  `tests/static/` are probe strings for the stub test.
 
 ## What the numbers decide
 
@@ -444,9 +454,12 @@ partition.
 - **Streaming stands.** `read_rows` reads a partition of the heaviest source in two
   seconds and the full 14.7M-row lines class in five minutes, with memory flat; slice 3's
   lineage-aware pipe can stream `Row` values and needs no columnar read beside it.
-- **A15.7 holds** for the one port method measured: `explode_multipart` adds 1.1 s per
-  partition over the bare tool on the polygons, nearly all of it the null pre-pass. The
-  pre-pass is the lever if it ever matters, not the DeleteField.
+- **A15.7 holds at partition size** for the one port method measured: `explode_multipart`
+  adds 1.1 s per partition of 36,407 polygons over the bare tool. Over the whole 3.0M-row
+  source the parts add 92.0 s to the tool's 87.3 s, more than the minute, so a stage that
+  explodes a whole source would exceed it. Nearly all of the addition is the null
+  pre-pass, a full `SHAPE@WKB` cursor; a cheaper token for the null check is an
+  unmeasured candidate, not a fact.
 - **B32's price is cheap:** 0.13 to 0.24 s per partition of polygons, 6 to 12% of the
   port pass; batch 2 may put canonical orientation into `Geometry`.
 - **The codec is the port's cost.** On every set the codec is most of what the port adds
@@ -479,7 +492,7 @@ partition.
 
 | item | where | status |
 |---|---|---|
-| W12 curves | the probe: neither densified nor a curve code, the arc's two vertices as a planar ring; the preflight's `shapes.curve` cannot see a curve | observed, contract question open |
+| W12 curves | the probe: neither densified nor a curve code, the arc's two vertices as a planar ring; the preflight's `shapes.curve` cannot see a curve, so the sources' half is unanswered, not zero | probe observed; sources unanswered; B-item opening |
 | W14 timing | the reads, explode and describe stages | done on all three sets, above |
 | W17 hasZ/hasM of the sources | preflight line per source | points and polygons: no Z, no M; lines: Z, no M; WKB export drops Z, so the Describe refusal is the only guard |
 | W18 date fields of the sources | preflight `date_fields`: every set holds sub-second parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal fired on the date-field pass | observed on all three, contract question open |
@@ -497,7 +510,21 @@ partition.
 - `SHAPE@WKB` drops Z as it drops curves (the lines run); the Describe-level refusal is
   the only Z guard and stands.
 - `explode_multipart`'s null pre-pass costs 87% of the tool's own time on polygons; fine
-  at partition size, the lever if a stage ever explodes a whole source.
+  at partition size, over A15.7's minute on a whole source.
+
+## The architect's decisions on the findings, 2026-11-07
+
+- Curves: a B-item, opened with this batch; whether curves matter is checked before the
+  two batches are pushed as one pull request.
+- Z dropped by `SHAPE@WKB`: fine; the Describe-level refusal stands as the only guard.
+- Sub-second dates: the port supports the native type and does not remove the fraction;
+  the change to ADR-0019 PC-D17, `row_io.py`, the predicate compiler's literal and the
+  memory adapter is presented as a per-item summary and lands with later work.
+- Holed multipolygon members: not expected and not produced by the pipeline; a raw input
+  that has them is exploded at ingest before it is read, so read after `explode_multipart`
+  is the contract. B30 closes on that basis.
+- B32: the condition is met; batch 2 puts canonical orientation into `Geometry`.
+- The attributes-only read: no B-item; the price above is the record.
 
 ## Record edits
 

@@ -156,7 +156,12 @@ CASES: tuple[Case, ...] = (
         "X6",
         "an input that already has the reference field accepted",
         SHAPE,
-        (("        if _REFERENCE in before.all_fields:\n", "        if False:\n"),),
+        (
+            (
+                "        if REFERENCE_FIELD in before.all_fields:\n",
+                "        if False:\n",
+            ),
+        ),
         tests_in(
             T_GEOMETRY,
             "test_explode_refuses_an_input_that_already_has_the_reference_field",
@@ -189,9 +194,8 @@ CASES: tuple[Case, ...] = (
         SHAPE,
         (
             (
-                "        self._session.run_tool(\n"
-                '            "management.DeleteField", in_table=target, drop_field=reference\n'
-                "        )\n",
+                "        self._session.run_tool("
+                "DELETE_FIELD_TOOL, in_table=target, drop_field=reference)\n",
                 "        pass\n",
             ),
         ),
