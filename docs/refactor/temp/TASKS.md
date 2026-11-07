@@ -1264,6 +1264,10 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 `lineage_id` to every feature of **every input the run reads from outside itself** — not only
 `ExternalSource`. Cross-run `Derived` and `ProductIdentity` inputs are re-allocated too (A24).
 
+- **Holed multipolygon members are exploded here.** A raw input whose rows carry a
+  multipolygon member with holes runs through `explode_multipart` at ingest, before any
+  stage reads it: read after explode is the contract (B30, closed 2026-11-07), and the
+  pipeline neither expects nor produces such members.
 - **The ingest map records four columns**, not two:
   `(native_index, incoming_lineage_id, new_lineage_id, boundary_kind)`, with
   `incoming_lineage_id` null where there is none and
@@ -1292,7 +1296,7 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 
 **depends on** T0.1, T3.3.
 
-**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7, A32.1, B28.
+**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7, A32.1, B28, B30.
 
 **doc migration** A10.6, A10.7, A24, A24.1 → the ADR from T3.3 and `02-runtime.md` §6. A22 →
 `02-runtime.md` §6.1.
@@ -1890,7 +1894,10 @@ states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`.
 into the adapter's write side, the builders call `write_rows`, and those test copies are
 deleted. `to_wkb` stays in `tests/support/wkb.py` as the independent oracle the codec is
 tested against. How `write_rows` learns a feature class's geometry type is B31; whether ring
-orientation is the port's contract or the write side's concern is B32.
+orientation is the port's contract or the write side's concern is B32. A33 lands with it:
+the fraction of a `DATE` survives a round trip, with W24 (a date field kind that keeps a
+fraction, and how `write_rows` creates it) and W25 (a fractional literal in a where clause)
+answered on the engine first.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.
@@ -1908,7 +1915,8 @@ after, assert equality. Acceptance: fails when a method is compiled to write its
 
 **(1c) Holed members.** A lake with islands stored as one multipart row runs through
 `explode_multipart` before any read, and the children read back as polygons with their holes;
-whether the value type gains a nested member form is B30.
+B30 closed 2026-11-07: read after `explode_multipart` is the contract, and ingest (T3.4)
+explodes a raw input that carries such a member.
 
 **(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
 `memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
@@ -1943,9 +1951,9 @@ pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5, B31, B32.
+**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5, A33, B30, B31, B32, B33.
 
-**doc migration** none.
+**doc migration** A33.1 → ADR-0019 PC-D17; A33.2 → `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`, the break-once cases and the conformance suite, with `write_rows` (slice 2a).
 
 ---
 

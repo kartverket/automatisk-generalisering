@@ -272,8 +272,8 @@ architect's.
 
 Log `20261106_190141_read_rows.jsonl`, every stage, `--cap-seconds 600`, default Describe
 counts; no pass reached the cap. Fields read: `subtypekode`, `objtype`, `vannbr`. An
-earlier start, `20261106_175420`, was stopped after five passes with `docker stop` when
-the machine had to move; its lines agree with the rerun and it is not used.
+earlier start was stopped after five passes with `docker stop` when the machine had to
+move; its log stayed on the volume, its lines agree with the rerun, and it is not used.
 
 Preflight, planar, EPSG 25833, no Z or M, 13 declared fields, none unrepresentable. The
 walk took 83.7 s over 3,044,617 rows: 85 null shapes, no holed multipolygon member in the
@@ -530,5 +530,6 @@ partition.
 
 To be presented as per-item summaries: T4.11's status (the timing run done, the W-items
 closed or open as above); the B-item for the destinations that name the design documents
-(B33, parked by the architect); the PR description with the partition table above. A15.7
+(parked by the architect; it takes the next free number when written, B33 being the
+curves item); the PR description with the partition table above. A15.7
 stays as it is. The logs under `docs/refactor/temp/logs/` are staged with this file.

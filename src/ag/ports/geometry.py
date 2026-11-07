@@ -63,7 +63,10 @@ class Geometry:
     Why: a `coords` field for simple kinds beside a `parts` field for multi-kinds means every
     reader checks which one is populated, and the check is forgotten in the one place a
     multipolygon arrives. An empty geometry is not representable: a null geometry is a `Row`
-    whose `geometry` is None.
+    whose `geometry` is None. A multi kind holds one ring per member, so a multipolygon
+    member with holes is not representable as one row; such a shape is read after
+    `explode_multipart`, which yields one polygon with its holes per row, and a raw input
+    carrying one is exploded at ingest. ADR-0019 PC-D25.
     """
 
     kind: GeometryKind

@@ -1864,6 +1864,38 @@ constant holds the values, tuned by the team outside this record.
 
 ---
 
+## A33. Dates carry their fraction
+
+*Decided 2026-11-07.* The port carries a `DATE` as a naive `datetime` to microsecond
+precision, the native type. No adapter refuses a fraction, and none reduces one its store
+can hold. An adapter whose store holds less precision states its precision in its
+docstring, and a round trip is identity to the coarser of the two sides. How such an
+adapter reduces a fraction, by rounding or by truncation, is the architect's to state
+here before the item lands: the engine rounds (PR A read 12:00:00.5 back as 12:00:01), and
+a rounded 23:59:59.6 moves into the next day. Why: the production sources hold sub-second
+parts in their editor-tracking fields and the read-side refusal fired on a production
+read (`temp/findings/slice_1b_read_rows_timing_evidence.md`). Lands in slice 2a with
+`write_rows`, whose round trip is the evidence for the contract.
+
+**A33.1** The contract line: `DATE` takes a naive `datetime`, carried to microsecond
+precision; an adapter whose store holds less states its precision, and a round trip is
+identity to the coarser of the two sides. Replaces "with no sub-second part, since the port
+carries dates to the whole second".
+`destination:` ADR-0019 PC-D17.
+
+**A33.2** The adapters: `row_io.py` drops the sub-second refusal in `_attribute`;
+`_shared/field_values.py` drops its microsecond branch, so the memory store and the
+compiler's check accept a fraction; the predicate compiler's literal carries the fraction
+once W25 shows the engine takes one. Break-once P4 and R3 go, replaced by a case that the
+compiler's literal drops a fraction silently and a conformance round trip asserting
+identity to the coarser precision. Open until the run: W24, whether the engine has a date
+field kind that keeps a fraction and how `write_rows` creates it, since the insert cursor
+rounded a fraction in an AddField DATE field while the sources hold milliseconds; W25, a
+fractional literal in a file geodatabase where clause, since W8 confirmed whole seconds
+only.
+`destination:` `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`,
+`tools/break_once/cases/arcpy_adapter.py`, `tests/conformance/`.
+
 # B. Open
 
 These are **not settled**. Nothing below should be treated as a decision.
@@ -2604,7 +2636,12 @@ tool, and whether the session environment's implicit reprojection of tool output
 a second line or is turned off once ingest conforms every input.
 `destination:` the ingest task and the session docstring when decided.
 
-**B30. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
+**B30. Holes in multipolygon members.** *Closed 2026-11-07.* Read after `explode_multipart`
+is the contract: `Geometry` holds one ring per member of a multi kind and gains no nested
+form; a member with holes is refused on read, and a raw input that has one, which the
+pipeline neither expects nor produces, is exploded at ingest (T3.4) before any read. The
+timing run's polygon source, `ArealdekkeFlate_N10`, held none. Landed in
+`ports/geometry.py`. As opened: Opened 2026-11-04 with the ArcPy adapter's WKB codec.
 `Geometry` holds one ring per member of a multi kind, so a multipolygon member with holes, a
 lake with islands arriving as one row, is refused on read with `PortContractError` and is
 reachable only after `explode_multipart`, which yields one polygon with its holes per row.
@@ -2634,3 +2671,18 @@ and the codec keeps rings as the engine writes them. Open: whether orientation i
 adapter concern at the boundary (PC-D25), the write side orienting and a value allowed to
 come back with its rings reversed.
 `destination:` `ports/geometry.py` when decided.
+
+**B33. True curves at the port boundary.** Opened 2026-11-07 with the timing run. The engine
+exports a true curve through `SHAPE@WKB` as neither a densified ring nor a curve code but
+the arc's vertices alone: a buffered point read back as a planar polygon of one ring and
+two vertices (probe, 2026-11-06). The codec accepts it and `Geometry` validates only a
+point's shape, so a curve is silent geometry loss on read. Exposure: the raw sources,
+unknown, since the WKB walk cannot see a curve; the pipeline's own curve-producing tools,
+certain, since Buffer writes true curves into a file geodatabase and the stages buffer.
+Open, none applied: a degenerate-ring refusal in `Geometry`, a polygon ring under four
+coordinates or a line under two, cheap, catching a full arc and not a curved corner; the
+adapter densifying the output of each curve-producing method through a tool; a per-row
+`hasCurves` check through `SHAPE@`, a stub name and an unpriced per-row cost; a one-off
+probe counting true curves per source, which answers whether any of it is needed.
+Re-assessed at the end of batch 2, before the two batches are pushed as one pull request.
+`destination:` `ports/geometry.py` and the codec when decided.
