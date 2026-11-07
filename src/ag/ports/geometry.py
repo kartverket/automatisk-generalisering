@@ -66,7 +66,7 @@ class Geometry:
     whose `geometry` is None. A multi kind holds one ring per member, so a multipolygon
     member with holes is not representable as one row; such a shape is read after
     `explode_multipart`, which yields one polygon with its holes per row, and a raw input
-    carrying one is exploded at ingest. ADR-0019 PC-D25.
+    carrying one is exploded at ingest.
     """
 
     kind: GeometryKind

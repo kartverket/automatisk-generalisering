@@ -1869,10 +1869,11 @@ constant holds the values, tuned by the team outside this record.
 *Decided 2026-11-07.* The port carries a `DATE` as a naive `datetime` to microsecond
 precision, the native type. No adapter refuses a fraction, and none reduces one its store
 can hold. An adapter whose store holds less precision states its precision in its
-docstring, and a round trip is identity to the coarser of the two sides. How such an
-adapter reduces a fraction, by rounding or by truncation, is the architect's to state
-here before the item lands: the engine rounds (PR A read 12:00:00.5 back as 12:00:01), and
-a rounded 23:59:59.6 moves into the next day. Why: the production sources hold sub-second
+docstring, and a round trip is identity to the coarser of the two sides. Such an adapter
+reduces a fraction by truncation, never by rounding (the architect, 2026-11-07): the
+engine rounds on its own (PR A read 12:00:00.5 back as 12:00:01), so an adapter whose
+store rounds truncates the value itself before handing it over, and 23:59:59.6 stays on
+its day. Why: the production sources hold sub-second
 parts in their editor-tracking fields and the read-side refusal fired on a production
 read (`temp/findings/slice_1b_read_rows_timing_evidence.md`). Lands in slice 2a with
 `write_rows`, whose round trip is the evidence for the contract.
@@ -1886,7 +1887,7 @@ carries dates to the whole second".
 **A33.2** The adapters: `row_io.py` drops the sub-second refusal in `_attribute`;
 `_shared/field_values.py` drops its microsecond branch, so the memory store and the
 compiler's check accept a fraction; the predicate compiler's literal carries the fraction
-once W25 shows the engine takes one. Break-once P4 and R3 go, replaced by a case that the
+once W25 shows the engine takes one. `arcpy_adapter`'s break-once cases P4 and R3 go, replaced by a case that the
 compiler's literal drops a fraction silently and a conformance round trip asserting
 identity to the coarser precision. Open until the run: W24, whether the engine has a date
 field kind that keeps a fraction and how `write_rows` creates it, since the insert cursor
