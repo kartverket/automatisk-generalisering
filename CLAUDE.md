@@ -119,6 +119,7 @@ What follows is how an agent works with them.
 
 ## Code conventions
 
+The system this refactor produces is expected to run for at least 8 to 15 years. Every choice is judged on what it costs to understand and change in year ten, not on what it saves today. In practice: one declaration per fact, so a constant, a name or an engine string is spelled once and referenced everywhere else; no magic strings or numbers without a stated reason beside them; no shortcut justified by "for now" without the item that retires it; the simplest construct that states the intent, and no structure added for a case that has not arrived.
 - Python version and tool settings: as pinned in `pyproject.toml`.
 - Pyright as configured in `pyproject.toml`: standard mode, strict on `src/`, `tests/`
   and `tools/`. Type hints are mandatory, including return types.
