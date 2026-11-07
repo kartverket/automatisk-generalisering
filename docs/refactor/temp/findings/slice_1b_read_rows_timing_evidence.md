@@ -274,8 +274,8 @@ architect's.
 
 Log `20261106_190141_read_rows.jsonl`, every stage, `--cap-seconds 600`, default Describe
 counts; no pass reached the cap. Fields read: `subtypekode`, `objtype`, `vannbr`. An
-earlier start, `20261106_175420`, was stopped after five passes with `docker stop` when
-the machine had to move; its lines agree with the rerun and it is not used.
+earlier start the same day was stopped after five passes with `docker stop` when the
+machine had to move; its lines agreed with the rerun, and its log was not kept.
 
 Preflight, planar, EPSG 25833, no Z or M, 13 declared fields, none unrepresentable. The
 walk took 83.7 s over 3,044,617 rows: 85 null shapes, no holed multipolygon member in the
