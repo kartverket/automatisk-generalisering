@@ -1,0 +1,149 @@
+# Slice 1b evidence: geometry family and canonical orientation, second pull request, batch 2
+
+**Status:** EVIDENCE, 2026-11-08, awaiting the marked run. Batch 2 of the second pull
+request of slice 1b: B31 (the geometry family on `Schema`) and B32 (canonical ring
+orientation in `Geometry`), their refusals, their break-once cases, the W23 pins, the
+W24 and W25 probe, and the records. Batch 1, the timing run, is
+`slice_1b_read_rows_timing_evidence.md` on the same branch.
+
+This file is written in WSL without ArcPy. The unit tests, the conformance suite's memory
+half, the static tests and the break-once sets ran here; the marked tests listed below
+are written and collected but have not run, and nothing here claims an engine result it
+has not been shown. The marked run command is in `docs/contributing/testing.md`.
+
+**The data is not open.** Nothing here comes from project data. The W24 and W25 probe
+reads one production field's Describe properties from the working copy on the
+`ag_timing` volume, never from the read-only `gis_files` mount, and prints names and
+properties only.
+
+## What this batch adds
+
+- `GeometryFamily` in `ports/geometry.py`: `POINT`, `MULTIPOINT`, `LINE`, `POLYGON`, the
+  folding every engine shares; `GeometryKind.family`; `GeometryFamily.single`, the family
+  `explode_multipart` writes, multipoint to point and every other family to itself.
+- `Schema.geometry_family`, required for a feature class and refused on a table, beside
+  `geometry_crs`. The empty dataset is answered by the schema: a partition in which one
+  input has no rows still hands the method a dataset with every field and its geometry
+  type, created from the schema alone (the architect, 2026-11-08; the legacy partition
+  iterator did this with a template feature class, and the port has no template).
+- `MemoryStore.write` refuses a row whose kind is outside the schema's family before
+  anything is replaced, as every engine refuses it. The memory `explode_multipart` writes
+  its output under the input family's `single`, so an empty multipoint input writes an
+  empty point feature class with no row consulted.
+- `describe` fills the family from the engine's `shapeType` through `SHAPE_TYPES` in
+  `dataset_schema.py`, spelled once, and refuses a shape type none of the families holds;
+  `_read` maps `dataType` inside the guard and branches on the port's `DataType`, not on
+  the engine's string.
+- `GEOMETRY_TYPES`, the CreateFeatureclass vocabulary keyed by family, moved from the test
+  builders into `dataset_writer.py` beside the AddField vocabulary; the builders and the
+  timing tool import it. All four keywords were exercised on the image on 2026-11-05
+  through the conformance seeds.
+- Canonical orientation in `Geometry.__post_init__`: a polygon's exterior and every
+  multipolygon member counter-clockwise, holes clockwise, through `object.__setattr__`;
+  the same `parts` tuple is kept when nothing reverses, which is every value an engine
+  returns; a ring of zero signed area keeps its order; lines and points are never touched.
+  The signed area is taken relative to the ring's first vertex.
+- `oriented`, `signed_area` and their helpers left `tests/support/wkb.py`; `to_wkb` stays
+  as the oracle. The builders seed a feature class from the schema's family and no longer
+  infer a geometry type from the rows' kinds (`geometry_type_of` removed).
+- The fake engine inverts `DATA_TYPES` and `SHAPE_TYPES` as it inverts `FIELD_TYPES`, so
+  its `FeatureClass`, `Table`, `Point`, `Multipoint`, `Polyline` and `Polygon` strings are
+  the adapter's own, and `seed` reads the data type and the shape type from the schema.
+- The timing tool: the `orient` variant, `oriented_rows`, `rings_to_reverse`, `signed_area`
+  and their tests retired; the 2D copy's geometry type read through the family and
+  `GEOMETRY_TYPES`; no engine string restated.
+- `docs/refactor/temp/w24_w25_date_probe.py`, the by-hand probe for W24 and W25.
+- The probes `w12_curve_probe.py` and `w19_wkb_probe.py` build their schemas with a family
+  and seed without a geometry type, so they run as before.
+
+## The signed-area form, 2026-11-08
+
+The plain shoelace form, `sum(x1 * y2 - x2 * y1)`, multiplies coordinates of 5e5 by 7e6
+and takes the sign from the difference of products near 3.5e12, where a double's spacing
+is about 5e-4. A ring a few millimetres across has twice its area below that spacing, so
+the sign is rounding. The relative form subtracts the first vertex first. Probe in the
+scratch directory, Python, no engine:
+
+```
+20000 CCW rectangles, sides 1 mm to 1 m, eastings 2e5-8e5, northings 6.4e6-7.9e6:
+  wrong sign plain=736 relative=0; exactly zero plain=4781 relative=0
+1 cm x 0.1 mm at (500000, 7000000): plain=0.0 relative=1.9999966e-06 true=2.0e-06
+same ring clockwise: plain=0.0 relative=-1.9999966e-06
+two-vertex ring: relative=0.0; collinear ring: relative=0.0
+200k calls, 5-vertex ring: plain=0.075s relative=0.100s ratio=1.33
+```
+
+So with the plain form a quarter of real rings would have read as zero area and kept
+whatever order they came in, and "a zero-area ring keeps its order" would have been a
+rule about rounding. The unit tests pin the thin and the small ring at UTM coordinates in
+both orientations, the two-vertex and the collinear ring, and the identity of `parts`
+when nothing reverses.
+
+## The explode family rule, 2026-11-08
+
+On the memory adapter before this batch, run in WSL:
+
+```
+multipoints  input kinds ['MULTIPOINT'] -> output kinds ['POINT']; output schema is input schema: True
+multilines   input kinds ['LINESTRING', 'MULTILINESTRING'] -> output kinds ['LINESTRING']; output schema is input schema: True
+polygons     input kinds ['MULTIPOLYGON', 'POLYGON'] -> output kinds ['POLYGON']; output schema is input schema: True
+```
+
+With the store's kind-against-family check, the first line is a refusal: point children
+under a multipoint schema. `GeometryFamily.single` is the rule, declared once; the memory
+adapter applies it to the output schema, and on the engine the tool decides, which the
+marked test in `tests/engine/arcpy/test_shape.py` asserts through `describe`.
+
+## Checks run here, 2026-11-08
+
+```
+$ uv run --locked --extra dev pre-commit run --all-files
+ruff format --check / ruff check / pyright strict / import contracts / source scans /
+pytest -m "not arcpy" / break-it-once case tables / design record consistency /
+terminology anchors and headwords: all Passed
+$ uv run --locked --extra dev pytest -m "not arcpy" -q
+540 passed, 43 deselected
+$ uv run --locked --extra dev python -m tools.break_once --check
+break-it-once: 173 cases in 8 set(s); needles match, targets collect
+$ uv run --locked --extra dev python -m tools.break_once ports --out ...
+break-it-once: 30 cases, 0 unexpected      (P25-P30 new: FAILED as expected)
+$ uv run --locked --extra dev python -m tools.break_once memory_adapter --out ...
+break-it-once: 31 cases, 0 unexpected      (M30, M31 new)
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --out ...
+break-it-once: 22 cases, 0 unexpected      (D3, D4 new)
+```
+
+The nine new marked tests collect (`pytest tests/engine tests/conformance
+--collect-only`: 64 tests) and have not run.
+
+## Marked tests awaiting the image, and what each pins
+
+| test | pins |
+|---|---|
+| `tests/engine/arcpy/test_dataset_schema.py::test_describe_reads_each_family_from_the_shape_type`, eight ids | W23: the four `shapeType` spellings, in a file geodatabase and in the memory workspace; `Multipoint` is the one not yet observed |
+| `tests/engine/arcpy/test_shape.py::test_a_multipoint_input_explodes_into_a_point_family_output` | the tool writes a multipoint input's children into a point class, which is `GeometryFamily.single` |
+| `tests/conformance/test_table_ops.py::test_read_rows_round_trips_each_geometry_kind[arcpy-*]` | the round trip is identity with the builders orienting nothing |
+| every other marked test | unchanged in intent; the seeds now take the geometry type from the schema |
+
+Under the batch's rule: a marked test the run fails is fixed here when the failure is an
+engine-facing assumption, and removed with the observation recorded when it is a contract
+question. The W24 and W25 probe runs in the same session; its output goes below.
+
+## W24 and W25, the probe
+
+To be pasted from the architect's run of `docs/refactor/temp/w24_w25_date_probe.py` in
+the image, with the `ag_timing` volume mounted for the production copy's field
+properties.
+
+## Records
+
+- ADR-0019 PC-D22 adapted: `write_rows`'s `Schema` names a feature class's CRS and
+  geometry family, so an empty dataset is created from the schema alone. PC-D25 adapted:
+  polygon rings canonical on construction, a round trip identity on every adapter, line
+  direction untouched. PC-D26 adapted: a row's geometry is held to the schema's CRS and
+  family. Direction affected: no, on all three.
+- B31 and B32 closed in `DECISIONS.md`, their opening text kept.
+- T4.11's status and follow-up paragraph in `TASKS.md`.
+- The timing evidence: the `orient` variant's retirement, the plain-form note on B32's
+  price, the W23 row.
+- B33 is re-assessed before the pull request and is not touched here.

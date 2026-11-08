@@ -20,8 +20,8 @@ Declared, and why:
   (ADR-0019 PC-D23), and no tool deletes chosen rows of a dataset without layer state.
 - `Describe`: a dataset's schema, data type, Z and M flags and spatial reference, read
   before a tool runs, and the names of the fields the engine maintains itself;
-  `shapeType`, the geometry family of a feature class, which the timing run's preflight
-  reports for a raw source and which `Schema` is to carry (B31).
+  `shapeType`, the geometry family of a feature class, which `describe` reads into
+  `Schema.geometry_family` and the timing run's preflight reports for a raw source.
 - `AddFieldDelimiters`: identifier quoting per workspace type for a compiled predicate,
   which is the engine's table and not one to restate.
 """

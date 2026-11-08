@@ -23,6 +23,7 @@ from ag.ports.columns import PARENT_ID as PARENT_ID
 from ag.ports.geometry import CRS as CRS
 from ag.ports.geometry import Coordinate as Coordinate
 from ag.ports.geometry import Geometry as Geometry
+from ag.ports.geometry import GeometryFamily as GeometryFamily
 from ag.ports.geometry import GeometryKind as GeometryKind
 from ag.ports.geometry import Ring as Ring
 from ag.ports.predicates import And as And
@@ -63,6 +64,7 @@ __all__ = [
     "FieldName",
     "FieldType",
     "Geometry",
+    "GeometryFamily",
     "GeometryKind",
     "Intersects",
     "IsIn",

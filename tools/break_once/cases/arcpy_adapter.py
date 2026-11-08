@@ -54,6 +54,36 @@ CASES: tuple[Case, ...] = (
         ),
     ),
     Case(
+        "D3",
+        "an unmapped shape type described as a feature class with no family",
+        SCHEMA,
+        (
+            (
+                '        family = SHAPE_TYPES.get(raw.shape_type or "")\n'
+                "        if family is None:\n",
+                '        family = SHAPE_TYPES.get(raw.shape_type or "", GeometryFamily.LINE)\n'
+                "        if False:\n",
+            ),
+        ),
+        (f"{DESCRIBE_REFUSES}[unknown-shape-type]",),
+    ),
+    Case(
+        "D4",
+        "the family read from a fixed shape type instead of the described one",
+        SCHEMA,
+        (
+            (
+                "            shape_type = described.shapeType\n",
+                '            shape_type = "Polyline"\n',
+            ),
+        ),
+        (
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[points]",
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[multipoints]",
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[polygons]",
+        ),
+    ),
+    Case(
         "V1",
         "a non-planar type code accepted",
         CODEC,

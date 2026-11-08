@@ -10,8 +10,9 @@ read as positions; the index is valid until the dataset is next written. A handl
 resolved through `os.fspath`, so an unmaterialised handle fails here as it would under an
 engine. A write checks the handle's `DataType` against the schema, that each row holds
 exactly the schema's fields, that each value fits its field's type and range or is None,
-and that geometry appears only on a feature class and in the schema's CRS; a bad row is a
-`PortContractError` raised before anything is replaced. Rows are stored as copies with
+and that geometry appears only on a feature class, in the schema's CRS and of a kind in
+the schema's geometry family, since a feature class holds one geometry type on every
+engine; a bad row is a `PortContractError` raised before anything is replaced. Rows are stored as copies with
 read-only attributes, so what was checked is what stays. ADR-0019 PC-D17, PC-D26.
 
 Why: all mutable state of the fake is in this one object, handed to every port class, so
@@ -130,5 +131,13 @@ def _check_row(*, row: Row, schema: Schema, path: str, position: int) -> None:
         raise PortContractError(
             f"row {position} written to {path!r} is in {row.geometry.crs!r}; the "
             f"schema declares {schema.geometry_crs!r}.",
+            context=ErrorContext(handle=path),
+        )
+    family = schema.geometry_family
+    if family is not None and row.geometry.kind.family is not family:
+        raise PortContractError(
+            f"row {position} written to {path!r} is a {row.geometry.kind.value}, "
+            f"outside the schema's {family.value} family; a feature class holds one "
+            "geometry type.",
             context=ErrorContext(handle=path),
         )

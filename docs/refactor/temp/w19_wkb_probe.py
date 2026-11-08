@@ -19,7 +19,7 @@ import tempfile
 
 from ag.adapters.arcpy.session import open_session
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
-from ag.ports import Field, FieldType, Schema
+from ag.ports import Field, FieldType, GeometryFamily, Schema
 from tests.support import wkb
 from tests.support.arcpy import gdb
 from tests.support.cases import CRS, multilines
@@ -105,7 +105,11 @@ def main() -> None:
     session = open_session()
     directory = tempfile.mkdtemp(prefix="w19_")
     workspace = gdb.file_gdb(session, directory=directory, name="probe")
-    schema = Schema(fields=(Field("name", FieldType.TEXT, 30),), geometry_crs=CRS)
+    schema = Schema(
+        fields=(Field("name", FieldType.TEXT, 30),),
+        geometry_crs=CRS,
+        geometry_family=GeometryFamily.POLYGON,
+    )
     shapes: dict[str, bytes] = {
         "single_ccw": polygon(SQUARE_CCW),
         "single_cw": polygon(reverse(SQUARE_CCW)),
@@ -123,7 +127,6 @@ def main() -> None:
         name="polys",
         schema=schema,
         cells=[(name, data) for name, data in shapes.items()],
-        geometry_type="POLYGON",
     )
     print("== read back as SHAPE@WKB ==")
     for name, data in gdb.read_cells(
@@ -147,7 +150,9 @@ def main() -> None:
     case = multilines()
     cells = [(name, 99, shape) for name, shape in cells_of(case.schema, case.rows)]
     taken = Schema(
-        fields=(*case.schema.fields, Field("ORIG_FID", FieldType.LONG)), geometry_crs=CRS
+        fields=(*case.schema.fields, Field("ORIG_FID", FieldType.LONG)),
+        geometry_crs=CRS,
+        geometry_family=case.schema.geometry_family,
     )
     gdb.seed(
         session,
@@ -155,7 +160,6 @@ def main() -> None:
         name="taken",
         schema=taken,
         cells=cells,
-        geometry_type="POLYLINE",
     )
     session.run_tool(
         "management.MultipartToSinglepart",

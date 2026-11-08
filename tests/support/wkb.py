@@ -1,20 +1,17 @@
 """Well-known binary for tests: `Geometry` values and hand-built edge cases to bytes.
 
 What: `to_wkb(geometry, order=)`, the planar WKB of a value in either byte order;
-`oriented(geometry)`, the value with its polygon rings in the orientation the engine reads
-through WKB; `empty(code)`, an empty geometry of a type code; `typed(code)`, a point
-payload under any type code, for the codes the adapter refuses;
-`multipolygon_with_hole()`, the one shape `Geometry` cannot hold, and the rings it is made
-of.
+`empty(code)`, an empty geometry of a type code; `typed(code)`, a point payload under any
+type code, for the codes the adapter refuses; `multipolygon_with_hole()`, the one shape
+`Geometry` cannot hold, and the rings it is made of.
 
 Why: the adapter's codec is a parser and nothing in the package writes WKB yet, so the
 tests carry the encoder. It is independent of the codec on purpose: a round trip through
 two implementations of the same specification is the evidence. The engine decides a
 ring's role from its orientation on import, not from its position in the WKB: two
 counter-clockwise rings become two exteriors and a lone clockwise ring an empty shape
-(the first engine run), so the write side orients, exterior counter-clockwise and holes
-clockwise, and a value written that way reads back as written. `TableOps.write_rows`
-inherits the step when the adapter writes geometry itself.
+(the first engine run). `Geometry` holds its rings in that orientation on construction,
+so a value's bytes are its bytes and the encoder orients nothing.
 """
 
 from __future__ import annotations
@@ -74,32 +71,6 @@ def multipolygon_with_hole(*, order: str = "<") -> bytes:
     lake = _header(POLYGON, order) + _rings((LAKE_OUTER, LAKE_ISLAND), order=order)
     neighbour = _header(POLYGON, order) + _rings((LAKE_NEIGHBOUR,), order=order)
     return _header(MULTIPOLYGON, order) + struct.pack(f"{order}I", 2) + lake + neighbour
-
-
-def oriented(geometry: Geometry) -> Geometry:
-    """`geometry` with a polygon's exterior counter-clockwise and its holes clockwise,
-    and every member of a multipolygon counter-clockwise; other kinds as they are."""
-    if geometry.kind is GeometryKind.POLYGON:
-        exterior, *holes = geometry.parts
-        parts = (_counter_clockwise(exterior), *(_clockwise(hole) for hole in holes))
-    elif geometry.kind is GeometryKind.MULTIPOLYGON:
-        parts = tuple(_counter_clockwise(member) for member in geometry.parts)
-    else:
-        return geometry
-    return Geometry(kind=geometry.kind, parts=parts, crs=geometry.crs)
-
-
-def signed_area(ring: Ring) -> float:
-    """Twice the shoelace area: positive counter-clockwise, negative clockwise."""
-    return sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(ring, ring[1:]))
-
-
-def _counter_clockwise(ring: Ring) -> Ring:
-    return ring if signed_area(ring) >= 0 else tuple(reversed(ring))
-
-
-def _clockwise(ring: Ring) -> Ring:
-    return ring if signed_area(ring) <= 0 else tuple(reversed(ring))
 
 
 def _geometry(kind: GeometryKind, parts: tuple[Ring, ...], *, order: str) -> bytes:

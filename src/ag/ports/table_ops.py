@@ -1,7 +1,7 @@
 """Schema and bulk row IO: the `TableOps` Protocol and the values that cross it.
 
-What: `Schema`, what a write needs to create a dataset from nothing; `PARENTS_SCHEMA`, the
-one schema every parents table has; `Row`, one record as attributes plus an optional
+What: `Schema`, what a write needs to create a dataset from nothing, a feature class with
+its CRS and geometry family; `PARENTS_SCHEMA`, the one schema every parents table has; `Row`, one record as attributes plus an optional
 geometry; and the Protocol, which gains its methods as their callers arrive.
 
 Why: a separate port from geometry because schema and rows are a different conversation,
@@ -21,20 +21,26 @@ from ag.core.handles import In
 from ag.core.types import DataType
 from ag.ports.attributes import AttributeValue, Field, FieldName, FieldType
 from ag.ports.columns import CHILD_ID, PARENT_ID
-from ag.ports.geometry import CRS, Geometry
+from ag.ports.geometry import CRS, Geometry, GeometryFamily
 
 
 @dataclass(frozen=True)
 class Schema:
     """What a write needs in order to create a dataset from nothing.
 
-    A feature class needs its CRS: one written without it is the failure that surfaces two
-    stages later as an empty spatial join. A table has no geometry and takes none.
+    A feature class needs its CRS and its geometry family: one written without a CRS is
+    the failure that surfaces two stages later as an empty spatial join, and one has one
+    geometry type on every engine, which nothing but the schema can say when a partition
+    has no rows of an input and the dataset is still created with all its fields. A row
+    whose geometry is outside the family is refused by the adapter before anything is
+    written (ADR-0019 PC-D26). A table has no geometry and takes neither.
+    ADR-0019 PC-D22.
     """
 
     fields: tuple[Field, ...]
     data_type: DataType = DataType.FEATURE_CLASS
     geometry_crs: CRS | None = None
+    geometry_family: GeometryFamily | None = None
 
     def __post_init__(self) -> None:
         if self.data_type is DataType.FEATURE_CLASS and self.geometry_crs is None:
@@ -43,6 +49,12 @@ class Schema:
                 "no CRS is the failure that surfaces two stages later as an empty spatial "
                 "join."
             )
+        if self.data_type is DataType.FEATURE_CLASS and self.geometry_family is None:
+            raise ValueError(
+                "a FEATURE_CLASS schema needs geometry_family. A feature class holds one "
+                "geometry type, and an empty one can be created from the schema alone "
+                "only if the schema says which."
+            )
         if (
             self.data_type is not DataType.FEATURE_CLASS
             and self.geometry_crs is not None
@@ -50,6 +62,14 @@ class Schema:
             raise ValueError(
                 f"a {self.data_type.value} schema takes no geometry_crs; only a feature "
                 "class has a geometry to reference."
+            )
+        if (
+            self.data_type is not DataType.FEATURE_CLASS
+            and self.geometry_family is not None
+        ):
+            raise ValueError(
+                f"a {self.data_type.value} schema takes no geometry_family; only a "
+                "feature class has a geometry type."
             )
 
 

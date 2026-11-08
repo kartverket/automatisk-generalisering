@@ -20,8 +20,8 @@ selectable with `--only`:
   read passes then read the exploded copy, since the codec refuses such a member.
 - `reads`: the timed passes. On a feature class the token set is the chosen fields with
   the shape and the variants are `bare`, a loop over the cursor; `codec`, the bare loop
-  plus `geometry_from_wkb` per row; `port`, `TableOps.read_rows`; and for polygons
-  `orient`, the port plus a signed-area check of every ring, the price B32 asks about.
+  plus `geometry_from_wkb` per row; and `port`, `TableOps.read_rows`, whose `Geometry`
+  values carry the canonical ring orientation, so its figure includes that check.
   The fields alone run bare only: `read_rows` carries the shape of a feature class on
   every row, so the port has no attributes-only pass there. On a table the fields alone
   are the token set and the variants are `bare` and `port`. A set runs in the order
@@ -87,8 +87,10 @@ from ag.adapters.arcpy.support.dataset_schema import (
     DATA_TYPES,
     FIELD_TYPES,
     OID_TOKEN,
+    SHAPE_TYPES,
     describe,
 )
+from ag.adapters.arcpy.support.dataset_writer import GEOMETRY_TYPES
 from ag.adapters.arcpy.support.geometry_values import (
     WKB_TOKEN,
     geometry_from_wkb,
@@ -99,7 +101,7 @@ from ag.core.errors import AgError
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports.attributes import FieldType
-from ag.ports.geometry import Geometry, GeometryKind, Ring
+from ag.ports.geometry import GeometryFamily
 from ag.ports.table_ops import Row
 
 PARTITION_ROWS = 36_407
@@ -231,6 +233,11 @@ class RawDescribe:
     @property
     def is_feature_class(self) -> bool:
         return DATA_TYPES.get(self.data_type) is DataType.FEATURE_CLASS
+
+    @property
+    def family(self) -> GeometryFamily | None:
+        """The port's family of the shape type, None for a table or an unmapped type."""
+        return SHAPE_TYPES.get(self.shape_type)
 
 
 def raw_describe(session: ArcpySession, path: str) -> RawDescribe:
@@ -515,34 +522,6 @@ def port_rows(
     )
 
 
-def oriented_rows(rows: Iterator[Row]) -> Iterator[int]:
-    """The port's rows plus the per-ring signed-area check a canonical `Geometry` would
-    run on construction; yields the rings each row would reverse, for the count."""
-    try:
-        for row in rows:
-            yield rings_to_reverse(row.geometry)
-    finally:
-        close_iterator(rows)
-
-
-def rings_to_reverse(geometry: Geometry | None) -> int:
-    """How many rings of a polygon value a canonical orientation would reverse: the
-    exterior and every member counter-clockwise, every hole clockwise."""
-    if geometry is None:
-        return 0
-    if geometry.kind is GeometryKind.MULTIPOLYGON:
-        return sum(signed_area(member) < 0 for member in geometry.parts)
-    if geometry.kind is GeometryKind.POLYGON:
-        exterior, *holes = geometry.parts
-        return (signed_area(exterior) < 0) + sum(signed_area(h) > 0 for h in holes)
-    return 0
-
-
-def signed_area(ring: Ring) -> float:
-    """Twice the shoelace area: positive counter-clockwise, negative clockwise."""
-    return sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(ring, ring[1:]))
-
-
 # --- The run ----------------------------------------------------------------------------
 
 
@@ -675,12 +654,17 @@ class Run:
     def make_copies(self) -> None:
         source = self.options.dataset
         if self.raw.has_z or self.raw.has_m:
+            family = self.raw.family
+            if family is None:
+                raise ValueError(
+                    f"shape type {self.raw.shape_type!r} is none of the port's families"
+                )
             target = f"{self.workspace}/{self.name}_2d"
             seconds = self.timed_tool(
                 "management.CreateFeatureclass",
                 out_path=self.workspace,
                 out_name=f"{self.name}_2d",
-                geometry_type=self.raw.shape_type.upper(),
+                geometry_type=GEOMETRY_TYPES[family],
                 template=source,
                 has_m="DISABLED",
                 has_z="DISABLED",
@@ -789,10 +773,7 @@ class Run:
             self.token_set("attributes", fields, variants=("port",))
             return
         self.token_set("attributes", fields, variants=())
-        variants = ("codec", "port")
-        if self.raw.shape_type == "Polygon":  # the engine's string, W23, until B31
-            variants = ("codec", "port", "orient")
-        self.token_set("geometry", fields, variants=variants)
+        self.token_set("geometry", fields, variants=("codec", "port"))
 
     def token_set(
         self, name: str, fields: Sequence[str], *, variants: Sequence[str]
@@ -869,11 +850,8 @@ class Run:
             return bare_rows(self.session, path=path, tokens=tokens)
         if variant == "codec":
             return codec_rows(self.session, path=path, tokens=tokens, crs=self.crs)
-        rows = port_rows(self.session, handle=self.handle(path), fields=fields)
         if variant == "port":
-            return rows
-        if variant == "orient":
-            return oriented_rows(rows)
+            return port_rows(self.session, handle=self.handle(path), fields=fields)
         raise ValueError(f"{variant!r} is not a variant.")
 
     def describe_stage(self) -> None:

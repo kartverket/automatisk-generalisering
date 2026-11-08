@@ -118,7 +118,9 @@ on a stable id and may carry geometry.
 
 - **PC-D22** `TableOps` has no cursor. `calculate_field(input, field, expression)` declares an
   expression update; `read_rows(input, fields) -> Iterable[Row]` reads in bulk;
-  `write_rows(output, schema, rows)` writes in bulk; `update_rows(input, key, fields, rows)`
+  `write_rows(output, schema, rows)` writes in bulk, a feature class's `Schema` naming its
+  CRS and its geometry family, the one geometry type the dataset holds, so that an empty
+  dataset is created from the schema alone; `update_rows(input, key, fields, rows)`
   writes back rows computed in Python, keyed on a stable id, with no iteration protocol,
   writing the changed rows and not every row, and may carry `Row.geometry`. The key must be
   stable; `lineage_id` provides one.
@@ -128,12 +130,16 @@ on a stable id and may carry geometry.
   `write_rows`; an update cursor becomes `calculate_field` where an expression suffices and
   `update_rows` where values are computed in Python.
 - **PC-D25** `ports/geometry.py` defines an immutable `Geometry` value type: geometry kind,
-  coordinate sequence, CRS. `read_rows` yields it and `write_rows` accepts it. Domain code
-  manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy geometry and
-  convert at the boundary.
+  coordinate sequence, CRS. Polygon rings are canonical on construction, the exterior and
+  every multipolygon member counter-clockwise and holes clockwise, a ring of zero area
+  kept as given, so one polygon has one value and a round trip is identity on every
+  adapter; line direction is never touched. `read_rows` yields it and `write_rows` accepts
+  it. Domain code manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy
+  geometry and convert at the boundary.
 - **PC-D26** A row written through the port is held to the field types and ranges of
-  PC-D17, with `None` a null in a cell; a mismatch is a `PortContractError` from the
-  adapter, raised before anything is written.
+  PC-D17, with `None` a null in a cell, and its geometry to the schema's CRS and geometry
+  family; a mismatch is a `PortContractError` from the adapter, raised before anything is
+  written.
 - **PC-D27** Coordinates are planar. No Z and no M cross a port; heights and depths are
   attribute values on points. An adapter refuses a dataset carrying Z or M values before
   any row is read.

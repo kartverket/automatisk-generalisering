@@ -2,9 +2,8 @@
 and the engine-touching builders.
 
 What: `seed_case`, which encodes a case's rows as cell tuples, the geometry as well-known
-binary through the test-side encoder, works out the engine geometry type from the rows'
-kinds, hands both to the builders and returns a `Seeded`; `handle_at`, a materialised
-handle for a dataset in a workspace.
+binary through the test-side encoder, hands them with the case's schema to the builders
+and returns a `Seeded`; `handle_at`, a materialised handle for a dataset in a workspace.
 
 Why: the builders import `ag` and the engine only, under the constrained stub, so the
 encoder and the cases cannot be theirs; this module sits outside that root and joins the
@@ -21,7 +20,7 @@ from ag.core.types import DataType
 from ag.ports.table_ops import Row, Schema
 from tests.support.arcpy import gdb
 from tests.support.cases import DatasetCase, Seeded
-from tests.support.wkb import oriented, to_wkb
+from tests.support.wkb import to_wkb
 
 NAMESPACE = "tests.support.gdb_cases"
 
@@ -37,9 +36,7 @@ def handle_at(
 
 def cells_of(schema: Schema, rows: tuple[Row, ...]) -> list[tuple[object, ...]]:
     """The rows as cell tuples in the schema's field order, a feature class with the
-    geometry as well-known binary, or None, in the last cell; polygon rings are oriented
-    as the engine reads them, which the cases already are, so a value reads back as
-    written."""
+    geometry as well-known binary, or None, in the last cell."""
     names = [field.name for field in schema.fields]
     cells: list[tuple[object, ...]] = []
     for row in rows:
@@ -47,7 +44,7 @@ def cells_of(schema: Schema, rows: tuple[Row, ...]) -> list[tuple[object, ...]]:
         if schema.data_type is DataType.TABLE:
             cells.append(attributes)
         else:
-            shape = None if row.geometry is None else to_wkb(oriented(row.geometry))
+            shape = None if row.geometry is None else to_wkb(row.geometry)
             cells.append((*attributes, shape))
     return cells
 
@@ -61,18 +58,12 @@ def seed_case(
 ) -> Seeded:
     """Writes `case` to `workspace` under `name`, the case's own by default."""
     name = case.name if name is None else name
-    geometry_type = None
-    if case.schema.data_type is DataType.FEATURE_CLASS:
-        geometry_type = gdb.geometry_type_of(
-            row.geometry.kind for row in case.rows if row.geometry is not None
-        )
     indices = gdb.seed(
         session,
         workspace=workspace,
         name=name,
         schema=case.schema,
         cells=cells_of(case.schema, case.rows),
-        geometry_type=geometry_type,
     )
     return Seeded(
         handle=handle_at(workspace, name, case.schema.data_type), indices=indices

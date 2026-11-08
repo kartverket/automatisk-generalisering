@@ -20,7 +20,7 @@ import tempfile
 
 from ag.adapters.arcpy.session import open_session
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
-from ag.ports import Field, FieldType, Schema
+from ag.ports import Field, FieldType, GeometryFamily, Schema
 from ag.ports.geometry import Geometry
 from tests.support import wkb
 from tests.support.arcpy import gdb
@@ -47,7 +47,11 @@ def main() -> None:
     session = open_session()
     directory = tempfile.mkdtemp(prefix="w12_")
     workspace = gdb.file_gdb(session, directory=directory, name="probe")
-    schema = Schema(fields=(Field("name", FieldType.TEXT, 30),), geometry_crs=CRS)
+    schema = Schema(
+        fields=(Field("name", FieldType.TEXT, 30),),
+        geometry_crs=CRS,
+        geometry_family=GeometryFamily.POINT,
+    )
     point = Geometry.point(100.0, 100.0, crs=CRS)
     gdb.seed(
         session,
@@ -55,7 +59,6 @@ def main() -> None:
         name="centre",
         schema=schema,
         cells=[("centre", wkb.to_wkb(point))],
-        geometry_type="POINT",
     )
     buffered = f"{workspace}/buffered"
     session.run_tool(

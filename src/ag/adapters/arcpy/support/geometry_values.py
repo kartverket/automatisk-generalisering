@@ -8,7 +8,9 @@ header alone, for a pass that only needs to know.
 How: a pure parser over the six planar simple-feature type codes, point to multipolygon,
 so the conversion touches no engine object and is tested without one (ADR-0018 AR-D23).
 A polygon's rings are kept in WKB order, exterior first, closed as the engine writes
-them; nothing depends on ring orientation. A multi kind becomes one part per member, so
+them, exterior counter-clockwise and holes clockwise, which is the orientation
+`Geometry` holds canonical, so construction reverses nothing on read. A multi kind
+becomes one part per member, so
 a multipolygon member with more than one ring is refused: `Geometry` holds one ring per
 member of a multi kind and cannot carry its holes. A multipart polygon with holes, a lake
 with islands arriving as one row, is read after `explode_multipart`, which yields one
@@ -20,8 +22,10 @@ shape, zero members or zero points, is None, as a null geometry is; a value that
 bytes is an adapter defect and a `TypeError`. ADR-0019 PC-D25.
 
 Expected of the engine, confirmed by the first run under it: a null shape arrives as
-None; an empty shape as None or as an empty WKB; curves are either densified or arrive
-as a curve code, which is refused.
+None; an empty shape as None or as an empty WKB. A true curve arrives as neither a
+densified ring nor a curve code but as the arc's vertices alone, a planar ring this
+parser accepts (the probe of 2026-11-06), so a curve is geometry loss this codec cannot
+see; what the port does about it is open (B33).
 
 Second caller: `TableOps.write_rows`, ADR-0019 PC-D22, not yet landed.
 """

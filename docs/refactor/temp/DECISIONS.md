@@ -2651,7 +2651,21 @@ is the contract. The first engine run adds: a one-member multipolygon is stored 
 so the one-row shape is a multipolygon with two or more members, one of them holed.
 `destination:` `ports/geometry.py` when decided.
 
-**B31. The geometry type of a feature class written through the port.** Opened 2026-11-06
+**B31. The geometry type of a feature class written through the port.** *Closed
+2026-11-08.* `Schema` carries a geometry family, `GeometryFamily` in `ports/geometry.py`,
+required for a feature class as the CRS is and refused on a table; the family folds the
+kinds as every engine does, lines together, polygons together, multipoint apart from
+point. The store refuses a row outside the family before anything is replaced, as every
+engine refuses it; `describe` fills the family from the engine's `shapeType` through
+`SHAPE_TYPES` and refuses a type none of the families holds; `explode_multipart` writes
+its output under the input family's `single`, multipoint to point. The empty dataset is
+answered by the schema: a partition in which one input has no rows still hands the
+method a dataset with every field and its geometry type, created from the schema alone,
+which the legacy partition iterator did with a template feature class and the port,
+having no template, does from `Schema`. The CreateFeatureclass vocabulary moved into the
+adapter as `GEOMETRY_TYPES` in `dataset_writer.py`, keyed by family, ahead of
+`write_rows`. Landed in `ports/table_ops.py`, `ports/geometry.py`, the store, `describe`
+and the test builders; ADR-0019 PC-D22 and PC-D26 adapted. As opened: Opened 2026-11-06
 with the `.gdb` builders. `Schema` carries fields, data type and CRS; the engine's create
 tool needs a geometry type, which the builders derive from the rows' kinds, test-side, in
 `tests/support/arcpy/gdb.py`. Open: how `write_rows` (PC-D22) learns it, a `Schema` field or
@@ -2660,7 +2674,23 @@ refuses what every engine refuses, one geometry type per feature class, which is
 mixed-kind case pass as engine-neutral until the first engine run.
 `destination:` `ports/table_ops.py` and the store when decided.
 
-**B32. Ring orientation at the port boundary.** Opened 2026-11-06 with the first engine run.
+**B32. Ring orientation at the port boundary.** *Closed 2026-11-08.* Orientation is part
+of the `Geometry` contract: a polygon's exterior and every multipolygon member run
+counter-clockwise and holes clockwise, applied on construction, so one polygon has one
+value and a round trip is identity on every adapter; a ring of zero signed area keeps
+its order, so B33's degenerate-ring candidate is untouched; line direction is never
+touched. The signed area is taken relative to the ring's first vertex, since the plain
+shoelace form loses the sign of a ring millimetres across at projected coordinates in
+the hundreds of kilometres (probe, 2026-11-08). Why in the value and not at an adapter's
+boundary: the rule is bad data in, bad data out, and the sources already read back
+canonical, so nothing on read changes; reversing a ring changes how a polygon is
+described, not what it is, since the position in `parts` already says which ring is the
+exterior; and a value canonical on construction cannot diverge between an engine that
+reads a ring's role from its orientation and a store that keeps what it is given. The
+price, 0.13 to 0.24 s per partition of polygons against A15.7's minute, was measured in
+the timing run with the plain form, which the relative form costs about a third more
+than. `oriented` left the test encoder. Landed in `ports/geometry.py`; ADR-0019 PC-D25
+adapted. As opened: Opened 2026-11-06 with the first engine run.
 The engine reads a WKB ring's role from its orientation, not from its position: exterior
 counter-clockwise, hole clockwise. Two counter-clockwise rings become two exterior members,
 and a lone clockwise ring becomes an empty shape, which is silent geometry loss on write. On

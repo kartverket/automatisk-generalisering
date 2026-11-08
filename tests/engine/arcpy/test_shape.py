@@ -3,8 +3,9 @@
 What: the tool drops a GlobalID field, keeps the declared fields and adds the reference; when
 `ORIG_FID` is already a field the tool writes into it and adds nothing, so such an input
 is refused before the tool runs; a multipart polygon with holes is refused on read as one
-row and, after `explode_multipart`, reads back as polygons with their holes. ADR-0017
-RS-D16, ADR-0019 PC-D25.
+row and, after `explode_multipart`, reads back as polygons with their holes; the tool
+writes a multipoint input's children into a point class, which is the family rule
+`GeometryFamily.single` states. ADR-0017 RS-D16, ADR-0019 PC-D25.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from ag.ports import CHILD_ID, PARENT_ID, Field, FieldType, GeometryKind
 from ag.ports.errors import PortContractError
 from tests.engine.arcpy.conftest import Pro
 from tests.support import wkb
-from tests.support.cases import multilines, polygons
+from tests.support.cases import multilines, multipoints, polygons
 
 pytestmark = pytest.mark.arcpy
 
@@ -52,6 +53,19 @@ def test_the_tool_drops_a_global_id_field_and_keeps_the_declared_ones(pro: Pro) 
     assert after.schema.fields == before.schema.fields
     assert dict(after.unrepresentable) == {}
     assert _parents(pro, "pairs") == set(seeded.indices)
+
+
+def test_a_multipoint_input_explodes_into_a_point_family_output(pro: Pro) -> None:
+    case = multipoints()
+    seeded = pro.seed(case)
+    output = pro.handle("exploded")
+    ArcpyGeometryOps(session=pro.session).explode_multipart(
+        input=seeded.handle, output=output
+    )
+    described = describe(pro.session, str(output.path))
+    assert case.schema.geometry_family is not None
+    assert described.schema.geometry_family is case.schema.geometry_family.single
+    assert described.schema.fields == case.schema.fields
 
 
 def test_an_input_that_already_has_the_reference_field_is_refused_before_the_tool(

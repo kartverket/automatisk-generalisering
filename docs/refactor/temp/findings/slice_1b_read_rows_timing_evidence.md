@@ -28,8 +28,9 @@ an exception class, never a message, because the port's own errors embed cell va
 - `tools/engine/time_read_rows.py`, the tool, and `tests/unit/tools/test_time_read_rows.py`
   for its pure parts: the pass loop closes its iterator on completion, cap and interrupt;
   the WKB walk classifies null, empty, planar, Z, M, ZM, curve and unknown codes in the
-  ISO and the extended spelling; the orientation count names the rings a canonical value
-  would reverse.
+  ISO and the extended spelling. The `orient` variant and its ring count were retired in
+  batch 2, once `Geometry` canonicalised on construction and the port pass carried the
+  check itself.
 - The stub gains `shapeType` on Describe, for the preflight and for B31.
 - `DATA_TYPES` in `dataset_schema.py` is public, so the tool reads the engine's data type
   through the adapter's own map instead of restating the string.
@@ -319,7 +320,11 @@ rest of `_rows` 0.1 s; the port reads a partition-sized set of these polygons in
 2.0 s, 1.2 s of it added over the bare cursor. **B32's price:** the signed-area check of
 every ring adds 10.6 s and 20.2 s over the two port passes it follows, 0.13 to 0.24 s per
 partition, 6 to 12% of the port pass; against A15.7's minute it is cheap, and batch 2's
-condition is met. RSS held between 835 and 854 MB across every pass; the peak of 1,604 MB
+condition is met. The check measured here was the plain shoelace form; batch 2 landed
+the form relative to the first vertex, which costs about a third more per ring (200,000
+calls on a five-vertex ring: 0.075 s plain, 0.100 s relative), so the landed price is
+nearer 0.17 to 0.32 s per partition, still inside the condition. RSS held between 835
+and 854 MB across every pass; the peak of 1,604 MB
 belongs to the tools of the copy and explode stages.
 
 Describe (seconds per call):
@@ -461,7 +466,8 @@ partition.
   pre-pass, a full `SHAPE@WKB` cursor; a cheaper token for the null check is an
   unmeasured candidate, not a fact.
 - **B32's price is cheap:** 0.13 to 0.24 s per partition of polygons, 6 to 12% of the
-  port pass; batch 2 may put canonical orientation into `Geometry`.
+  port pass, with the plain form; batch 2 put canonical orientation into `Geometry` with
+  the relative form, about a third more.
 - **The codec is the port's cost.** On every set the codec is most of what the port adds
   (60% on points, 85% on lines, 90% on polygons); `_attribute`, the `Row` and the per-row
   `where` string are the rest. An attributes-only port read on a feature class would cost
@@ -497,7 +503,7 @@ partition.
 | W17 hasZ/hasM of the sources | preflight line per source | points and polygons: no Z, no M; lines: Z, no M; WKB export drops Z, so the Describe refusal is the only guard |
 | W18 date fields of the sources | preflight `date_fields`: every set holds sub-second parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal fired on the date-field pass | observed on all three, contract question open |
 | W22 (new) the 2D copy through CreateFeatureclass and Append drops Z and M | copy line of the lines run: `copy_has_z` false, 457 s for 14.7M rows | holds |
-| W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources | three of four observed |
+| W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources; batch 2 maps all four in `SHAPE_TYPES` and pins them in `tests/engine/arcpy/test_dataset_schema.py` in both workspaces | three of four observed; the fourth awaits the marked run |
 
 ## Findings for the architect, not decided here
 

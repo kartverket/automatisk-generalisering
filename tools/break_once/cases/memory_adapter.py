@@ -282,6 +282,37 @@ CASES: tuple[Case, ...] = (
         ),
     ),
     Case(
+        "M30",
+        "a row of another geometry family accepted by the store",
+        STORE,
+        (
+            (
+                "    if family is not None and row.geometry.kind.family is not family:\n",
+                "    if False:\n",
+            ),
+        ),
+        (
+            f"{ROW_REFUSED}[point-in-line-family]",
+            f"{ROW_REFUSED}[multipoint-in-line-family]",
+            f"{T_STORE}::"
+            "test_a_polygon_family_holds_both_polygon_kinds_and_a_point_family_no_multipoint",
+        ),
+    ),
+    Case(
+        "M31",
+        "explode writes its output under the input's family, so a multipoint input is refused",
+        SHAPE,
+        (
+            (
+                "    return replace(schema, geometry_family=schema.geometry_family.single)\n",
+                "    return schema\n",
+            ),
+        ),
+        (
+            f"{T_GEOMETRY}::test_explode_of_a_multipoint_input_writes_a_point_family_output",
+        ),
+    ),
+    Case(
         "M20",
         "the distinct-paths check removed from select",
         SELECTION,

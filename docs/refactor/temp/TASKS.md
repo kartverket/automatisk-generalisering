@@ -1886,18 +1886,24 @@ green on the image `ghcr.io/kartverket/arcpy-linux:12.1` on 2026-11-05: `tests/c
 over both adapters and `tests/engine/arcpy/`, 34 marked tests, evidence in
 `temp/findings/slice_1b_arcpy_conformance_evidence.md`; no test was removed for a contract
 question. (1b), (2) and (3) wait on their methods. The `read_rows` timing run ran
-2026-11-06 on the three raw sets (W14 done; W12, W17, W18, W22, W23 as the evidence file
-states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`.
+2026-11-06 on the three raw sets (W14 done; W12, W17, W18, W22 as the evidence file
+states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`. Batch 2 of
+that pull request closed B31 and B32 on 2026-11-08: `Schema` carries a geometry family,
+`Geometry` holds its rings canonical, the builders seed from the schema and orient
+nothing, and the marked tests in `tests/engine/arcpy/test_dataset_schema.py` and
+`test_shape.py` pin W23's four `shapeType` spellings and the multipoint explode's point
+output, to be confirmed by the next image run; evidence in
+`temp/findings/slice_1b_family_orientation_evidence.md`.
 
-**follow-up (`write_rows`):** when `TableOps.write_rows` lands, `CreateFeatureclass` and
-`GEOMETRY_TYPES` (`tests/support/arcpy/gdb.py`) and `oriented` (`tests/support/wkb.py`) move
-into the adapter's write side, the builders call `write_rows`, and those test copies are
-deleted. `to_wkb` stays in `tests/support/wkb.py` as the independent oracle the codec is
-tested against. How `write_rows` learns a feature class's geometry type is B31; whether ring
-orientation is the port's contract or the write side's concern is B32. A33 lands with it:
-the fraction of a `DATE` survives a round trip, with W24 (a date field kind that keeps a
-fraction, and how `write_rows` creates it) and W25 (a fractional literal in a where clause)
-answered on the engine first.
+**follow-up (`write_rows`):** when `TableOps.write_rows` lands, the `CreateFeatureclass`
+call in `tests/support/arcpy/gdb.py` moves into the adapter's write side, the builders call
+`write_rows`, and that test copy is deleted; its vocabulary is already the adapter's,
+`GEOMETRY_TYPES` in `dataset_writer.py`. `to_wkb` stays in `tests/support/wkb.py` as the
+independent oracle the codec is tested against. A33 lands with it: the fraction of a
+`DATE` survives a round trip, with W24 (a date field kind that keeps a fraction, and how
+`write_rows` creates it) and W25 (a fractional literal in a where clause) answered first
+by the by-hand probe `temp/w24_w25_date_probe.py`, whose output the batch 2 evidence file
+records and whose observations become the marked tests' expectations in slice 2a.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.

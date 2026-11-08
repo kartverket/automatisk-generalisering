@@ -6,8 +6,9 @@ engine; `FakeDataset`, what it holds per path; `seed`, which writes an engine-ne
 case to it with the port's field types mapped to the engine's names.
 
 How: rows are dicts keyed by field name and by the adapter's two cursor tokens, which
-are imported, as the engine's type names are, so the fake spells nothing of the adapter's
-twice; the engine's strings are the marked run's to confirm. A toolbox is a namespace
+are imported, as the engine's type, data-type and shape-type names are, each the
+adapter's own table inverted, so the fake spells nothing of the adapter's twice; the
+engine's strings are the marked run's to confirm. A toolbox is a namespace
 whose attributes are the tools, the structure `run_tool` resolves a dotted name against,
 and a tool records itself under that path. A search cursor over an unknown name raises
 `RuntimeError` and Describe of an unknown path `OSError`, as the engine's do; a tool records its keyword arguments,
@@ -26,9 +27,16 @@ from dataclasses import dataclass, field
 from types import ModuleType, SimpleNamespace, TracebackType
 from typing import Self
 
-from ag.adapters.arcpy.support.dataset_schema import FIELD_TYPES, OID_TOKEN
+from ag.adapters.arcpy.support.dataset_schema import (
+    DATA_TYPES,
+    FIELD_TYPES,
+    OID_TOKEN,
+    SHAPE_TYPES,
+)
 from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
+from ag.core.types import DataType
+from ag.ports.geometry import GeometryFamily
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
 
@@ -37,6 +45,15 @@ ENGINE_TYPES = {port: engine for engine, port in FIELD_TYPES.items()}
 
 ADDED_TYPES = {ADD_FIELD_TYPES[port]: engine for engine, port in FIELD_TYPES.items()}
 """The AddField vocabulary to the Describe names, through the adapter's two tables."""
+
+ENGINE_DATA_TYPES = {port: engine for engine, port in DATA_TYPES.items()}
+"""The port's data types to the engine's `dataType` strings, the adapter's table inverted."""
+
+ENGINE_SHAPE_TYPES = {port: engine for engine, port in SHAPE_TYPES.items()}
+"""The port's geometry families to the engine's `shapeType` strings, inverted likewise."""
+
+FEATURE_CLASS = ENGINE_DATA_TYPES[DataType.FEATURE_CLASS]
+TABLE = ENGINE_DATA_TYPES[DataType.TABLE]
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -72,6 +89,7 @@ class FakeDataset:
     epsg: int = 25833
     has_z: bool = False
     has_m: bool = False
+    shape_type: str = ENGINE_SHAPE_TYPES[GeometryFamily.LINE]
     oid_name: str = "OBJECTID"
     shape_name: str = "Shape"
     length_name: str = "Shape_Length"
@@ -79,7 +97,7 @@ class FakeDataset:
 
     def engine_fields(self) -> list[FakeField]:
         found = [FakeField(self.oid_name, "OID")]
-        if self.data_type == "FeatureClass":
+        if self.data_type == FEATURE_CLASS:
             found.append(FakeField(self.shape_name, "Geometry"))
             for name in (self.length_name, self.area_name):
                 if name:
@@ -227,6 +245,7 @@ class FakeEngine(ModuleType):
             areaFieldName=dataset.area_name,
             hasZ=dataset.has_z,
             hasM=dataset.has_m,
+            shapeType=dataset.shape_type,
             spatialReference=SimpleNamespace(factoryCode=dataset.epsg),
         )
 
@@ -260,7 +279,13 @@ class FakeEngine(ModuleType):
         fields = [*source.fields]
         for name in self.reference_fields:
             fields.append(FakeField(name, "Integer"))
-        output = FakeDataset("FeatureClass", fields, epsg=source.epsg)
+        family = SHAPE_TYPES[source.shape_type].single
+        output = FakeDataset(
+            FEATURE_CLASS,
+            fields,
+            epsg=source.epsg,
+            shape_type=ENGINE_SHAPE_TYPES[family],
+        )
         for row in source.rows:
             parent = int(str(row[OID_TOKEN]))
             for shape in scripted.get(parent, [row[WKB_TOKEN]]):
@@ -275,7 +300,7 @@ class FakeEngine(ModuleType):
         self.datasets[out_feature_class] = output
 
     def _create_table(self, *, out_path: str, out_name: str) -> None:
-        self.datasets[f"{out_path}/{out_name}"] = FakeDataset("Table", [])
+        self.datasets[f"{out_path}/{out_name}"] = FakeDataset(TABLE, [])
 
     def _add_field(
         self,
@@ -300,7 +325,12 @@ class FakeEngine(ModuleType):
             str(arguments.get("in_features", arguments.get("in_table")))
         )
         target = str(arguments.get("out_feature_class", arguments.get("out_table")))
-        output = FakeDataset(source.data_type, [*source.fields], epsg=source.epsg)
+        output = FakeDataset(
+            source.data_type,
+            [*source.fields],
+            epsg=source.epsg,
+            shape_type=source.shape_type,
+        )
         for row in source.rows:
             output.rows.append({**row, OID_TOKEN: output.next_oid()})
         self.datasets[target] = output
@@ -312,11 +342,13 @@ def seed(engine: FakeEngine, case: DatasetCase, *, path: str) -> FakeDataset:
     fields = [
         FakeField(f.name, ENGINE_TYPES[f.type], f.length or 0) for f in schema.fields
     ]
-    data_type = "FeatureClass" if schema.geometry_crs is not None else "Table"
+    data_type = ENGINE_DATA_TYPES[schema.data_type]
     dataset = FakeDataset(data_type, fields)
+    if schema.geometry_family is not None:
+        dataset.shape_type = ENGINE_SHAPE_TYPES[schema.geometry_family]
     for position, row in enumerate(case.rows, start=1):
         values: dict[str, object] = {**row.attributes, OID_TOKEN: position}
-        if data_type == "FeatureClass":
+        if data_type == FEATURE_CLASS:
             values[WKB_TOKEN] = None if row.geometry is None else to_wkb(row.geometry)
         dataset.rows.append(values)
     engine.datasets[path] = dataset

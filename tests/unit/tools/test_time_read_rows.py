@@ -1,8 +1,8 @@
-"""The timing run's pure parts: the pass loop, the WKB walk and the orientation count.
+"""The timing run's pure parts: the pass loop and the WKB walk.
 
 What: `run_pass` on generators that record whether their `finally` ran, with an
-injected clock; `shape_stats` on values the test-side encoder writes; `rings_to_reverse`
-on hand-built rings. No engine: the stages that reach one are read in the evidence.
+injected clock; `shape_stats` on values the test-side encoder writes. No engine: the
+stages that reach one are read in the evidence.
 """
 
 from __future__ import annotations
@@ -20,9 +20,7 @@ from tools.engine import time_read_rows as timing
 
 CRS = "EPSG:25833"
 SQUARE_CCW = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0))
-SQUARE_CW = tuple(reversed(SQUARE_CCW))
 HOLE_CW = ((1.0, 1.0), (1.0, 2.0), (2.0, 2.0), (2.0, 1.0), (1.0, 1.0))
-HOLE_CCW = tuple(reversed(HOLE_CW))
 
 
 class Clock:
@@ -142,22 +140,6 @@ def test_a_failure_line_carries_the_class_and_never_the_message() -> None:
     assert timing.failure(PortContractError("row 3"))["status"] == "refused"
 
 
-def test_closing_the_oriented_wrapper_closes_the_port_rows_beneath_it() -> None:
-    rows = Rows(10)
-    wrapped = timing.oriented_rows(_as_rows(iter(rows)))
-    next(wrapped)
-    timing.close_iterator(wrapped)
-    assert rows.closed
-
-
-def _as_rows(values: Iterator[object]) -> Iterator[timing.Row]:
-    try:
-        for _ in values:
-            yield timing.Row(attributes={}, geometry=None)
-    finally:
-        timing.close_iterator(values)
-
-
 @pytest.mark.parametrize(
     ("value", "kind", "rings", "vertices", "holed"),
     [
@@ -202,22 +184,6 @@ def test_the_walk_classifies_a_shape_and_counts_a_planar_one(
         vertices,
         holed,
     )
-
-
-def test_the_orientation_count_names_the_rings_a_canonical_value_would_reverse() -> (
-    None
-):
-    polygon = Geometry(kind=GeometryKind.POLYGON, parts=(SQUARE_CCW, HOLE_CW), crs=CRS)
-    inverted = Geometry(kind=GeometryKind.POLYGON, parts=(SQUARE_CW, HOLE_CCW), crs=CRS)
-    multi = Geometry(
-        kind=GeometryKind.MULTIPOLYGON, parts=(SQUARE_CCW, SQUARE_CW), crs=CRS
-    )
-    line = Geometry.linestring(SQUARE_CCW, crs=CRS)
-    assert timing.rings_to_reverse(polygon) == 0
-    assert timing.rings_to_reverse(inverted) == 2
-    assert timing.rings_to_reverse(multi) == 1
-    assert timing.rings_to_reverse(line) == 0
-    assert timing.rings_to_reverse(None) == 0
 
 
 def test_the_histogram_summary_reads_percentiles_from_counts() -> None:
