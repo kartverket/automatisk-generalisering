@@ -154,7 +154,101 @@ and, run as a file, it is `__main__`, where the engine rebinds `datetime` to the
 when the session opens, so an `isinstance` against that name after `open_session` raised
 `TypeError`. The probe now prints a date through its `isoformat` attribute and names its
 field `stamp`, since Describe listed no field named `when`, an SQL keyword, on the first
-run; the second run shows whether the keyword was the cause.
+run; the second run listed `stamp`, so the field name was the cause and the probe's
+first field was never created under the name it asked for.
+
+### The second run, 2026-11-08
+
+Image digest `sha256:7159decd0b00fc3ab152a000e66e8709b0816f38e1da5f69f8ae40963a858a61`,
+`PYTHONPATH=/work/src:/work`, the production copy from the `ag_timing` volume:
+
+```
+== file: AddField DATE, fresh ==
+describe reports fields ['OBJECTID', 'stamp']
+field properties: {}
+written 2024-01-01T12:00:00.500000 and 2024-01-01T12:00:00
+read back ['2024-01-01T12:00:01', '2024-01-01T12:00:00']
+where timestamp-fraction   -> 0 row(s)
+where timestamp-whole      -> 1 row(s)
+where date-fraction        -> 0 row(s)
+where date-whole           -> 1 row(s)
+== management.MigrateDateFieldToHighPrecision ==
+tool unavailable or refused: TypeError
+== memory: AddField DATE, fresh ==
+describe reports fields ['OBJECTID', 'stamp']
+field properties: {}
+written 2024-01-01T12:00:00.500000 and 2024-01-01T12:00:00
+read back ['2024-01-01T12:00:00.500000', '2024-01-01T12:00:00']
+where timestamp-fraction   -> 1 row(s)
+where timestamp-whole      -> 1 row(s)
+where date-fraction        -> 1 row(s)
+where date-whole           -> 1 row(s)
+== production copy, date fields of BygningsPunkt_N10 ==
+describe reports fields [OBJECTID, shape, 14 declared fields]
+datafangstdato: {}   merknadsdato: {}   created_date: {}   last_edited_date: {}
+port type for 'Date': FieldType.DATE
+```
+
+What it settles and what it does not:
+
+- **W25, answered.** A fractional literal is accepted by the file geodatabase's SQL and
+  compared with its fraction: in the file geodatabase it matched neither the row stored
+  as 12:00:01 nor the one stored as 12:00:00, which a literal truncated or rounded to the
+  second would have matched; in the memory workspace it matched the fractional row. The
+  predicate compiler's literal may carry the fraction, which is the condition A33.2 set.
+- **W24, half.** A DATE field made by AddField in a fresh file geodatabase rounds a
+  fraction to the second, PR A's observation again on this digest, while the memory
+  workspace keeps microseconds. So the engine has a store that holds the fraction and a
+  store that, as the adapter creates it today, does not; the production fields that hold
+  fractions (the timing run) are of a third kind the probe has not yet told apart from
+  the fresh one.
+- **Two probe defects, fixed for the third run.** The property dump walked `dir()` and
+  found nothing public on every Field object, fresh and production alike, so the dump
+  now asks for named properties through `arcpy.ListFields`, the documented ones and the
+  candidates for a precision flag, and prints the object's type and attribute names
+  once. The migration tool was called with the keyword `field` and raised `TypeError`,
+  which the session's rule says is a misspelt keyword and not a missing tool, so the
+  tool is present on the image; the call now uses `field_names` and a failure prints the
+  message, since the table is synthetic.
+- **For slice 2a.** Under A33 an adapter whose store holds less precision truncates
+  before handing over. The file geodatabase store the adapter creates today holds whole
+  seconds and rounds, so `write_rows` truncates for such a field and not for the memory
+  workspace, and the precision is a fact the adapter has to read, which is what the
+  third run is for.
+
+### The third run, 2026-11-08
+
+Same digest and command. The property dump through `ListFields` worked; the read-back
+and where-clause lines repeated the second run exactly.
+
+```
+field object arcpy.arcobjects.arcobjects.Field
+public attributes ['aliasName', 'baseName', 'defaultValue', 'domain', 'editable',
+                   'isNullable', 'length', 'name', 'precision', 'required', 'scale', 'type']
+file gdb, fresh:        {'type': 'Date', 'length': 8,   'precision': 0, 'scale': 0, ...}
+memory, fresh:          {'type': 'Date', 'length': 255, 'precision': 0, 'scale': 0, ...}
+production created_date {'type': 'Date', 'length': 8,   'precision': 0, 'scale': 0, ...}
+production datafangstdato, merknadsdato, last_edited_date: the same values
+== management.MigrateDateFieldToHighPrecision ==
+TypeError: MigrateDateFieldToHighPrecision() got an unexpected keyword argument 'field_names'
+```
+
+What it settles:
+
+- **The precision is not a Field property.** The fresh file geodatabase field, which
+  rounds, and the production `created_date`, which holds microseconds (the timing run),
+  have identical Field objects: `Date`, length 8, precision 0, scale 0, and the object
+  exposes twelve attributes and no other. So `write_rows` cannot read the precision from
+  the field it creates; it is a property of the dataset or the geodatabase, if the engine
+  exposes it at all.
+- The memory workspace's Date field reports length 255 against 8; a difference of the
+  store, not a flag.
+- The migration tool exists and takes neither `field` nor `field_names`; the fourth run
+  calls it with the table alone and prints its signature on a refusal, and dumps the
+  dataset-level Describe attributes of the fresh table before and after the migration, of
+  the memory table and of the production class, with the names that differ. Which way
+  2a goes, migrate every created dataset or truncate for the file geodatabase, is what
+  that run decides.
 
 ## Records
 
