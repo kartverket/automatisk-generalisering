@@ -22,8 +22,12 @@ migration tool on the table, prints what the migration changed, then inserts and
 back again; repeats the insert and read in the memory workspace; and runs where clauses
 with a fractional and a whole-second literal in two spellings against the stored rows.
 Last, when a path is given, it describes that feature class's date fields the same way,
-names and properties only, and prints the dataset attributes that differ from the fresh
-table's.
+names and properties only, prints the dataset attributes that differ from the fresh
+table's, and counts the microsecond parts of each date field in bands: within a
+millisecond of a whole second, which is what the double encoding of a low-precision date
+produces, or elsewhere, which only a stored fraction produces. The fifth run showed every
+production date field at `precision` 0, a store of whole seconds, while the timing run
+had counted microsecond parts in them; the bands tell noise from fractions.
 
 The data is not open: the production dataset, when given, is read from the working copy
 on the `ag_timing` volume, never from the read-only `gis_files` mount, and nothing of it
@@ -262,6 +266,32 @@ def probe_migration(session: ArcpySession, workspace: str) -> dict[str, object]:
     return after
 
 
+NOISE_BAND_US = 1000
+"""A microsecond part within this of a whole second is counted as encoding noise: a
+low-precision file geodatabase date is a double of days, and a double does not represent
+most whole seconds exactly."""
+
+
+def microsecond_histogram(session: ArcpySession, path: str, name: str) -> dict[str, int]:
+    """Counts only: how many values of the date field `name` carry a microsecond part,
+    how many of those lie within `NOISE_BAND_US` of a whole second on either side, and
+    how many lie elsewhere, which a stored fraction would. No value is printed."""
+    counts = {"non_null": 0, "with_fraction": 0, "near_whole_second": 0, "elsewhere": 0}
+    for (value,) in gdb.read_cells(session, path=path, tokens=(name,)):
+        if value is None:
+            continue
+        counts["non_null"] += 1
+        microsecond = getattr(value, "microsecond", 0)
+        if not microsecond:
+            continue
+        counts["with_fraction"] += 1
+        if microsecond <= NOISE_BAND_US or microsecond >= 1_000_000 - NOISE_BAND_US:
+            counts["near_whole_second"] += 1
+        else:
+            counts["elsewhere"] += 1
+    return counts
+
+
 def describe_production(
     session: ArcpySession, path: str, *, fresh: dict[str, object]
 ) -> None:
@@ -277,6 +307,7 @@ def describe_production(
         names = [f.name for f in arcpy.ListFields(path) if f.type == "Date"]
     for name in names:
         print(f"{name}: {field_properties(session, path, name)}")
+        print(f"{name} microsecond parts: {microsecond_histogram(session, path, name)}")
     print(f"port type for 'Date': {FIELD_TYPES.get('Date')}")
     production = dataset_properties(session, path)
     print(f"dataset attributes, production: {present(production)}")

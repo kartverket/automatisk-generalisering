@@ -275,6 +275,48 @@ What it settles:
   a date-precision flag, each reported present with its value or absent, on the dataset
   and on its workspace.
 
+### The fifth run, 2026-11-08
+
+Same digest and command. The migration ran with `date_fields`.
+
+```
+file gdb, AddField DATE        precision 0   12:00:00.5 -> 12:00:01            fraction literal 0 rows
+after MigrateDateFieldToHighPrecision(in_table, date_fields='stamp')
+                               precision 1   12:00:00.5 -> 12:00:00.500000     fraction literal 1 row
+memory, AddField DATE          precision 0   12:00:00.5 -> 12:00:00.500000     fraction literal 1 row
+dataset attributes changed by the migration: {}
+memory table, differing from fresh: workspace.release, workspace.workspaceFactoryProgID only
+production BygningsPunkt_N10: datafangstdato, merknadsdato, created_date, last_edited_date
+                               all precision 0; dataset attributes differ from the fresh
+                               table only in being a feature class
+```
+
+**W24, answered.** In a file geodatabase the flag is `Field.precision`: 0 is a store of
+whole seconds, the engine rounding what it is given on write; 1 keeps the fraction and
+matches a fractional literal; `MigrateDateFieldToHighPrecision(in_table, date_fields)`
+switches a field from 0 to 1 and changes nothing on the dataset or the workspace. So
+`write_rows` can create a date field that keeps the fraction: AddField, then the
+migration on the date fields. The memory workspace keeps the fraction whatever
+`precision` says. No dataset or workspace attribute carries the distinction.
+
+**The premise behind A33, reopened for the architect.** Every production date field is
+`precision` 0, a store of whole seconds, yet the timing run counted microsecond parts in
+them, about 12% of the values with a time of day in every set. Those cannot be stored
+fractions. The candidate explanation is the encoding: a low-precision file geodatabase
+date is a double of days, and a double represents few whole seconds exactly, so a
+whole second reads back as 10.999999 or 11.000001 some of the time. Not shown yet; the
+sixth run counts the microsecond parts of each production date field in two bands,
+within a millisecond of a whole second or elsewhere, counts only. If the parts are
+noise, the sources hold whole seconds: A33's contract line stands, since `precision` 1
+fields hold real fractions and `write_rows` can make them, but A33's rule for a
+fraction an adapter cannot store, truncate and never round, would turn 11.999999 into
+11, one second from the value the source meant, where rounding would restore it; and
+the read-side refusal that fired on production data fired on noise. Which rule holds,
+and whether the port reads a `precision` 0 field to the second, is the architect's
+decision and is not changed here. The project reads dates rarely, to order
+observations, and has to handle varying raw data reliably (the architect, 2026-11-09),
+so the rule has to be right for noise and for real fractions alike.
+
 ## Records
 
 - ADR-0019 PC-D22 adapted: `write_rows`'s `Schema` names a feature class's CRS and
