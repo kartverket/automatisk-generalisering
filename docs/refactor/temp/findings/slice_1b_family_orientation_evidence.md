@@ -250,6 +250,31 @@ What it settles:
   2a goes, migrate every created dataset or truncate for the file geodatabase, is what
   that run decides.
 
+### The fourth run, 2026-11-08
+
+Same digest and command. The read-back and where-clause lines repeated the second run.
+
+```
+== management.MigrateDateFieldToHighPrecision ==
+EngineError: ... ERROR 000735: Date Fields: Value is required
+signature: (in_table=None, date_fields=None) -> 'Result1[str | Table | Layer | Path]'
+dataset attributes, fresh table: {}
+dataset attributes changed by the migration (before, after): {}
+dataset attributes, memory table, differing from fresh (fresh, memory): {}
+dataset attributes, production: []
+differing from the fresh table (fresh, production): {}
+```
+
+What it settles:
+
+- **The migration tool's signature** on the image is `(in_table, date_fields)`, and
+  `date_fields` is required; the fifth run calls it so.
+- **A Describe object lists nothing through `dir()`,** as a Field object did not, so the
+  dataset dump has to ask by name. The fifth run asks for the documented table,
+  geodatabase-table, feature-class and workspace attributes and for candidate names of
+  a date-precision flag, each reported present with its value or absent, on the dataset
+  and on its workspace.
+
 ## Records
 
 - ADR-0019 PC-D22 adapted: `write_rows`'s `Schema` names a feature class's CRS and

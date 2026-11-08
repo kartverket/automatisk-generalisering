@@ -55,8 +55,8 @@ FRACTION = datetime(2024, 1, 1, 12, 0, 0, 500000)
 WHOLE = datetime(2024, 1, 1, 12, 0, 0)
 FIELD = "stamp"
 MIGRATION_TOOL = "management.MigrateDateFieldToHighPrecision"
-"""The engine's documented tool name for the precision change; the probe reports when
-the image's toolbox lacks it instead of failing."""
+"""The engine's tool for the precision change; its signature on the image is
+`(in_table, date_fields)`, `date_fields` required (fourth run)."""
 
 LITERALS = {
     "timestamp-fraction": "timestamp '2024-01-01 12:00:00.500'",
@@ -110,27 +110,86 @@ def field_properties(session: ArcpySession, path: str, name: str) -> dict[str, o
     return {}
 
 
+DATASET_PROPERTIES = (
+    # the documented table, geodatabase-table and feature-class properties
+    "dataType",
+    "datasetType",
+    "hasOID",
+    "OIDFieldName",
+    "hasGlobalID",
+    "globalIDFieldName",
+    "aliasName",
+    "modelName",
+    "subtypeFieldName",
+    "defaultSubtypeCode",
+    "isVersioned",
+    "canVersion",
+    "isArchived",
+    "changeTracked",
+    "editorTrackingEnabled",
+    "createdAtField",
+    "editedAtField",
+    "creatorField",
+    "editorField",
+    "isTimeInUTC",
+    "versionedView",
+    "featureType",
+    "shapeType",
+    "hasM",
+    "hasZ",
+    "hasSpatialIndex",
+    "isCompressed",
+    "workspaceType",
+    "workspaceFactoryProgID",
+    "release",
+    "currentRelease",
+    # candidates for a date precision flag, asked for by name
+    "dateFieldsPrecision",
+    "dateFieldsTimePrecision",
+    "dateTimePrecision",
+    "timePrecision",
+    "hasHighPrecisionDateFields",
+    "highPrecisionDateFields",
+    "isHighPrecisionDate",
+    "highPrecisionDate",
+    "supportsHighPrecisionDates",
+)
+"""The Describe attributes asked for by name, since `dir()` lists nothing on a Describe
+object (fourth run), as it listed nothing on a Field object. The workspace's are asked
+of the dataset's workspace too."""
+
+ABSENT = "<absent>"
+
+
 def dataset_properties(session: ArcpySession, path: str) -> dict[str, object]:
-    """The dataset-level Describe attributes of `path` whose value is a bool, a number
-    or a short string: names and scalar values, never rows. Where the engine exposes a
-    date precision of a dataset, it is here and not on the Field object (third run)."""
+    """The named Describe attributes of `path` and of its workspace, each present with
+    its scalar value or marked absent: names and scalar values, never rows. Where the
+    engine exposes a date precision of a dataset, it is here and not on the Field
+    object (third run)."""
     found: dict[str, object] = {}
     with session.guard("Describe"):
         import arcpy
 
-        described = arcpy.Describe(path)
-        for key in dir(described):
-            if key.startswith("_"):
-                continue
-            try:
-                value = getattr(described, key)
-            except Exception:  # noqa: BLE001  a property the dataset kind lacks
-                continue
-            if isinstance(value, bool | int | float) or (
-                isinstance(value, str) and len(value) < 80
-            ):
-                found[key] = value
+        for prefix, described in (
+            ("", arcpy.Describe(path)),
+            ("workspace.", arcpy.Describe(path.rsplit("/", 1)[0])),
+        ):
+            for key in DATASET_PROPERTIES:
+                try:
+                    value = getattr(described, key)
+                except Exception:  # noqa: BLE001  a property this kind lacks
+                    found[prefix + key] = ABSENT
+                    continue
+                if isinstance(value, bool | int | float | str):
+                    found[prefix + key] = value if len(str(value)) < 80 else "<long>"
+                else:
+                    found[prefix + key] = f"<{type(value).__name__}>"
     return found
+
+
+def present(properties: dict[str, object]) -> dict[str, object]:
+    """The attributes a dataset has, for printing without the absent ones."""
+    return {key: value for key, value in properties.items() if value != ABSENT}
 
 
 def differing(
@@ -180,7 +239,7 @@ def probe_migration(session: ArcpySession, workspace: str) -> dict[str, object]:
     path = f"{workspace}/dates_file"
     print(f"== {MIGRATION_TOOL} ==")
     try:
-        session.run_tool(MIGRATION_TOOL, in_table=path)
+        session.run_tool(MIGRATION_TOOL, in_table=path, date_fields=FIELD)
     except Exception as error:  # noqa: BLE001
         # A synthetic table: the message carries no data and says what the tool wanted.
         print(f"tool unavailable or refused: {type(error).__name__}: {error}")
@@ -220,7 +279,7 @@ def describe_production(
         print(f"{name}: {field_properties(session, path, name)}")
     print(f"port type for 'Date': {FIELD_TYPES.get('Date')}")
     production = dataset_properties(session, path)
-    print(f"dataset attributes, production: {sorted(production)}")
+    print(f"dataset attributes, production: {present(production)}")
     print(
         "differing from the fresh table (fresh, production): "
         f"{differing(fresh, production)}"
@@ -233,7 +292,7 @@ def main(argv: Sequence[str]) -> None:
     workspace = gdb.file_gdb(session, directory=directory, name="probe")
     probe_table(session, workspace, "file")
     before = dataset_properties(session, f"{workspace}/dates_file")
-    print(f"dataset attributes, fresh table: {before}")
+    print(f"dataset attributes, fresh table: {present(before)}")
     after = probe_migration(session, workspace)
     print(
         "dataset attributes changed by the migration (before, after): "
