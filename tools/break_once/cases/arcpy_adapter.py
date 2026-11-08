@@ -1,5 +1,6 @@
 """Cases for the ArcPy adapter's first methods: the described schema, the WKB codec, the
-predicate compiler, the three group modules and the capability record.
+predicate compiler, the write side's builders, the three group modules and the
+capability record.
 
 The session's own guards are in `arcpy_session.py`; the scan and stub rules there cover
 the adapter root as a whole and are not repeated. The memory adapter's case on the
@@ -11,10 +12,10 @@ from __future__ import annotations
 from ..engine import Case, tests_in
 
 ROOT_INIT = "src/ag/adapters/arcpy/__init__.py"
-FIELD_VALUES = "src/ag/adapters/_shared/field_values.py"
 SCHEMA = "src/ag/adapters/arcpy/support/dataset_schema.py"
 CODEC = "src/ag/adapters/arcpy/support/geometry_values.py"
 COMPILER = "src/ag/adapters/arcpy/support/predicate_compiler.py"
+WRITER = "src/ag/adapters/arcpy/support/dataset_writer.py"
 SELECTION = "src/ag/adapters/arcpy/geometry_ops/selection.py"
 SHAPE = "src/ag/adapters/arcpy/geometry_ops/shape.py"
 ROW_IO = "src/ag/adapters/arcpy/table_ops/row_io.py"
@@ -23,11 +24,10 @@ UNIT = "tests/unit/adapters/arcpy"
 T_SCHEMA = f"{UNIT}/test_dataset_schema.py"
 T_CODEC = f"{UNIT}/test_geometry_values.py"
 T_COMPILER = f"{UNIT}/test_predicate_compiler.py"
+T_WRITER = f"{UNIT}/test_dataset_writer.py"
 T_GEOMETRY = f"{UNIT}/test_geometry_ops.py"
 T_TABLE = f"{UNIT}/test_table_ops.py"
 T_CAPABILITIES = "tests/static/test_capabilities.py"
-T_MEMORY_EVAL = "tests/unit/adapters/fakes/memory/test_predicate_eval.py"
-T_MEMORY_STORE = "tests/unit/adapters/fakes/memory/test_store.py"
 T_SCANS = "tests/static/test_source_scans.py"
 
 REFUSES = f"{T_COMPILER}::test_check_refuses_before_anything_compiles"
@@ -130,14 +130,41 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "P4",
-        "a sub-second date accepted by the shared rule, so one adapter truncates",
-        FIELD_VALUES,
-        (("    if value.microsecond:\n", "    if False:\n"),),
+        "the compiler's literal drops a date's fraction silently",
+        COMPILER,
         (
-            f"{T_COMPILER}::test_a_sub_second_date_is_refused_not_truncated",
-            f"{T_MEMORY_EVAL}::test_check_refuses_what_the_adapter_cannot_evaluate[sub-second-date]",
-            f"{T_MEMORY_STORE}::test_a_row_that_does_not_fit_the_schema_is_refused[sub-second-date]",
+            (
+                '        fraction = f".{value.microsecond:06d}" if value.microsecond else ""\n',
+                '        fraction = ""\n',
+            ),
         ),
+        (f"{CLAUSE}[date-with-fraction]",),
+    ),
+    Case(
+        "D5",
+        "a date field's precision not read, so no field is a whole-second store",
+        SCHEMA,
+        (
+            (
+                "            if field_type is FieldType.DATE and precision == WHOLE_SECOND_PRECISION:\n",
+                "            if False:\n",
+            ),
+        ),
+        (
+            f"{T_SCHEMA}::test_describe_names_the_date_fields_whose_store_holds_whole_seconds",
+        ),
+    ),
+    Case(
+        "W1",
+        "a date field added without the migration, so the adapter's own store rounds",
+        WRITER,
+        (
+            (
+                "        if field.type is FieldType.DATE:\n",
+                "        if False:\n",
+            ),
+        ),
+        (f"{T_WRITER}::test_create_table_adds_every_field_and_migrates_the_date_ones",),
     ),
     Case(
         "S1",
@@ -256,16 +283,32 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "R3",
-        "a sub-second date read through and truncated on the next write",
+        "a whole-second store's encoding noise read through as a fraction",
         ROW_IO,
         (
             (
-                "    if isinstance(value, datetime) and value.microsecond:\n",
-                "    if False:\n",
+                "        if whole_second and value.microsecond:\n",
+                "        if False:\n",
             ),
         ),
         (
-            f"{T_TABLE}::test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-over]",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-under]",
+        ),
+    ),
+    Case(
+        "R4",
+        "a whole-second store's value truncated instead of rounded, a second off",
+        ROW_IO,
+        (
+            (
+                "            return (value + _HALF_SECOND).replace(microsecond=0)\n",
+                "            return value.replace(microsecond=0)\n",
+            ),
+        ),
+        (
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-under]",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[over-midnight]",
         ),
     ),
     Case(

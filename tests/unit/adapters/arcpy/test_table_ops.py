@@ -10,6 +10,7 @@ from datetime import datetime
 import pytest
 
 from ag.adapters.arcpy.session import ArcpySession
+from ag.adapters.arcpy.support.dataset_schema import WHOLE_SECOND_PRECISION
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
@@ -111,19 +112,43 @@ def test_a_cursor_failure_mid_read_leaves_as_an_engine_error(
     assert engine.cursors_closed == 1
 
 
-def test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row(
-    engine: FakeEngine, session: ArcpySession
+@pytest.mark.parametrize(
+    ("stored", "read"),
+    [
+        (datetime(2015, 1, 6, 7, 11, 36, 500), datetime(2015, 1, 6, 7, 11, 36)),
+        (datetime(2015, 1, 6, 7, 11, 35, 999500), datetime(2015, 1, 6, 7, 11, 36)),
+        (datetime(2015, 1, 6, 23, 59, 59, 999999), datetime(2015, 1, 7)),
+        (datetime(2015, 1, 6, 7, 11, 36), datetime(2015, 1, 6, 7, 11, 36)),
+    ],
+    ids=["just-over", "just-under", "over-midnight", "exact"],
+)
+def test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second(
+    engine: FakeEngine, session: ArcpySession, stored: datetime, read: datetime
 ) -> None:
-    seed(engine, roads(), path="roads")
-    engine.datasets["roads"].rows[1]["surveyed"] = datetime(2015, 1, 6, 7, 11, 36, 500)
-    rows = iter(
+    """A precision 0 field holds whole seconds in a double, and one value in eight comes
+    back a microsecond off; rounding restores the stored second on either side."""
+    seed(engine, roads(), path="roads", date_precision=WHOLE_SECOND_PRECISION)
+    engine.datasets["roads"].rows[1]["surveyed"] = stored
+    rows = list(
         ArcpyTableOps(session=session).read_rows(
             input=handle("roads"), fields=("surveyed",)
         )
     )
-    next(rows)
-    with pytest.raises(PortContractError, match="'roads' row 1: 'surveyed' holds"):
-        next(rows)
+    assert rows[1].attributes["surveyed"] == read
+
+
+def test_a_date_from_a_field_that_holds_the_fraction_is_read_as_it_is(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    stored = datetime(2015, 1, 6, 7, 11, 36, 500)
+    engine.datasets["roads"].rows[1]["surveyed"] = stored
+    rows = list(
+        ArcpyTableOps(session=session).read_rows(
+            input=handle("roads"), fields=("surveyed",)
+        )
+    )
+    assert rows[1].attributes["surveyed"] == stored
 
 
 def test_a_cell_of_an_unknown_type_is_an_adapter_defect_not_wrapped(

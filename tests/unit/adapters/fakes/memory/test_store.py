@@ -101,7 +101,6 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         (_road(name="x" * 21), "holds at most 20"),
         (_road(surveyed="2024-01-01"), "is not a datetime"),
         (_road(surveyed=datetime(2024, 1, 1, tzinfo=UTC)), "aware datetime"),
-        (_road(surveyed=datetime(2024, 1, 1, 0, 0, 0, 1)), r"replace\(microsecond=0\)"),
         (
             Row(_road().attributes, Geometry.point(0.0, 0.0, crs="EPSG:4326")),
             "schema declares",
@@ -129,7 +128,6 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         "text-too-long",
         "str-on-date",
         "aware-datetime",
-        "sub-second-date",
         "wrong-crs",
         "point-in-line-family",
         "multipoint-in-line-family",
@@ -205,6 +203,15 @@ def test_an_int_fits_a_double_field_and_none_fits_every_field() -> None:
     store = MemoryStore()
     row = _road(rank=None, width_m=2, surveyed=None)
     store.write(memory_handle("roads"), schema=roads().schema, rows=[row])
+
+
+def test_a_date_keeps_its_fraction_through_the_store() -> None:
+    store = MemoryStore()
+    handle = memory_handle("roads")
+    stamp = datetime(2024, 1, 1, 0, 0, 0, 1)
+    store.write(handle, schema=roads().schema, rows=[_road(surveyed=stamp)])
+    (row,) = store.read(handle).rows.values()
+    assert row.attributes["surveyed"] == stamp
 
 
 def test_a_refused_write_replaces_nothing() -> None:

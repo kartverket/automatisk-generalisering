@@ -34,6 +34,7 @@ class _Field:
     name: str
     type: str
     length: int
+    precision: int
 
 class _SpatialReference:
     factoryCode: int

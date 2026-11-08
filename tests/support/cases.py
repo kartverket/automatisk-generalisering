@@ -229,6 +229,31 @@ def polygons() -> DatasetCase:
     )
 
 
+def stamps() -> DatasetCase:
+    """Two points stamped a half second apart, the first with a fraction, for the date
+    round trip and the fractional literal; the values are millisecond-aligned, which is
+    what every store that holds a fraction holds."""
+    schema = Schema(
+        fields=(Field("name", FieldType.TEXT, 5), Field("at", FieldType.DATE)),
+        geometry_crs=CRS,
+        geometry_family=GeometryFamily.POINT,
+    )
+    return DatasetCase(
+        name="stamps",
+        schema=schema,
+        rows=(
+            Row(
+                {"name": "half", "at": datetime(2024, 1, 1, 12, 0, 0, 500000)},
+                Geometry.point(0.0, 5.0, crs=CRS),
+            ),
+            Row(
+                {"name": "whole", "at": datetime(2024, 1, 1, 12, 0, 0)},
+                Geometry.point(1.0, 5.0, crs=CRS),
+            ),
+        ),
+    )
+
+
 def lookup() -> DatasetCase:
     """A two-row table with no geometry."""
     schema = Schema(

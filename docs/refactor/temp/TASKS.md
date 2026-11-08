@@ -1899,12 +1899,15 @@ the same day (43 marked tests green); evidence in
 call in `tests/support/arcpy/gdb.py` moves into the adapter's write side, the builders call
 `write_rows`, and that test copy is deleted; its vocabulary is already the adapter's,
 `GEOMETRY_TYPES` in `dataset_writer.py`. `to_wkb` stays in `tests/support/wkb.py` as the
-independent oracle the codec is tested against. A33 lands with it: the fraction of a
-`DATE` survives a round trip, with W24 (a date field kind that keeps a fraction, and how
-`write_rows` creates it) and W25 (a fractional literal in a where clause) answered first
-by the by-hand probe `temp/w24_w25_date_probe.py`, whose output
-`temp/findings/slice_1b_family_orientation_evidence.md` records and whose observations
-become the marked tests' expectations in slice 2a.
+independent oracle the codec is tested against. A33's adapter side landed ahead of
+`write_rows` on 2026-11-09, once the probe `temp/w24_w25_date_probe.py` had answered W24
+and W25 (evidence in `temp/findings/slice_1b_family_orientation_evidence.md`): a date
+field the adapter creates is migrated to the engine's fraction-holding precision in
+`add_fields`, `describe` names the whole-second fields of an input and `read_rows` reads
+them to the second, the shared value rule and the compiler's literal carry the fraction,
+and the conformance suite round-trips a fractional date and selects on a fractional
+literal on both adapters. `write_rows` inherits `add_fields` and adds nothing to the
+date rule.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.

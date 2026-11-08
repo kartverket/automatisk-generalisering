@@ -249,15 +249,16 @@ Describe (seconds per call):
 in memory. Describe sits at 0.04 s on a file geodatabase, fresh or warm, a tenth of the
 agreed band's upper edge; a few hundred calls per stage cost seconds.
 
-**W18, refuted on the sources.** The walk read sub-second parts from a file geodatabase:
-24,456 of `created_date`'s values and 365 of `datafangstdato`'s carry microseconds. PR A
-showed the engine rounds a fraction it is given to the second; these values arrived with
-their fraction, so the sources hold more than seconds and the read-side refusal in
-`row_io.py` fires on any read that names such a field. It did not fire here because the
-three fields read are not dates. A contract question for the architect: refuse, as today,
-or truncate on read (ADR-0019 PC-D17), given that the project's own use of dates is at day
-accuracy. A second points run with `--fields created_date,datafangstdato,objtype` shows the
-refusal path and is cheap.
+**W18, as first read, then corrected.** The walk read sub-second parts from a file
+geodatabase: 24,456 of `created_date`'s values and 365 of `datafangstdato`'s carry
+microseconds, and the read-side refusal then in `row_io.py` fired on any read that named
+such a field. The reading at the time was that the sources hold more than seconds. The
+date probe of 2026-11-08 (`slice_1b_family_orientation_evidence.md`) showed otherwise:
+every one of those fields is a whole-second store (engine `precision` 0, a double of
+days), and every stray microsecond part lies within a millisecond of a whole second,
+24,456 of 24,456 and 365 of 365, which is the double's rounding and not a stored
+fraction. The reader now restores the stored second on such a field, and nothing is
+refused.
 
 #### The date-field pass on points, 2026-11-06
 
@@ -502,7 +503,7 @@ partition.
 | W12 curves | the probe: neither densified nor a curve code, the arc's two vertices as a planar ring; the preflight's `shapes.curve` cannot see a curve, so the sources' half is unanswered, not zero | probe observed; sources unanswered; B-item opening |
 | W14 timing | the reads, explode and describe stages | done on all three sets, above |
 | W17 hasZ/hasM of the sources | preflight line per source | points and polygons: no Z, no M; lines: Z, no M; WKB export drops Z, so the Describe refusal is the only guard |
-| W18 date fields of the sources | preflight `date_fields`: every set holds sub-second parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal fired on the date-field pass | observed on all three, contract question open |
+| W18 date fields of the sources | preflight `date_fields`: every set read back microsecond parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal of the time fired on the date-field pass; the date probe showed the parts to be a whole-second store's encoding noise | closed: the reader restores the stored second (A33) |
 | W22 (new) the 2D copy through CreateFeatureclass and Append drops Z and M | copy line of the lines run: `copy_has_z` false, 457 s for 14.7M rows | holds |
 | W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources; `SHAPE_TYPES` maps all four and `tests/engine/arcpy/test_dataset_schema.py` pins them in both workspaces | all four confirmed on the image, 2026-11-08 |
 
@@ -512,8 +513,9 @@ partition.
 - The engine writes into `__main__` on import (above); entry points that open the session
   are exposed.
 - `read_rows` has no attributes-only pass on a feature class (above).
-- The sources hold sub-second date values, so the read-side refusal fires on production
-  data (W18 above, and the date-field pass).
+- The sources' date fields read back with microsecond parts, so the read-side refusal of
+  the time fired on production data (W18 above, and the date-field pass); the parts
+  proved to be the whole-second store's encoding noise.
 - `SHAPE@WKB` drops Z as it drops curves (the lines run); the Describe-level refusal is
   the only Z guard and stands.
 - `explode_multipart`'s null pre-pass costs 87% of the tool's own time on polygons; fine

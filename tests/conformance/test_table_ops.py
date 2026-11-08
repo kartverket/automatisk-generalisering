@@ -1,10 +1,11 @@
 """`read_rows` against the port's contract, on every adapter.
 
-What: every field type round-trips as the value the case wrote, dates to the whole
-second; every geometry kind the port holds comes back as the kind that was written, which
-is the one question about kinds an engine answers and the one place it fails; an
-undeclared field is refused before any row is read; a table has no geometry and an empty
-field list yields empty attributes. ADR-0019 PC-D17, PC-D22, PC-D25.
+What: every field type round-trips as the value the case wrote, a date with its
+fraction, since every store an adapter creates holds one; every geometry kind the port
+holds comes back as the kind that was written, which is the one question about kinds an
+engine answers and the one place it fails; an undeclared field is refused before any row
+is read; a table has no geometry and an empty field list yields empty attributes.
+ADR-0019 PC-D17, PC-D22, PC-D25.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from tests.support.cases import (
     points,
     polygons,
     roads,
+    stamps,
 )
 
 KIND_CASES = [roads(), multilines(), multipoints(), points(), polygons()]
@@ -35,7 +37,9 @@ def _rows(
     return list(adapter.table_ops.read_rows(input=handle, fields=fields))
 
 
-@pytest.mark.parametrize("case", [roads(), lookup()], ids=["feature-class", "table"])
+@pytest.mark.parametrize(
+    "case", [roads(), lookup(), stamps()], ids=["feature-class", "table", "fraction"]
+)
 def test_read_rows_round_trips_every_field_type(
     adapter: Adapter, case: DatasetCase
 ) -> None:

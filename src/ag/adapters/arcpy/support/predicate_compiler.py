@@ -15,8 +15,10 @@ unrepresentable field are a `PortContractError` from `check`, so an engine coerc
 a Python comparison can never disagree; a `LIKE` pattern is held to the field's type and
 not its length. A `RawAttr` is compiled as written (PC-D14). Identifiers are quoted by
 the engine's own rule for the dataset's workspace (PC-D20); text literals by SQL's
-doubled quote; dates in the file geodatabase form, `date 'YYYY-MM-DD HH:MM:SS'`, which
-the memory workspace is expected to share and the first run under the engine confirms.
+doubled quote; dates in the file geodatabase form, `date 'YYYY-MM-DD HH:MM:SS'`, with
+the fraction appended as `.ffffff` when there is one, which both workspaces compare with
+its fraction (the probe of 2026-11-08: a fractional literal matched the stored fraction
+and nothing else), so a whole-second literal never matches a value a microsecond off.
 An enterprise geodatabase dialect is not built. A `Spatial` leaf is not compiled yet and
 raises `NotImplementedError`, which is not a port error, so no caller mistakes it for a
 contract breach; its route, the engine's layer selection with negation pushed to the
@@ -146,7 +148,8 @@ def _literal(value: AttributeValue) -> str:
     if isinstance(value, str):
         return "'" + value.replace("'", "''") + "'"
     if isinstance(value, datetime):
-        return f"date '{value:%Y-%m-%d %H:%M:%S}'"
+        fraction = f".{value.microsecond:06d}" if value.microsecond else ""
+        return f"date '{value:%Y-%m-%d %H:%M:%S}{fraction}'"
     if value is None:
         raise TypeError("a null reached compilation; check() refuses it.")
     return repr(value)

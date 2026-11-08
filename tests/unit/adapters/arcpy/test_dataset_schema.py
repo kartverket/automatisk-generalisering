@@ -10,6 +10,7 @@ from ag.adapters.arcpy.session import ArcpySession
 from ag.adapters.arcpy.support.dataset_schema import (
     FIELD_TYPES,
     SHAPE_TYPES,
+    WHOLE_SECOND_PRECISION,
     declared_field,
     describe,
 )
@@ -63,6 +64,16 @@ def test_a_table_has_no_crs_and_only_the_native_index_as_engine_field(
     assert dataset.schema.geometry_family is None
     assert dataset.engine_fields == {"OBJECTID"}
     assert dataset.schema.fields[0] == Field("code", FieldType.SHORT)
+
+
+def test_describe_names_the_date_fields_whose_store_holds_whole_seconds(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="raw", date_precision=WHOLE_SECOND_PRECISION)
+    seed(engine, roads(), path="own")
+    assert describe(session, "raw").whole_second_fields == {"surveyed"}
+    assert describe(session, "own").whole_second_fields == frozenset()
+    assert describe(session, "raw").schema == describe(session, "own").schema
 
 
 @pytest.mark.parametrize("case", FAMILY_CASES, ids=[c.name for c in FAMILY_CASES])

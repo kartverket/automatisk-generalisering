@@ -1,7 +1,7 @@
 # Slice 1b evidence: geometry family and canonical orientation
 
-**Status:** EVIDENCE, 2026-11-08, the marked run green; the W24 and W25 probe output
-pending. B31 (the geometry family on `Schema`) and B32 (canonical ring orientation in
+**Status:** EVIDENCE, 2026-11-09, the marked run of 2026-11-08 green, the date rule
+landed and its marked tests awaiting the image. B31 (the geometry family on `Schema`) and B32 (canonical ring orientation in
 `Geometry`), their refusals, their break-once cases, the W23 pins, the W24 and W25
 probe, and the records. The timing run that priced B32 is
 `slice_1b_read_rows_timing_evidence.md`.
@@ -317,8 +317,86 @@ decision and is not changed here. The project reads dates rarely, to order
 observations, and has to handle varying raw data reliably (the architect, 2026-11-09),
 so the rule has to be right for noise and for real fractions alike.
 
+### The sixth run, 2026-11-09
+
+Same digest and command; the engine lines repeated the fifth run. The microsecond parts
+of the production copy's date fields, counts only, the band one millisecond wide:
+
+| field | non-null | with a fraction | within a millisecond of a whole second | elsewhere |
+|---|---|---|---|---|
+| `datafangstdato` | 1,167,072 | 365 | 365 | 0 |
+| `merknadsdato` | 62 | 0 | 0 | 0 |
+| `created_date` | 202,005 | 24,456 | 24,456 | 0 |
+| `last_edited_date` | 371,619 | 44,778 | 44,778 | 0 |
+
+**The parts are encoding noise.** Every stray fraction on every production field lies
+within a millisecond of a whole second and none elsewhere, which a stored fraction would
+have produced somewhere in 69,599 values. The sources hold whole seconds; the file
+geodatabase's `precision` 0 store encodes them as a double of days and about one in
+eight reads back a microsecond off. W24 and W25 close.
+
+### The date rule, decided 2026-11-09
+
+The architect chose, from four options presented with their costs: the adapter decodes
+by the field's precision and creates fields that hold the fraction. The project reads
+dates rarely, to pick the newer of two observations years apart or to order its own run
+stamps minutes apart, but has to handle varying raw data reliably, and a later need for
+accuracy has to be cheap to meet.
+
+- `describe` reads each field's engine `precision` and names the date fields at 0 as
+  `DescribedDataset.whole_second_fields`; `read_rows` reads such a field to its nearest
+  second, so no encoding noise crosses the port and two copies of one timestamp compare
+  equal, and reads a `precision` 1 field with its fraction. Rounding, not truncation,
+  because the noise lies on both sides of the stored second; A33's truncation rule is
+  for a real fraction meeting a store that cannot hold it, which this is not.
+- `add_fields` migrates every date field it adds to `precision` 1 through
+  `MigrateDateFieldToHighPrecision(in_table, date_fields)`, so every date field the
+  adapter creates holds what the port carries, and `write_rows` inherits the step. The
+  engine documents that store as milliseconds; the marked test holds a value written
+  with microseconds to within a millisecond, and the adapter's docstring states it.
+- The shared value rule and the memory store accept a fraction; the compiler's literal
+  carries it as `.ffffff`; the read-side refusal is gone.
+- Rejected: whole seconds only in the port, which reverses A33 and makes a later need
+  for accuracy a contract change; a noise band in the data path, a magic threshold that
+  destroys a real fraction near a whole second; A33 unchanged with nothing on the read
+  side, which truncates 11.999999 to 11 on one value in eight.
+
+What landed with it, 2026-11-09:
+
+- `dataset_schema.py`: `_Raw.fields` carries `precision`; `WHOLE_SECOND_PRECISION`;
+  `DescribedDataset.whole_second_fields`. `row_io.py`: the decode, the refusal removed.
+  `_shared/field_values.py`: the microsecond branch removed. `predicate_compiler.py`:
+  the fraction in the literal. `dataset_writer.py`: `MIGRATION_TOOL`, the migration in
+  `add_fields`. The stub's `_Field` gains `precision`.
+- The fake engine: `FakeField.precision`, the migration tool, `seed(date_precision=)`
+  with the adapter's own precision as the default and the whole-second store for a test
+  that stands in for a raw source.
+- Tests: the whole-second decode on both sides of the second and across midnight, the
+  fraction read as it is, the compiler's fractional literal, the fraction through the
+  memory store and the evaluator, `whole_second_fields` from describe, the builders'
+  migration call; `tests/support/cases.py` gains `stamps`, two rows half a second apart;
+  conformance round-trips it on both adapters and selects on a fractional and a
+  whole-second literal; the marked `test_row_io.py` tests a bare AddField field that
+  rounds and reads to the second, and a field the adapter creates that holds a fraction
+  to within a millisecond. The sub-second refusal tests are gone.
+- Break-once: P4 is now the compiler's literal dropping the fraction; R3 the decode
+  removed; R4 truncation instead of rounding; D5 the precision not read; W1 the
+  migration not run.
+- Records: ADR-0019 PC-D17 adapted per A33.1's decided text; T4.11's follow-up; the W18
+  rows of the timing evidence. A33's own text in `DECISIONS.md` is the architect's to
+  approve and is proposed in the end-of-task report, not changed here.
+
+Marked tests awaiting the image: the two in `test_row_io.py`, the `fraction` id of the
+conformance round trip and `test_a_date_comparison_carries_its_fraction` under `arcpy`.
+Expectations they carry beyond the probe: a six-digit fraction in a literal (the probe
+used three), and a microsecond value held to within a millisecond in a `precision` 1
+field.
+
 ## Records
 
+- ADR-0019 PC-D17 adapted per A33.1: `DATE` carried to microsecond precision, an adapter
+  whose store holds less stating its precision, a round trip identity to the coarser side.
+  Direction affected: no.
 - ADR-0019 PC-D22 adapted: `write_rows`'s `Schema` names a feature class's CRS and
   geometry family, so an empty dataset is created from the schema alone. PC-D25 adapted:
   polygon rings canonical on construction, a round trip identity on every adapter, line

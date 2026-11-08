@@ -5,7 +5,8 @@ the port's types, and `GEOMETRY_TYPES`, its geometry-type vocabulary for CreateF
 against the port's families, each spelled here and nowhere else;
 `create_table(session, path=, fields=)`,
 a table with the declared fields; `add_fields(session, path=, fields=)`, the declared
-fields on an existing dataset; `insert_rows(session, path=, tokens=, rows=)`, cell tuples
+fields on an existing dataset, a date field migrated to the engine's high precision as
+it is added; `insert_rows(session, path=, tokens=, rows=)`, cell tuples
 through one insert cursor under the session's guard; `split_path`, a dataset path as the
 workspace and the name the engine's create tools take.
 
@@ -13,7 +14,13 @@ How: AddField's vocabulary (`LONG`, `TEXT`) is not the vocabulary Describe repor
 (`Integer`, `String`), and CreateFeatureclass's (`POLYLINE`) is not Describe's
 (`Polyline`), so these tables are a second direction and not the inverses of
 `dataset_schema.FIELD_TYPES` and `SHAPE_TYPES`: the engine spells each type two ways,
-and each table sits with the call that speaks it. A TEXT field carries its length. The rows are cell tuples in
+and each table sits with the call that speaks it. A TEXT field carries its length. A DATE field is added at the engine's default
+precision, a store of whole seconds that rounds what it is given, and then migrated by
+`MIGRATION_TOOL` to precision 1, which holds the fraction and matches a fractional
+literal (the probe of 2026-11-08), so every date field this adapter creates holds what
+the port carries and nothing the adapter writes is reduced (A33). The engine's own
+documentation gives that store milliseconds; the marked test holds a value written with
+microseconds to within a millisecond. The rows are cell tuples in
 the order of `tokens`, a geometry already encoded as the `WKB_TOKEN` cell where there is
 one; nothing here holds a cell to its field, which is the caller's rule (ADR-0019
 PC-D26). Every engine call runs inside the session's guard or through `run_tool`
@@ -56,6 +63,10 @@ GEOMETRY_TYPES: Mapping[GeometryFamily, str] = MappingProxyType(
 four were confirmed on the image on 2026-11-05: every conformance case seeded through
 them, the multipoints case among them."""
 
+MIGRATION_TOOL = "management.MigrateDateFieldToHighPrecision"
+"""The engine's tool that switches a date field from whole seconds to the fraction;
+`(in_table, date_fields)` on the image, one field per call here."""
+
 
 def create_table(
     session: ArcpySession, *, path: str, fields: tuple[Field, ...]
@@ -67,7 +78,8 @@ def create_table(
 
 
 def add_fields(session: ArcpySession, *, path: str, fields: tuple[Field, ...]) -> None:
-    """Declares `fields` on the dataset at `path`, one tool call each."""
+    """Declares `fields` on the dataset at `path`, one tool call each, and migrates each
+    date field to the precision that holds the fraction."""
     for field in fields:
         arguments: dict[str, object] = {
             "in_table": path,
@@ -77,6 +89,8 @@ def add_fields(session: ArcpySession, *, path: str, fields: tuple[Field, ...]) -
         if field.length is not None:
             arguments["field_length"] = field.length
         session.run_tool("management.AddField", **arguments)
+        if field.type is FieldType.DATE:
+            session.run_tool(MIGRATION_TOOL, in_table=path, date_fields=field.name)
 
 
 def insert_rows(

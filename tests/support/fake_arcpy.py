@@ -32,10 +32,12 @@ from ag.adapters.arcpy.support.dataset_schema import (
     FIELD_TYPES,
     OID_TOKEN,
     SHAPE_TYPES,
+    WHOLE_SECOND_PRECISION,
 )
-from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
+from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES, MIGRATION_TOOL
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
 from ag.core.types import DataType
+from ag.ports.attributes import FieldType
 from ag.ports.geometry import GeometryFamily
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
@@ -54,6 +56,10 @@ ENGINE_SHAPE_TYPES = {port: engine for engine, port in SHAPE_TYPES.items()}
 
 FEATURE_CLASS = ENGINE_DATA_TYPES[DataType.FEATURE_CLASS]
 TABLE = ENGINE_DATA_TYPES[DataType.TABLE]
+
+FRACTION_PRECISION = 1
+"""The engine `precision` of a date field that holds the fraction, which the migration
+tool sets and the adapter's own date fields carry."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -77,6 +83,7 @@ class FakeField:
     name: str
     type: str
     length: int = 0
+    precision: int = WHOLE_SECOND_PRECISION
 
 
 @dataclass
@@ -207,6 +214,7 @@ class FakeEngine(ModuleType):
             CreateTable=self._create_table,
             AddField=self._add_field,
             DeleteField=self._delete_field,
+            **{MIGRATION_TOOL.split(".")[1]: self._migrate_date_field},
         )
         self.analysis = _Toolbox(
             self, "analysis", Select=self._select, TableSelect=self._select
@@ -314,6 +322,11 @@ class FakeEngine(ModuleType):
             FakeField(field_name, ADDED_TYPES[field_type], field_length or 0)
         )
 
+    def _migrate_date_field(self, *, in_table: str, date_fields: str) -> None:
+        for found in self.dataset(in_table).fields:
+            if found.name == date_fields:
+                found.precision = FRACTION_PRECISION
+
     def _delete_field(self, *, in_table: str, drop_field: str) -> None:
         dataset = self.dataset(in_table)
         dataset.fields = [f for f in dataset.fields if f.name != drop_field]
@@ -336,11 +349,25 @@ class FakeEngine(ModuleType):
         self.datasets[target] = output
 
 
-def seed(engine: FakeEngine, case: DatasetCase, *, path: str) -> FakeDataset:
-    """Writes `case` to `engine` under `path`, with native indices 1 to n in order."""
+def seed(
+    engine: FakeEngine,
+    case: DatasetCase,
+    *,
+    path: str,
+    date_precision: int = FRACTION_PRECISION,
+) -> FakeDataset:
+    """Writes `case` to `engine` under `path`, with native indices 1 to n in order; its
+    date fields at `date_precision`, the adapter's own by default, a whole-second store
+    when a test stands in for a raw source."""
     schema = case.schema
     fields = [
-        FakeField(f.name, ENGINE_TYPES[f.type], f.length or 0) for f in schema.fields
+        FakeField(
+            f.name,
+            ENGINE_TYPES[f.type],
+            f.length or 0,
+            date_precision if f.type is FieldType.DATE else WHOLE_SECOND_PRECISION,
+        )
+        for f in schema.fields
     ]
     data_type = ENGINE_DATA_TYPES[schema.data_type]
     dataset = FakeDataset(data_type, fields)
