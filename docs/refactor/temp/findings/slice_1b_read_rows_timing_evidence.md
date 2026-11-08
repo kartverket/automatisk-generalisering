@@ -1,10 +1,11 @@
-# Slice 1b evidence: the `read_rows` timing run, second pull request, batch 1
+# Slice 1b evidence: the `read_rows` timing run
 
 **Status:** EVIDENCE, 2026-11-06 (the three runs complete on the image). The tool, its
 root and the run commands are in place; the three datasets and the probe have run, and
-the logs are under `docs/refactor/temp/logs/`. Batch 1 of the second pull request of slice 1b: the timing
-run (`tools/engine/time_read_rows.py`), W14, the by-hand items W12, W17 and W18, and their
-records. Batch 2, B31 and B32, is a later session on the same branch.
+the logs are under `docs/refactor/temp/logs/`. The timing run of slice 1b
+(`tools/engine/time_read_rows.py`), W14, the by-hand items W12, W17 and W18, and their
+records. B31 and B32, which the run priced, are recorded in
+`slice_1b_family_orientation_evidence.md`.
 
 This file is written in WSL without ArcPy; every engine result below is run by the
 architect in the project's image, `ghcr.io/kartverket/arcpy-linux:12.1`, and pasted, and
@@ -16,7 +17,7 @@ types, shape types, EPSG codes and the Z and M flags. Never a cell value, a coor
 extent or an object id. The tool's docstring states the rule and its refusal lines record
 an exception class, never a message, because the port's own errors embed cell values.
 
-## What this batch adds
+## What the timing run adds
 
 - `tools/engine/`, the third root under the constrained ArcPy stub: its execution
   environment in `pyproject.toml`, placed before the root one because pyright applies the
@@ -28,9 +29,9 @@ an exception class, never a message, because the port's own errors embed cell va
 - `tools/engine/time_read_rows.py`, the tool, and `tests/unit/tools/test_time_read_rows.py`
   for its pure parts: the pass loop closes its iterator on completion, cap and interrupt;
   the WKB walk classifies null, empty, planar, Z, M, ZM, curve and unknown codes in the
-  ISO and the extended spelling. The `orient` variant and its ring count were retired in
-  batch 2, once `Geometry` canonicalised on construction and the port pass carried the
-  check itself.
+  ISO and the extended spelling. The `orient` variant and its ring count were retired
+  once `Geometry` canonicalised on construction and the port pass carried the check
+  itself (B32).
 - The stub gains `shapeType` on Describe, for the preflight and for B31.
 - `DATA_TYPES` in `dataset_schema.py` is public, so the tool reads the engine's data type
   through the adapter's own map instead of restating the string.
@@ -60,7 +61,7 @@ the port has no attributes-only pass on a feature class: the plan's "attributes 
 pass exists for the bare cursor alone, and the port's figure is always with geometry. A
 caller that needs attributes alone, as a lineage-aware pipe over a parents mapping might,
 pays the codec on every row. Whether `read_rows` gets a way to leave the shape out is a
-port question for the architect, not something this batch decides.
+port question for the architect, not something the timing run decides.
 
 ## The run
 
@@ -166,7 +167,7 @@ cap can drop to 300 s on the lines after the first two runs show stable rates.
   instead, made through `CreateFeatureclass` with `has_z="DISABLED"` and `Append` with
   `schema_type="NO_TEST"`. That the engine drops Z this way is W22, an expectation until
   the run shows it; if it does not, the route through the session's environment is a
-  proposal to the architect, not a change this batch makes.
+  proposal to the architect, not a change the timing run makes.
 - A holed multipolygon member: the codec refuses it mid-stream (B30); the read passes then
   read the exploded copy, and the bare variant reads the same copy.
 - A null or empty shape: `explode_multipart` refuses the input; the explode stage runs on
@@ -319,8 +320,8 @@ Pairs agree within 4%. Over the bare cursor the codec adds 1.1 s per partition a
 rest of `_rows` 0.1 s; the port reads a partition-sized set of these polygons in about
 2.0 s, 1.2 s of it added over the bare cursor. **B32's price:** the signed-area check of
 every ring adds 10.6 s and 20.2 s over the two port passes it follows, 0.13 to 0.24 s per
-partition, 6 to 12% of the port pass; against A15.7's minute it is cheap, and batch 2's
-condition is met. The check measured here was the plain shoelace form; batch 2 landed
+partition, 6 to 12% of the port pass; against A15.7's minute it is cheap, and B32's
+condition is met. The check measured here was the plain shoelace form; B32 landed
 the form relative to the first vertex, which costs about a third more per ring (200,000
 calls on a five-vertex ring: 0.075 s plain, 0.100 s relative), so the landed price is
 nearer 0.17 to 0.32 s per partition, still inside the condition. RSS held between 835
@@ -410,7 +411,7 @@ on read, and nothing in the WKB tells the preflight a curve was there: its `shap
 count stays zero whatever the sources hold. Detecting a curve needs the geometry object's
 `hasCurves` through `SHAPE@`, a stub name and a per-row cost, or a densify of the working
 copy before any read. Which, and whether the port refuses or densifies, is a contract
-question for the architect; this batch records it and the W-item table says so.
+question for the architect; the run records it and the W-item table says so.
 
 ### The engine writes into `__main__` on import, 2026-11-06
 
@@ -429,7 +430,7 @@ So a script that is `__main__`, binds `datetime` from the class and then opens t
 loses the class. The tool now runs as a module and its guarded block imports the module
 and calls `main` there, where the engine does not write; `tools/engine/__init__.py` states
 the rule. The same applies to every pipeline entry point under the `__main__` guard once
-one opens the session. Not decided in this batch; the two candidate responses, for the
+one opens the session. Not decided with the run; the two candidate responses, for the
 architect:
 
 - (a) the convention the tool uses: every entry point that opens the session runs as a
@@ -466,7 +467,7 @@ partition.
   pre-pass, a full `SHAPE@WKB` cursor; a cheaper token for the null check is an
   unmeasured candidate, not a fact.
 - **B32's price is cheap:** 0.13 to 0.24 s per partition of polygons, 6 to 12% of the
-  port pass, with the plain form; batch 2 put canonical orientation into `Geometry` with
+  port pass, with the plain form; B32 put canonical orientation into `Geometry` with
   the relative form, about a third more.
 - **The codec is the port's cost.** On every set the codec is most of what the port adds
   (60% on points, 85% on lines, 90% on polygons); `_attribute`, the `Row` and the per-row
@@ -503,7 +504,7 @@ partition.
 | W17 hasZ/hasM of the sources | preflight line per source | points and polygons: no Z, no M; lines: Z, no M; WKB export drops Z, so the Describe refusal is the only guard |
 | W18 date fields of the sources | preflight `date_fields`: every set holds sub-second parts in its editor-tracking date fields (points 3 fields, polygons 2, lines `oppdateringsdato` 1.49M of 14.7M); the refusal fired on the date-field pass | observed on all three, contract question open |
 | W22 (new) the 2D copy through CreateFeatureclass and Append drops Z and M | copy line of the lines run: `copy_has_z` false, 457 s for 14.7M rows | holds |
-| W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources; batch 2 maps all four in `SHAPE_TYPES` and pins them in `tests/engine/arcpy/test_dataset_schema.py` in both workspaces | three of four observed; the fourth awaits the marked run |
+| W23 (new) the engine's `shapeType` strings | preflight `shape_type`: `Point`, `Polygon`, `Polyline` observed; `Multipoint` not in these sources; `SHAPE_TYPES` maps all four and `tests/engine/arcpy/test_dataset_schema.py` pins them in both workspaces | all four confirmed on the image, 2026-11-08 |
 
 ## Findings for the architect, not decided here
 
@@ -520,8 +521,8 @@ partition.
 
 ## The architect's decisions on the findings, 2026-11-07
 
-- Curves: a B-item, opened with this batch; whether curves matter is checked before the
-  two batches are pushed as one pull request.
+- Curves: a B-item, B33, opened with the run; whether curves matter is checked before the
+  pull request that carries this run and B31 and B32.
 - Z dropped by `SHAPE@WKB`: fine; the Describe-level refusal stands as the only guard.
 - Sub-second dates: the port supports the native type and does not remove the fraction;
   the change to ADR-0019 PC-D17, `row_io.py`, the predicate compiler's literal and the
@@ -529,7 +530,7 @@ partition.
 - Holed multipolygon members: not expected and not produced by the pipeline; a raw input
   that has them is exploded at ingest before it is read, so read after `explode_multipart`
   is the contract. B30 closes on that basis.
-- B32: the condition is met; batch 2 puts canonical orientation into `Geometry`.
+- B32: the condition is met; canonical orientation goes into `Geometry`.
 - The attributes-only read: no B-item; the price above is the record.
 
 ## Record edits

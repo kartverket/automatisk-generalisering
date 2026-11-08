@@ -1887,12 +1887,12 @@ over both adapters and `tests/engine/arcpy/`, 34 marked tests, evidence in
 `temp/findings/slice_1b_arcpy_conformance_evidence.md`; no test was removed for a contract
 question. (1b), (2) and (3) wait on their methods. The `read_rows` timing run ran
 2026-11-06 on the three raw sets (W14 done; W12, W17, W18, W22 as the evidence file
-states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`. Batch 2 of
-that pull request closed B31 and B32 on 2026-11-08: `Schema` carries a geometry family,
-`Geometry` holds its rings canonical, the builders seed from the schema and orient
-nothing, and the marked tests in `tests/engine/arcpy/test_dataset_schema.py` and
-`test_shape.py` pin W23's four `shapeType` spellings and the multipoint explode's point
-output, to be confirmed by the next image run; evidence in
+states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`. B31 and B32
+closed on 2026-11-08: `Schema` carries a geometry family, `Geometry` holds its rings
+canonical, the builders seed from the schema and orient nothing, and the marked tests in
+`tests/engine/arcpy/test_dataset_schema.py` and `test_shape.py` pin W23's four
+`shapeType` spellings and the multipoint explode's point output, confirmed on the image
+the same day (43 marked tests green); evidence in
 `temp/findings/slice_1b_family_orientation_evidence.md`.
 
 **follow-up (`write_rows`):** when `TableOps.write_rows` lands, the `CreateFeatureclass`
@@ -1902,8 +1902,9 @@ call in `tests/support/arcpy/gdb.py` moves into the adapter's write side, the bu
 independent oracle the codec is tested against. A33 lands with it: the fraction of a
 `DATE` survives a round trip, with W24 (a date field kind that keeps a fraction, and how
 `write_rows` creates it) and W25 (a fractional literal in a where clause) answered first
-by the by-hand probe `temp/w24_w25_date_probe.py`, whose output the batch 2 evidence file
-records and whose observations become the marked tests' expectations in slice 2a.
+by the by-hand probe `temp/w24_w25_date_probe.py`, whose output
+`temp/findings/slice_1b_family_orientation_evidence.md` records and whose observations
+become the marked tests' expectations in slice 2a.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.

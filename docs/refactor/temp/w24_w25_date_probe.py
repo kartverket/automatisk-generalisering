@@ -27,6 +27,11 @@ on the `ag_timing` volume, never from the read-only `gis_files` mount, and nothi
 is printed but field names and field properties. Nothing here asserts; the output is
 pasted into the evidence, and A33.2's conformance round trip and the compiler's literal
 test take their expectations from it in slice 2a.
+
+Run as a file, this module is `__main__`, and the engine rebinds `datetime` there to the
+module when the session opens (observed 2026-11-06), so nothing after `open_session`
+consults that name: a value is printed through its `isoformat` attribute. The field is
+named `stamp`, not a word any SQL dialect reserves.
 """
 
 from __future__ import annotations
@@ -44,6 +49,7 @@ from tests.support.arcpy import gdb
 
 FRACTION = datetime(2024, 1, 1, 12, 0, 0, 500000)
 WHOLE = datetime(2024, 1, 1, 12, 0, 0)
+FIELD = "stamp"
 MIGRATION_TOOL = "management.MigrateDateFieldToHighPrecision"
 """The engine's documented tool name for the precision change; the probe reports when
 the image's toolbox lacks it instead of failing."""
@@ -57,12 +63,15 @@ LITERALS = {
 
 
 def field_properties(session: ArcpySession, path: str, name: str) -> dict[str, object]:
-    """Every public property of the Describe field object `name` of `path`."""
+    """Every public property of the Describe field object `name` of `path`, matched
+    without regard to case; the names Describe reports are printed first."""
     with session.guard("Describe"):
         import arcpy
 
-        for found in arcpy.Describe(path).fields:
-            if found.name == name:
+        fields = list(arcpy.Describe(path).fields)
+        print(f"describe reports fields {[f.name for f in fields]}")
+        for found in fields:
+            if found.name.lower() == name.lower():
                 return {
                     key: getattr(found, key)
                     for key in dir(found)
@@ -71,24 +80,30 @@ def field_properties(session: ArcpySession, path: str, name: str) -> dict[str, o
     return {}
 
 
+def shown(value: object) -> object:
+    """A date as ISO text, anything else as it is, without naming the datetime class."""
+    isoformat = getattr(value, "isoformat", None)
+    return isoformat() if callable(isoformat) else value
+
+
 def read_back(session: ArcpySession, path: str, where: str | None = None) -> list[object]:
     return [
         cell[0]
-        for cell in gdb.read_cells(session, path=path, tokens=("when",), where=where)
+        for cell in gdb.read_cells(session, path=path, tokens=(FIELD,), where=where)
     ]
 
 
 def probe_table(session: ArcpySession, workspace: str, label: str) -> None:
     path = f"{workspace}/dates_{label}"
-    create_table(session, path=path, fields=(Field("when", FieldType.DATE),))
+    create_table(session, path=path, fields=(Field(FIELD, FieldType.DATE),))
     print(f"== {label}: AddField DATE, fresh ==")
-    print(f"field properties: {field_properties(session, path, 'when')}")
-    insert_rows(session, path=path, tokens=("when",), rows=[(FRACTION,), (WHOLE,)])
+    print(f"field properties: {field_properties(session, path, FIELD)}")
+    insert_rows(session, path=path, tokens=(FIELD,), rows=[(FRACTION,), (WHOLE,)])
     print(f"written {FRACTION.isoformat()} and {WHOLE.isoformat()}")
-    print(f"read back {[v.isoformat() if isinstance(v, datetime) else v for v in read_back(session, path)]}")
+    print(f"read back {[shown(v) for v in read_back(session, path)]}")
     for name, literal in LITERALS.items():
         try:
-            matched = read_back(session, path, where=f'"when" = {literal}')
+            matched = read_back(session, path, where=f'"{FIELD}" = {literal}')
             print(f"where {name:20} -> {len(matched)} row(s)")
         except Exception as error:  # noqa: BLE001  a probe reports, it does not handle
             print(f"where {name:20} -> {type(error).__name__}")
@@ -98,16 +113,16 @@ def probe_migration(session: ArcpySession, workspace: str) -> None:
     path = f"{workspace}/dates_file"
     print(f"== {MIGRATION_TOOL} ==")
     try:
-        session.run_tool(MIGRATION_TOOL, in_table=path, field="when")
+        session.run_tool(MIGRATION_TOOL, in_table=path, field=FIELD)
     except Exception as error:  # noqa: BLE001
         print(f"tool unavailable or refused: {type(error).__name__}")
         return
-    print(f"field properties after: {field_properties(session, path, 'when')}")
-    insert_rows(session, path=path, tokens=("when",), rows=[(FRACTION,)])
-    print(f"read back {[v.isoformat() if isinstance(v, datetime) else v for v in read_back(session, path)]}")
+    print(f"field properties after: {field_properties(session, path, FIELD)}")
+    insert_rows(session, path=path, tokens=(FIELD,), rows=[(FRACTION,)])
+    print(f"read back {[shown(v) for v in read_back(session, path)]}")
     for name, literal in LITERALS.items():
         try:
-            matched = read_back(session, path, where=f'"when" = {literal}')
+            matched = read_back(session, path, where=f'"{FIELD}" = {literal}')
             print(f"where {name:20} -> {len(matched)} row(s)")
         except Exception as error:  # noqa: BLE001
             print(f"where {name:20} -> {type(error).__name__}")

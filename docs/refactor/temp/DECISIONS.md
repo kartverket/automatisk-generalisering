@@ -2715,5 +2715,5 @@ coordinates or a line under two, cheap, catching a full arc and not a curved cor
 adapter densifying the output of each curve-producing method through a tool; a per-row
 `hasCurves` check through `SHAPE@`, a stub name and an unpriced per-row cost; a one-off
 probe counting true curves per source, which answers whether any of it is needed.
-Re-assessed at the end of batch 2, before the two batches are pushed as one pull request.
+Re-assessed once B31 and B32 have landed, before the pull request that carries them.
 `destination:` `ports/geometry.py` and the codec when decided.

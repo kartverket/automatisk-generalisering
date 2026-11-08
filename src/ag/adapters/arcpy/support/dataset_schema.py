@@ -75,9 +75,8 @@ SHAPE_TYPES: Mapping[str, GeometryFamily] = MappingProxyType(
     }
 )
 """Engine `shapeType` to the port's family. `Point`, `Polyline` and `Polygon` were read
-from the raw sources in the timing run of 2026-11-06; `Multipoint` is the engine's
-documented spelling, unconfirmed until a marked run describes a multipoint class
-(W23)."""
+from the raw sources in the timing run of 2026-11-06 and all four, `Multipoint` included,
+from the marked run of 2026-11-08 in both workspaces (W23)."""
 
 
 @dataclass(frozen=True, slots=True)

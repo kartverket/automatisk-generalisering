@@ -1,22 +1,22 @@
-# Slice 1b evidence: geometry family and canonical orientation, second pull request, batch 2
+# Slice 1b evidence: geometry family and canonical orientation
 
-**Status:** EVIDENCE, 2026-11-08, awaiting the marked run. Batch 2 of the second pull
-request of slice 1b: B31 (the geometry family on `Schema`) and B32 (canonical ring
-orientation in `Geometry`), their refusals, their break-once cases, the W23 pins, the
-W24 and W25 probe, and the records. Batch 1, the timing run, is
-`slice_1b_read_rows_timing_evidence.md` on the same branch.
+**Status:** EVIDENCE, 2026-11-08, the marked run green; the W24 and W25 probe output
+pending. B31 (the geometry family on `Schema`) and B32 (canonical ring orientation in
+`Geometry`), their refusals, their break-once cases, the W23 pins, the W24 and W25
+probe, and the records. The timing run that priced B32 is
+`slice_1b_read_rows_timing_evidence.md`.
 
 This file is written in WSL without ArcPy. The unit tests, the conformance suite's memory
-half, the static tests and the break-once sets ran here; the marked tests listed below
-are written and collected but have not run, and nothing here claims an engine result it
-has not been shown. The marked run command is in `docs/contributing/testing.md`.
+half, the static tests and the break-once sets ran here; the marked tests ran in the
+image, run by the architect and pasted, and nothing here claims an engine result it has
+not been shown. The marked run command is in `docs/contributing/testing.md`.
 
 **The data is not open.** Nothing here comes from project data. The W24 and W25 probe
 reads one production field's Describe properties from the working copy on the
 `ag_timing` volume, never from the read-only `gis_files` mount, and prints names and
 properties only.
 
-## What this batch adds
+## What B31 and B32 add
 
 - `GeometryFamily` in `ports/geometry.py`: `POINT`, `MULTIPOINT`, `LINE`, `POLYGON`, the
   folding every engine shares; `GeometryKind.family`; `GeometryFamily.single`, the family
@@ -81,7 +81,7 @@ when nothing reverses.
 
 ## The explode family rule, 2026-11-08
 
-On the memory adapter before this batch, run in WSL:
+On the memory adapter before the family check, run in WSL:
 
 ```
 multipoints  input kinds ['MULTIPOINT'] -> output kinds ['POINT']; output schema is input schema: True
@@ -116,24 +116,45 @@ break-it-once: 22 cases, 0 unexpected      (D3, D4 new)
 The nine new marked tests collect (`pytest tests/engine tests/conformance
 --collect-only`: 64 tests) and have not run.
 
-## Marked tests awaiting the image, and what each pins
+## The marked run, 2026-11-08
 
-| test | pins |
+Image `ghcr.io/kartverket/arcpy-linux:12.1`, the documented command, tip `097c509`:
+
+```
+collected 64 items / 21 deselected / 43 selected
+tests/conformance/test_geometry_ops.py ............
+tests/conformance/test_table_ops.py .........
+tests/engine/arcpy/test_dataset_schema.py .........
+tests/engine/arcpy/test_memory_workspace.py ..
+tests/engine/arcpy/test_row_io.py ..
+tests/engine/arcpy/test_session.py .....
+tests/engine/arcpy/test_shape.py ....
+43 passed, 21 deselected in 60.21s
+```
+
+No test was fixed or removed. What the nine new tests confirmed:
+
+| test | confirmed |
 |---|---|
-| `tests/engine/arcpy/test_dataset_schema.py::test_describe_reads_each_family_from_the_shape_type`, eight ids | W23: the four `shapeType` spellings, in a file geodatabase and in the memory workspace; `Multipoint` is the one not yet observed |
+| `tests/engine/arcpy/test_dataset_schema.py::test_describe_reads_each_family_from_the_shape_type`, eight ids | W23 closed: the four `shapeType` spellings, `Multipoint` included, in a file geodatabase and in the memory workspace |
 | `tests/engine/arcpy/test_shape.py::test_a_multipoint_input_explodes_into_a_point_family_output` | the tool writes a multipoint input's children into a point class, which is `GeometryFamily.single` |
 | `tests/conformance/test_table_ops.py::test_read_rows_round_trips_each_geometry_kind[arcpy-*]` | the round trip is identity with the builders orienting nothing |
-| every other marked test | unchanged in intent; the seeds now take the geometry type from the schema |
+| every other marked test | unchanged in intent; the seeds take the geometry type from the schema |
 
-Under the batch's rule: a marked test the run fails is fixed here when the failure is an
-engine-facing assumption, and removed with the observation recorded when it is a contract
-question. The W24 and W25 probe runs in the same session; its output goes below.
+The `SHAPE_TYPES` docstring's note that `Multipoint` was unconfirmed is lifted with this
+run.
 
 ## W24 and W25, the probe
 
 To be pasted from the architect's run of `docs/refactor/temp/w24_w25_date_probe.py` in
 the image, with the `ag_timing` volume mounted for the production copy's field
-properties.
+properties. Two defects of the probe surfaced on its first runs, 2026-11-08, and are
+fixed: it needs the repository root on the path beside `src`, as the earlier probes do;
+and, run as a file, it is `__main__`, where the engine rebinds `datetime` to the module
+when the session opens, so an `isinstance` against that name after `open_session` raised
+`TypeError`. The probe now prints a date through its `isoformat` attribute and names its
+field `stamp`, since Describe listed no field named `when`, an SQL keyword, on the first
+run; the second run shows whether the keyword was the cause.
 
 ## Records
 
