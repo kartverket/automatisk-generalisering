@@ -21,7 +21,9 @@ Declared, and why:
 - `Describe`: a dataset's schema, data type, Z and M flags and spatial reference, read
   before a tool runs, and the names of the fields the engine maintains itself;
   `shapeType`, the geometry family of a feature class, which `describe` reads into
-  `Schema.geometry_family` and the timing run's preflight reports for a raw source.
+  `Schema.geometry_family` and the timing run's preflight reports for a raw source;
+  `path`, the dataset's workspace, and the workspace's `workspaceFactoryProgID`, which
+  tell the in-memory workspace apart, where a date keeps its fraction untreated.
 - `AddFieldDelimiters`: identifier quoting per workspace type for a compiled predicate,
   which is the engine's table and not one to restate.
 """
@@ -50,6 +52,8 @@ class _Describe:
     hasM: bool
     shapeType: str
     spatialReference: _SpatialReference
+    path: str
+    workspaceFactoryProgID: str
 
 class da:
     class SearchCursor:

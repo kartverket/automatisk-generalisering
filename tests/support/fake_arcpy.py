@@ -30,6 +30,7 @@ from typing import Self
 from ag.adapters.arcpy.support.dataset_schema import (
     DATA_TYPES,
     FIELD_TYPES,
+    MEMORY_WORKSPACE_PROG_ID,
     OID_TOKEN,
     SHAPE_TYPES,
     WHOLE_SECOND_PRECISION,
@@ -60,6 +61,16 @@ TABLE = ENGINE_DATA_TYPES[DataType.TABLE]
 FRACTION_PRECISION = 1
 """The engine `precision` of a date field that holds the fraction, which the migration
 tool sets and the adapter's own date fields carry."""
+
+FILE_GDB_PROG_ID = "esriDataSourcesGDB.FileGDBWorkspaceFactory"
+"""The engine's `workspaceFactoryProgID` of a file geodatabase, the fake's default
+workspace; the adapter never names it, only the memory one."""
+
+MEMORY_WORKSPACE = "memory"
+"""The in-memory workspace's path, as the engine spells it."""
+
+FILE_WORKSPACE = "ws"
+"""The fake's default workspace, a stand-in file geodatabase."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -97,6 +108,7 @@ class FakeDataset:
     has_z: bool = False
     has_m: bool = False
     shape_type: str = ENGINE_SHAPE_TYPES[GeometryFamily.LINE]
+    workspace: str = FILE_WORKSPACE
     oid_name: str = "OBJECTID"
     shape_name: str = "Shape"
     length_name: str = "Shape_Length"
@@ -196,6 +208,10 @@ class FakeEngine(ModuleType):
         self.ExecuteError = FakeExecuteError
         self.buffer = ""
         self.datasets: dict[str, FakeDataset] = {}
+        self.workspaces: dict[str, str] = {
+            FILE_WORKSPACE: FILE_GDB_PROG_ID,
+            MEMORY_WORKSPACE: MEMORY_WORKSPACE_PROG_ID,
+        }
         self.calls: list[tuple[str, dict[str, object]]] = []
         self.failures: dict[str, str] = {}
         self.children: dict[str, Mapping[int, Sequence[object]]] = {}
@@ -243,8 +259,12 @@ class FakeEngine(ModuleType):
     def Describe(self, path: str) -> SimpleNamespace:
         dataset = self.datasets.get(path)
         if dataset is None:
-            raise OSError(f'"{path}" does not exist')
+            prog_id = self.workspaces.get(path)
+            if prog_id is None:
+                raise OSError(f'"{path}" does not exist')
+            return SimpleNamespace(workspaceFactoryProgID=prog_id)
         return SimpleNamespace(
+            path=dataset.workspace,
             dataType=dataset.data_type,
             fields=[*dataset.engine_fields(), *dataset.fields],
             OIDFieldName=dataset.oid_name,
@@ -293,6 +313,7 @@ class FakeEngine(ModuleType):
             fields,
             epsg=source.epsg,
             shape_type=ENGINE_SHAPE_TYPES[family],
+            workspace=source.workspace,
         )
         for row in source.rows:
             parent = int(str(row[OID_TOKEN]))
@@ -308,7 +329,9 @@ class FakeEngine(ModuleType):
         self.datasets[out_feature_class] = output
 
     def _create_table(self, *, out_path: str, out_name: str) -> None:
-        self.datasets[f"{out_path}/{out_name}"] = FakeDataset(TABLE, [])
+        self.datasets[f"{out_path}/{out_name}"] = FakeDataset(
+            TABLE, [], workspace=out_path
+        )
 
     def _add_field(
         self,
@@ -323,7 +346,12 @@ class FakeEngine(ModuleType):
         )
 
     def _migrate_date_field(self, *, in_table: str, date_fields: str) -> None:
-        for found in self.dataset(in_table).fields:
+        dataset = self.dataset(in_table)
+        if self.workspaces.get(dataset.workspace) == MEMORY_WORKSPACE_PROG_ID:
+            raise FakeExecuteError(
+                "ERROR 002764: The operation is not supported by this implementation."
+            )
+        for found in dataset.fields:
             if found.name == date_fields:
                 found.precision = FRACTION_PRECISION
 
@@ -343,6 +371,7 @@ class FakeEngine(ModuleType):
             [*source.fields],
             epsg=source.epsg,
             shape_type=source.shape_type,
+            workspace=source.workspace,
         )
         for row in source.rows:
             output.rows.append({**row, OID_TOKEN: output.next_oid()})
@@ -370,7 +399,8 @@ def seed(
         for f in schema.fields
     ]
     data_type = ENGINE_DATA_TYPES[schema.data_type]
-    dataset = FakeDataset(data_type, fields)
+    workspace, _, _ = path.rpartition("/")
+    dataset = FakeDataset(data_type, fields, workspace=workspace or FILE_WORKSPACE)
     if schema.geometry_family is not None:
         dataset.shape_type = ENGINE_SHAPE_TYPES[schema.geometry_family]
     for position, row in enumerate(case.rows, start=1):

@@ -29,6 +29,7 @@ from tests.support.cases import (
 )
 from tests.support.fake_arcpy import (
     FEATURE_CLASS,
+    MEMORY_WORKSPACE,
     FakeDataset,
     FakeEngine,
     FakeField,
@@ -74,6 +75,15 @@ def test_describe_names_the_date_fields_whose_store_holds_whole_seconds(
     assert describe(session, "raw").whole_second_fields == {"surveyed"}
     assert describe(session, "own").whole_second_fields == frozenset()
     assert describe(session, "raw").schema == describe(session, "own").schema
+
+
+def test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """The in-memory workspace keeps the fraction while reporting precision 0."""
+    path = f"{MEMORY_WORKSPACE}/roads"
+    seed(engine, roads(), path=path, date_precision=WHOLE_SECOND_PRECISION)
+    assert describe(session, path).whole_second_fields == frozenset()
 
 
 @pytest.mark.parametrize("case", FAMILY_CASES, ids=[c.name for c in FAMILY_CASES])

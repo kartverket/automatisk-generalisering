@@ -11,7 +11,7 @@ from ag.adapters.arcpy.support.dataset_writer import (
     create_table,
 )
 from ag.ports import Field, FieldType
-from tests.support.fake_arcpy import FRACTION_PRECISION, FakeEngine
+from tests.support.fake_arcpy import FRACTION_PRECISION, MEMORY_WORKSPACE, FakeEngine
 
 
 def test_create_table_adds_every_field_and_migrates_the_date_ones(
@@ -35,6 +35,15 @@ def test_create_table_adds_every_field_and_migrates_the_date_ones(
     precision = {f.name: f.precision for f in engine.datasets["ws/t"].fields}
     assert precision["seen"] == FRACTION_PRECISION
     assert precision["count"] != FRACTION_PRECISION
+
+
+def test_a_date_field_in_the_memory_workspace_is_not_migrated(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """The in-memory workspace keeps the fraction as it is and refuses the tool."""
+    path = f"{MEMORY_WORKSPACE}/t"
+    create_table(session, path=path, fields=(Field("seen", FieldType.DATE),))
+    assert MIGRATION_TOOL not in engine.tool_names()
 
 
 def test_add_fields_without_a_date_runs_no_migration(

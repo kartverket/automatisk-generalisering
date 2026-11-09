@@ -155,12 +155,39 @@ CASES: tuple[Case, ...] = (
         ),
     ),
     Case(
+        "D6",
+        "a memory-workspace date field named a whole-second store, so its fraction is rounded away",
+        SCHEMA,
+        (
+            (
+                "    if whole_second and _workspace_prog_id(session, raw.workspace) == (\n",
+                "    if False and _workspace_prog_id(session, raw.workspace) == (\n",
+            ),
+        ),
+        (
+            f"{T_SCHEMA}::"
+            "test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision",
+        ),
+    ),
+    Case(
+        "W2",
+        "the migration run in the memory workspace, which refuses it",
+        WRITER,
+        (
+            (
+                "        not in_memory_workspace(session, path)\n",
+                "        True\n",
+            ),
+        ),
+        (f"{T_WRITER}::test_a_date_field_in_the_memory_workspace_is_not_migrated",),
+    ),
+    Case(
         "W1",
         "a date field added without the migration, so the adapter's own store rounds",
         WRITER,
         (
             (
-                "        if field.type is FieldType.DATE:\n",
+                "        if migrate and field.type is FieldType.DATE:\n",
                 "        if False:\n",
             ),
         ),

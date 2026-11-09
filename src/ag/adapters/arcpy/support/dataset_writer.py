@@ -18,7 +18,9 @@ and each table sits with the call that speaks it. A TEXT field carries its lengt
 precision, a store of whole seconds that rounds what it is given, and then migrated by
 `MIGRATION_TOOL` to precision 1, which holds the fraction and matches a fractional
 literal (the probe of 2026-11-08), so every date field this adapter creates holds what
-the port carries and nothing the adapter writes is reduced (A33). The engine's own
+the port carries and nothing the adapter writes is reduced (A33). The in-memory
+workspace keeps the fraction as it is and refuses the tool (the marked run of
+2026-11-09), so a dataset there is not migrated. The engine's own
 documentation gives that store milliseconds; the marked test holds a value written with
 microseconds to within a millisecond. The rows are cell tuples in
 the order of `tokens`, a geometry already encoded as the `WKB_TOKEN` cell where there is
@@ -37,6 +39,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from types import MappingProxyType
 
 from ag.adapters.arcpy.session import ArcpySession
+from ag.adapters.arcpy.support.dataset_schema import in_memory_workspace
 from ag.ports.attributes import Field, FieldType
 from ag.ports.geometry import GeometryFamily
 
@@ -79,7 +82,11 @@ def create_table(
 
 def add_fields(session: ArcpySession, *, path: str, fields: tuple[Field, ...]) -> None:
     """Declares `fields` on the dataset at `path`, one tool call each, and migrates each
-    date field to the precision that holds the fraction."""
+    date field to the precision that holds the fraction, outside the in-memory workspace,
+    which holds it already."""
+    migrate = any(field.type is FieldType.DATE for field in fields) and (
+        not in_memory_workspace(session, path)
+    )
     for field in fields:
         arguments: dict[str, object] = {
             "in_table": path,
@@ -89,7 +96,7 @@ def add_fields(session: ArcpySession, *, path: str, fields: tuple[Field, ...]) -
         if field.length is not None:
             arguments["field_length"] = field.length
         session.run_tool("management.AddField", **arguments)
-        if field.type is FieldType.DATE:
+        if migrate and field.type is FieldType.DATE:
             session.run_tool(MIGRATION_TOOL, in_table=path, date_fields=field.name)
 
 

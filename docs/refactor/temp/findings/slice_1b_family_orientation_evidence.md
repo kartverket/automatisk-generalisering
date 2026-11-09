@@ -386,11 +386,33 @@ What landed with it, 2026-11-09:
   rows of the timing evidence. A33's own text in `DECISIONS.md` is the architect's to
   approve and is proposed in the end-of-task report, not changed here.
 
-Marked tests awaiting the image: the two in `test_row_io.py`, the `fraction` id of the
-conformance round trip and `test_a_date_comparison_carries_its_fraction` under `arcpy`.
-Expectations they carry beyond the probe: a six-digit fraction in a literal (the probe
-used three), and a microsecond value held to within a millisecond in a `precision` 1
-field.
+### The marked run of the date rule, 2026-11-09
+
+Same digest, the documented command, 69 collected, 46 selected: 44 passed, 2 failed. The
+six new tests passed, which confirms what the probe had not shown: a six-digit fraction
+in a literal matches (`test_a_date_comparison_carries_its_fraction[arcpy]`), a value
+written with microseconds into a field the adapter creates reads back within a
+millisecond and not whole, and a bare AddField field rounds and is read to the second.
+
+The two failures were both `test_memory_workspace.py`, at the seed:
+
+```
+EngineError: arcpy: management.MigrateDateFieldToHighPrecision failed:
+ERROR 002764: The operation is not supported by this implementation.
+```
+
+An engine-facing assumption, fixed in place under the run's rule: the in-memory
+workspace refuses the migration, and it also reports `precision` 0 while keeping the
+fraction (the fifth run), so `describe` would have named its date fields whole-second
+stores and `read_rows` rounded real fractions there. The adapter now tells the workspace
+apart through the engine: `in_memory_workspace` reads the dataset's `path` and the
+workspace's `workspaceFactoryProgID`, the spelling the fifth run showed, kept once in
+`dataset_schema.py`; `add_fields` skips the migration there and `describe` names no
+whole-second field there, consulting the workspace only when a date field at 0 is
+present. The fake engine models workspaces the same way and refuses the migration in
+its memory one. Break-once D6 and W2 cover the two guards. The Describe `path`
+attribute is an expectation of the engine's documented Describe object until the next
+marked run shows it.
 
 ## Records
 

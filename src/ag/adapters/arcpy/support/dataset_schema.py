@@ -17,7 +17,11 @@ microsecond off its stored second (the probe of 2026-11-08, all four production 
 every stray part within a millisecond of a whole second); at 1 it holds the fraction.
 The names at 0 are `whole_second_fields`, so the reader restores the stored second and
 no encoding noise crosses the port (A33). The memory workspace reports 0 and keeps the
-fraction, so a value read from it carries what was written. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
+fraction regardless, and refuses the migration tool (the marked run of 2026-11-09), so a
+dataset there has no whole-second field: `in_memory_workspace` reads the workspace's
+`workspaceFactoryProgID`, the one place that spelling lives, and `describe` consults it
+only when a date field at 0 is present, so a dataset without one costs no second
+Describe. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
 `Blob`, `Raster`, `DateOnly`, `TimeOnly`, `TimestampOffset` and any later one, is
 unrepresentable and recorded rather than refused: a dataset carrying such a field is
 read and selected over as long as no call names the field, and naming one is a
@@ -105,6 +109,10 @@ class DescribedDataset:
 WHOLE_SECOND_PRECISION = 0
 """The engine `precision` of a date field that holds whole seconds; 1 holds the fraction."""
 
+MEMORY_WORKSPACE_PROG_ID = "esriDataSourcesGDB.MemoryWorkspaceFactory"
+"""The `workspaceFactoryProgID` of the engine's in-memory workspace, which keeps a date's
+fraction at any `precision` and takes no migration."""
+
 
 @dataclass(frozen=True, slots=True)
 class _Raw:
@@ -119,6 +127,8 @@ class _Raw:
     has_m: bool
     epsg: int | None
     shape_type: str | None
+    workspace: str
+    """The path of the dataset's workspace, for `in_memory_workspace`."""
 
 
 def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
@@ -169,6 +179,10 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
             declared.append(Field(name, field_type))
             if field_type is FieldType.DATE and precision == WHOLE_SECOND_PRECISION:
                 whole_second.add(name)
+    if whole_second and _workspace_prog_id(session, raw.workspace) == (
+        MEMORY_WORKSPACE_PROG_ID
+    ):
+        whole_second.clear()
     return DescribedDataset(
         path=path,
         schema=Schema(
@@ -182,6 +196,23 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
         engine_fields=engine_fields,
         whole_second_fields=frozenset(whole_second),
     )
+
+
+def in_memory_workspace(session: ArcpySession, path: str, /) -> bool:
+    """Whether the dataset at `path` lives in the engine's in-memory workspace."""
+    with session.guard("Describe"):
+        import arcpy
+
+        workspace = arcpy.Describe(path).path
+    return _workspace_prog_id(session, workspace) == MEMORY_WORKSPACE_PROG_ID
+
+
+def _workspace_prog_id(session: ArcpySession, workspace: str, /) -> str:
+    """The `workspaceFactoryProgID` of `workspace`, under the guard."""
+    with session.guard("Describe"):
+        import arcpy
+
+        return arcpy.Describe(workspace).workspaceFactoryProgID
 
 
 def declared_field(dataset: DescribedDataset, name: FieldName, /) -> Field:
@@ -217,6 +248,7 @@ def _read(session: ArcpySession, path: str, /) -> _Raw:
             (f.name, f.type, f.length, f.precision) for f in described.fields
         )
         engine_fields = [described.OIDFieldName]
+        workspace = described.path
         has_z = has_m = False
         epsg: int | None = None
         shape_type: str | None = None
@@ -238,4 +270,5 @@ def _read(session: ArcpySession, path: str, /) -> _Raw:
         has_m=has_m,
         epsg=epsg,
         shape_type=shape_type,
+        workspace=workspace,
     )
