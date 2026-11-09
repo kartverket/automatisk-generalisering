@@ -613,9 +613,33 @@ counts, since the rule rests on `select` and `read_rows` agreeing at that grain 
   compiler's states the W26 fact.
 - `w26_w27_date_store_probe.py` gains the select count at the millisecond grain.
 
-Waiting on that run: the store-grain generalisation in `describe` and `read_rows`,
-A33.2's millisecond line (the architect's approval of the text), and the marked test
-asserting an exact read of a millisecond-aligned, non-binary-exact value.
+### The millisecond grain, 2026-11-09
+
+The probe's second run, same digest, the new lines:
+
+```
+precision 1:  millisecond-aligned reads that came back off: 208;
+              selected by engine equality on the millisecond-rounded literal: 208
+              control, 53 exact reads selected by their own literal: 57
+memory:       millisecond-aligned reads that came back off: 158;
+              selected by engine equality on the millisecond-rounded literal: 158
+              control, 53 exact reads selected by their own literal: 57
+```
+
+Every noisy read is selected by the engine's equality on its millisecond, so `select`
+and `read_rows` agree at that grain as at the second (PC-D17). The control's 57 rows for
+53 literals is the store holding milliseconds: the sub-millisecond probe values collapse
+onto their millisecond, so a literal for one of those selects its neighbours too.
+
+Landed: `DescribedDataset.date_grains`, a `DateGrain` per declared date field,
+`SECOND` at `precision` 0 and `MILLISECOND` at `precision` 1 and in the memory
+workspace, replacing the whole-second set; `read_rows` rounds to the field's grain. Unit
+tests on both grains on both sides of the grain and across the second; the marked
+`test_row_io.py` asserts an exact read of a millisecond-aligned value that is not exact
+in binary, replacing the one-millisecond window; break-once R3, R4, D5 and D6 follow the
+changed lines. A33.2's millisecond line, approved by the architect word for word and
+applied. The marked run of the refusal, 47 passed, before this landed; the three
+changed marked tests await the next.
 
 W-items opened here: W28 the count (done), W29 the Pro observation against the image,
 W30 Densify on curve-free rows, W31 the repair tool on a ring under four coordinates.

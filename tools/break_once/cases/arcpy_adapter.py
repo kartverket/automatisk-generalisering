@@ -142,31 +142,29 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "D5",
-        "a date field's precision not read, so no field is a whole-second store",
+        "a date field's grain not read, so no reader rounds",
         SCHEMA,
         (
             (
-                "            if field_type is FieldType.DATE and precision == WHOLE_SECOND_PRECISION:\n",
-                "            if False:\n",
+                "            if field_type is FieldType.DATE:\n                grains[name] = (\n",
+                "            if False:\n                grains[name] = (\n",
             ),
         ),
-        (
-            f"{T_SCHEMA}::test_describe_names_the_date_fields_whose_store_holds_whole_seconds",
-        ),
+        (f"{T_SCHEMA}::test_describe_names_each_date_fields_store_grain",),
     ),
     Case(
         "D6",
-        "a memory-workspace date field named a whole-second store, so its fraction is rounded away",
+        "a memory-workspace date field named a whole-second store, so its milliseconds are rounded away",
         SCHEMA,
         (
             (
-                "    if whole_second:\n        prog_id = _workspace_prog_id(",
+                "    if DateGrain.SECOND in grains.values():\n        prog_id = _workspace_prog_id(",
                 "    if False:\n        prog_id = _workspace_prog_id(",
             ),
         ),
         (
             f"{T_SCHEMA}::"
-            "test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision",
+            "test_a_memory_workspace_date_field_is_at_the_millisecond_grain_at_any_precision",
         ),
     ),
     Case(
@@ -322,11 +320,11 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "R3",
-        "a whole-second store's encoding noise read through as a fraction",
+        "a store's encoding noise read through instead of rounded to its grain",
         ROW_IO,
         (
             (
-                "        if whole_second and value.microsecond:\n",
+                "        if grain is not None and value.microsecond:\n",
                 "        if False:\n",
             ),
         ),
@@ -337,12 +335,12 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "R4",
-        "a whole-second store's value truncated instead of rounded, a second off",
+        "a store's value truncated to its grain instead of rounded, a grain off",
         ROW_IO,
         (
             (
-                "            return (value + _HALF_SECOND).replace(microsecond=0)\n",
-                "            return value.replace(microsecond=0)\n",
+                "    shifted = value + grain.value / 2\n",
+                "    shifted = value\n",
             ),
         ),
         (

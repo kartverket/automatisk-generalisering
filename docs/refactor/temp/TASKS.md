@@ -1273,7 +1273,8 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
   geometry on a feature class, so it is not ingest's first read of raw data. The order:
   (a) stamp `lineage_id` on ingest's copy inside the engine through `calculate_field`
   (ADR-0019 PC-D22), reading no row, so `native_index` in the map is the copy's row at
-  stamp time and nothing after depends on it; (b) clean through port methods backed by
+  stamp time, and what that points at if the copy renumbers is B34's; (b) clean through
+  port methods backed by
   engine tools on that copy: `select` with a negated predicate removes rows (PC-D23),
   `explode_multipart` splits holed members and records parents, densify and repair edit
   the copy in place, keeping rows and ids; (c) read through `read_rows` only after that.

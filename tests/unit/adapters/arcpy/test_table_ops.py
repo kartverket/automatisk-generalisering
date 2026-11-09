@@ -137,18 +137,38 @@ def test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second(
     assert rows[1].attributes["surveyed"] == read
 
 
-def test_a_date_from_a_field_that_holds_the_fraction_is_read_as_it_is(
-    engine: FakeEngine, session: ArcpySession
+@pytest.mark.parametrize(
+    ("stored", "read"),
+    [
+        (
+            datetime(2015, 1, 6, 7, 11, 36, 37004),
+            datetime(2015, 1, 6, 7, 11, 36, 37000),
+        ),
+        (
+            datetime(2015, 1, 6, 7, 11, 36, 36996),
+            datetime(2015, 1, 6, 7, 11, 36, 37000),
+        ),
+        (datetime(2015, 1, 6, 7, 11, 36, 999600), datetime(2015, 1, 6, 7, 11, 37)),
+        (
+            datetime(2015, 1, 6, 7, 11, 36, 37000),
+            datetime(2015, 1, 6, 7, 11, 36, 37000),
+        ),
+    ],
+    ids=["just-over", "just-under", "over-the-second", "exact"],
+)
+def test_a_date_from_a_millisecond_store_is_read_to_its_nearest_millisecond(
+    engine: FakeEngine, session: ArcpySession, stored: datetime, read: datetime
 ) -> None:
+    """A precision 1 field holds milliseconds, and a fifth of the values come back a few
+    microseconds off; rounding restores the stored millisecond."""
     seed(engine, roads(), path="roads")
-    stored = datetime(2015, 1, 6, 7, 11, 36, 500)
     engine.datasets["roads"].rows[1]["surveyed"] = stored
     rows = list(
         ArcpyTableOps(session=session).read_rows(
             input=handle("roads"), fields=("surveyed",)
         )
     )
-    assert rows[1].attributes["surveyed"] == stored
+    assert rows[1].attributes["surveyed"] == read
 
 
 def test_a_cell_of_an_unknown_type_is_an_adapter_defect_not_wrapped(

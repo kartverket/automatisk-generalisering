@@ -3,8 +3,8 @@
 What: `DescribedDataset`, the port-visible schema of one dataset plus what the port does
 not carry: the fields whose engine type has no `FieldType`, by name and engine type;
 every field name the engine reports; the engine's own field names, the native index,
-the shape, and the length and area it maintains; and the date fields whose store holds
-whole seconds, which `read_rows` reads to the second. `describe(session, path)` builds
+the shape, and the length and area it maintains; and the grain each date field's store
+holds, a second or a millisecond, which `read_rows` rounds to. `describe(session, path)` builds
 it inside the session's guard; `declared_field(dataset, name)` is the one lookup that
 `read_rows` and the predicate compiler share. `OID_TOKEN` is the cursor token for the
 native index, and `FIELD_TYPES`, `DATA_TYPES` and `SHAPE_TYPES` the engine's type names
@@ -14,11 +14,13 @@ How: the engine's `SmallInteger`, `Integer`, `Double`, `String` and `Date` map t
 five `FieldType` members. A `Date` field's engine `precision` is 0 or 1: at 0 the file
 geodatabase holds whole seconds in a double of days, and one in eight reads back a
 microsecond off its stored second (the probe of 2026-11-08, all four production fields,
-every stray part within a millisecond of a whole second); at 1 it holds the fraction.
-The names at 0 are `whole_second_fields`, so the reader restores the stored second and
-no encoding noise crosses the port (A33). The memory workspace reports 0 and keeps the
-fraction regardless, and refuses the migration tool (the marked run of 2026-11-09), so a
-dataset there has no whole-second field: `in_memory_workspace` reads the workspace's
+every stray part within a millisecond of a whole second); at 1 it holds milliseconds,
+with the same noise one grain finer (the probe of 2026-11-09, a fifth of the
+millisecond-aligned values a few microseconds off). `date_grains` names each date
+field's grain, so the reader restores the stored value and no encoding noise crosses the
+port (A33). The memory workspace reports 0 and holds milliseconds regardless, and
+refuses the migration tool (the marked run of 2026-11-09), so a date field there is at
+the millisecond grain: `in_memory_workspace` reads the workspace's
 `workspaceFactoryProgID`, the one place that spelling lives, and `describe` consults it
 only when a date field at 0 is present, so a dataset without one costs no second
 Describe. The workspace is found by walking a dataset's `path` upward until a Describe
@@ -52,6 +54,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import timedelta
+from enum import Enum
 from types import MappingProxyType
 
 from ag.adapters.arcpy.session import ArcpySession
@@ -106,12 +110,21 @@ class DescribedDataset:
     """Every field name the engine reports, in its order, the engine's own included."""
     engine_fields: frozenset[FieldName]
     """The native index, the shape, and the length and area the engine maintains."""
-    whole_second_fields: frozenset[FieldName] = frozenset()
-    """The declared date fields whose store holds whole seconds (engine precision 0)."""
+    date_grains: Mapping[FieldName, DateGrain] = MappingProxyType({})
+    """The grain each declared date field's store holds, which `read_rows` rounds to."""
+
+
+class DateGrain(Enum):
+    """What a date store holds: whole seconds, or milliseconds. Each reads back with the
+    double encoding's microsecond noise, so a reader rounds to the grain and a writer
+    truncates to it (A33)."""
+
+    SECOND = timedelta(seconds=1)
+    MILLISECOND = timedelta(milliseconds=1)
 
 
 WHOLE_SECOND_PRECISION = 0
-"""The engine `precision` of a date field that holds whole seconds; 1 holds the fraction."""
+"""The engine `precision` of a date field that holds whole seconds; 1 holds milliseconds."""
 
 MEMORY_WORKSPACE_PROG_ID = "esriDataSourcesGDB.MemoryWorkspaceFactory"
 """The `workspaceFactoryProgID` of the engine's in-memory workspace, which keeps a date's
@@ -177,7 +190,7 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
     engine_fields = frozenset(name for name in raw.engine_fields if name)
     declared: list[Field] = []
     unrepresentable: dict[FieldName, str] = {}
-    whole_second: set[FieldName] = set()
+    grains: dict[FieldName, DateGrain] = {}
     for name, engine_type, length, precision in raw.fields:
         if name in engine_fields:
             continue
@@ -188,12 +201,16 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
             declared.append(Field(name, field_type, length))
         else:
             declared.append(Field(name, field_type))
-            if field_type is FieldType.DATE and precision == WHOLE_SECOND_PRECISION:
-                whole_second.add(name)
-    if whole_second:
+            if field_type is FieldType.DATE:
+                grains[name] = (
+                    DateGrain.SECOND
+                    if precision == WHOLE_SECOND_PRECISION
+                    else DateGrain.MILLISECOND
+                )
+    if DateGrain.SECOND in grains.values():
         prog_id = _workspace_prog_id(session, raw.workspace, dataset=path)
         if prog_id == MEMORY_WORKSPACE_PROG_ID:
-            whole_second.clear()
+            grains = dict.fromkeys(grains, DateGrain.MILLISECOND)
     return DescribedDataset(
         path=path,
         schema=Schema(
@@ -205,7 +222,7 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
         unrepresentable=MappingProxyType(unrepresentable),
         all_fields=tuple(name for name, _, _, _ in raw.fields),
         engine_fields=engine_fields,
-        whole_second_fields=frozenset(whole_second),
+        date_grains=MappingProxyType(grains),
     )
 
 

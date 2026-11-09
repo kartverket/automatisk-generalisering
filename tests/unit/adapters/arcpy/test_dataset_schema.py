@@ -11,6 +11,7 @@ from ag.adapters.arcpy.support.dataset_schema import (
     FIELD_TYPES,
     SHAPE_TYPES,
     WHOLE_SECOND_PRECISION,
+    DateGrain,
     declared_field,
     describe,
 )
@@ -67,13 +68,14 @@ def test_a_table_has_no_crs_and_only_the_native_index_as_engine_field(
     assert dataset.schema.fields[0] == Field("code", FieldType.SHORT)
 
 
-def test_describe_names_the_date_fields_whose_store_holds_whole_seconds(
+def test_describe_names_each_date_fields_store_grain(
     engine: FakeEngine, session: ArcpySession
 ) -> None:
+    """Precision 0 holds seconds, 1 holds milliseconds; the schema is the same."""
     seed(engine, roads(), path="raw", date_precision=WHOLE_SECOND_PRECISION)
     seed(engine, roads(), path="own")
-    assert describe(session, "raw").whole_second_fields == {"surveyed"}
-    assert describe(session, "own").whole_second_fields == frozenset()
+    assert describe(session, "raw").date_grains == {"surveyed": DateGrain.SECOND}
+    assert describe(session, "own").date_grains == {"surveyed": DateGrain.MILLISECOND}
     assert describe(session, "raw").schema == describe(session, "own").schema
 
 
@@ -90,10 +92,12 @@ def test_the_workspace_is_found_through_a_feature_dataset(
         path=f"{MEMORY_WORKSPACE}/fd/roads",
         date_precision=WHOLE_SECOND_PRECISION,
     )
-    assert describe(session, "ws/fd/roads").whole_second_fields == {"surveyed"}
-    assert describe(session, f"{MEMORY_WORKSPACE}/fd/roads").whole_second_fields == (
-        frozenset()
-    )
+    assert describe(session, "ws/fd/roads").date_grains == {
+        "surveyed": DateGrain.SECOND
+    }
+    assert describe(session, f"{MEMORY_WORKSPACE}/fd/roads").date_grains == {
+        "surveyed": DateGrain.MILLISECOND
+    }
 
 
 def test_a_dataset_with_no_workspace_within_two_levels_is_refused(
@@ -111,13 +115,13 @@ def test_a_dataset_with_no_workspace_within_two_levels_is_refused(
     assert caught.value.context.handle == "ws/a/b/roads"
 
 
-def test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision(
+def test_a_memory_workspace_date_field_is_at_the_millisecond_grain_at_any_precision(
     engine: FakeEngine, session: ArcpySession
 ) -> None:
-    """The in-memory workspace keeps the fraction while reporting precision 0."""
+    """The in-memory workspace holds milliseconds while reporting precision 0."""
     path = f"{MEMORY_WORKSPACE}/roads"
     seed(engine, roads(), path=path, date_precision=WHOLE_SECOND_PRECISION)
-    assert describe(session, path).whole_second_fields == frozenset()
+    assert describe(session, path).date_grains == {"surveyed": DateGrain.MILLISECOND}
 
 
 @pytest.mark.parametrize("case", FAMILY_CASES, ids=[c.name for c in FAMILY_CASES])

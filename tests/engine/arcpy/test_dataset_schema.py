@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from ag.adapters.arcpy.support.dataset_schema import describe
+from ag.adapters.arcpy.support.dataset_schema import DateGrain, describe
 from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.ports import FieldType
@@ -62,7 +62,7 @@ def test_a_feature_class_in_a_feature_dataset_finds_its_workspace(pro: Pro) -> N
         field_type=ADD_FIELD_TYPES[FieldType.DATE],
     )
     described = describe(pro.session, path)
-    assert described.whole_second_fields == {"raw_stamp"}
+    assert described.date_grains["raw_stamp"] is DateGrain.SECOND
     rows = list(
         ArcpyTableOps(session=pro.session).read_rows(
             input=seeded.handle, fields=("name", "surveyed", "raw_stamp")

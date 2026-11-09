@@ -1898,7 +1898,13 @@ fraction-holding precision, outside the in-memory workspace, which refuses the t
 nothing the adapter writes is reduced. `_shared/field_values.py` and the compiler's
 literal carry the fraction, `.ffffff`, which both workspaces compare (W25). W24 and W25
 closed by `temp/w24_w25_date_probe.py`. Break-once: P4 the literal, R3 and R4 the
-decode, D5 the precision, D6 and W2 the in-memory workspace, W1 the migration.
+decode, D5 the precision, D6 and W2 the in-memory workspace, W1 the migration. The
+ArcPy adapter's engine stores hold a date to the millisecond at precision 1 and in the
+engine's in-memory workspace, and to the second at precision 0, each reading back with
+the double encoding's microsecond noise; `read_rows` rounds to the field's grain and
+`write_rows` truncates to it before handing over, so a round trip is identity to the
+grain (the architect, 2026-11-09; `temp/w26_w27_date_store_probe.py`: the engine's
+equality on the rounded literal selects every noisy read at both grains).
 `destination:` `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`,
 `dataset_schema.py`, `dataset_writer.py`, `tools/break_once/cases/arcpy_adapter.py`,
 `tests/conformance/`.
@@ -2764,5 +2770,9 @@ with what the engine's repair tool does to a ring under four coordinates a W-ite
 `calculate_field`, declared in PC-D22 and not landed. One more consequence to decide: a
 cleanup step that removes a row leaves its lineage id in the ingest map with no
 survivor, which an A23 walk must report as removed at ingest, a terminal kind the map's
-`boundary_kind` does not yet name. Open until ingest is designed; nothing built now.
+`boundary_kind` does not yet name. And what `native_index` in the map points at when
+ingest copies the raw source: `cp -a` keeps a geodatabase whole, an engine copy tool may
+renumber, which no run has shown; if the copy renumbers, the map points at the copy and
+not at the source, and the trace to RAW (A10.6, A23, A24.1) needs a stable raw id or a
+copy that keeps native indices. Open until ingest is designed; nothing built now.
 `destination:` the ingest task (T3.4) and ADR-0019 when decided.
