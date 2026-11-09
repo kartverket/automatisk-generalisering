@@ -107,7 +107,7 @@ FAN_OUT_HALO_M = 25_000
 # Temporary: thin roads runs twice with different partition sizes and context radii,
 # (max_elements_per_partition, context_radius_meters), and a road is only dropped
 # when both runs drop it. This damps the variance from differing context at seams.
-THIN_ROAD_RUNS = ((75_000, 7_000), (45_000, 10_000))
+THIN_ROAD_RUNS = ((100_000, 7_000), (100_000, 10_000))
 
 
 @timing_decorator
@@ -326,7 +326,7 @@ def run_thin_roads(
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
         context_radius_meters=context_radius_m,
-        run_partition_optimization=False,
+        run_partition_optimization=True,
     )
 
     partition_thin_roads = PartitionIterator(
