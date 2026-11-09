@@ -65,6 +65,11 @@ from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 from typing import Callable
 from custom_tools.general_tools.integrate_diff import IntegrateDiff
 
+
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 # SELECT_STUDY_AREA: "True" selects the AREA municipalities, "False" runs on the global
@@ -95,7 +100,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Oslo','Ringerike')"
+    AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
@@ -226,6 +231,7 @@ def data_selection_and_validation(
     road_data_validation.check_repair_sequence()
 
     # run integrate diff on all inputs
+
     IntegrateDiff(
         Road_N100.data_selection___nvdb_roads___n100_road.value
     ).run_integration()
@@ -487,6 +493,7 @@ def trim_road_details():
 def ramp_partition():
     road = "road"
     points = "points"
+    removed_dangles = "removed_dangles"
 
     ramps_input_config = core_config.PartitionInputConfig(
         entries=[
@@ -510,6 +517,11 @@ def ramp_partition():
                 path=Road_N100.ramps__potential_points__n100_road.value,
                 extraction_method=core_config.OutputExtractionMethod.CLIP,
             ),
+            core_config.OutputEntry.vector_output(
+                object=removed_dangles,
+                tag="output",
+                path=Road_N100.ramps__removed_dangles__n100_road.value,
+            ),
         ]
     )
 
@@ -525,6 +537,9 @@ def ramp_partition():
             input_roads=core_config.InjectIO(object=road, tag="input"),
             output_roads=core_config.InjectIO(object=road, tag="generalized"),
             output_points=core_config.InjectIO(object=points, tag="output"),
+            output_removed_dangles=core_config.InjectIO(
+                object=removed_dangles, tag="output"
+            ),
             wfm_config=core_config.WorkFileConfig(
                 root_file=Road_N100.ramps__ramps_root__n100_road.value
             ),
@@ -534,7 +549,7 @@ def ramp_partition():
 
     run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=35_000,
-        context_radius_meters=500,
+        context_radius_meters=1000,
         run_partition_optimization=False,
     )
 

@@ -1026,6 +1026,10 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="generalized_ramps"
     )
 
+    ramps__removed_dangles__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="removed_dangles"
+    )
+
     data_preparation__partition_ramps_root__n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation, description="partition_ramps_root"

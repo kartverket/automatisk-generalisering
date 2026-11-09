@@ -9,6 +9,7 @@ from collections import deque, defaultdict
 from typing import Dict, Set, List, Any, Iterable, Optional
 
 from composition_configs.logic_config import RoadRampsConfig
+from generalization.n100.road.ramps_dangles import remove_new_dangles
 
 
 @timing_decorator
@@ -59,6 +60,11 @@ def main(
         out_feature_class=output_roads_fc,
     )
     arcpy.management.Append([files["new_lines"]], output_roads_fc)
+    remove_new_dangles(
+        lines_fc=output_roads_fc,
+        ramp_reference_fc=input_fc,
+        removed_fc=ramp_config.output_removed_dangles,
+    )
     if (
         not arcpy.Exists(files["potential_points"])
         or arcpy.management.GetCount(files["potential_points"]).getOutput(0) == 0
@@ -3245,6 +3251,13 @@ def main_part_2(input_roads_fc: str, input_points_fc: str, output_points_fc: str
     config = core_config.WorkFileConfig(root_file=input_points_fc)
     wfm = WorkFileManager(config=config)
     files = create_wfm_gdbs_2(wfm=wfm)
+    if arcpy.Exists(input_points_fc):
+        if arcpy.management.GetCount(input_points_fc)[0] == 0:
+            if arcpy.Exists(output_points_fc):
+                arcpy.management.Delete(output_points_fc)
+            return
+    else:
+        return
     arcpy.management.CopyFeatures(input_roads_fc, files["copy_of_roads"])
     if not arcpy.Exists(input_points_fc):
         wfm.delete_created_files()
@@ -3917,6 +3930,7 @@ if __name__ == "__main__":
             input_roads=Road_N100.data_preparation___road_single_part_2___n100_road.value,
             output_roads=Road_N100.ramps__generalized_ramps__n100_road.value,
             output_points=Road_N100.ramps__potential_points__n100_road.value,
+            output_removed_dangles=Road_N100.ramps__removed_dangles__n100_road.value,
             wfm_config=core_config.WorkFileConfig(
                 root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
             ),
