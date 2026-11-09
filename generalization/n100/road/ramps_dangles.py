@@ -1,10 +1,21 @@
+"""Remove or cut dangles left by ramps that do not reach main roads in NVDB data.
+
+At a ramp crossing, the retained segment adopts the crossed road's medium so the
+crossing becomes a T-junction in that medium.
 """
-In new road input from nvdb ramps dont always extend all the way to main roads,
-This causes the ramps generalisation to leave behind dangles.
-This function handles those dangles.
-Make it in such a way that we can reuse the logic to handle other similar cases of dangles.
-Sitations where the dangle is one of the roads part of the crossroad then we convert the crossroad to a T cross in the same medium.
+
 """
+The endpoint graph is specialized for finding and following dangles, not for modeling
+full network connectivity: only line endpoints become graph nodes, so interior crossings
+do not create graph connections. When removing or cutting lines, a spatial segment index
+is used to find nearby segments that are checked for interior crossings.
+"""
+"""
+We do not use arcpy for detecting dangles because it is unreliable.
+It often creates dangles where they do not exist.
+And removal of a line can create new dangles in a completely different places.
+"""
+
 
 import heapq
 import logging
@@ -24,18 +35,19 @@ Point: TypeAlias = tuple[float, float]
 Segment: TypeAlias = tuple[float, float, float, float]
 Cell: TypeAlias = tuple[int, int]
 
-_SNAP_TOLERANCE_M = 1.0
-_RAMP_MATCH_TOLERANCE_M = 1.0
-_INDEX_CELL_SIZE_M = 25.0
-_MAX_FALSE_LOOP_PERIMETER_M = 500
-_MAX_REMOVAL_ENDPOINT_DISTANCE_M = 500
+_SNAP_TOLERANCE_M = 1.0  # tolerance for considering points as touching
+_RAMP_MATCH_TOLERANCE_M = 1.0  # sets how close a dangling endpoint must be to a ramp line in ramp_reference_fc to qualify as a starting dangle. Maybe unnecessary to have a separate tolerance for this and _SNAP_TOLERANCE_M
+_INDEX_CELL_SIZE_M = 25.0  # Grid cell width for the segment spatial index.
+_MAX_FALSE_LOOP_PERIMETER_M = 500  # max perimeter for a loop to be considered a false junction, meaning it will be removed if smaller than this and a dangle connects to it
+_MAX_REMOVAL_ENDPOINT_DISTANCE_M = 500  # max distance from starting dangle point to line endpoint to consider line for removal, Exists to prevent partition edge issues from cascading beyond context so context has to be bigger than this parameter
 _MEDIUM_FIELD = "medium"
 _RAMP_ID_FIELD = "ramp_id"
 _RAMP_WHERE_CLAUSE = "typeveg = 'rampe'"
-_REMOVABLE_WHERE_CLAUSE = None
+_REMOVABLE_WHERE_CLAUSE = None  # SQL where for removable lines, if needed
 
 
 def _cell(point: Point, size: float) -> Cell:
+    """Return the grid cell containing `point`."""
     return math.floor(point[0] / size), math.floor(point[1] / size)
 
 
@@ -52,6 +64,7 @@ def _project(point: Point, segment: Segment) -> tuple[float, Point]:
 
 
 def _point_segment_distance(point: Point, segment: Segment) -> float:
+    """Return the shortest distance from `point` to `segment`."""
     return math.dist(point, _project(point, segment)[1])
 
 
@@ -73,18 +86,22 @@ def _segment_intersection(a: Segment, b: Segment) -> tuple[float, Point] | None:
 
 
 def _reverse_segments(segments: list[Segment]) -> list[Segment]:
+    """Reverse segment order and direction."""
     return [(x2, y2, x1, y1) for x1, y1, x2, y2 in reversed(segments)]
 
 
 def _drop_empty(segments: list[Segment]) -> list[Segment]:
+    """Remove zero-length segments."""
     return [s for s in segments if (s[0], s[1]) != (s[2], s[3])]
 
 
 def _segment_length(segment: Segment) -> float:
+    """Return the Euclidean length of `segment`."""
     return math.dist((segment[0], segment[1]), (segment[2], segment[3]))
 
 
 def _length(segments: Sequence[Segment]) -> float:
+    """Return the combined length of `segments`."""
     return sum(_segment_length(segment) for segment in segments)
 
 
@@ -105,6 +122,8 @@ def _distance_along(segments: Sequence[Segment], point: Point) -> float:
 
 @dataclass
 class _Line:
+    """Graph representation of a line and its road-medium and ramp associations."""
+
     segments: list[Segment]
     medium: str | None = None
     ramp_ids: set[str] = field(default_factory=set)
@@ -123,6 +142,8 @@ class _Cut:
 
 @dataclass(frozen=True)
 class _Split:
+    """Record the cut point and original dangle point for a split line."""
+
     oid: int
     point: Point
     dangle_point: Point
@@ -130,6 +151,15 @@ class _Split:
 
 @dataclass
 class _WaveResult:
+    """Collect line edits and handled dangle nodes from all removal waves.
+
+    Attributes:
+        removed_oids: Feature IDs of lines removed whole.
+        splits: Cut locations for lines whose dangle sides are removed.
+        ramp_changed: Feature IDs of roads whose ramp IDs changed at a crossing.
+        waves: Dangle node IDs handled in each wave.
+    """
+
     removed_oids: list[int]
     splits: list[_Split]
     ramp_changed: set[int]
@@ -150,11 +180,13 @@ class _SegmentIndex:
     """Grid index answering whether a point is within `tolerance` of any indexed segment."""
 
     def __init__(self, tolerance: float) -> None:
+        """Initialize an empty segment index with the given search tolerance."""
         self._tolerance = tolerance
         self._cells: dict[Cell, list[tuple[int, Segment]]] = defaultdict(list)
         self._dead: set[tuple[int, Segment]] = set()
 
     def add(self, oid: int, segment: Segment) -> None:
+        """Index `segment` under its feature ID."""
         self._dead.discard((oid, segment))
         x1, y1, x2, y2 = segment
         size, pad = _INDEX_CELL_SIZE_M, self._tolerance
@@ -187,12 +219,15 @@ class _SegmentIndex:
                         yield entry
 
     def has_within(self, point: Point, ignore: Set[int]) -> bool:
+        """Return whether an indexed segment is within tolerance of `point`."""
         return next(self._within(point, ignore), None) is not None
 
     def oids_within(self, point: Point, ignore: Set[int]) -> set[int]:
+        """Return feature IDs with indexed segments within tolerance of `point`."""
         return set(self._within(point, ignore))
 
     def _within(self, point: Point, ignore: Set[int]) -> Iterator[int]:
+        """Yield feature IDs whose indexed segments are near `point`."""
         for entry in self._cells.get(_cell(point, _INDEX_CELL_SIZE_M), ()):
             oid, segment = entry
             if (
@@ -207,11 +242,13 @@ class _NodeIndex:
     """Merges endpoints closer than the snap tolerance into one node."""
 
     def __init__(self, tolerance: float) -> None:
+        """Initialize an empty endpoint index with the given snap tolerance."""
         self._tolerance = tolerance
         self._cells: dict[Cell, list[int]] = defaultdict(list)
         self.xy: list[Point] = []
 
     def find_or_add(self, point: Point) -> int:
+        """Return the existing nearby node or add `point` as a new node."""
         cx, cy = _cell(point, self._tolerance)
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
@@ -229,6 +266,7 @@ class _EndpointGraph:
     """Line endpoints as nodes; a dangle is a node with exactly one line attached."""
 
     def __init__(self) -> None:
+        """Initialize an empty endpoint graph and its spatial index."""
         self.nodes = _NodeIndex(_SNAP_TOLERANCE_M)
         self.lines: dict[int, _Line] = {}
         self.line_nodes: dict[int, tuple[int, int]] = {}
@@ -236,6 +274,7 @@ class _EndpointGraph:
         self._segments = _SegmentIndex(_SNAP_TOLERANCE_M)
 
     def add_line(self, oid: int, line: _Line) -> None:
+        """Add a line, its endpoint nodes, and its segments to the graph."""
         first, last = line.segments[0], line.segments[-1]
         start = self.nodes.find_or_add((first[0], first[1]))
         end = self.nodes.find_or_add((last[2], last[3]))
@@ -284,6 +323,7 @@ class _EndpointGraph:
         return affected
 
     def _degree(self, node: int) -> int:
+        """Return the number of line ends attached to `node`."""
         # A closed line has both ends on the node.
         return sum(
             2 if self.line_nodes[oid][0] == self.line_nodes[oid][1] else 1
@@ -297,6 +337,7 @@ class _EndpointGraph:
         return not self._segments.has_within(self.nodes.xy[node], self.node_lines[node])
 
     def _far_node(self, oid: int, node: int) -> int:
+        """Return the other endpoint node of `oid` from `node`."""
         start, end = self.line_nodes[oid]
         return end if start == node else start
 
@@ -404,6 +445,7 @@ class _EndpointGraph:
         return cycle
 
     def has_ramp_crossing(self, oid: int) -> bool:
+        """Return whether `oid` crosses a road of another medium sharing a ramp ID."""
         line = self.lines[oid]
         for segment in line.segments:
             for other_oid, other_segment in self._segments.candidates(segment):
@@ -593,12 +635,14 @@ class _EndpointGraph:
 
 
 def _parse_ramp_ids(value: object) -> set[str]:
+    """Parse comma-separated ramp IDs into a set."""
     if not value:
         return set()
     return {part.strip() for part in str(value).split(",") if part.strip()}
 
 
-def _read_lines(fc: str, where_clause: str) -> Iterator[tuple[int, _Line]]:
+def _read_lines(fc: str, where_clause: str | None) -> Iterator[tuple[int, _Line]]:
+    """Read feature lines and their available medium and ramp ID attributes."""
     names = {f.name for f in arcpy.ListFields(fc)}
     extra = [name for name in (_MEDIUM_FIELD, _RAMP_ID_FIELD) if name in names]
     with arcpy.da.SearchCursor(
@@ -627,6 +671,7 @@ def _read_lines(fc: str, where_clause: str) -> Iterator[tuple[int, _Line]]:
 
 
 def _build_graph(lines_fc: str) -> _EndpointGraph:
+    """Build an endpoint graph from the selected lines in `lines_fc`."""
     graph = _EndpointGraph()
     for oid, line in _read_lines(lines_fc, _REMOVABLE_WHERE_CLAUSE):
         graph.add_line(oid, line)
@@ -634,6 +679,7 @@ def _build_graph(lines_fc: str) -> _EndpointGraph:
 
 
 def _build_ramp_index(ramp_reference_fc: str) -> _SegmentIndex:
+    """Index ramp segments from `ramp_reference_fc` for nearby dangle lookup."""
     index = _SegmentIndex(_RAMP_MATCH_TOLERANCE_M)
     for oid, line in _read_lines(ramp_reference_fc, _RAMP_WHERE_CLAUSE):
         for segment in line.segments:
@@ -663,6 +709,7 @@ def _remove_in_waves(
         exposed: dict[int, set[Point]] = {}
 
         def expose(nodes: list[int], origins: set[Point]) -> None:
+            """Queue newly exposed dangles and pendant loops for the next wave."""
             for candidate in nodes:
                 if (
                     graph.is_dangle(candidate)
@@ -719,6 +766,10 @@ def _remove_in_waves(
 
 
 def _write_points(points: list[Point], out_fc: str, spatial_reference: Any) -> None:
+    """Create a point feature class containing `points`.
+
+    An existing output is deleted before it is recreated.
+    """
     if arcpy.Exists(out_fc):
         arcpy.management.Delete(out_fc)
 
@@ -734,6 +785,10 @@ def _write_points(points: list[Point], out_fc: str, spatial_reference: Any) -> N
 
 
 def _create_removed_fc(template_fc: str, removed_fc: str) -> None:
+    """Create an empty polyline feature class matching `template_fc`.
+
+    An existing output is deleted before it is recreated.
+    """
     if arcpy.Exists(removed_fc):
         arcpy.management.Delete(removed_fc)
 
@@ -761,6 +816,7 @@ def _cut_shape(shape: Any, split: _Split) -> tuple[Any, Any]:
 def _write_attributes(
     row: list[Any], index: dict[str, int], line: _Line, set_medium: bool
 ) -> None:
+    """Update a cursor row with the line's medium and ramp IDs as requested."""
     if set_medium and _MEDIUM_FIELD in index:
         row[index[_MEDIUM_FIELD]] = line.medium
     if _RAMP_ID_FIELD in index:
@@ -825,7 +881,8 @@ def remove_new_dangles(
     checked, and any dangle there is handled in the next wave, even one that existed
     before the run. A line is connected if it shares an end node with the removed
     geometry, ends on it, or has the removed geometry end on its interior. Removal
-    repeats in waves until no dangle is left.
+    repeats in waves until no more eligible dangles are exposed or `max_iterations`
+    is reached; reaching the limit may leave dangles unprocessed.
 
     A dangling line is not removed whole if, walking from the dangle, it reaches a
     junction (another line's endpoint, or a crossing with a road of the same medium)
@@ -846,12 +903,15 @@ def remove_new_dangles(
     Args:
         lines_fc: Line feature class edited in place.
         ramp_reference_fc: Lines with `typeveg`; dangles on its ramps are the starting dangles.
-        removed_fc: Permanent output; receives a copy of every removed line.
-        max_iterations: Safety limit for the number of waves.
+        removed_fc: Output recreated on each call; receives a copy of every removed line.
+        max_iterations: Maximum number of waves; reaching it may leave dangles unprocessed.
         dangle_iterations_prefix: If set, the dangles removed in each wave are
-            saved permanently as `<prefix>_ite1`, `<prefix>_ite2`, ...
+            saved as `<prefix>_ite1`, `<prefix>_ite2`, ...; existing outputs are replaced.
         max_false_loop_perimeter: Largest loop perimeter in metres treated as a
             false junction; 0 disables the check.
+
+    Existing outputs at `removed_fc` and the generated iteration paths are deleted
+    and recreated. `removed_fc` must not alias either input feature class.
 
     Returns:
         Total number of removed lines.
