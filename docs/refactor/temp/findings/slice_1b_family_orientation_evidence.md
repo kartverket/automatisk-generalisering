@@ -470,6 +470,49 @@ $ uv run --locked --extra dev python -m tools.break_once ports --out ...
 break-it-once: 31 cases, 0 unexpected   (P31 new)
 ```
 
+## B33, true curves: the decision and the probes before it lands, 2026-11-09
+
+The architect's decision: the project does not support or deliver true curves. The port
+carries planar simple features with straight segments, settled the way B30 was: ingest
+makes a raw input conform, and the pipeline's own curve-producing methods, buffer first,
+densify their output within a set deviation (Densify, not Simplify, which removes
+vertices and changes the form). The degenerate-ring refusal, a polygon ring under four
+coordinates or a line under two on every ring, exterior, hole and member alike, is the
+backstop for a curve that is a whole ring, such as a buffered point's circle, and not the
+guard: a curved corner inside a longer ring reads as a straight chord, off by about 0.29
+of the radius on a right angle, and keeps its coordinates. Why the loss is new with the
+port: the legacy code reads geometry objects, which keep curves; the port reads WKB,
+which drops them.
+
+Order of landing, the architect's: the count first, then the refusal and T3.4's rule.
+Two probes, written 2026-11-09, their output to be pasted here:
+
+- `docs/refactor/temp/w28_curve_count_probe.py` (W28): per raw source on the plain
+  `cp -a` copies under `/timing/copies`, never the timing run's derived copies, rows
+  whose geometry `hasCurves` through `SHAPE@`, and rings under four coordinates or lines
+  under two through a per-ring WKB walk, which the timing walk's per-row counts could not
+  give. It walks every feature class of each geodatabase it is given, so `ArealdekkeFlate`
+  is counted with the three datasets the timing run read; runs detached with a progress
+  line per 100,000 rows and an `interrupted` line on SIGTERM. Which geodatabases under
+  `ag_inputs/raw_data` the stages read is not declared in this tree; the three copied are
+  counted and the architect names what is left out.
+- `docs/refactor/temp/w29_buffer_densify_probe.py` (W29): a point, a line and a polygon
+  buffered by ten metres in a file geodatabase and in the memory workspace, `hasCurves`
+  and the vertex count per row before and after `edit.Densify` with the offset method at
+  one centimetre. Turns the architect's Pro observation (a buffered point is one true
+  curve, a buffered line straight segments, a buffered polygon curves at its corners) and
+  the engine's documented Densify behaviour into image facts.
+
+What follows the counts: B33 closed with them as the reason T3.4's step exists or does
+not; T3.4's bullet as a rule covering future sources (a zero count: ingest checks each
+new source for curves; a non-zero count: ingest densifies every raw input); ADR-0019
+PC-D30 beside PC-D27; T4.11's follow-up, each curve-producing method densifying its own
+output, never its input, the deviation in the session environment tied to the XY
+tolerance, and a marked acceptance reading `hasCurves` on every row in both workspaces;
+the refusal with its tests and break-once case. If the count finds degenerate rings in a
+source, how ingest handles them is proposed with the count in hand, as holed members are
+handled.
+
 ## Records
 
 - ADR-0019 PC-D17 adapted per A33.1: `DATE` carried to microsecond precision, an adapter
