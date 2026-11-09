@@ -133,7 +133,13 @@ class Log:
 
 
 def rss_mb() -> float | None:
-    """The process's current resident set in MiB from `/proc`, None where absent."""
+    """The process's current resident set in MiB from `/proc`, None where absent.
+
+    The tool runs in the Linux image; on Windows, where the type check also runs and
+    `os.sysconf` does not exist, the figure is None.
+    """
+    if sys.platform == "win32":
+        return None
     try:
         with open("/proc/self/statm", encoding="ascii") as statm:
             pages = int(statm.read().split()[1])
@@ -143,11 +149,12 @@ def rss_mb() -> float | None:
 
 
 def peak_rss_mb() -> float | None:
-    """The process's peak resident set in MiB, once, at the end."""
-    try:
-        import resource
-    except ImportError:
+    """The process's peak resident set in MiB, once, at the end; None on Windows, which
+    has no `resource` module."""
+    if sys.platform == "win32":
         return None
+    import resource
+
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**10
 
 
