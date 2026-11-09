@@ -101,7 +101,7 @@ if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
     AREA_SELECTOR = "navn IN ('Bergen')"
-SCALE = "n100"
+SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
