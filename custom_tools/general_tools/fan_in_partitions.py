@@ -3,6 +3,7 @@ import math
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Literal, TypeAlias
 
 import arcpy
 
@@ -38,6 +39,7 @@ DROPPED_FIELD_PREFIXES = ("fid_", "orig_fid")
 ORIG_FID_FIELD = "ORIG_FID"
 
 XY = tuple[float, float]
+FanInMode: TypeAlias = Literal["strict", "partial"]
 
 
 @dataclass
@@ -57,32 +59,36 @@ def fan_in_partitions(
     unclaimed_output: str,
     unmatched_output: str,
     work_file_config: core_config.WorkFileConfig,
-    output_name_prefix: str = "final_output",
+    output_name_prefix: str = "p",
+    mode: FanInMode = "strict",
     match_tolerance_m: float = 1.0,
     border_step_m: float = 0.02,
     max_border_distance_m: float = 1.0,
 ) -> None:
     """
     What:
-        Merges the per-partition outputs {output_name_prefix}_0 to _{N-1} into one
+        Merges the per-partition outputs {output_name_prefix}0 to {N-1} into one
         feature where every line is claimed by exactly one partition, and writes the
         lines that no partition claimed for troubleshooting.
 
     How:
         - N is read from the fan-out partition_index values. The indexed outputs gdb
-          must hold exactly the N outputs, and their schemas must match.
+          must hold only these outputs, and their schemas must match. In strict mode
+          all N must be present; in partial mode missing outputs are left out and
+          their cells are treated as dropped.
         - The outputs are merged with a src_index field, and every line gets its
           midpoint along its length, whose ORIG_FID is the line.
-        - Border: midpoints near the fan-out cell boundaries are selected with a
-          search distance growing by border_step_m until no new points are added.
-          Each border line is grouped with its copies from other partitions among
-          all lines; the lowest src_index of each group is kept, and every line in
-          a group is taken out of the main selection.
-        - Main: for each partition N, the lines of output N whose midpoint is
-          within fan-out cell N.
+        - Border: midpoints near the boundaries of the present fan-out cells are
+          selected with a search distance growing by border_step_m until no new
+          points are added. Each border line is grouped with its copies from other
+          partitions among all lines; the lowest src_index of each group is kept,
+          and every line in a group is taken out of the main selection.
+        - Main: for each present partition N, the lines of output N whose midpoint
+          is within fan-out cell N.
         - Lines that are not claimed and have no claimed copy from another
           partition are written out: as unclaimed when their midpoint is within a
-          fan-in cell that fan-out dropped, otherwise as unmatched.
+          fan-in cell that fan-out dropped or whose output is missing, otherwise as
+          unmatched.
 
         Two lines are copies when both endpoints lie within match_tolerance_m of
         each other, in either direction, and their lengths differ by at most
@@ -103,10 +109,12 @@ def fan_in_partitions(
         fan_in_feature (str): The fan-in partition feature, all cells.
         output_feature (str): The merged output, with src_index.
         unclaimed_output (str): Lines with no claimed copy whose midpoint lies in a
-            dropped cell.
+            dropped cell or the cell of a missing output.
         unmatched_output (str): Other lines with no claimed copy.
         work_file_config (core_config.WorkFileConfig): Work file configuration.
-        output_name_prefix (str): Name of the outputs before the _N index.
+        output_name_prefix (str): Name of the outputs before the index.
+        mode (FanInMode): "strict" requires every output; "partial" runs with the
+            outputs that are present.
         match_tolerance_m (float): Distance within which the endpoints, and
             difference within which the lengths, of two lines must lie for them to
             be copies of one road.
@@ -119,9 +127,13 @@ def fan_in_partitions(
         gdb=indexed_outputs_gdb,
         prefix=output_name_prefix,
         partition_count=partition_count,
+        mode=mode,
     )
-    _check_schemas(indexed_outputs=indexed_outputs)
-    logger.info(f"Fanning in {partition_count} partitions from {indexed_outputs_gdb}")
+    _check_schemas(indexed_outputs=list(indexed_outputs.values()))
+    logger.info(
+        f"Fanning in {len(indexed_outputs)} of {partition_count} partitions from "
+        f"{indexed_outputs_gdb}"
+    )
 
     wfm = WorkFileManager(config=work_file_config)
     all_lines = wfm.build_file_path("all_lines")
@@ -133,8 +145,13 @@ def fan_in_partitions(
         _merge_with_src_index(
             indexed_outputs=indexed_outputs, all_lines=all_lines, wfm=wfm
         )
-        arcpy.management.PolygonToLine(
+        present_indices = ", ".join(str(index) for index in indexed_outputs)
+        present_cells = layers.make(
             in_features=fan_out_feature,
+            where_clause=f"{PARTITION_INDEX_FIELD} IN ({present_indices})",
+        )
+        arcpy.management.PolygonToLine(
+            in_features=present_cells,
             out_feature_class=border_lines,
             neighbor_option="IGNORE_NEIGHBORS",
         )
@@ -157,7 +174,7 @@ def fan_in_partitions(
             _select_main_line_oids(
                 midpoints=midpoints,
                 fan_out_feature=fan_out_feature,
-                partition_count=partition_count,
+                partition_indices=list(indexed_outputs),
                 layers=layers,
             )
             - border_group_oids
@@ -171,7 +188,7 @@ def fan_in_partitions(
         )
         unclaimed_oids = unmatched_oids & _select_dropped_cell_line_oids(
             midpoints=midpoints,
-            fan_out_feature=fan_out_feature,
+            present_cells=present_cells,
             fan_in_feature=fan_in_feature,
             layers=layers,
         )
@@ -243,10 +260,18 @@ def _partition_count(fan_out_feature: str) -> int:
     return len(indices)
 
 
-def _indexed_outputs(gdb: str, prefix: str, partition_count: int) -> list[str]:
+def _indexed_outputs(
+    gdb: str, prefix: str, partition_count: int, mode: FanInMode
+) -> dict[int, str]:
     """
-    Returns the paths of {prefix}_0 to {prefix}_{N-1}, which must be the only
-    feature classes in gdb.
+    What:
+        Returns the paths of the outputs {prefix}0 to {prefix}{N-1} in gdb, keyed by
+        partition index.
+
+    How:
+        Every feature class in gdb must be one of these outputs. In strict mode all
+        N must be present. In partial mode the missing ones are logged and left out,
+        but at least one must be present.
     """
     if not arcpy.Exists(gdb):
         raise FileNotFoundError(f"Indexed outputs gdb not found: {gdb}")
@@ -256,15 +281,25 @@ def _indexed_outputs(gdb: str, prefix: str, partition_count: int) -> list[str]:
         for _, _, names in arcpy.da.Walk(gdb, datatype="FeatureClass")
         for name in names
     }
-    expected = [f"{prefix}_{index}" for index in range(partition_count)]
-    missing = set(expected) - found
-    extra = found - set(expected)
-    if missing or extra:
+    expected = {f"{prefix}{index}": index for index in range(partition_count)}
+    extra = sorted(found - expected.keys())
+    missing = [index for name, index in expected.items() if name not in found]
+    if extra or len(missing) == partition_count or (missing and mode == "strict"):
+        required = "all of" if mode == "strict" else "at least one of"
         raise RuntimeError(
-            f"{gdb} must hold exactly {prefix}_0 to {prefix}_{partition_count - 1}."
-            f"\nMissing: {sorted(missing)}\nExtra: {sorted(extra)}"
+            f"{gdb} must hold only, and {required}, {prefix}0 to "
+            f"{prefix}{partition_count - 1}.\nMissing: {missing}\nExtra: {extra}"
         )
-    return [os.path.join(gdb, name) for name in expected]
+    if missing:
+        logger.warning(
+            f"Partial fan-in: {len(missing)} of {partition_count} outputs missing, "
+            f"partitions {missing}"
+        )
+    return {
+        index: os.path.join(gdb, name)
+        for name, index in expected.items()
+        if name in found
+    }
 
 
 def _check_schemas(indexed_outputs: list[str]) -> None:
@@ -338,15 +373,15 @@ def _is_dropped(field_name: str) -> bool:
 
 
 def _merge_with_src_index(
-    indexed_outputs: list[str], all_lines: str, wfm: WorkFileManager
+    indexed_outputs: dict[int, str], all_lines: str, wfm: WorkFileManager
 ) -> None:
     """
-    Merges the indexed outputs into all_lines with their index in src_index, after
-    removing the dropped fields. The append fails on any schema mismatch between
-    the outputs.
+    Merges the indexed outputs into all_lines with their partition index in
+    src_index, after removing the dropped fields. The append fails on any schema
+    mismatch between the outputs.
     """
     copies = []
-    for index, indexed_output in enumerate(indexed_outputs):
+    for index, indexed_output in indexed_outputs.items():
         copy = wfm.build_file_path("indexed_output", index=index)
         arcpy.management.CopyFeatures(
             in_features=indexed_output, out_feature_class=copy
@@ -490,14 +525,17 @@ def _resolve_border_groups(
 
 
 def _select_main_line_oids(
-    midpoints: str, fan_out_feature: str, partition_count: int, layers: _Layers
+    midpoints: str,
+    fan_out_feature: str,
+    partition_indices: list[int],
+    layers: _Layers,
 ) -> set[int]:
     """
-    Returns, for every partition N, the lines of output N whose midpoint is within
-    fan-out cell N.
+    Returns, for every partition N in partition_indices, the lines of output N whose
+    midpoint is within fan-out cell N.
     """
     oids = set()
-    for index in range(partition_count):
+    for index in partition_indices:
         cell_layer = layers.make(
             in_features=fan_out_feature,
             where_clause=f"{PARTITION_INDEX_FIELD} = {index}",
@@ -515,17 +553,18 @@ def _select_main_line_oids(
 
 
 def _select_dropped_cell_line_oids(
-    midpoints: str, fan_out_feature: str, fan_in_feature: str, layers: _Layers
+    midpoints: str, present_cells: str, fan_in_feature: str, layers: _Layers
 ) -> set[int]:
     """
-    Returns the lines whose midpoint is within a fan-in cell that fan-out dropped
-    for having no counted features.
+    Returns the lines whose midpoint is within a fan-in cell that has no identical
+    present fan-out cell: one that fan-out dropped for having no counted features,
+    or one whose output is missing.
     """
     dropped_cells_layer = layers.make(in_features=fan_in_feature)
     dropped_count = _select_by_location(
         in_layer=dropped_cells_layer,
         overlap_type="ARE_IDENTICAL_TO",
-        select_features=fan_out_feature,
+        select_features=present_cells,
         invert=True,
     )
     if dropped_count == 0:
@@ -698,9 +737,7 @@ def _log_summary(
 if __name__ == "__main__":
     environment_setup.main()
 
-    INDEXED_OUTPUTS_GDB = (
-        r"C:\GIS_Files\ag_outputs\n100\indexed_only_outputs\only_outputs.gdb"
-    )
+    INDEXED_OUTPUTS_GDB = r"C:\GIS_Files\imported\091126only_outputs.gdb"
     partitioning_gdb = GIS_FILES_ROOT / dn.raw_data / f"{dn.partitioning.lower()}.gdb"
 
     fan_in_partitions(
@@ -713,4 +750,5 @@ if __name__ == "__main__":
         work_file_config=core_config.WorkFileConfig(
             root_file=Road_N100.fan_in___root___n100_road.value
         ),
+        mode="partial",
     )
