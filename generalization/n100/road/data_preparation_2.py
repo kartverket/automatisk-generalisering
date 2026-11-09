@@ -205,7 +205,7 @@ def data_selection_and_validation(
             railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
             area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
             area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
-            area.ArealdekkeFlate_N10: Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
+            area.ArealdekkeFlate_N10: Road_N100.data_selection___arealdekke_n10___n100_road.value,
         },
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
@@ -231,7 +231,7 @@ def data_selection_and_validation(
     road_data_validation.check_repair_sequence()
 
     # run integrate diff on all inputs
-    """
+
     IntegrateDiff(
         Road_N100.data_selection___nvdb_roads___n100_road.value
     ).run_integration()
@@ -247,7 +247,6 @@ def data_selection_and_validation(
     IntegrateDiff(
         Road_N100.data_selection___admin_boundary___n100_road.value
     ).run_integration()
-    """
 
 
 def reclassify_medium():

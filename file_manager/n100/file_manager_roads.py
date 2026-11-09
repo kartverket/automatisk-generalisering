@@ -111,13 +111,6 @@ class Road_N100(Enum):
         )
     )
 
-    data_selection___ArealdekkeFlate_N10___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_selection,
-            description="ArealdekkeFlate_N10",
-        )
-    )
-
     # ========================================
     #                         DATA PREPARATION
     # ========================================
