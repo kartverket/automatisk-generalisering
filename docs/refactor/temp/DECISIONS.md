@@ -1873,10 +1873,14 @@ docstring, and a round trip is identity to the coarser of the two sides. Such an
 reduces a fraction by truncation, never by rounding (the architect, 2026-11-07): the
 engine rounds on its own (PR A read 12:00:00.5 back as 12:00:01), so an adapter whose
 store rounds truncates the value itself before handing it over, and 23:59:59.6 stays on
-its day. Why: the production sources hold sub-second
-parts in their editor-tracking fields and the read-side refusal fired on a production
-read (`temp/findings/slice_1b_read_rows_timing_evidence.md`). Lands in slice 2a with
-`write_rows`, whose round trip is the evidence for the contract.
+its day. Why: the production sources' editor-tracking date fields read back with
+microsecond parts and the read-side refusal fired on a production read
+(`temp/findings/slice_1b_read_rows_timing_evidence.md`); the date probe of 2026-11-08
+then showed those fields to be whole-second stores (engine `precision` 0) and the parts
+the double encoding's noise, so the contract line stands for stores that hold a fraction
+(`precision` 1, which the adapter creates), and a whole-second store is decoded to its
+second on read (`temp/findings/slice_1b_family_orientation_evidence.md`). The adapter
+side landed 2026-11-09, ahead of `write_rows`, which inherits it.
 
 **A33.1** The contract line: `DATE` takes a naive `datetime`, carried to microsecond
 precision; an adapter whose store holds less states its precision, and a round trip is
@@ -1884,18 +1888,20 @@ identity to the coarser of the two sides. Replaces "with no sub-second part, sin
 carries dates to the whole second".
 `destination:` ADR-0019 PC-D17.
 
-**A33.2** The adapters: `row_io.py` drops the sub-second refusal in `_attribute`;
-`_shared/field_values.py` drops its microsecond branch, so the memory store and the
-compiler's check accept a fraction; the predicate compiler's literal carries the fraction
-once W25 shows the engine takes one. `arcpy_adapter`'s break-once cases P4 and R3 go, replaced by a case that the
-compiler's literal drops a fraction silently and a conformance round trip asserting
-identity to the coarser precision. Open until the run: W24, whether the engine has a date
-field kind that keeps a fraction and how `write_rows` creates it, since the insert cursor
-rounded a fraction in an AddField DATE field while the sources hold milliseconds; W25, a
-fractional literal in a file geodatabase where clause, since W8 confirmed whole seconds
-only.
+**A33.2** The adapters, landed 2026-11-09 ahead of `write_rows` (the architect,
+2026-11-09): `describe` names the date fields whose store holds whole seconds and
+`read_rows` reads them to the nearest second, since the encoding's noise lies on both
+sides of the stored second and rounding restores it; a store that holds the fraction is
+read as it is; the in-memory workspace keeps the fraction at any precision and has no
+whole-second field. `add_fields` migrates every date field it adds to the
+fraction-holding precision, outside the in-memory workspace, which refuses the tool, so
+nothing the adapter writes is reduced. `_shared/field_values.py` and the compiler's
+literal carry the fraction, `.ffffff`, which both workspaces compare (W25). W24 and W25
+closed by `temp/w24_w25_date_probe.py`. Break-once: P4 the literal, R3 and R4 the
+decode, D5 the precision, D6 and W2 the in-memory workspace, W1 the migration.
 `destination:` `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`,
-`tools/break_once/cases/arcpy_adapter.py`, `tests/conformance/`.
+`dataset_schema.py`, `dataset_writer.py`, `tools/break_once/cases/arcpy_adapter.py`,
+`tests/conformance/`.
 
 # B. Open
 

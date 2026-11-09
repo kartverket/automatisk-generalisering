@@ -1,7 +1,7 @@
 # Slice 1b evidence: geometry family and canonical orientation
 
-**Status:** EVIDENCE, 2026-11-09, the marked run of 2026-11-08 green, the date rule
-landed and its marked tests awaiting the image. B31 (the geometry family on `Schema`) and B32 (canonical ring orientation in
+**Status:** EVIDENCE, 2026-11-09, every marked run green, the date rule landed and
+confirmed on the image. Open: B33, with the architect's team. B31 (the geometry family on `Schema`) and B32 (canonical ring orientation in
 `Geometry`), their refusals, their break-once cases, the W23 pins, the W24 and W25
 probe, and the records. The timing run that priced B32 is
 `slice_1b_read_rows_timing_evidence.md`.
@@ -383,8 +383,8 @@ What landed with it, 2026-11-09:
   removed; R4 truncation instead of rounding; D5 the precision not read; W1 the
   migration not run.
 - Records: ADR-0019 PC-D17 adapted per A33.1's decided text; T4.11's follow-up; the W18
-  rows of the timing evidence. A33's own text in `DECISIONS.md` is the architect's to
-  approve and is proposed in the end-of-task report, not changed here.
+  rows of the timing evidence. A33's "Why" and A33.2 in `DECISIONS.md`, approved by the
+  architect on 2026-11-09 and applied.
 
 ### The marked run of the date rule, 2026-11-09
 
@@ -410,9 +410,26 @@ workspace's `workspaceFactoryProgID`, the spelling the fifth run showed, kept on
 `dataset_schema.py`; `add_fields` skips the migration there and `describe` names no
 whole-second field there, consulting the workspace only when a date field at 0 is
 present. The fake engine models workspaces the same way and refuses the migration in
-its memory one. Break-once D6 and W2 cover the two guards. The Describe `path`
-attribute is an expectation of the engine's documented Describe object until the next
-marked run shows it.
+its memory one. Break-once D6 and W2 cover the two guards.
+
+The run after the fix, same digest and command, 2026-11-09:
+
+```
+collected 69 items / 23 deselected / 46 selected
+tests/conformance/test_geometry_ops.py .............
+tests/conformance/test_table_ops.py ..........
+tests/engine/arcpy/test_dataset_schema.py .........
+tests/engine/arcpy/test_memory_workspace.py ..
+tests/engine/arcpy/test_row_io.py ...
+tests/engine/arcpy/test_session.py .....
+tests/engine/arcpy/test_shape.py ....
+46 passed, 23 deselected in 68.59s
+```
+
+The two memory-workspace tests seed through `add_fields` and so pass only if the
+Describe `path` attribute names the dataset's workspace and the workspace's
+`workspaceFactoryProgID` is the memory one; both held. Nothing on the date rule is open
+on the engine. A33's text in `DECISIONS.md` was approved and applied the same day.
 
 ## Records
 
