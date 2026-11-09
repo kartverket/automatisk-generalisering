@@ -68,6 +68,14 @@ generalization.n100.road.ramps module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.ramps\_dangles module
+----------------------------------------------
+
+.. automodule:: generalization.n100.road.ramps_dangles
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.resolve\_road\_conflict\_preparation module
 --------------------------------------------------------------------
 

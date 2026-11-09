@@ -279,6 +279,63 @@ Returns the last completed step name, or None for a clean start.</p>
 <section id="generalization-n100-road-ramps-module">
 <h2>generalization.n100.road.ramps module<a class="headerlink" href="#generalization-n100-road-ramps-module" title="Link to this heading"></a></h2>
 </section>
+<section id="module-generalization.n100.road.ramps_dangles">
+<span id="generalization-n100-road-ramps-dangles-module"></span><h2>generalization.n100.road.ramps_dangles module<a class="headerlink" href="#module-generalization.n100.road.ramps_dangles" title="Link to this heading"></a></h2>
+<p>Remove or cut dangles left by ramps that do not reach main roads in NVDB data.</p>
+<p>At a ramp crossing, the retained segment adopts the crossed road’s medium so the
+crossing becomes a T-junction in that medium.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.ramps_dangles.remove_new_dangles">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.ramps_dangles.</span></span><span class="sig-name descname"><span class="pre">remove_new_dangles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ramp_reference_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">removed_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dangle_iterations_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_false_loop_perimeter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/ramps_dangles.html#remove_new_dangles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.ramps_dangles.remove_new_dangles" title="Link to this definition"></a></dt>
+<dd><p>Remove ramp dangles from <cite>lines_fc</cite>, then dangles on the lines connected to each removal.</p>
+<p>Dangles come from an endpoint graph of the <cite>VegSenterlinje</cite> lines: a dangle is an
+endpoint with one line attached that no other line passes through. The starting
+dangles are those on <cite>typeveg = ‘rampe’</cite> lines in <cite>ramp_reference_fc</cite>. After a
+line or a cut-off piece is removed, both ends of every line connected to it are
+checked, and any dangle there is handled in the next wave, even one that existed
+before the run. A line is connected if it shares an end node with the removed
+geometry, ends on it, or has the removed geometry end on its interior. Removal
+repeats in waves until no more eligible dangles are exposed or <cite>max_iterations</cite>
+is reached; reaching the limit may leave dangles unprocessed.</p>
+<p>A dangling line is not removed whole if, walking from the dangle, it reaches a
+junction (another line’s endpoint, or a crossing with a road of the same medium)
+or a ramp crossing (a road of another medium sharing a <cite>ramp_id</cite>). It is cut at
+the first one and the dangle side goes to <cite>removed_fc</cite>. At a ramp crossing the
+kept part takes the crossed road’s medium, and the shared ids are removed from
+<cite>ramp_id</cite> on both the kept part and the crossed road. A line can be cut again
+if its kept part later dangles. A junction where a loop of lines leaves and
+rejoins the dangling line (a P shape) is skipped if the loop perimeter is at most
+<cite>max_false_loop_perimeter</cite>. A loop of at most that perimeter left hanging at a
+node after a removal, touched by other lines at one node at most, is removed
+like a dangle. If that loop has ramp crossings, the side with the first one is
+kept and then handled from the dangle, so only that crossing becomes a T cross.
+Open removal paths are limited to 500 metres of straight-line distance from the
+starting ramp dangle to the prospective endpoint. Pendant loops remain limited
+by their perimeter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lines_fc</strong> – Line feature class edited in place.</p></li>
+<li><p><strong>ramp_reference_fc</strong> – Lines with <cite>typeveg</cite>; dangles on its ramps are the starting dangles.</p></li>
+<li><p><strong>removed_fc</strong> – Output recreated on each call; receives a copy of every removed line.</p></li>
+<li><p><strong>max_iterations</strong> – Maximum number of waves; reaching it may leave dangles unprocessed.</p></li>
+<li><p><strong>dangle_iterations_prefix</strong> – If set, the dangles removed in each wave are
+saved as <cite>&lt;prefix&gt;_ite1</cite>, <cite>&lt;prefix&gt;_ite2</cite>, …; existing outputs are replaced.</p></li>
+<li><p><strong>max_false_loop_perimeter</strong> – Largest loop perimeter in metres treated as a
+false junction; 0 disables the check.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Existing outputs at <cite>removed_fc</cite> and the generated iteration paths are deleted
+and recreated. <cite>removed_fc</cite> must not alias either input feature class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Total number of removed lines.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="generalization-n100-road-resolve-road-conflict-preparation-module">
 <h2>generalization.n100.road.resolve_road_conflict_preparation module<a class="headerlink" href="#generalization-n100-road-resolve-road-conflict-preparation-module" title="Link to this heading"></a></h2>
 </section>

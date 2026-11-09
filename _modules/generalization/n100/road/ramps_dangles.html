@@ -1,0 +1,1078 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n100.road.ramps_dangles &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n100.road.ramps_dangles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n100.road.ramps_dangles</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Remove or cut dangles left by ramps that do not reach main roads in NVDB data.</span>
+
+<span class="sd">At a ramp crossing, the retained segment adopts the crossed road's medium so the</span>
+<span class="sd">crossing becomes a T-junction in that medium.</span>
+<span class="sd">"""</span>
+
+<span class="sd">"""</span>
+<span class="sd">The endpoint graph is specialized for finding and following dangles, not for modeling</span>
+<span class="sd">full network connectivity: only line endpoints become graph nodes, so interior crossings</span>
+<span class="sd">do not create graph connections. When removing or cutting lines, a spatial segment index</span>
+<span class="sd">is used to find nearby segments that are checked for interior crossings.</span>
+<span class="sd">"""</span>
+<span class="sd">"""</span>
+<span class="sd">We do not use arcpy for detecting dangles because it is unreliable.</span>
+<span class="sd">It often creates dangles where they do not exist.</span>
+<span class="sd">And removal of a line can create new dangles in a completely different places.</span>
+<span class="sd">"""</span>
+
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">heapq</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeAlias</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">Point</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="n">Segment</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="n">Cell</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+<span class="n">_SNAP_TOLERANCE_M</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># tolerance for considering points as touching</span>
+<span class="n">_RAMP_MATCH_TOLERANCE_M</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># sets how close a dangling endpoint must be to a ramp line in ramp_reference_fc to qualify as a starting dangle. Maybe unnecessary to have a separate tolerance for this and _SNAP_TOLERANCE_M</span>
+<span class="n">_INDEX_CELL_SIZE_M</span> <span class="o">=</span> <span class="mf">25.0</span>  <span class="c1"># Grid cell width for the segment spatial index.</span>
+<span class="n">_MAX_FALSE_LOOP_PERIMETER_M</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># max perimeter for a loop to be considered a false junction, meaning it will be removed if smaller than this and a dangle connects to it</span>
+<span class="n">_MAX_REMOVAL_ENDPOINT_DISTANCE_M</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># max distance from starting dangle point to line endpoint to consider line for removal, Exists to prevent partition edge issues from cascading beyond context so context has to be bigger than this parameter</span>
+<span class="n">_MEDIUM_FIELD</span> <span class="o">=</span> <span class="s2">"medium"</span>
+<span class="n">_RAMP_ID_FIELD</span> <span class="o">=</span> <span class="s2">"ramp_id"</span>
+<span class="n">_RAMP_WHERE_CLAUSE</span> <span class="o">=</span> <span class="s2">"typeveg = 'rampe'"</span>
+<span class="n">_REMOVABLE_WHERE_CLAUSE</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># SQL where for removable lines, if needed</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cell</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cell</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the grid cell containing `point`."""</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">size</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_project</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Point</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the fraction along `segment` and the point on it closest to `point`."""</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">point</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">segment</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+    <span class="n">length_sq</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">dy</span>
+    <span class="k">if</span> <span class="n">length_sq</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span> <span class="o">/</span> <span class="n">length_sq</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_point_segment_distance</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the shortest distance from `point` to `segment`."""</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">_project</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">segment</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_segment_intersection</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Segment</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Point</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the fraction along `a` and the point where `a` and `b` cross, if they do."""</span>
+    <span class="n">ax1</span><span class="p">,</span> <span class="n">ay1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ay2</span> <span class="o">=</span> <span class="n">a</span>
+    <span class="n">bx1</span><span class="p">,</span> <span class="n">by1</span><span class="p">,</span> <span class="n">bx2</span><span class="p">,</span> <span class="n">by2</span> <span class="o">=</span> <span class="n">b</span>
+    <span class="n">rx</span><span class="p">,</span> <span class="n">ry</span> <span class="o">=</span> <span class="n">ax2</span> <span class="o">-</span> <span class="n">ax1</span><span class="p">,</span> <span class="n">ay2</span> <span class="o">-</span> <span class="n">ay1</span>
+    <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span> <span class="o">=</span> <span class="n">bx2</span> <span class="o">-</span> <span class="n">bx1</span><span class="p">,</span> <span class="n">by2</span> <span class="o">-</span> <span class="n">by1</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">rx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">-</span> <span class="n">ry</span> <span class="o">*</span> <span class="n">sx</span>
+    <span class="k">if</span> <span class="n">denom</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="n">bx1</span> <span class="o">-</span> <span class="n">ax1</span><span class="p">,</span> <span class="n">by1</span> <span class="o">-</span> <span class="n">ay1</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">qx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">-</span> <span class="n">qy</span> <span class="o">*</span> <span class="n">sx</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">qx</span> <span class="o">*</span> <span class="n">ry</span> <span class="o">-</span> <span class="n">qy</span> <span class="o">*</span> <span class="n">rx</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+    <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mf">1.0</span> <span class="ow">and</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">u</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">rx</span><span class="p">,</span> <span class="n">ay1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">ry</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reverse_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Reverse segment order and direction."""</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">segments</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_drop_empty</span><span class="p">(</span><span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Remove zero-length segments."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span> <span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_segment_length</span><span class="p">(</span><span class="n">segment</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the Euclidean length of `segment`."""</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">((</span><span class="n">segment</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">segment</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">segment</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">segment</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_length</span><span class="p">(</span><span class="n">segments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Segment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the combined length of `segments`."""</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_segment_length</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span> <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_distance_along</span><span class="p">(</span><span class="n">segments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Segment</span><span class="p">],</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Length along `segments` to where `point` projects onto the closest segment."""</span>
+    <span class="n">best_gap</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">best_along</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">walked</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+        <span class="n">fraction</span><span class="p">,</span> <span class="n">projected</span> <span class="o">=</span> <span class="n">_project</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+        <span class="n">gap</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">projected</span><span class="p">)</span>
+        <span class="n">segment_length</span> <span class="o">=</span> <span class="n">_segment_length</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="n">best_gap</span><span class="p">:</span>
+            <span class="n">best_gap</span><span class="p">,</span> <span class="n">best_along</span> <span class="o">=</span> <span class="n">gap</span><span class="p">,</span> <span class="n">walked</span> <span class="o">+</span> <span class="n">fraction</span> <span class="o">*</span> <span class="n">segment_length</span>
+        <span class="n">walked</span> <span class="o">+=</span> <span class="n">segment_length</span>
+    <span class="k">return</span> <span class="n">best_along</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Line</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Graph representation of a line and its road-medium and ramp associations."""</span>
+
+    <span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">]</span>
+    <span class="n">medium</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ramp_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Cut</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where to cut a dangling line; `shared_ramp_ids` is empty for a plain junction."""</span>
+
+    <span class="n">other_oid</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">segment_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">point</span><span class="p">:</span> <span class="n">Point</span>
+    <span class="n">shared_ramp_ids</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">oriented_segments</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Segment</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Split</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record the cut point and original dangle point for a split line."""</span>
+
+    <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">point</span><span class="p">:</span> <span class="n">Point</span>
+    <span class="n">dangle_point</span><span class="p">:</span> <span class="n">Point</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_WaveResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Collect line edits and handled dangle nodes from all removal waves.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        removed_oids: Feature IDs of lines removed whole.</span>
+<span class="sd">        splits: Cut locations for lines whose dangle sides are removed.</span>
+<span class="sd">        ramp_changed: Feature IDs of roads whose ramp IDs changed at a crossing.</span>
+<span class="sd">        waves: Dangle node IDs handled in each wave.</span>
+<span class="sd">    """</span>
+
+    <span class="n">removed_oids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">splits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Split</span><span class="p">]</span>
+    <span class="n">ramp_changed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">waves</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_ramp_crossing</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="n">_Line</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">_Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if `other` is a road of another medium sharing a ramp id with `line`."""</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">medium</span>
+        <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">medium</span>
+        <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">medium</span> <span class="o">!=</span> <span class="n">line</span><span class="o">.</span><span class="n">medium</span>
+        <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">ramp_ids</span> <span class="o">&amp;</span> <span class="n">other</span><span class="o">.</span><span class="n">ramp_ids</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_SegmentIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Grid index answering whether a point is within `tolerance` of any indexed segment."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize an empty segment index with the given search tolerance."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span> <span class="o">=</span> <span class="n">tolerance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Cell</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Segment</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dead</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Segment</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Index `segment` under its feature ID."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dead</span><span class="o">.</span><span class="n">discard</span><span class="p">((</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">))</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">segment</span>
+        <span class="n">size</span><span class="p">,</span> <span class="n">pad</span> <span class="o">=</span> <span class="n">_INDEX_CELL_SIZE_M</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span>
+        <span class="n">min_cx</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">min</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">max_cx</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">max</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">min_cy</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">min</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">max_cy</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">max</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_cx</span><span class="p">,</span> <span class="n">max_cx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">cy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_cy</span><span class="p">,</span> <span class="n">max_cy</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="p">[(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Stop reporting these segments; they stay in the cells."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dead</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span> <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">Segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Segment</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Yield indexed segments whose cells overlap the bounding box of `segment`."""</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">segment</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">_INDEX_CELL_SIZE_M</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Segment</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">cx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+            <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">cy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">):</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">),</span> <span class="p">()):</span>
+                    <span class="k">if</span> <span class="n">entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="n">entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dead</span><span class="p">:</span>
+                        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+                        <span class="k">yield</span> <span class="n">entry</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">ignore</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return whether an indexed segment is within tolerance of `point`."""</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_within</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">ignore</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">oids_within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">ignore</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return feature IDs with indexed segments within tolerance of `point`."""</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_within</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">ignore</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">ignore</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Yield feature IDs whose indexed segments are near `point`."""</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_cell</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">_INDEX_CELL_SIZE_M</span><span class="p">),</span> <span class="p">()):</span>
+            <span class="n">oid</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="n">entry</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">oid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore</span>
+                <span class="ow">and</span> <span class="n">entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dead</span>
+                <span class="ow">and</span> <span class="n">_point_segment_distance</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span>
+            <span class="p">):</span>
+                <span class="k">yield</span> <span class="n">oid</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_NodeIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Merges endpoints closer than the snap tolerance into one node."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize an empty endpoint index with the given snap tolerance."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span> <span class="o">=</span> <span class="n">tolerance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Cell</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Point</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the existing nearby node or add `point` as a new node."""</span>
+        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">_cell</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">cx</span> <span class="o">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">dy</span><span class="p">),</span> <span class="p">()):</span>
+                    <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">nx</span><span class="p">,</span> <span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ny</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tolerance</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">node</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cells</span><span class="p">[(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_EndpointGraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Line endpoints as nodes; a dangle is a node with exactly one line attached."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize an empty endpoint graph and its spatial index."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">_NodeIndex</span><span class="p">(</span><span class="n">_SNAP_TOLERANCE_M</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">_Line</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span> <span class="o">=</span> <span class="n">_SegmentIndex</span><span class="p">(</span><span class="n">_SNAP_TOLERANCE_M</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">_Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add a line, its endpoint nodes, and its segments to the graph."""</span>
+        <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">find_or_add</span><span class="p">((</span><span class="n">first</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">first</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">find_or_add</span><span class="p">((</span><span class="n">last</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">last</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">start</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">connected_end_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">],</span> <span class="n">end_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""End nodes of every other line connected to `segments` or `end_nodes` of `oid`.</span>
+
+<span class="sd">        A line is connected if it shares an end node, ends on `segments`, or has</span>
+<span class="sd">        one of `end_nodes` on its interior.</span>
+<span class="sd">        """</span>
+        <span class="n">ignore</span> <span class="o">=</span> <span class="p">{</span><span class="n">oid</span><span class="p">}</span>
+        <span class="n">connected</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">end_nodes</span><span class="p">:</span>
+            <span class="n">connected</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">connected</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">oids_within</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">ignore</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">candidates</span><span class="p">(</span><span class="n">segment</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">other_oid</span> <span class="o">==</span> <span class="n">oid</span> <span class="ow">or</span> <span class="n">other_oid</span> <span class="ow">in</span> <span class="n">connected</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">_point_segment_distance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">segment</span><span class="p">)</span>
+                    <span class="o">&lt;=</span> <span class="n">_SNAP_TOLERANCE_M</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]</span>
+                <span class="p">):</span>
+                    <span class="n">connected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other_oid</span><span class="p">)</span>
+        <span class="n">connected</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">node</span> <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">connected</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">other</span><span class="p">]})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Remove the line and return the end nodes of the lines connected to it."""</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="n">affected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected_end_nodes</span><span class="p">(</span>
+            <span class="n">oid</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">oid</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">affected</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_degree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of line ends attached to `node`."""</span>
+        <span class="c1"># A closed line has both ends on the node.</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_dangle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True if one line ends at the node and no other line passes through it."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">has_within</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_far_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the other endpoint node of `oid` from `node`."""</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">end</span> <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">node</span> <span class="k">else</span> <span class="n">start</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_shortest_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">starts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">start_cost</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">blocked</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">max_cost</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">closing_cost</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Lines in order on the shortest path from `starts` to a node that closes a loop within `max_cost`.</span>
+
+<span class="sd">        `closing_cost` gives the cost left to close the loop at a node, or None if the</span>
+<span class="sd">        node does not close it. The walk never continues past a closing node.</span>
+<span class="sd">        """</span>
+        <span class="n">best</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">heap</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">:</span>
+            <span class="n">best</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_cost</span>
+            <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+        <span class="n">previous</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">while</span> <span class="n">heap</span><span class="p">:</span>
+            <span class="n">cost</span><span class="p">,</span> <span class="n">node</span> <span class="o">=</span> <span class="n">heapq</span><span class="o">.</span><span class="n">heappop</span><span class="p">(</span><span class="n">heap</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">max_cost</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">best</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="n">closing_cost</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">extra</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">extra</span> <span class="o">&lt;=</span> <span class="n">max_cost</span><span class="p">:</span>
+                    <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">while</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">previous</span><span class="p">:</span>
+                        <span class="n">node</span><span class="p">,</span> <span class="n">via</span> <span class="o">=</span> <span class="n">previous</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                        <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">via</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">path</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">next_oid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">next_oid</span> <span class="ow">in</span> <span class="n">blocked</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">far</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_far_node</span><span class="p">(</span><span class="n">next_oid</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                <span class="n">next_cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">next_oid</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">next_cost</span> <span class="o">&lt;</span> <span class="n">best</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">far</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">):</span>
+                    <span class="n">best</span><span class="p">[</span><span class="n">far</span><span class="p">]</span> <span class="o">=</span> <span class="n">next_cost</span>
+                    <span class="n">previous</span><span class="p">[</span><span class="n">far</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">next_oid</span><span class="p">)</span>
+                    <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="p">(</span><span class="n">next_cost</span><span class="p">,</span> <span class="n">far</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_attachment_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">hub</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Nodes other than `hub` where lines outside `loop` touch it."""</span>
+        <span class="n">loop_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">loop</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">]}</span>
+        <span class="n">attached</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">loop_nodes</span> <span class="o">-</span> <span class="p">{</span><span class="n">hub</span><span class="p">}:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">-</span> <span class="n">loop</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">has_within</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">loop</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">attached</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">loop</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">candidates</span><span class="p">(</span><span class="n">segment</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">other_oid</span> <span class="ow">in</span> <span class="n">loop</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loop_nodes</span>
+                            <span class="ow">and</span> <span class="n">_point_segment_distance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">segment</span><span class="p">)</span>
+                            <span class="o">&lt;=</span> <span class="n">_SNAP_TOLERANCE_M</span>
+                        <span class="p">):</span>
+                            <span class="n">attached</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attached</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">pendant_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_perimeter</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Lines in order around the loop through `node`, if it is a small loop hanging off the network.</span>
+
+<span class="sd">        `node` must have two line ends and no line through it, the shortest loop</span>
+<span class="sd">        through it must have a perimeter within `max_perimeter`, and other lines may</span>
+<span class="sd">        touch the loop at one node at most.</span>
+<span class="sd">        """</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">has_within</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">lines</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">ring</span><span class="p">,)</span> <span class="o">=</span> <span class="n">lines</span>
+            <span class="k">if</span> <span class="n">_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">ring</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_perimeter</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">cycle</span> <span class="o">=</span> <span class="p">[</span><span class="n">ring</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+            <span class="n">second_far</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_far_node</span><span class="p">(</span><span class="n">second</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+            <span class="n">second_length</span> <span class="o">=</span> <span class="n">_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">second</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shortest_path</span><span class="p">(</span>
+                <span class="n">starts</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_far_node</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">node</span><span class="p">)],</span>
+                <span class="n">start_cost</span><span class="o">=</span><span class="n">_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">first</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">),</span>
+                <span class="n">blocked</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span>
+                <span class="n">max_cost</span><span class="o">=</span><span class="n">max_perimeter</span><span class="p">,</span>
+                <span class="n">closing_cost</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">second_length</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="n">second_far</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">cycle</span> <span class="o">=</span> <span class="p">[</span><span class="n">first</span><span class="p">,</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">second</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attachment_nodes</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cycle</span><span class="p">),</span> <span class="n">node</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">cycle</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_ramp_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return whether `oid` crosses a road of another medium sharing a ramp ID."""</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">other_segment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">candidates</span><span class="p">(</span><span class="n">segment</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">other_oid</span> <span class="o">!=</span> <span class="n">oid</span>
+                    <span class="ow">and</span> <span class="n">_is_ramp_crossing</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">other_oid</span><span class="p">])</span>
+                    <span class="ow">and</span> <span class="n">_segment_intersection</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">other_segment</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">loop_lines_to_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hub</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cycle</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Lines of the pendant loop `cycle` at `hub` to remove.</span>
+
+<span class="sd">        If the loop has ramp crossings, the side holding the first one, from `hub` to</span>
+<span class="sd">        where the loop meets the network, is kept so that crossing is handled as a</span>
+<span class="sd">        ramp crossing once `hub` dangles; the other side is removed with its crossings.</span>
+<span class="sd">        """</span>
+        <span class="n">crossing</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">oid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_ramp_crossing</span><span class="p">(</span><span class="n">oid</span><span class="p">)),</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">crossing</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cycle</span>
+        <span class="n">attachments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attachment_nodes</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cycle</span><span class="p">),</span> <span class="n">hub</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">hub</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">cycle</span><span class="p">:</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_far_node</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="c1"># An isolated loop, or one attached on a line interior, is split in the middle.</span>
+        <span class="n">split</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">))</span> <span class="k">if</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="n">attachments</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cycle</span><span class="p">[</span><span class="n">split</span><span class="p">:]</span> <span class="k">if</span> <span class="n">crossing</span> <span class="o">&lt;</span> <span class="n">split</span> <span class="k">else</span> <span class="n">cycle</span><span class="p">[:</span><span class="n">split</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">false_loop_oids</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">oriented</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Segment</span><span class="p">],</span>
+        <span class="n">hit_point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span>
+        <span class="n">other_oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">max_perimeter</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Lines of the shortest loop from `other_oid` back onto `oid`, if its perimeter is within `max_perimeter`.</span>
+
+<span class="sd">        The perimeter is the length of the loop lines plus the stretch of `oid`</span>
+<span class="sd">        between the two contact points.</span>
+<span class="sd">        """</span>
+        <span class="n">other_length</span> <span class="o">=</span> <span class="n">_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">end</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">other_oid</span><span class="p">}</span> <span class="k">if</span> <span class="n">other_length</span> <span class="o">&lt;=</span> <span class="n">max_perimeter</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">hit_along</span> <span class="o">=</span> <span class="n">_distance_along</span><span class="p">(</span><span class="n">oriented</span><span class="p">,</span> <span class="n">hit_point</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">closing_cost</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">_point_segment_distance</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_SNAP_TOLERANCE_M</span>
+                <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">oriented</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">_distance_along</span><span class="p">(</span><span class="n">oriented</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">hit_along</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># A crossing hit starts from both ends at full length, which only overstates the loop.</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shortest_path</span><span class="p">(</span>
+            <span class="n">starts</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">node</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">hit_point</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_SNAP_TOLERANCE_M</span>
+            <span class="p">],</span>
+            <span class="n">start_cost</span><span class="o">=</span><span class="n">other_length</span><span class="p">,</span>
+            <span class="n">blocked</span><span class="o">=</span><span class="p">{</span><span class="n">oid</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">},</span>
+            <span class="n">max_cost</span><span class="o">=</span><span class="n">max_perimeter</span><span class="p">,</span>
+            <span class="n">closing_cost</span><span class="o">=</span><span class="n">closing_cost</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_cut</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dangle_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_loop_perimeter</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Cut</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""First junction or ramp crossing along the line, walking from the dangle.</span>
+
+<span class="sd">        A junction is another line's endpoint on the line, or a crossing with a road of</span>
+<span class="sd">        the same medium. A ramp crossing is a crossing with a road of another medium</span>
+<span class="sd">        that shares a ramp id; it wins a tie with a junction. A junction on a loop back</span>
+<span class="sd">        onto the line with perimeter within `max_loop_perimeter` is a false junction and</span>
+<span class="sd">        is skipped.</span>
+<span class="sd">        """</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="n">oriented</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">segments</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">dangle_node</span>
+            <span class="k">else</span> <span class="n">_reverse_segments</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="p">[(</span><span class="n">oriented</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">oriented</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">oriented</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">oriented</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">3</span><span class="p">])]</span>
+        <span class="n">no_ramp_ids</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+        <span class="n">false_loops</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">segment</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">oriented</span><span class="p">):</span>
+            <span class="c1"># (fraction, priority, point, other oid, shared ramp ids)</span>
+            <span class="n">hits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Point</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">seen_oids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">other_segment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">candidates</span><span class="p">(</span><span class="n">segment</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">other_oid</span> <span class="o">==</span> <span class="n">oid</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]</span>
+                <span class="n">is_ramp_crossing</span> <span class="o">=</span> <span class="n">_is_ramp_crossing</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_ramp_crossing</span> <span class="ow">or</span> <span class="n">other</span><span class="o">.</span><span class="n">medium</span> <span class="o">==</span> <span class="n">line</span><span class="o">.</span><span class="n">medium</span><span class="p">:</span>
+                    <span class="n">hit</span> <span class="o">=</span> <span class="n">_segment_intersection</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">other_segment</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">fraction</span><span class="p">,</span> <span class="n">point</span> <span class="o">=</span> <span class="n">hit</span>
+                        <span class="k">if</span> <span class="n">is_ramp_crossing</span><span class="p">:</span>
+                            <span class="n">shared</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">ramp_ids</span> <span class="o">&amp;</span> <span class="n">other</span><span class="o">.</span><span class="n">ramp_ids</span><span class="p">)</span>
+                            <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fraction</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">shared</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fraction</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">no_ramp_ids</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">other_oid</span> <span class="ow">in</span> <span class="n">seen_oids</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">seen_oids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other_oid</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]:</span>
+                    <span class="n">xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="n">fraction</span><span class="p">,</span> <span class="n">point</span> <span class="o">=</span> <span class="n">_project</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">point</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_SNAP_TOLERANCE_M</span><span class="p">:</span>
+                        <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fraction</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">no_ramp_ids</span><span class="p">))</span>
+            <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">hit</span>
+                <span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">hits</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">hit</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">end</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">_SNAP_TOLERANCE_M</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">ends</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">shared</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="n">hits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">hit</span><span class="p">:</span> <span class="p">(</span><span class="n">hit</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="n">priority</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">other_oid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">false_loops</span><span class="p">:</span>
+                        <span class="n">false_loops</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">false_loop_oids</span><span class="p">(</span>
+                                <span class="n">oid</span><span class="p">,</span> <span class="n">oriented</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">other_oid</span><span class="p">,</span> <span class="n">max_loop_perimeter</span>
+                            <span class="p">)</span>
+                            <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">false_loops</span><span class="p">[</span><span class="n">other_oid</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+                <span class="k">return</span> <span class="n">_Cut</span><span class="p">(</span>
+                    <span class="n">other_oid</span><span class="o">=</span><span class="n">other_oid</span><span class="p">,</span>
+                    <span class="n">segment_index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
+                    <span class="n">point</span><span class="o">=</span><span class="n">point</span><span class="p">,</span>
+                    <span class="n">shared_ramp_ids</span><span class="o">=</span><span class="n">shared</span><span class="p">,</span>
+                    <span class="n">oriented_segments</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">oriented</span><span class="p">),</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_line</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dangle_node</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">_Cut</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">_Split</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Cut off the dangle side at `cut`; at a ramp crossing the kept part takes the crossed road's medium.</span>
+
+<span class="sd">        Returns the split and the end nodes of the lines connected to the cut-off side.</span>
+<span class="sd">        """</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">point</span>
+        <span class="n">oriented</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">oriented_segments</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">oriented</span><span class="p">[</span><span class="n">cut</span><span class="o">.</span><span class="n">segment_index</span><span class="p">]</span>
+        <span class="n">kept</span> <span class="o">=</span> <span class="n">_drop_empty</span><span class="p">([(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="o">*</span><span class="n">oriented</span><span class="p">[</span><span class="n">cut</span><span class="o">.</span><span class="n">segment_index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]])</span>
+        <span class="n">cut_off</span> <span class="o">=</span> <span class="n">_drop_empty</span><span class="p">([</span><span class="o">*</span><span class="n">oriented</span><span class="p">[:</span> <span class="n">cut</span><span class="o">.</span><span class="n">segment_index</span><span class="p">],</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)])</span>
+        <span class="n">affected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected_end_nodes</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">cut_off</span><span class="p">,</span> <span class="p">[</span><span class="n">dangle_node</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">segments</span> <span class="o">=</span> <span class="n">kept</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+
+        <span class="n">far</span> <span class="o">=</span> <span class="n">end</span> <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">dangle_node</span> <span class="k">else</span> <span class="n">start</span>
+        <span class="n">cut_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">find_or_add</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">point</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">dangle_node</span><span class="p">]</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_nodes</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cut_node</span><span class="p">,</span> <span class="n">far</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">cut_node</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">shared_ramp_ids</span><span class="p">:</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">cut</span><span class="o">.</span><span class="n">other_oid</span><span class="p">]</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">medium</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">medium</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">ramp_ids</span> <span class="o">-=</span> <span class="n">cut</span><span class="o">.</span><span class="n">shared_ramp_ids</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">ramp_ids</span> <span class="o">-=</span> <span class="n">cut</span><span class="o">.</span><span class="n">shared_ramp_ids</span>
+        <span class="n">split</span> <span class="o">=</span> <span class="n">_Split</span><span class="p">(</span>
+            <span class="n">oid</span><span class="o">=</span><span class="n">oid</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="n">cut</span><span class="o">.</span><span class="n">point</span><span class="p">,</span> <span class="n">dangle_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">dangle_node</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">split</span><span class="p">,</span> <span class="n">affected</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_ramp_ids</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse comma-separated ramp IDs into a set."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_lines</span><span class="p">(</span><span class="n">fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">where_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">_Line</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Read feature lines and their available medium and ramp ID attributes."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">fc</span><span class="p">)}</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_MEDIUM_FIELD</span><span class="p">,</span> <span class="n">_RAMP_ID_FIELD</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">"OID@"</span><span class="p">,</span> <span class="s2">"SHAPE@"</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span><span class="p">],</span> <span class="n">where_clause</span><span class="o">=</span><span class="n">where_clause</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">oid</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">extra</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))</span>
+            <span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Segment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
+                <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">part</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="n">segments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">segments</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span>
+                    <span class="n">oid</span><span class="p">,</span>
+                    <span class="n">_Line</span><span class="p">(</span>
+                        <span class="n">segments</span><span class="o">=</span><span class="n">segments</span><span class="p">,</span>
+                        <span class="n">medium</span><span class="o">=</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_MEDIUM_FIELD</span><span class="p">),</span>
+                        <span class="n">ramp_ids</span><span class="o">=</span><span class="n">_parse_ramp_ids</span><span class="p">(</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_RAMP_ID_FIELD</span><span class="p">)),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_graph</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_EndpointGraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build an endpoint graph from the selected lines in `lines_fc`."""</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">_EndpointGraph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_read_lines</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">,</span> <span class="n">_REMOVABLE_WHERE_CLAUSE</span><span class="p">):</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_ramp_index</span><span class="p">(</span><span class="n">ramp_reference_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_SegmentIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Index ramp segments from `ramp_reference_fc` for nearby dangle lookup."""</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">_SegmentIndex</span><span class="p">(</span><span class="n">_RAMP_MATCH_TOLERANCE_M</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_read_lines</span><span class="p">(</span><span class="n">ramp_reference_fc</span><span class="p">,</span> <span class="n">_RAMP_WHERE_CLAUSE</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
+            <span class="n">index</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">index</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_remove_in_waves</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">_EndpointGraph</span><span class="p">,</span>
+    <span class="n">ramp_index</span><span class="p">:</span> <span class="n">_SegmentIndex</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_loop_perimeter</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_WaveResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove or split dangling lines wave by wave, recording the dangle nodes per wave."""</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">_WaveResult</span><span class="p">(</span><span class="n">removed_oids</span><span class="o">=</span><span class="p">[],</span> <span class="n">splits</span><span class="o">=</span><span class="p">[],</span> <span class="n">ramp_changed</span><span class="o">=</span><span class="nb">set</span><span class="p">(),</span> <span class="n">waves</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">no_ignore</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
+    <span class="n">wave</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">node</span><span class="p">:</span> <span class="p">{</span><span class="n">xy</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">is_dangle</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ramp_index</span><span class="o">.</span><span class="n">has_within</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">no_ignore</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iterations</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wave</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">acted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">exposed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Point</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">expose</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">origins</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Point</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">"""Queue newly exposed dangles and pendant loops for the next wave."""</span>
+            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">graph</span><span class="o">.</span><span class="n">is_dangle</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+                    <span class="ow">or</span> <span class="n">graph</span><span class="o">.</span><span class="n">pendant_loop</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">max_loop_perimeter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="p">):</span>
+                    <span class="n">exposed</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">origins</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">origins</span> <span class="ow">in</span> <span class="n">wave</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">is_dangle</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="p">(</span><span class="n">oid</span><span class="p">,)</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">node_lines</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                <span class="n">cut</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">find_cut</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">max_loop_perimeter</span><span class="p">)</span>
+                <span class="n">endpoint</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">cut</span><span class="o">.</span><span class="n">point</span>
+                    <span class="k">if</span> <span class="n">cut</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">graph</span><span class="o">.</span><span class="n">_far_node</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">node</span><span class="p">)]</span>
+                <span class="p">)</span>
+                <span class="n">dangle_point</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                <span class="n">eligible_origins</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">origin</span>
+                    <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">origins</span>
+                    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">dangle_point</span><span class="p">)</span>
+                    <span class="o">&lt;=</span> <span class="n">_MAX_REMOVAL_ENDPOINT_DISTANCE_M</span>
+                    <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_MAX_REMOVAL_ENDPOINT_DISTANCE_M</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">eligible_origins</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">acted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cut</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">split</span><span class="p">,</span> <span class="n">affected</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">split_line</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">cut</span><span class="p">)</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">shared_ramp_ids</span><span class="p">:</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">ramp_changed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">other_oid</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">affected</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">remove_line</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">removed_oids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+                <span class="n">expose</span><span class="p">(</span><span class="n">affected</span><span class="p">,</span> <span class="n">eligible_origins</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">cycle</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">pendant_loop</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">max_loop_perimeter</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cycle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">acted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">loop_oid</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">loop_lines_to_remove</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">cycle</span><span class="p">):</span>
+                <span class="n">expose</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">remove_line</span><span class="p">(</span><span class="n">loop_oid</span><span class="p">),</span> <span class="n">origins</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">removed_oids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loop_oid</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">waves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acted</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Dangle removal iteration </span><span class="si">%d</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> dangles handled"</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">acted</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">wave</span> <span class="o">=</span> <span class="n">exposed</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Dangle removal stopped at max_iterations=</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">max_iterations</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_points</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Point</span><span class="p">],</span> <span class="n">out_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spatial_reference</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Create a point feature class containing `points`.</span>
+
+<span class="sd">    An existing output is deleted before it is recreated.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">out_fc</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">out_fc</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+        <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">out_fc</span><span class="p">),</span>
+        <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">out_fc</span><span class="p">),</span>
+        <span class="n">geometry_type</span><span class="o">=</span><span class="s2">"POINT"</span><span class="p">,</span>
+        <span class="n">spatial_reference</span><span class="o">=</span><span class="n">spatial_reference</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span><span class="n">out_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">"SHAPE@XY"</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">([</span><span class="n">point</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_removed_fc</span><span class="p">(</span><span class="n">template_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">removed_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Create an empty polyline feature class matching `template_fc`.</span>
+
+<span class="sd">    An existing output is deleted before it is recreated.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">removed_fc</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">removed_fc</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+        <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">removed_fc</span><span class="p">),</span>
+        <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">removed_fc</span><span class="p">),</span>
+        <span class="n">geometry_type</span><span class="o">=</span><span class="s2">"POLYLINE"</span><span class="p">,</span>
+        <span class="n">template</span><span class="o">=</span><span class="n">template_fc</span><span class="p">,</span>
+        <span class="n">spatial_reference</span><span class="o">=</span><span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">template_fc</span><span class="p">)</span><span class="o">.</span><span class="n">spatialReference</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cut_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="n">_Split</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the (dangle side, kept side) pieces of `shape` cut at the split point."""</span>
+    <span class="n">cut_point</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">PointGeometry</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="o">*</span><span class="n">split</span><span class="o">.</span><span class="n">point</span><span class="p">),</span> <span class="n">shape</span><span class="o">.</span><span class="n">spatialReference</span><span class="p">)</span>
+    <span class="n">along</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">queryPointAndDistance</span><span class="p">(</span><span class="n">cut_point</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">segmentAlongLine</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">along</span><span class="p">)</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">segmentAlongLine</span><span class="p">(</span><span class="n">along</span><span class="p">,</span> <span class="n">shape</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+    <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">firstPoint</span><span class="p">,</span> <span class="n">shape</span><span class="o">.</span><span class="n">lastPoint</span>
+    <span class="n">start_gap</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">split</span><span class="o">.</span><span class="n">dangle_point</span><span class="p">,</span> <span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">first</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
+    <span class="n">end_gap</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">split</span><span class="o">.</span><span class="n">dangle_point</span><span class="p">,</span> <span class="p">(</span><span class="n">last</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">last</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">before</span><span class="p">,</span> <span class="n">after</span><span class="p">)</span> <span class="k">if</span> <span class="n">start_gap</span> <span class="o">&lt;=</span> <span class="n">end_gap</span> <span class="k">else</span> <span class="p">(</span><span class="n">after</span><span class="p">,</span> <span class="n">before</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_attributes</span><span class="p">(</span>
+    <span class="n">row</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">line</span><span class="p">:</span> <span class="n">_Line</span><span class="p">,</span> <span class="n">set_medium</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Update a cursor row with the line's medium and ramp IDs as requested."""</span>
+    <span class="k">if</span> <span class="n">set_medium</span> <span class="ow">and</span> <span class="n">_MEDIUM_FIELD</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+        <span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">[</span><span class="n">_MEDIUM_FIELD</span><span class="p">]]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">medium</span>
+    <span class="k">if</span> <span class="n">_RAMP_ID_FIELD</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+        <span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">[</span><span class="n">_RAMP_ID_FIELD</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">ramp_ids</span><span class="p">))</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_edits</span><span class="p">(</span>
+    <span class="n">lines_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">removed_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">_EndpointGraph</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">_WaveResult</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delete removed lines, cut split lines and update ramp ids; removed parts go to `removed_fc`."""</span>
+    <span class="n">removed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">removed_oids</span><span class="p">)</span>
+    <span class="n">splits</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Split</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+        <span class="n">splits</span><span class="p">[</span><span class="n">split</span><span class="o">.</span><span class="n">oid</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">removed</span> <span class="ow">or</span> <span class="n">splits</span> <span class="ow">or</span> <span class="n">result</span><span class="o">.</span><span class="n">ramp_changed</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">field_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">editable</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"OID"</span><span class="p">,</span> <span class="s2">"Geometry"</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">position</span> <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">field_names</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">2</span><span class="p">)}</span>
+    <span class="n">removed_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">"OID@"</span><span class="p">,</span> <span class="s2">"SHAPE@"</span><span class="p">,</span> <span class="o">*</span><span class="n">field_names</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">oid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">removed</span><span class="p">:</span>
+                <span class="n">removed_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">deleteRow</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">splits</span><span class="p">:</span>
+                <span class="n">shape</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">splits</span><span class="p">[</span><span class="n">oid</span><span class="p">]:</span>
+                    <span class="n">dangle_piece</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">_cut_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span>
+                    <span class="n">removed_rows</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">dangle_piece</span><span class="p">,</span> <span class="o">*</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">:]])</span>
+                <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span>
+                <span class="n">_write_attributes</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">graph</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">],</span> <span class="n">set_medium</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">updateRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">ramp_changed</span><span class="p">:</span>
+                <span class="n">_write_attributes</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">graph</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">oid</span><span class="p">],</span> <span class="n">set_medium</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">updateRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span><span class="n">removed_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">"SHAPE@"</span><span class="p">,</span> <span class="o">*</span><span class="n">field_names</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">removed_row</span> <span class="ow">in</span> <span class="n">removed_rows</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">(</span><span class="n">removed_row</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="remove_new_dangles">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.ramps_dangles.remove_new_dangles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_new_dangles</span><span class="p">(</span>
+    <span class="n">lines_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ramp_reference_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">removed_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="n">dangle_iterations_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_false_loop_perimeter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_MAX_FALSE_LOOP_PERIMETER_M</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove ramp dangles from `lines_fc`, then dangles on the lines connected to each removal.</span>
+
+<span class="sd">    Dangles come from an endpoint graph of the `VegSenterlinje` lines: a dangle is an</span>
+<span class="sd">    endpoint with one line attached that no other line passes through. The starting</span>
+<span class="sd">    dangles are those on `typeveg = 'rampe'` lines in `ramp_reference_fc`. After a</span>
+<span class="sd">    line or a cut-off piece is removed, both ends of every line connected to it are</span>
+<span class="sd">    checked, and any dangle there is handled in the next wave, even one that existed</span>
+<span class="sd">    before the run. A line is connected if it shares an end node with the removed</span>
+<span class="sd">    geometry, ends on it, or has the removed geometry end on its interior. Removal</span>
+<span class="sd">    repeats in waves until no more eligible dangles are exposed or `max_iterations`</span>
+<span class="sd">    is reached; reaching the limit may leave dangles unprocessed.</span>
+
+<span class="sd">    A dangling line is not removed whole if, walking from the dangle, it reaches a</span>
+<span class="sd">    junction (another line's endpoint, or a crossing with a road of the same medium)</span>
+<span class="sd">    or a ramp crossing (a road of another medium sharing a `ramp_id`). It is cut at</span>
+<span class="sd">    the first one and the dangle side goes to `removed_fc`. At a ramp crossing the</span>
+<span class="sd">    kept part takes the crossed road's medium, and the shared ids are removed from</span>
+<span class="sd">    `ramp_id` on both the kept part and the crossed road. A line can be cut again</span>
+<span class="sd">    if its kept part later dangles. A junction where a loop of lines leaves and</span>
+<span class="sd">    rejoins the dangling line (a P shape) is skipped if the loop perimeter is at most</span>
+<span class="sd">    `max_false_loop_perimeter`. A loop of at most that perimeter left hanging at a</span>
+<span class="sd">    node after a removal, touched by other lines at one node at most, is removed</span>
+<span class="sd">    like a dangle. If that loop has ramp crossings, the side with the first one is</span>
+<span class="sd">    kept and then handled from the dangle, so only that crossing becomes a T cross.</span>
+<span class="sd">    Open removal paths are limited to 500 metres of straight-line distance from the</span>
+<span class="sd">    starting ramp dangle to the prospective endpoint. Pendant loops remain limited</span>
+<span class="sd">    by their perimeter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lines_fc: Line feature class edited in place.</span>
+<span class="sd">        ramp_reference_fc: Lines with `typeveg`; dangles on its ramps are the starting dangles.</span>
+<span class="sd">        removed_fc: Output recreated on each call; receives a copy of every removed line.</span>
+<span class="sd">        max_iterations: Maximum number of waves; reaching it may leave dangles unprocessed.</span>
+<span class="sd">        dangle_iterations_prefix: If set, the dangles removed in each wave are</span>
+<span class="sd">            saved as `&lt;prefix&gt;_ite1`, `&lt;prefix&gt;_ite2`, ...; existing outputs are replaced.</span>
+<span class="sd">        max_false_loop_perimeter: Largest loop perimeter in metres treated as a</span>
+<span class="sd">            false junction; 0 disables the check.</span>
+
+<span class="sd">    Existing outputs at `removed_fc` and the generated iteration paths are deleted</span>
+<span class="sd">    and recreated. `removed_fc` must not alias either input feature class.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Total number of removed lines.</span>
+<span class="sd">    """</span>
+    <span class="n">_create_removed_fc</span><span class="p">(</span><span class="n">template_fc</span><span class="o">=</span><span class="n">lines_fc</span><span class="p">,</span> <span class="n">removed_fc</span><span class="o">=</span><span class="n">removed_fc</span><span class="p">)</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">_build_graph</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">)</span>
+    <span class="n">ramp_index</span> <span class="o">=</span> <span class="n">_build_ramp_index</span><span class="p">(</span><span class="n">ramp_reference_fc</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">_remove_in_waves</span><span class="p">(</span>
+        <span class="n">graph</span><span class="p">,</span> <span class="n">ramp_index</span><span class="p">,</span> <span class="n">max_iterations</span><span class="p">,</span> <span class="n">max_false_loop_perimeter</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dangle_iterations_prefix</span><span class="p">:</span>
+        <span class="n">spatial_reference</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">)</span><span class="o">.</span><span class="n">spatialReference</span>
+        <span class="k">for</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">waves</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">_write_points</span><span class="p">(</span>
+                <span class="n">points</span><span class="o">=</span><span class="p">[</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">],</span>
+                <span class="n">out_fc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dangle_iterations_prefix</span><span class="si">}</span><span class="s2">_ite</span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">spatial_reference</span><span class="o">=</span><span class="n">spatial_reference</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">_apply_edits</span><span class="p">(</span><span class="n">lines_fc</span><span class="p">,</span> <span class="n">removed_fc</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">"Removed </span><span class="si">%d</span><span class="s2"> lines and split </span><span class="si">%d</span><span class="s2"> lines"</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">removed_oids</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">splits</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">removed_oids</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N100</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+
+    <span class="n">src</span> <span class="o">=</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">ramps__generalized_ramps__n100_road</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">test_lines</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">_dangle_test"</span>  <span class="c1"># scratch copy, the permanent file stays untouched</span>
+    <span class="p">)</span>
+    <span class="n">test_removed</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">_dangle_test_removed"</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">test_lines</span><span class="p">)</span>
+    <span class="n">removed</span> <span class="o">=</span> <span class="n">remove_new_dangles</span><span class="p">(</span>
+        <span class="n">lines_fc</span><span class="o">=</span><span class="n">test_lines</span><span class="p">,</span>
+        <span class="n">ramp_reference_fc</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preparation___road_single_part_2___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">removed_fc</span><span class="o">=</span><span class="n">test_removed</span><span class="p">,</span>
+        <span class="n">dangle_iterations_prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">_dangle_test"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removed </span><span class="si">{</span><span class="n">removed</span><span class="si">}</span><span class="s2"> lines"</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
