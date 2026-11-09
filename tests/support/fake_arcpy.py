@@ -34,6 +34,7 @@ from ag.adapters.arcpy.support.dataset_schema import (
     OID_TOKEN,
     SHAPE_TYPES,
     WHOLE_SECOND_PRECISION,
+    WORKSPACE_DATA_TYPE,
 )
 from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES, MIGRATION_TOOL
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
@@ -71,6 +72,10 @@ MEMORY_WORKSPACE = "memory"
 
 FILE_WORKSPACE = "ws"
 """The fake's default workspace, a stand-in file geodatabase."""
+
+FEATURE_DATASET = "FeatureDataset"
+"""The engine's `dataType` of a feature dataset, which the fake reports for the entries
+of `FakeEngine.feature_datasets`; the adapter never names it, it only walks past it."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -212,6 +217,9 @@ class FakeEngine(ModuleType):
             FILE_WORKSPACE: FILE_GDB_PROG_ID,
             MEMORY_WORKSPACE: MEMORY_WORKSPACE_PROG_ID,
         }
+        self.feature_datasets: dict[str, str] = {}
+        """Feature dataset path to the path it sits in; a test nests them to probe the
+        adapter's walk, though the engine does not."""
         self.calls: list[tuple[str, dict[str, object]]] = []
         self.failures: dict[str, str] = {}
         self.children: dict[str, Mapping[int, Sequence[object]]] = {}
@@ -260,9 +268,14 @@ class FakeEngine(ModuleType):
         dataset = self.datasets.get(path)
         if dataset is None:
             prog_id = self.workspaces.get(path)
-            if prog_id is None:
-                raise OSError(f'"{path}" does not exist')
-            return SimpleNamespace(workspaceFactoryProgID=prog_id)
+            if prog_id is not None:
+                return SimpleNamespace(
+                    dataType=WORKSPACE_DATA_TYPE, workspaceFactoryProgID=prog_id
+                )
+            parent = self.feature_datasets.get(path)
+            if parent is not None:
+                return SimpleNamespace(dataType=FEATURE_DATASET, path=parent)
+            raise OSError(f'"{path}" does not exist')
         return SimpleNamespace(
             path=dataset.workspace,
             dataType=dataset.data_type,

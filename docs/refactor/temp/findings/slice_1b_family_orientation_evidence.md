@@ -431,6 +431,45 @@ Describe `path` attribute names the dataset's workspace and the workspace's
 `workspaceFactoryProgID` is the memory one; both held. Nothing on the date rule is open
 on the engine. A33's text in `DECISIONS.md` was approved and applied the same day.
 
+### Review rounds three and four, 2026-11-09
+
+Four points adopted, one adapted, from the reviewer's third round, and three adopted from
+the fourth; assumptions checked against the tree before acting, the session's guard
+among them (it wraps the vendor class and an exact `RuntimeError` or `OSError`, so a
+missing Describe attribute leaves as a raw `AttributeError`).
+
+- **Two engine behaviours the date rule rests on, unobserved** (W26, W27). `read_rows`
+  rounds a `precision` 0 value to its second, but whether the engine's own where clause
+  on that second selects a value that reads back a microsecond off is not shown, and
+  the compiler's docstring predicted the disagreement PC-D17 forbids. The `precision`
+  1 store is documented as milliseconds, the writer's docstring said both that and
+  "nothing is reduced", and the marked test's one-millisecond window cannot tell
+  truncation from rounding. `docs/refactor/temp/w26_w27_date_store_probe.py`, counts
+  only, settles both; the writer's text, A33.2's millisecond rule for `write_rows` and
+  the marked test's assertion follow its output.
+- **An empty polygon ring** raised `IndexError` from `_signed_area` on construction and
+  through the codec, where both had constructed before; the guard would have let it out
+  raw. A ring under two vertices now has signed area zero and keeps its order, like any
+  degenerate ring; whether it is a valid ring is B33's. Unit tests on the value and on
+  the codec; break-once P31 in the ports set.
+- **The workspace walk.** A feature class in a feature dataset has the feature dataset
+  as its `path`, whose Describe is not shown to carry `workspaceFactoryProgID`. The
+  lookup now walks `path` upward until a Describe reports `dataType` `Workspace`
+  (`WORKSPACE_DATA_TYPE`), at most `WORKSPACE_DEPTH` = 2 steps, since feature datasets
+  do not nest, and refuses with `PortContractError` naming the dataset past that. Unit
+  tests on the fake, which models feature datasets and nests them to reach the refusal;
+  break-once D7; a marked case in `tests/engine/arcpy/test_dataset_schema.py`, a feature
+  class with a bare date field inside a feature dataset, described and read, awaiting
+  the image.
+- **The arcpy break-once set in full**, after the date rule and these changes:
+
+```
+$ uv run --locked --extra dev python -m tools.break_once arcpy_adapter --out ...
+break-it-once: 28 cases, 0 unexpected   (P4, R3 changed; R4, D5, D6, D7, W1, W2 new)
+$ uv run --locked --extra dev python -m tools.break_once ports --out ...
+break-it-once: 31 cases, 0 unexpected   (P31 new)
+```
+
 ## Records
 
 - ADR-0019 PC-D17 adapted per A33.1: `DATE` carried to microsecond precision, an adapter

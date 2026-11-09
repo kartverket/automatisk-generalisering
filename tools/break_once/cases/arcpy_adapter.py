@@ -160,14 +160,26 @@ CASES: tuple[Case, ...] = (
         SCHEMA,
         (
             (
-                "    if whole_second and _workspace_prog_id(session, raw.workspace) == (\n",
-                "    if False and _workspace_prog_id(session, raw.workspace) == (\n",
+                "    if whole_second:\n        prog_id = _workspace_prog_id(",
+                "    if False:\n        prog_id = _workspace_prog_id(",
             ),
         ),
         (
             f"{T_SCHEMA}::"
             "test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision",
         ),
+    ),
+    Case(
+        "D7",
+        "the workspace walk unbounded, so a nested path is followed instead of refused",
+        SCHEMA,
+        (
+            (
+                "    for _ in range(WORKSPACE_DEPTH):\n",
+                "    while True:\n",
+            ),
+        ),
+        (f"{T_SCHEMA}::test_a_dataset_with_no_workspace_within_two_levels_is_refused",),
     ),
     Case(
         "W2",

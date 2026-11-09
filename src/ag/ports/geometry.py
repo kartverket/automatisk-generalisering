@@ -191,7 +191,11 @@ def _turned(ring: Ring, *, clockwise: bool) -> Ring:
 def _signed_area(ring: Ring) -> float:
     """Twice the shoelace area, positive counter-clockwise, taken relative to the first
     vertex: at projected coordinates in the hundreds of kilometres the plain form loses
-    the sign of a ring a few millimetres across to rounding, and this form does not."""
+    the sign of a ring a few millimetres across to rounding, and this form does not. A
+    ring under two vertices has no area and keeps its order; whether it is a valid ring
+    at all is not decided here."""
+    if len(ring) < 2:
+        return 0.0
     x0, y0 = ring[0]
     return sum(
         (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)

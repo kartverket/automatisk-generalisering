@@ -21,7 +21,11 @@ fraction regardless, and refuses the migration tool (the marked run of 2026-11-0
 dataset there has no whole-second field: `in_memory_workspace` reads the workspace's
 `workspaceFactoryProgID`, the one place that spelling lives, and `describe` consults it
 only when a date field at 0 is present, so a dataset without one costs no second
-Describe. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
+Describe. The workspace is found by walking a dataset's `path` upward until a Describe
+reports `dataType` `Workspace`, at most `WORKSPACE_DEPTH` steps, since a feature class
+sits in its workspace or in one feature dataset inside it and feature datasets do not
+nest; a walk that reaches no workspace within that is a `PortContractError` naming the
+path, not a loop or a failure on an unrelated Describe. Every other type, `BigInteger`, `Single`, `GUID`, `GlobalID`,
 `Blob`, `Raster`, `DateOnly`, `TimeOnly`, `TimestampOffset` and any later one, is
 unrepresentable and recorded rather than refused: a dataset carrying such a field is
 read and selected over as long as no call names the field, and naming one is a
@@ -113,6 +117,13 @@ MEMORY_WORKSPACE_PROG_ID = "esriDataSourcesGDB.MemoryWorkspaceFactory"
 """The `workspaceFactoryProgID` of the engine's in-memory workspace, which keeps a date's
 fraction at any `precision` and takes no migration."""
 
+WORKSPACE_DATA_TYPE = "Workspace"
+"""The engine `dataType` of a workspace's Describe, where `workspaceFactoryProgID` lives."""
+
+WORKSPACE_DEPTH = 2
+"""How many `path` steps up a dataset's workspace is at most: one for a dataset in its
+workspace, two for a feature class in a feature dataset, which do not nest."""
+
 
 @dataclass(frozen=True, slots=True)
 class _Raw:
@@ -179,10 +190,10 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
             declared.append(Field(name, field_type))
             if field_type is FieldType.DATE and precision == WHOLE_SECOND_PRECISION:
                 whole_second.add(name)
-    if whole_second and _workspace_prog_id(session, raw.workspace) == (
-        MEMORY_WORKSPACE_PROG_ID
-    ):
-        whole_second.clear()
+    if whole_second:
+        prog_id = _workspace_prog_id(session, raw.workspace, dataset=path)
+        if prog_id == MEMORY_WORKSPACE_PROG_ID:
+            whole_second.clear()
     return DescribedDataset(
         path=path,
         schema=Schema(
@@ -203,16 +214,27 @@ def in_memory_workspace(session: ArcpySession, path: str, /) -> bool:
     with session.guard("Describe"):
         import arcpy
 
-        workspace = arcpy.Describe(path).path
-    return _workspace_prog_id(session, workspace) == MEMORY_WORKSPACE_PROG_ID
+        parent = arcpy.Describe(path).path
+    return _workspace_prog_id(session, parent, dataset=path) == MEMORY_WORKSPACE_PROG_ID
 
 
-def _workspace_prog_id(session: ArcpySession, workspace: str, /) -> str:
-    """The `workspaceFactoryProgID` of `workspace`, under the guard."""
-    with session.guard("Describe"):
-        import arcpy
+def _workspace_prog_id(session: ArcpySession, parent: str, /, *, dataset: str) -> str:
+    """The `workspaceFactoryProgID` of the workspace that holds `dataset`, starting from
+    its `parent` path and walking up at most `WORKSPACE_DEPTH` Describes."""
+    path = parent
+    for _ in range(WORKSPACE_DEPTH):
+        with session.guard("Describe"):
+            import arcpy
 
-        return arcpy.Describe(workspace).workspaceFactoryProgID
+            described = arcpy.Describe(path)
+            if described.dataType == WORKSPACE_DATA_TYPE:
+                return described.workspaceFactoryProgID
+            path = described.path
+    raise PortContractError(
+        f"{dataset!r} has no workspace within {WORKSPACE_DEPTH} levels of its path; a "
+        "dataset sits in its workspace or in one feature dataset inside it.",
+        context=ErrorContext(handle=dataset),
+    )
 
 
 def declared_field(dataset: DescribedDataset, name: FieldName, /) -> Field:

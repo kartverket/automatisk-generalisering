@@ -89,6 +89,8 @@ def test_lines_and_points_are_never_reoriented() -> None:
 @pytest.mark.parametrize(
     "ring",
     [
+        (),
+        ((500000.0, 7000000.0),),
         ((500000.0, 7000000.0), (500001.0, 7000001.0)),
         (
             (500000.0, 7000000.0),
@@ -97,7 +99,7 @@ def test_lines_and_points_are_never_reoriented() -> None:
             (500000.0, 7000000.0),
         ),
     ],
-    ids=["two-vertices", "collinear"],
+    ids=["empty", "one-vertex", "two-vertices", "collinear"],
 )
 def test_a_ring_of_zero_area_keeps_its_order(ring: Ring) -> None:
     """A degenerate ring has no orientation to repair; what B33 does with it is B33's."""

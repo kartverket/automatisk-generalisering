@@ -3,6 +3,8 @@ None, and what the port cannot hold is refused by name. ADR-0019 PC-D25."""
 
 from __future__ import annotations
 
+import struct
+
 import pytest
 
 from ag.adapters.arcpy.support.geometry_values import (
@@ -76,6 +78,22 @@ def test_what_the_port_cannot_hold_is_refused_naming_the_row(
     with pytest.raises(PortContractError, match=message) as caught:
         geometry_from_wkb(data, crs=CRS, where="'roads' row 3")
     assert "'roads' row 3" in str(caught.value)
+
+
+def test_a_polygon_ring_of_no_points_constructs_and_keeps_its_place() -> None:
+    """The codec leaves what a ring holds to the port; an empty ring is a value the port
+    accepts today, and what becomes of it is B33's question, not an IndexError."""
+    ring = wkb.to_wkb(Geometry.linestring(SQUARE, crs=CRS))[5:]  # count and points
+    data = (
+        b"\x01"
+        + struct.pack("<I", wkb.POLYGON)
+        + struct.pack("<I", 2)
+        + ring
+        + struct.pack("<I", 0)
+    )
+    found = geometry_from_wkb(data, crs=CRS, where="probe")
+    assert found is not None
+    assert found.parts == (SQUARE, ())
 
 
 def test_an_unreadable_type_is_not_null() -> None:

@@ -77,6 +77,40 @@ def test_describe_names_the_date_fields_whose_store_holds_whole_seconds(
     assert describe(session, "raw").schema == describe(session, "own").schema
 
 
+def test_the_workspace_is_found_through_a_feature_dataset(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """A feature class in a feature dataset is two `path` steps from its workspace."""
+    engine.feature_datasets[f"{MEMORY_WORKSPACE}/fd"] = MEMORY_WORKSPACE
+    engine.feature_datasets["ws/fd"] = "ws"
+    seed(engine, roads(), path="ws/fd/roads", date_precision=WHOLE_SECOND_PRECISION)
+    seed(
+        engine,
+        roads(),
+        path=f"{MEMORY_WORKSPACE}/fd/roads",
+        date_precision=WHOLE_SECOND_PRECISION,
+    )
+    assert describe(session, "ws/fd/roads").whole_second_fields == {"surveyed"}
+    assert describe(session, f"{MEMORY_WORKSPACE}/fd/roads").whole_second_fields == (
+        frozenset()
+    )
+
+
+def test_a_dataset_with_no_workspace_within_two_levels_is_refused(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """Feature datasets do not nest, so a walk that finds none in two steps is a
+    contract error naming the dataset, not a loop or an unrelated Describe failure."""
+    engine.feature_datasets["ws/a"] = "ws"
+    engine.feature_datasets["ws/a/b"] = "ws/a"
+    seed(engine, roads(), path="ws/a/b/roads", date_precision=WHOLE_SECOND_PRECISION)
+    with pytest.raises(
+        PortContractError, match="no workspace within 2 levels"
+    ) as caught:
+        describe(session, "ws/a/b/roads")
+    assert caught.value.context.handle == "ws/a/b/roads"
+
+
 def test_a_memory_workspace_dataset_has_no_whole_second_field_at_any_precision(
     engine: FakeEngine, session: ArcpySession
 ) -> None:

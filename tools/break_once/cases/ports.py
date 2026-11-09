@@ -149,6 +149,17 @@ CASES: tuple[Case, ...] = (
         tests_in(T_GEOM, "test_a_ring_of_zero_area_keeps_its_order"),
     ),
     Case(
+        "P31",
+        "an empty polygon ring an IndexError on construction",
+        GEOMETRY,
+        (("    if len(ring) < 2:\n        return 0.0\n", ""),),
+        (
+            f"{T_GEOM}::test_a_ring_of_zero_area_keeps_its_order[empty]",
+            "tests/unit/adapters/arcpy/test_geometry_values.py::"
+            "test_a_polygon_ring_of_no_points_constructs_and_keeps_its_place",
+        ),
+    ),
+    Case(
         "P4",
         "Row without slots",
         TABLE,
