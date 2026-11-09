@@ -284,13 +284,13 @@ def data_selection(files: dict, arealdekke_fc: str) -> None:
         arealdekke_fc (str): The land use (ArealdekkeFlate_N10) selected for the run
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
+        input_layer=arealdekke_fc,
         expression=f"OBJTYPE IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["water_fc"],
         selection_type="NEW_SELECTION",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_selection___ArealdekkeFlate_N10___n100_road.value,
+        input_layer=arealdekke_fc,
         expression=f"OBJTYPE NOT IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["other_area_fc"],
         selection_type="NEW_SELECTION",
