@@ -146,17 +146,38 @@ CASES: tuple[Case, ...] = (
                 "    if (area < 0.0) is clockwise:\n",
             ),
         ),
-        tests_in(T_GEOM, "test_a_ring_of_zero_area_keeps_its_order"),
+        tests_in(T_GEOM, "test_a_collinear_ring_of_zero_area_keeps_its_order"),
     ),
     Case(
         "P31",
-        "an empty polygon ring an IndexError on construction",
+        "a ring under four coordinates or a line under two accepted, so a whole-ring curve passes as data",
         GEOMETRY,
-        (("    if len(ring) < 2:\n        return 0.0\n", ""),),
         (
-            f"{T_GEOM}::test_a_ring_of_zero_area_keeps_its_order[empty]",
+            (
+                "        least = _LEAST_COORDINATES.get(self.kind.family)\n",
+                "        least = None\n",
+            ),
+        ),
+        tests_in(
+            T_GEOM, "test_a_ring_under_four_coordinates_or_a_line_under_two_is_refused"
+        ),
+    ),
+    Case(
+        "P32",
+        "the codec lets the port's refusal out as a bare ValueError instead of naming the row",
+        "src/ag/adapters/arcpy/support/geometry_values.py",
+        (
+            (
+                "    except ValueError as error:\n"
+                '        raise PortContractError(f"{where}: {error}") from error\n',
+                "    except ValueError as error:\n        raise error\n",
+            ),
+        ),
+        (
             "tests/unit/adapters/arcpy/test_geometry_values.py::"
-            "test_a_polygon_ring_of_no_points_constructs_and_keeps_its_place",
+            "test_a_ring_under_four_coordinates_is_refused_naming_the_row[empty-hole]",
+            "tests/unit/adapters/arcpy/test_geometry_values.py::"
+            "test_a_ring_under_four_coordinates_is_refused_naming_the_row[two-vertex-hole]",
         ),
     ),
     Case(

@@ -18,7 +18,10 @@ the engine's own rule for the dataset's workspace (PC-D20); text literals by SQL
 doubled quote; dates in the file geodatabase form, `date 'YYYY-MM-DD HH:MM:SS'`, with
 the fraction appended as `.ffffff` when there is one, which both workspaces compare with
 its fraction (the probe of 2026-11-08: a fractional literal matched the stored fraction
-and nothing else), so a whole-second literal never matches a value a microsecond off.
+and nothing else). On a whole-second store the engine's equality on the stored second
+selects every row, including the one in eight that reads back a microsecond off (the
+probe of 2026-11-09: 118 of 118), so `select` and `read_rows`, which reads such a field
+to its second, agree on every row (PC-D17).
 An enterprise geodatabase dialect is not built. A `Spatial` leaf is not compiled yet and
 raises `NotImplementedError`, which is not a port error, so no caller mistakes it for a
 contract breach; its route, the engine's layer selection with negation pushed to the

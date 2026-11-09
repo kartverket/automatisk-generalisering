@@ -16,14 +16,14 @@ How: AddField's vocabulary (`LONG`, `TEXT`) is not the vocabulary Describe repor
 `dataset_schema.FIELD_TYPES` and `SHAPE_TYPES`: the engine spells each type two ways,
 and each table sits with the call that speaks it. A TEXT field carries its length. A DATE field is added at the engine's default
 precision, a store of whole seconds that rounds what it is given, and then migrated by
-`MIGRATION_TOOL` to precision 1, which holds the fraction and matches a fractional
-literal (the probe of 2026-11-08), so every date field this adapter creates holds what
-the port carries and nothing the adapter writes is reduced (A33). The in-memory
-workspace keeps the fraction as it is and refuses the tool (the marked run of
-2026-11-09), so a dataset there is not migrated. The engine's own
-documentation gives that store milliseconds; the marked test holds a value written with
-microseconds to within a millisecond. The rows are cell tuples in
-the order of `tokens`, a geometry already encoded as the `WKB_TOKEN` cell where there is
+`MIGRATION_TOOL` to precision 1, a store of milliseconds (the probe of 2026-11-09:
+millisecond-aligned values read back as written, a fifth of them a few microseconds
+off, which is the double encoding's noise and not a finer grain). The in-memory
+workspace is the same millisecond store at any precision and refuses the tool (the
+marked run of 2026-11-09), so a dataset there is not migrated. So the adapter's store
+holds a date to the millisecond: under A33, `write_rows` truncates a fraction to the
+millisecond before handing it over, and a round trip is identity to that grain. The rows
+are cell tuples in the order of `tokens`, a geometry already encoded as the `WKB_TOKEN` cell where there is
 one; nothing here holds a cell to its field, which is the caller's rule (ADR-0019
 PC-D26). Every engine call runs inside the session's guard or through `run_tool`
 (ADR-0018 AR-D23).

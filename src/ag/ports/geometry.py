@@ -106,8 +106,15 @@ class Geometry:
     Polygon rings are canonical: a polygon's exterior and every member of a multipolygon
     run counter-clockwise and a hole runs clockwise, applied on construction, so one
     polygon has one representation and a round trip through any adapter is identity. A
-    ring of zero signed area, two vertices or collinear ones, keeps its order. Line
-    direction is never touched.
+    ring of zero signed area, collinear vertices, keeps its order. Line direction is
+    never touched. A polygon ring under four coordinates or a line under two is
+    refused, on every ring, exterior, hole and member alike: the port carries straight
+    segments and no true curve (ADR-0019 PC-D30), and an engine exports a curve that is
+    a whole ring, a buffered point's circle, as its two end vertices, so such a ring is
+    the one trace of a curve a value can show; a line under two coordinates has no
+    segment. This is the backstop for a whole-ring curve, not the guard: a curved
+    corner inside a longer ring reads as a straight chord and is caught only by the
+    adapter densifying where curves arise.
 
     Why: a `coords` field for simple kinds beside a `parts` field for multi-kinds means every
     reader checks which one is populated, and the check is forgotten in the one place a
@@ -142,6 +149,16 @@ class Geometry:
                 "POINT must be exactly one part of one coordinate, got parts of lengths "
                 f"{[len(part) for part in self.parts]}"
             )
+        least = _LEAST_COORDINATES.get(self.kind.family)
+        if least is not None:
+            short = [len(part) for part in self.parts if len(part) < least]
+            if short:
+                raise ValueError(
+                    f"{self.kind.value} has a part of {short[0]} coordinate(s); a "
+                    f"{self.kind.family.value} part needs at least {least}. A ring this "
+                    "short is what an engine exports a true curve as, which the port "
+                    "does not carry."
+                )
         if self.kind.family is GeometryFamily.POLYGON:
             object.__setattr__(self, "parts", _canonical(self.kind, self.parts))
 
@@ -164,6 +181,11 @@ class Geometry:
     def linestring(cls, coords: Ring, *, crs: CRS) -> Geometry:
         """A linestring geometry from one coordinate sequence."""
         return cls(kind=GeometryKind.LINESTRING, parts=(tuple(coords),), crs=crs)
+
+
+_LEAST_COORDINATES = {GeometryFamily.LINE: 2, GeometryFamily.POLYGON: 4}
+"""The fewest coordinates a part of the family may hold: a segment for a line, a closed
+triangle for a ring."""
 
 
 def _canonical(kind: GeometryKind, parts: tuple[Ring, ...]) -> tuple[Ring, ...]:
@@ -191,11 +213,7 @@ def _turned(ring: Ring, *, clockwise: bool) -> Ring:
 def _signed_area(ring: Ring) -> float:
     """Twice the shoelace area, positive counter-clockwise, taken relative to the first
     vertex: at projected coordinates in the hundreds of kilometres the plain form loses
-    the sign of a ring a few millimetres across to rounding, and this form does not. A
-    ring under two vertices has no area and keeps its order; whether it is a valid ring
-    at all is not decided here."""
-    if len(ring) < 2:
-        return 0.0
+    the sign of a ring a few millimetres across to rounding, and this form does not."""
     x0, y0 = ring[0]
     return sum(
         (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)

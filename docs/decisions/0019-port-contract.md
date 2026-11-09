@@ -144,6 +144,14 @@ on a stable id and may carry geometry.
 - **PC-D27** Coordinates are planar. No Z and no M cross a port; heights and depths are
   attribute values on points. An adapter refuses a dataset carrying Z or M values before
   any row is read.
+- **PC-D30** No true curve crosses a port: the port carries planar simple features with
+  straight segments. An adapter's method whose engine tool writes curves densifies its
+  own output, never its input, within the deviation the session environment sets, before
+  anything reads it; ingest densifies raw inputs before any stage reads them. A polygon
+  ring under four coordinates or a line under two is refused on construction, on every
+  ring, exterior, hole and member alike: the backstop for a curve that is a whole ring,
+  which an engine exports as its two end vertices, and not the guard, since a curved
+  corner inside a longer ring reads as a straight chord.
 
 ## PC-5 Parents capability
 

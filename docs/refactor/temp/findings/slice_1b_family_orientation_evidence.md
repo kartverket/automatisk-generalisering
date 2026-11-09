@@ -503,15 +503,122 @@ Two probes, written 2026-11-09, their output to be pasted here:
   curve, a buffered line straight segments, a buffered polygon curves at its corners) and
   the engine's documented Densify behaviour into image facts.
 
-What follows the counts: B33 closed with them as the reason T3.4's step exists or does
-not; T3.4's bullet as a rule covering future sources (a zero count: ingest checks each
-new source for curves; a non-zero count: ingest densifies every raw input); ADR-0019
-PC-D30 beside PC-D27; T4.11's follow-up, each curve-producing method densifying its own
-output, never its input, the deviation in the session environment tied to the XY
-tolerance, and a marked acceptance reading `hasCurves` on every row in both workspaces;
-the refusal with its tests and break-once case. If the count finds degenerate rings in a
-source, how ingest handles them is proposed with the count in hand, as holed members are
-handled.
+### W28, the count, 2026-11-09
+
+Run detached on the plain `cp -a` copies of the three raw geodatabases, fifteen feature
+classes, 39.7 million rows in 21 minutes; `hasCurves` through `SHAPE@` per row and the
+per-ring WKB walk in one cursor. The `dataset` lines, batch lines left out:
+
+| feature class | shape | rows | curved rows | rings under 4 | lines under 2 | s |
+|---|---|---|---|---|---|---|
+| `AnleggsLinje_N50` | Polyline | 29,506 | 20 | 0 | 0 | 0.2 |
+| `BygningsPunkt_N10` | Point | 1,167,072 | 0 | 0 | 0 | 3.9 |
+| `Grunnriss_N10` | Polygon | 43,735 | 69 | 0 | 0 | 0.4 |
+| `TuristHytte_N10` | Point | 1,864 | 0 | 0 | 0 | 0.0 |
+| `Begrensningskurve_N50` | Polyline | 1,220,991 | 0 | 0 | 0 | 12.4 |
+| `AdminGrense_N50` | Polyline | 1,083 | 0 | 0 | 0 | 0.1 |
+| `AdminFlate_N50` | Polygon | 365 | 0 | 0 | 0 | 0.1 |
+| `ArealdekkeFlate_N50` | Polygon | 526,121 | 0 | 0 | 0 | 42.0 |
+| `ArealdekkeFlate_N10` | Polygon | 3,044,617 | 0 | 0 | 0 | 119.0 |
+| `ArealdekkeFlate` | Polygon | 14,730,236 | 0 | 4,312 | 0 | 714.5 |
+| `Fishnet_500m` | Polygon | 1,887,170 | 0 | 0 | 0 | 13.4 |
+| `Arealdekke_Test` | Polygon | 469 | 0 | 0 | 0 | 0.0 |
+| `fkb_vann_omrade` | Polygon | 2,344,625 | 0 | 0 | 0 | 138.1 |
+| `fkb_vann_grense` | Polyline | 14,695,279 | 0 | 0 | 0 | 208.7 |
+| `fkb_vann_posisjon` | Point | 176,351 | 0 | 0 | 0 | 0.7 |
+
+Two sources hold true curves, so by the architect's rule ingest densifies raw inputs
+(T3.4; whether every input or only the curved rows is W30). One source holds 4,312
+polygon rings under four coordinates, none of them curves: bad source geometry, which
+ingest repairs or removes (T3.4, W31) and which a port read refuses. The counts are from
+that day's copies, which is why T3.4 records a rule. Which geodatabases under
+`ag_inputs/raw_data` beyond these three the stages read is for the architect to name.
+The `SHAPE@` pass priced itself: 20,600 rows a second on the 14.7M-row polygons and
+70,400 on the lines, against 46,000 and 121,000 for the bare WKB cursor in the timing
+run, so a per-row `hasCurves` check on read would have cost more than the codec does.
+
+### W29, buffer and Densify, 2026-11-09
+
+`analysis.Buffer` with `buffer_distance_or_field="10 Meters"` and every other parameter
+at its default (full side, round end, no dissolve, planar method) over the `points`,
+`roads` and `polygons` cases (two points; three two-vertex lines; an axis-aligned square
+with a square hole and a two-member multipolygon), then `edit.Densify` with
+`densification_method="OFFSET"` and `max_deviation="0.01 Meters"` on the output:
+
+```
+== buffers written to probe.gdb ==
+  points after Buffer:    rows=2 with_curves=2 vertices=[2, 2]
+  points after Densify:   rows=2 with_curves=0 vertices=[37, 37]
+  roads after Buffer:     rows=3 with_curves=0 vertices=[99, 99, 99]
+  roads after Densify:    rows=3 with_curves=0 vertices=[99, 99, 99]
+  polygons after Buffer:  rows=2 with_curves=0 vertices=[101, 107]
+  polygons after Densify: rows=2 with_curves=0 vertices=[101, 107]
+== buffers written to memory ==  (identical)
+```
+
+A buffered point is one true curve, read as two vertices, as the architect saw in Pro; a
+buffered line is straight segments, as in Pro; a buffered polygon had no curve on the
+image where the architect saw curved corners in Pro, both recorded as observed (W29).
+Densify's offset method at one centimetre makes the ten-metre circle 37 segments and
+`hasCurves` false, in both workspaces, so the acceptance test of every curve-producing
+method is viable. Vertex counts of curve-free rows were unchanged; whether their
+coordinates were is W30.
+
+### W26 and W27, the date stores, 2026-11-09
+
+```
+== W26, precision 0, 1000 whole seconds written ==
+read back: 1000; with a microsecond part: 118
+of those, engine equality on the rounded second: {'selected by the rounded literal': 118}
+control, 52 exact reads selected by their own literal: 52
+== W27, precision 1, 1015 values written, 1015 read ==
+  millisecond-aligned: exact: 792      millisecond-aligned: other: 208
+  sub-millisecond: truncated to the millisecond: 9   rounded: 4   other: 2
+== W27, memory, precision 0, 1015 values written, 1015 read ==
+  millisecond-aligned: exact: 842      millisecond-aligned: other: 158
+  sub-millisecond: truncated to the millisecond: 9   rounded: 4   other: 2
+```
+
+**W26, settled.** The engine's equality on the rounded second selects every one of the
+118 reads that came back a microsecond off, so `select` and `read_rows` agree on every
+row of a whole-second store (PC-D17); the compiler's docstring states it.
+
+**W27, the fraction store is milliseconds with the same noise.** A fifth of the
+millisecond-aligned values read back a few microseconds off, in the file geodatabase at
+`precision` 1 and in the memory workspace alike; the `stamps` case passed because one
+half is exact in binary. For a sub-millisecond value handed raw to the cursor the
+engine's result is mixed and unreadable through the noise, which does not matter: under
+A33 `write_rows` truncates to the millisecond itself. The reader's rule therefore
+generalises to a store grain per field, a second at `precision` 0, a millisecond at
+`precision` 1 and in the memory workspace, `read_rows` rounding to it; the architect
+agreed (2026-11-09: second accuracy is enough, as long as the original values are
+preserved and nothing crashes). It lands after the probe's next run shows the engine's
+equality on the millisecond-rounded literal selects the noisy reads, which the probe now
+counts, since the rule rests on `select` and `read_rows` agreeing at that grain too.
+
+### What landed with B33's closing, 2026-11-09
+
+- `ports/geometry.py` refuses a polygon ring under four coordinates or a line under two,
+  on every ring; the codec reports the refusal as the row's `PortContractError`. Tests
+  on the value (empty, one, two and three coordinates, as exterior, hole and member; a
+  one-coordinate line and member; the shortest valid parts) and on the codec; break-once
+  P31 and P32.
+- ADR-0019 PC-D30 added beside PC-D27. Direction affected: no.
+- B33 closed with the counts and the sources ingest has to clean; B34 opened for the
+  port methods ingest's order needs and the removed-at-ingest case.
+- T3.4: lineage first, cleanup after, read last, with the order and why; the densify
+  rule with W30; the repair rule with W31. T4.11: the millisecond truncation in
+  `write_rows`, the densify-your-output rule and its acceptance, W29.
+- The writer's docstring states the store's grain and drops "nothing is reduced"; the
+  compiler's states the W26 fact.
+- `w26_w27_date_store_probe.py` gains the select count at the millisecond grain.
+
+Waiting on that run: the store-grain generalisation in `describe` and `read_rows`,
+A33.2's millisecond line (the architect's approval of the text), and the marked test
+asserting an exact read of a millisecond-aligned, non-binary-exact value.
+
+W-items opened here: W28 the count (done), W29 the Pro observation against the image,
+W30 Densify on curve-free rows, W31 the repair tool on a ring under four coordinates.
 
 ## Records
 

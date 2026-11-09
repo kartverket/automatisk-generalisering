@@ -2709,7 +2709,33 @@ adapter concern at the boundary (PC-D25), the write side orienting and a value a
 come back with its rings reversed.
 `destination:` `ports/geometry.py` when decided.
 
-**B33. True curves at the port boundary.** Opened 2026-11-07 with the timing run. The engine
+**B33. True curves at the port boundary.** *Closed 2026-11-09.* The project does not
+support or deliver true curves: the port carries planar simple features with straight
+segments (ADR-0019 PC-D30), settled as B30 was. The guard is densifying where curves
+arise: an adapter method whose engine tool writes curves, buffer first, densifies its own
+output, never its input, within the deviation the session environment sets, and is
+accepted by a marked test reading `hasCurves` on every row in both workspaces; ingest
+(T3.4) densifies raw inputs before any stage reads them. The degenerate-ring refusal, a
+polygon ring under four coordinates or a line under two on every ring, exterior, hole and
+member alike, is the backstop for a curve that is a whole ring, which the engine exports
+as its two end vertices, and not the guard: a curved corner inside a longer ring reads as
+a straight chord, off by about 0.29 of the radius on a right angle, and keeps its
+coordinates. Not taken: a per-row `hasCurves` check on read, since nothing after ingest
+holds a curve and the check costs what the null pre-pass costs. Why the loss is new with
+the port: the legacy code reads geometry objects, which keep curves; the port reads WKB,
+which drops them. What the sources hold, counted 2026-11-09 on that day's copies of the
+three raw geodatabases, fifteen feature classes, 39.7 million rows
+(`temp/w28_curve_count_probe.py`): `AnleggsLinje_N50` 20 curved rows of 29,506,
+`Grunnriss_N10` 69 of 43,735, no other curve anywhere; `ArealdekkeFlate` 4,312 polygon
+rings under four coordinates in 14.7 million rows, no curve among them; so ingest has
+sources to clean today, and T3.4 records a rule, not these numbers, since sources change
+over the system's life. On the image a buffered point is one true curve, a buffered line
+and a buffered polygon straight segments, and `edit.Densify` with the offset method
+removes the curve in both workspaces (`temp/w29_buffer_densify_probe.py`); the
+architect saw curved corners on polygon buffers in Pro, recorded as observed (W29).
+Landed: the refusal in `ports/geometry.py`, the codec's mapping of it to the row's
+`PortContractError`, PC-D30, T3.4's cleanup order and rule, T4.11's follow-up; the gaps
+ingest's design needs are B34. As opened: Opened 2026-11-07 with the timing run. The engine
 exports a true curve through `SHAPE@WKB` as neither a densified ring nor a curve code but
 the arc's vertices alone: a buffered point read back as a planar polygon of one ring and
 two vertices (probe, 2026-11-06). The codec accepts it and `Geometry` validates only a
@@ -2722,4 +2748,21 @@ adapter densifying the output of each curve-producing method through a tool; a p
 `hasCurves` check through `SHAPE@`, a stub name and an unpriced per-row cost; a one-off
 probe counting true curves per source, which answers whether any of it is needed.
 Re-assessed once B31 and B32 have landed, before the pull request that carries them.
-`destination:` `ports/geometry.py` and the codec when decided.
+`destination:` ADR-0019 PC-D30, `ports/geometry.py`, the codec, T3.4 and T4.11.
+
+**B34. Ingest's cleanup through port methods: the gaps.** Opened 2026-11-09 with B33's
+closing. The architect's constraints for ingest: lineage is stamped first and cleanup
+runs after, so every cleanup step is an ordinary port method whose lineage is carried or
+minted like any stage's; ingest removes raw rows without geometry, cleans topology, and
+fixes or removes short rings; the work itself waits until the legacy code moves into the
+new architecture. The order T3.4 records, (a) stamp through `calculate_field` reading no
+row, (b) clean through port methods backed by engine tools on the copy, (c) `read_rows`
+only after that, needs what the port does not yet have: a way to select rows by their
+geometry, null or degenerate, since `Attr.is_null` takes an attribute field and
+`read_rows` refuses such a row rather than filtering it; a densify and a repair method,
+with what the engine's repair tool does to a ring under four coordinates a W-item; and
+`calculate_field`, declared in PC-D22 and not landed. One more consequence to decide: a
+cleanup step that removes a row leaves its lineage id in the ingest map with no
+survivor, which an A23 walk must report as removed at ingest, a terminal kind the map's
+`boundary_kind` does not yet name. Open until ingest is designed; nothing built now.
+`destination:` the ingest task (T3.4) and ADR-0019 when decided.

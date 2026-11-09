@@ -13,7 +13,10 @@ not, `select` and `read_rows` disagree on the same row (ADR-0019 PC-D17). W27: a
 `precision` 1 field holds the fraction; the engine documents it as milliseconds. Whether
 a sub-millisecond part is truncated or rounded, and whether a millisecond-aligned value
 reads back exact, is not shown either, and A33 asks the adapter to state its store's
-precision and to truncate itself to it.
+precision and to truncate itself to it. The first run (2026-11-09) showed the
+millisecond store reads back off by microseconds as the whole-second one does, so the
+second question is W26's at the millisecond grain: whether engine equality on the
+millisecond-rounded literal, in the compiler's six-digit form, selects those reads.
 
 What it does, on synthetic data: a fresh file geodatabase; a table with one AddField
 DATE field at `precision` 0 and a thousand whole-second values spread over several
@@ -81,7 +84,15 @@ second."""
 
 
 def literal(value: datetime) -> str:
-    return f"date '{value:%Y-%m-%d %H:%M:%S}'"
+    """The compiler's form: the fraction as six digits when there is one."""
+    fraction = f".{value.microsecond:06d}" if value.microsecond else ""
+    return f"date '{value:%Y-%m-%d %H:%M:%S}{fraction}'"
+
+
+def to_millisecond(value: datetime) -> datetime:
+    """`value` rounded to its nearest millisecond, the fraction store's grain."""
+    rounded = value + timedelta(microseconds=500)
+    return rounded.replace(microsecond=rounded.microsecond // 1000 * 1000)
 
 
 def read_all(session: ArcpySession, path: str) -> list[object]:
@@ -162,6 +173,25 @@ def fraction_store(session: ArcpySession, workspace: str, *, migrate: bool) -> N
             bands[f"{kind}: other"] += 1
     for key in sorted(bands):
         print(f"  {key}: {bands[key]}")
+    noisy = [
+        (sent, got)
+        for sent, got in zip(written, read, strict=True)
+        if sent.microsecond % 1000 == 0 and hasattr(got, "replace") and got != sent
+    ]
+    hits = sum(
+        count_selected(session, path, f'"{FIELD}" = {literal(to_millisecond(got))}')
+        for _, got in noisy
+    )
+    print(
+        f"  millisecond-aligned reads that came back off: {len(noisy)}; selected by "
+        f"engine equality on the millisecond-rounded literal: {hits}"
+    )
+    exact = [got for sent, got in zip(written, read, strict=True) if got == sent]
+    sample = exact[:: max(1, len(exact) // 50)]
+    control = sum(
+        count_selected(session, path, f'"{FIELD}" = {literal(v)}') for v in sample
+    )
+    print(f"  control, {len(sample)} exact reads selected by their own literal: {control}")
 
 
 def main() -> None:

@@ -86,27 +86,63 @@ def test_lines_and_points_are_never_reoriented() -> None:
     assert Geometry.point(1.0, 2.0, crs=CRS).parts == (((1.0, 2.0),),)
 
 
-@pytest.mark.parametrize(
-    "ring",
-    [
-        (),
-        ((500000.0, 7000000.0),),
-        ((500000.0, 7000000.0), (500001.0, 7000001.0)),
-        (
-            (500000.0, 7000000.0),
-            (500001.0, 7000001.0),
-            (500002.0, 7000002.0),
-            (500000.0, 7000000.0),
-        ),
-    ],
-    ids=["empty", "one-vertex", "two-vertices", "collinear"],
-)
-def test_a_ring_of_zero_area_keeps_its_order(ring: Ring) -> None:
-    """A degenerate ring has no orientation to repair; what B33 does with it is B33's."""
+def test_a_collinear_ring_of_zero_area_keeps_its_order() -> None:
+    """A ring of four coordinates on one line has no orientation to repair."""
+    ring: Ring = (
+        (500000.0, 7000000.0),
+        (500001.0, 7000001.0),
+        (500002.0, 7000002.0),
+        (500000.0, 7000000.0),
+    )
     assert Geometry(GeometryKind.POLYGON, (ring,), CRS).parts == (ring,)
     assert Geometry(GeometryKind.POLYGON, (SQUARE_CCW, ring), CRS).parts == (
         SQUARE_CCW,
         ring,
+    )
+
+
+TWO: Ring = ((0.0, 0.0), (1.0, 1.0))
+THREE: Ring = ((0.0, 0.0), (1.0, 1.0), (0.0, 0.0))
+
+
+@pytest.mark.parametrize(
+    ("kind", "parts"),
+    [
+        (GeometryKind.POLYGON, ((),)),
+        (GeometryKind.POLYGON, (((0.0, 0.0),),)),
+        (GeometryKind.POLYGON, (TWO,)),
+        (GeometryKind.POLYGON, (THREE,)),
+        (GeometryKind.POLYGON, (SQUARE_CCW, TWO)),
+        (GeometryKind.MULTIPOLYGON, (SQUARE_CCW, THREE)),
+        (GeometryKind.LINESTRING, (((0.0, 0.0),),)),
+        (GeometryKind.MULTILINESTRING, (TWO, ((0.0, 0.0),))),
+    ],
+    ids=[
+        "empty-ring",
+        "one-coordinate-ring",
+        "two-coordinate-ring",
+        "three-coordinate-ring",
+        "short-hole",
+        "short-member",
+        "one-coordinate-line",
+        "one-coordinate-line-member",
+    ],
+)
+def test_a_ring_under_four_coordinates_or_a_line_under_two_is_refused(
+    kind: GeometryKind, parts: tuple[Ring, ...]
+) -> None:
+    """On every ring, exterior, hole and member: a whole-ring curve is exported as two
+    end vertices, and the port carries no curve (ADR-0019 PC-D30)."""
+    with pytest.raises(ValueError, match="needs at least"):
+        Geometry(kind, parts, CRS)
+
+
+def test_the_shortest_valid_parts_construct() -> None:
+    assert Geometry(GeometryKind.LINESTRING, (TWO,), CRS).parts == (TWO,)
+    triangle: Ring = ((0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (0.0, 0.0))
+    assert Geometry(GeometryKind.POLYGON, (triangle,), CRS).parts == (triangle,)
+    assert Geometry(GeometryKind.MULTIPOINT, (((0.0, 0.0),),), CRS).parts == (
+        ((0.0, 0.0),),
     )
 
 
