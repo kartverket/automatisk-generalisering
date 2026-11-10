@@ -12,6 +12,14 @@ tests.unit.tools.test\_break\_once module
    :show-inheritance:
    :undoc-members:
 
+tests.unit.tools.test\_time\_read\_rows module
+----------------------------------------------
+
+.. automodule:: tests.unit.tools.test_time_read_rows
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
