@@ -33,7 +33,6 @@ R = TypeVar("R")
 OPERATION_RETRY_ATTEMPTS = 6
 OPERATION_RETRY_TOTAL_DELAY_S = 600
 OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / (OPERATION_RETRY_ATTEMPTS - 1)
-STAGGER_SECONDS_PER_INDEX = 60
 
 
 def is_transient_error(error: BaseException) -> bool:
@@ -129,48 +128,57 @@ def create_s3_client(
     return Minio(endpoint=endpoint_url, access_key=access_key, secret_key=secret_key)
 
 
-def download_scality_zip(
+def download_scality_folder(
     client: Minio,
     bucket_name: str,
-    scality_zip_object: str,
+    scality_folder: str,
     local_folder: str,
 ) -> None:
     """
-    Download a zip file from Scality and extract it into a local folder.
+    Download all files from a Scality/S3 folder/prefix to a local folder.
 
     Args:
-        client: MinIO client instance.
         bucket_name: Name of the Scality bucket.
-        scality_zip_object: Zip object name, e.g. "GIS_Files/GIS_Files.zip"
-        local_folder: Local destination folder, e.g. "/tmp/GIS_Files"
-
-    Raises:
-        ValueError: If a zip member would be extracted outside local_folder.
+        scality_folder: Folder/prefix inside the bucket, e.g. "data/input/"
+        local_folder: Local destination folder, e.g. "/tmp/mydata"
     """
-    local_base = Path(local_folder).resolve()
+
+    # Ensure prefix ends with /
+    if scality_folder and not scality_folder.endswith("/"):
+        scality_folder += "/"
+
+    objects = client.list_objects(
+        bucket_name=bucket_name,
+        prefix=scality_folder,
+        recursive=True,
+    )
+
+    local_base = Path(local_folder)
     local_base.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        zip_path = Path(tmp_dir) / Path(scality_zip_object).name
-        download_file(
-            client=client,
+    for obj in objects:
+        # Skip "directory marker" objects
+        if obj.object_name.endswith("/"):
+            continue
+
+        # Preserve folder structure relative to scality_folder
+        relative_path = obj.object_name[len(scality_folder) :]
+        local_path = local_base / relative_path
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+
+        """client.fget_object(
             bucket_name=bucket_name,
-            object_name=scality_zip_object,
-            file_path=zip_path,
-        )
-        logger.info(f"Downloaded s3://{bucket_name}/{scality_zip_object}")
+            object_name=obj.object_name,
+            file_path=str(local_path),
+        )"""
+        download_file(client, bucket_name, obj.object_name, local_path)
 
-        with zipfile.ZipFile(zip_path) as archive:
-            for member in archive.namelist():
-                if not (local_base / member).resolve().is_relative_to(local_base):
-                    raise ValueError(f"Unsafe path in zip: {member}")
-            archive.extractall(local_base)
-
-    logger.info(f"Extracted {scality_zip_object} -> {local_base}")
+        logger.info(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
 
 
 def upload_results_to_scality(
-    client: Minio, bucket_name: str, local_path: Path, object_name: str | None = None
+    client: Minio, bucket_name: str, local_path: str, object_name: str | None = None
 ):
     """
     Upload a local ZIP file to a Scality bucket.
@@ -200,12 +208,14 @@ def upload_results_to_scality(
 
     logger.info(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
 
-    upload_file(
-        client=client,
+    """
+    client.fput_object(
         bucket_name=bucket_name,
         object_name=object_name,
         file_path=local_zip_path,
-    )
+        content_type="application/zip",
+    )"""
+    upload_file(client, bucket_name, object_name, local_zip_path)
 
     logger.info("ZIP upload completed.")
 
@@ -243,6 +253,7 @@ def upload_error_to_scality(
             length=len(data),
             content_type="application/json",
         )
+
         logger.info("Uploaded error file to s3://%s/%s", bucket_name, object_name)
     except Exception:
         logger.exception("Failed to upload error file to Scality")
@@ -360,15 +371,10 @@ def main():
         secret_key=secret_key,
     )
 
-    if job_completion_index:
-        stagger_s = STAGGER_SECONDS_PER_INDEX * int(job_completion_index)
-        logger.info("Staggering start by %d s", stagger_s)
-        time.sleep(stagger_s)
-
-    download_scality_zip(
+    download_scality_folder(
         client=s3,
         bucket_name=bucket_name,
-        scality_zip_object="GIS_Files/GIS_Files.zip",
+        scality_folder="GIS_Files/",
         local_folder="/tmp/GIS_Files",
     )
 
