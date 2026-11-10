@@ -44,7 +44,9 @@ def main(
     give_points_score(files=files)
     give_points_ramp_id(files=files)
     all_ramp_oids_per_rampid, all_ramp_oids_per_rampid_extended_length_threshold = (
-        remove_points_without_ramp_connection(files=files, max_path_length=1000)
+        remove_points_without_ramp_connection(
+            files=files, max_path_length=1500, max_steps=5
+        )  # tester med 1500 og max steps 5 siden vi nå bare beholder motorveier
     )
     add_subsets_values(files=files, all_ramp_oids_per_rampid=all_ramp_oids_per_rampid)
 
@@ -468,6 +470,31 @@ def make_potential_points(files: dict):
         lines_fc=files["relevant_roads_dissolved"],
         points_fc=files["potential_points"],
     )
+    keep_only_motorway_points(files=files)
+
+
+def keep_only_motorway_points(files: dict):
+    base = os.path.splitext(os.path.basename(files["relevant_roads_dissolved"]))[0]
+    road_id_field1 = f"FID_{base}"
+    road_id_field2 = f"FID_{base}_1"
+
+    motorway_road_oids = set()
+    with arcpy.da.SearchCursor(
+        files["relevant_roads_dissolved"], ["OID@", "motorvegtype"]
+    ) as s_cur:
+        for oid, motorvegtype in s_cur:
+            if motorvegtype in {"Motorveg", "Motortrafikkveg"}:
+                motorway_road_oids.add(oid)
+
+    with arcpy.da.UpdateCursor(
+        files["potential_points"], [road_id_field1, road_id_field2]
+    ) as u_cur:
+        for road_oid1, road_oid2 in u_cur:
+            if (
+                road_oid1 not in motorway_road_oids
+                and road_oid2 not in motorway_road_oids
+            ):
+                u_cur.deleteRow()
 
 
 def remove_endpoints(files: dict, lines_fc: str, points_fc: str):
@@ -529,7 +556,9 @@ def get_line_endpoints(line_geom):
 
 
 @timing_decorator
-def remove_points_without_ramp_connection(files: dict, max_path_length: int):
+def remove_points_without_ramp_connection(
+    files: dict, max_path_length: int, max_steps: int
+):
     """
     Removes potential points that arent on top of 2 roads connected by ramps
 
@@ -594,7 +623,7 @@ def remove_points_without_ramp_connection(files: dict, max_path_length: int):
                 adjacency=adjacency,
                 start=road_a,
                 target=road_b,
-                max_steps=10,
+                max_steps=max_steps,
                 valid_oids=near_set,
             )
 
@@ -607,7 +636,7 @@ def remove_points_without_ramp_connection(files: dict, max_path_length: int):
                 adjacency=adjacency,
                 start=road_a,
                 target=road_b,
-                max_steps=10,
+                max_steps=max_steps,
                 valid_oids=near_set,
             )
             paths_with_ramps_test_no_neighbour = [
