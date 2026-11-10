@@ -1264,6 +1264,35 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 `lineage_id` to every feature of **every input the run reads from outside itself** — not only
 `ExternalSource`. Cross-run `Derived` and `ProductIdentity` inputs are re-allocated too (A24).
 
+- **Holed multipolygon members are exploded here.** A raw input whose rows carry a
+  multipolygon member with holes runs through `explode_multipart` at ingest, before any
+  stage reads it: read after explode is the contract (B30, closed 2026-11-07), and the
+  pipeline neither expects nor produces such members.
+- **Lineage first, cleanup after, read last.** `read_rows` refuses a ring under four
+  coordinates and a holed member, straightens a curve silently, and decodes every row's
+  geometry on a feature class, so it is not ingest's first read of raw data. The order:
+  (a) stamp `lineage_id` on ingest's copy inside the engine through `calculate_field`
+  (ADR-0019 PC-D22), reading no row, so `native_index` in the map is the copy's row at
+  stamp time, and what that points at if the copy renumbers is B34's; (b) clean through
+  port methods backed by
+  engine tools on that copy: `select` with a negated predicate removes rows (PC-D23),
+  `explode_multipart` splits holed members and records parents, densify and repair edit
+  the copy in place, keeping rows and ids; (c) read through `read_rows` only after that.
+  So a cleaned feature traces to its raw row through the ordinary parents tables and the
+  cleanup is a stage like any other. The port methods this order needs that do not exist
+  are B34.
+- **True curves are removed here** (B33, ADR-0019 PC-D30). The rule, not today's count,
+  since sources change over the system's life: ingest densifies every raw input if
+  Densify leaves the coordinates of rows without curves unchanged, and only the rows
+  `hasCurves` marks if it does not; which, is W30, the number of curve-free rows whose
+  WKB differs before and after `edit.Densify` with the offset method, counts only, on a
+  copy. Today's copies (2026-11-09) hold curves in `AnleggsLinje_N50` (20 rows) and
+  `Grunnriss_N10` (69 rows) and in no other of the fifteen feature classes.
+- **Faulty geometry is repaired or removed here.** Rows without geometry go; topology is
+  cleaned; a ring under four coordinates is fixed or the row removed, whichever is right,
+  through the engine's repair tool, whose treatment of such a ring is W31 until a run on
+  a copy shows it, counts only. Today's copies hold 4,312 such rings in `ArealdekkeFlate`
+  (14.7 million rows) and none elsewhere; a read through the port refuses them.
 - **The ingest map records four columns**, not two:
   `(native_index, incoming_lineage_id, new_lineage_id, boundary_kind)`, with
   `incoming_lineage_id` null where there is none and
@@ -1292,7 +1321,8 @@ A distinct run-scoped step, before any stage executes, that allocates a dense po
 
 **depends on** T0.1, T3.3.
 
-**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7, A32.1, B28.
+**decision refs** A10.6, A10.7, A22, A24, A24.1, A6.6, A31.1, A31.2, A31.7, A32.1, B28, B30,
+B33, B34.
 
 **doc migration** A10.6, A10.7, A24, A24.1 → the ADR from T3.3 and `02-runtime.md` §6. A22 →
 `02-runtime.md` §6.1.
@@ -1881,14 +1911,39 @@ resulting capability record as an argument — data, not a call. No exemption ne
 green on the image `ghcr.io/kartverket/arcpy-linux:12.1` on 2026-11-05: `tests/conformance/`
 over both adapters and `tests/engine/arcpy/`, 34 marked tests, evidence in
 `temp/findings/slice_1b_arcpy_conformance_evidence.md`; no test was removed for a contract
-question. (1b), (2) and (3) wait on their methods.
+question. (1b), (2) and (3) wait on their methods. The `read_rows` timing run ran
+2026-11-06 on the three raw sets (W14 done; W12, W17, W18, W22 as the evidence file
+states), evidence in `temp/findings/slice_1b_read_rows_timing_evidence.md`. B31 and B32
+closed on 2026-11-08: `Schema` carries a geometry family, `Geometry` holds its rings
+canonical, the builders seed from the schema and orient nothing, and the marked tests in
+`tests/engine/arcpy/test_dataset_schema.py` and `test_shape.py` pin W23's four
+`shapeType` spellings and the multipoint explode's point output, confirmed on the image
+the same day (43 marked tests green); evidence in
+`temp/findings/slice_1b_family_orientation_evidence.md`.
 
-**follow-up (`write_rows`):** when `TableOps.write_rows` lands, `CreateFeatureclass` and
-`GEOMETRY_TYPES` (`tests/support/arcpy/gdb.py`) and `oriented` (`tests/support/wkb.py`) move
-into the adapter's write side, the builders call `write_rows`, and those test copies are
-deleted. `to_wkb` stays in `tests/support/wkb.py` as the independent oracle the codec is
-tested against. How `write_rows` learns a feature class's geometry type is B31; whether ring
-orientation is the port's contract or the write side's concern is B32.
+**follow-up (`write_rows`):** when `TableOps.write_rows` lands, the `CreateFeatureclass`
+call in `tests/support/arcpy/gdb.py` moves into the adapter's write side, the builders call
+`write_rows`, and that test copy is deleted; its vocabulary is already the adapter's,
+`GEOMETRY_TYPES` in `dataset_writer.py`. `to_wkb` stays in `tests/support/wkb.py` as the
+independent oracle the codec is tested against. A33's adapter side landed ahead of
+`write_rows` on 2026-11-09, once the probe `temp/w24_w25_date_probe.py` had answered W24
+and W25 (evidence in `temp/findings/slice_1b_family_orientation_evidence.md`): a date
+field the adapter creates is migrated to the engine's fraction-holding precision in
+`add_fields`, `describe` names the whole-second fields of an input and `read_rows` reads
+them to the second, the shared value rule and the compiler's literal carry the fraction,
+and the conformance suite round-trips a fractional date and selects on a fractional
+literal on both adapters. `write_rows` inherits `add_fields` and truncates a fraction to
+the millisecond, the store's grain, before handing it over (A33; the probe of 2026-11-09
+showed the fraction-holding store is milliseconds with the double encoding's noise, as
+the whole-second store is). Every method whose engine tool writes true curves, buffer
+first, densifies its own output and never its input with `edit.Densify`'s offset method,
+the deviation set in the session environment beside the XY tolerance with its reason
+stated (B33, ADR-0019 PC-D30); its acceptance is a marked test, point, line and polygon
+inputs, in a file geodatabase and the memory workspace, reading the output through
+`SHAPE@` and asserting `hasCurves` false on every row, and its price is measured against
+A15.7 when it lands, since read cost scales with vertex count. The degenerate-ring
+refusal in `Geometry` catches only a curve that is a whole ring. W29: on the image a
+buffered polygon had no curve where the architect saw curved corners in Pro.
 
 **what done means** Three halves. The environment the ArcPy half runs in is B23, settled
 with the first marked test.
@@ -1906,7 +1961,8 @@ after, assert equality. Acceptance: fails when a method is compiled to write its
 
 **(1c) Holed members.** A lake with islands stored as one multipart row runs through
 `explode_multipart` before any read, and the children read back as polygons with their holes;
-whether the value type gains a nested member form is B30.
+B30 closed 2026-11-07: read after `explode_multipart` is the contract, and ingest (T3.4)
+explodes a raw input that carries such a member.
 
 **(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
 `memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
@@ -1941,9 +1997,9 @@ pytest marker (see T7.4).
 
 **depends on** T4.10.
 
-**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5, B31, B32.
+**decision refs** A9.2, A11.15, A14.1, A12.11, A12.11a, A31.5, A33, B30, B31, B32, B33.
 
-**doc migration** none.
+**doc migration** A33.1 → ADR-0019 PC-D17; A33.2 → `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`, the break-once cases and the conformance suite, with `write_rows` (slice 2a).
 
 ---
 

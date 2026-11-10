@@ -6,6 +6,7 @@ that is a gap the conformance suite closes once a port method does. ADR-0019 PC-
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from types import MappingProxyType
 
@@ -15,9 +16,16 @@ from ag.adapters.fakes.memory.store import MemoryStore
 from ag.core.errors import InjectionError
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
-from ag.ports import AttributeValue, FieldName, Geometry, Row
+from ag.ports import (
+    AttributeValue,
+    FieldName,
+    Geometry,
+    GeometryFamily,
+    GeometryKind,
+    Row,
+)
 from ag.ports.errors import PortContractError
-from tests.support.cases import CRS, lookup, roads
+from tests.support.cases import CRS, lookup, polygons, roads
 from tests.support.memory import memory_handle, seed
 
 
@@ -93,10 +101,20 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         (_road(name="x" * 21), "holds at most 20"),
         (_road(surveyed="2024-01-01"), "is not a datetime"),
         (_road(surveyed=datetime(2024, 1, 1, tzinfo=UTC)), "aware datetime"),
-        (_road(surveyed=datetime(2024, 1, 1, 0, 0, 0, 1)), r"replace\(microsecond=0\)"),
         (
             Row(_road().attributes, Geometry.point(0.0, 0.0, crs="EPSG:4326")),
             "schema declares",
+        ),
+        (
+            Row(_road().attributes, Geometry.point(0.0, 0.0, crs=CRS)),
+            "outside the schema's line family",
+        ),
+        (
+            Row(
+                _road().attributes,
+                Geometry(GeometryKind.MULTIPOINT, (((0.0, 0.0),),), CRS),
+            ),
+            "outside the schema's line family",
         ),
     ],
     ids=[
@@ -110,8 +128,9 @@ def test_a_table_handle_refuses_a_feature_class_schema() -> None:
         "text-too-long",
         "str-on-date",
         "aware-datetime",
-        "sub-second-date",
         "wrong-crs",
+        "point-in-line-family",
+        "multipoint-in-line-family",
     ],
 )
 def test_a_row_that_does_not_fit_the_schema_is_refused(row: Row, reason: str) -> None:
@@ -134,10 +153,65 @@ def test_short_overflow_and_geometry_on_a_table_are_refused() -> None:
         )
 
 
+def test_a_polygon_family_holds_both_polygon_kinds_and_a_point_family_no_multipoint() -> (
+    None
+):
+    """The family folds as every engine folds: single and multi lines and polygons
+    together, multipoints apart."""
+    store = MemoryStore()
+    case = polygons()
+    assert {row.geometry.kind for row in case.rows if row.geometry} == {
+        GeometryKind.POLYGON,
+        GeometryKind.MULTIPOLYGON,
+    }
+    store.write(memory_handle("polygons"), schema=case.schema, rows=case.rows)
+    points_schema = replace(case.schema, geometry_family=GeometryFamily.POINT)
+    with pytest.raises(PortContractError, match="outside the schema's point family"):
+        store.write(
+            memory_handle("points"),
+            schema=points_schema,
+            rows=[
+                Row(
+                    {"name": "m"},
+                    Geometry(GeometryKind.MULTIPOINT, (((0.0, 0.0),),), CRS),
+                )
+            ],
+        )
+
+
+def test_an_empty_feature_class_is_written_and_read_with_its_fields_and_family() -> (
+    None
+):
+    """A partition in which one input has no rows still hands the method a dataset with
+    every field and its geometry type, created from the schema alone."""
+    store = MemoryStore()
+    handle = memory_handle("absent")
+    assert store.write(handle, schema=roads().schema, rows=()) == ()
+    dataset = store.read(handle)
+    assert dataset.schema == roads().schema
+    assert dataset.schema.geometry_family is GeometryFamily.LINE
+    assert [field.name for field in dataset.schema.fields] == [
+        "name",
+        "rank",
+        "width_m",
+        "surveyed",
+    ]
+    assert dict(dataset.rows) == {}
+
+
 def test_an_int_fits_a_double_field_and_none_fits_every_field() -> None:
     store = MemoryStore()
     row = _road(rank=None, width_m=2, surveyed=None)
     store.write(memory_handle("roads"), schema=roads().schema, rows=[row])
+
+
+def test_a_date_keeps_its_fraction_through_the_store() -> None:
+    store = MemoryStore()
+    handle = memory_handle("roads")
+    stamp = datetime(2024, 1, 1, 0, 0, 0, 1)
+    store.write(handle, schema=roads().schema, rows=[_road(surveyed=stamp)])
+    (row,) = store.read(handle).rows.values()
+    assert row.attributes["surveyed"] == stamp
 
 
 def test_a_refused_write_replaces_nothing() -> None:

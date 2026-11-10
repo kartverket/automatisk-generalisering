@@ -15,12 +15,12 @@ from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports import Attr, Comparison, Predicate
-from tests.engine.arcpy.conftest import Pro
+from tests.engine.arcpy.conftest import MEMORY_WORKSPACE, Pro
 from tests.support.cases import lookup, roads
 
 pytestmark = pytest.mark.arcpy
 
-MEMORY = "memory"
+MEMORY = MEMORY_WORKSPACE
 
 
 def _names(pro: Pro, handle: ScratchHandle) -> set[str]:

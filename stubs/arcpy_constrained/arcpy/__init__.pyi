@@ -1,7 +1,7 @@
 """The constrained ArcPy stub: the names the ArcPy adapter may reach on `arcpy` directly.
 
-Pyright applies this stub to `src/ag/adapters/arcpy/` and `tests/support/arcpy/`, so every
-attribute of `arcpy` not declared here is an error there: a tool goes through the
+Pyright applies this stub to `src/ag/adapters/arcpy/`, `tests/support/arcpy/` and
+`tools/engine/`, so every attribute of `arcpy` not declared here is an error there: a tool goes through the
 session's `run_tool`, and `arcpy.env` and the vendor exceptions are the session's alone;
 `ag.adapters.arcpy.session` states the rule and cites its record. A non-tool name that a
 group module needs on the engine directly is declared here with its reason, in the
@@ -19,7 +19,11 @@ Declared, and why:
   native index non-dense. No port method deletes, since deletion is a selection
   (ADR-0019 PC-D23), and no tool deletes chosen rows of a dataset without layer state.
 - `Describe`: a dataset's schema, data type, Z and M flags and spatial reference, read
-  before a tool runs, and the names of the fields the engine maintains itself.
+  before a tool runs, and the names of the fields the engine maintains itself;
+  `shapeType`, the geometry family of a feature class, which `describe` reads into
+  `Schema.geometry_family` and the timing run's preflight reports for a raw source;
+  `path`, the dataset's workspace, and the workspace's `workspaceFactoryProgID`, which
+  tell the in-memory workspace apart, where a date keeps its fraction untreated.
 - `AddFieldDelimiters`: identifier quoting per workspace type for a compiled predicate,
   which is the engine's table and not one to restate.
 """
@@ -32,6 +36,7 @@ class _Field:
     name: str
     type: str
     length: int
+    precision: int
 
 class _SpatialReference:
     factoryCode: int
@@ -45,7 +50,10 @@ class _Describe:
     areaFieldName: str
     hasZ: bool
     hasM: bool
+    shapeType: str
     spatialReference: _SpatialReference
+    path: str
+    workspaceFactoryProgID: str
 
 class da:
     class SearchCursor:

@@ -77,6 +77,25 @@ def test_every_ordering_operator_on_a_number(
     assert truth(Attr.cmp("rank", op, value), ALPHA) is expected
 
 
+def test_a_date_compares_with_its_fraction() -> None:
+    half_past = Attr.cmp(
+        "surveyed", Comparison.GT, datetime(2023, 12, 31, 23, 59, 59, 500000)
+    )
+    assert truth(half_past, ALPHA) is Truth.TRUE
+    assert (
+        truth(
+            half_past,
+            Row(
+                {
+                    **ALPHA.attributes,
+                    "surveyed": datetime(2023, 12, 31, 23, 59, 59, 400000),
+                }
+            ),
+        )
+        is Truth.FALSE
+    )
+
+
 def test_orderings_hold_on_text_dates_and_an_int_against_a_double() -> None:
     on_new_year = Attr.cmp("surveyed", Comparison.GE, datetime(2024, 1, 1))
     assert truth(Attr.cmp("name", Comparison.LT, "B"), ALPHA) is Truth.TRUE
@@ -129,10 +148,6 @@ def test_like_wildcards(pattern: str, row: Row, expected: Truth) -> None:
         (Attr.cmp("name", Comparison.EQ, "x" * 21), "holds at most 20"),
         (Attr.cmp("rank", Comparison.LIKE, "1%"), "matches text only"),
         (Attr.cmp("surveyed", Comparison.GT, "2024"), "is not a datetime"),
-        (
-            Attr.cmp("surveyed", Comparison.GT, datetime(2024, 1, 1, 0, 0, 0, 1)),
-            r"replace\(microsecond=0\)",
-        ),
         (Attr.raw("rank > 1"), "compiles no CQL"),
         (Intersects(memory_handle("other")), "computes no geometry"),
         (~(Attr.cmp("rank", Comparison.EQ, 1) & Attr.raw("x")), "compiles no CQL"),
@@ -147,7 +162,6 @@ def test_like_wildcards(pattern: str, row: Row, expected: Truth) -> None:
         "text-too-long",
         "like-on-a-number",
         "str-on-date",
-        "sub-second-date",
         "raw",
         "spatial",
         "raw-nested",

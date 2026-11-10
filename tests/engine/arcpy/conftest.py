@@ -21,6 +21,9 @@ from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from tests.support.cases import DatasetCase, Seeded
 
+MEMORY_WORKSPACE = "memory"
+"""The engine's in-memory workspace, as a path a dataset name is joined to."""
+
 
 @dataclass(frozen=True)
 class Pro:

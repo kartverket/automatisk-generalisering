@@ -7,9 +7,10 @@ from datetime import datetime
 import pytest
 
 from ag.core.types import DataType
-from ag.ports import Field, FieldType, Geometry, Row, Schema
+from ag.ports import Field, FieldType, Geometry, GeometryFamily, Row, Schema
 
 CRS = "EPSG:25833"
+LINE = GeometryFamily.LINE
 
 
 def test_a_text_field_needs_a_length_and_no_other_type_takes_one() -> None:
@@ -23,12 +24,25 @@ def test_a_text_field_needs_a_length_and_no_other_type_takes_one() -> None:
 
 def test_a_feature_class_schema_needs_a_crs_and_a_table_does_not() -> None:
     fields = (Field("count", FieldType.LONG),)
-    assert Schema(fields, geometry_crs=CRS).geometry_crs == CRS
+    assert Schema(fields, geometry_crs=CRS, geometry_family=LINE).geometry_crs == CRS
     assert Schema(fields, data_type=DataType.TABLE).geometry_crs is None
     with pytest.raises(ValueError, match="needs geometry_crs"):
-        Schema(fields)
+        Schema(fields, geometry_family=LINE)
     with pytest.raises(ValueError, match="takes no geometry_crs"):
         Schema(fields, data_type=DataType.TABLE, geometry_crs=CRS)
+
+
+def test_a_feature_class_schema_needs_a_family_and_a_table_does_not() -> None:
+    """A feature class holds one geometry type, and an empty one is created from the
+    schema alone, so the schema says which."""
+    fields = (Field("count", FieldType.LONG),)
+    spatial = Schema(fields, geometry_crs=CRS, geometry_family=LINE)
+    assert spatial.geometry_family is LINE
+    assert Schema(fields, data_type=DataType.TABLE).geometry_family is None
+    with pytest.raises(ValueError, match="needs geometry_family"):
+        Schema(fields, geometry_crs=CRS)
+    with pytest.raises(ValueError, match="takes no geometry_family"):
+        Schema(fields, data_type=DataType.TABLE, geometry_family=LINE)
 
 
 def test_a_row_holds_attributes_and_an_optional_geometry() -> None:

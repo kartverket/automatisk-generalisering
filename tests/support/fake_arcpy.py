@@ -6,8 +6,9 @@ engine; `FakeDataset`, what it holds per path; `seed`, which writes an engine-ne
 case to it with the port's field types mapped to the engine's names.
 
 How: rows are dicts keyed by field name and by the adapter's two cursor tokens, which
-are imported, as the engine's type names are, so the fake spells nothing of the adapter's
-twice; the engine's strings are the marked run's to confirm. A toolbox is a namespace
+are imported, as the engine's type, data-type and shape-type names are, each the
+adapter's own table inverted, so the fake spells nothing of the adapter's twice; the
+engine's strings are the marked run's to confirm. A toolbox is a namespace
 whose attributes are the tools, the structure `run_tool` resolves a dotted name against,
 and a tool records itself under that path. A search cursor over an unknown name raises
 `RuntimeError` and Describe of an unknown path `OSError`, as the engine's do; a tool records its keyword arguments,
@@ -26,9 +27,20 @@ from dataclasses import dataclass, field
 from types import ModuleType, SimpleNamespace, TracebackType
 from typing import Self
 
-from ag.adapters.arcpy.support.dataset_schema import FIELD_TYPES, OID_TOKEN
-from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
+from ag.adapters.arcpy.support.dataset_schema import (
+    DATA_TYPES,
+    FIELD_TYPES,
+    MEMORY_WORKSPACE_PROG_ID,
+    OID_TOKEN,
+    SHAPE_TYPES,
+    WHOLE_SECOND_PRECISION,
+    WORKSPACE_DATA_TYPE,
+)
+from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES, MIGRATION_TOOL
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
+from ag.core.types import DataType
+from ag.ports.attributes import FieldType
+from ag.ports.geometry import GeometryFamily
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
 
@@ -37,6 +49,33 @@ ENGINE_TYPES = {port: engine for engine, port in FIELD_TYPES.items()}
 
 ADDED_TYPES = {ADD_FIELD_TYPES[port]: engine for engine, port in FIELD_TYPES.items()}
 """The AddField vocabulary to the Describe names, through the adapter's two tables."""
+
+ENGINE_DATA_TYPES = {port: engine for engine, port in DATA_TYPES.items()}
+"""The port's data types to the engine's `dataType` strings, the adapter's table inverted."""
+
+ENGINE_SHAPE_TYPES = {port: engine for engine, port in SHAPE_TYPES.items()}
+"""The port's geometry families to the engine's `shapeType` strings, inverted likewise."""
+
+FEATURE_CLASS = ENGINE_DATA_TYPES[DataType.FEATURE_CLASS]
+TABLE = ENGINE_DATA_TYPES[DataType.TABLE]
+
+FRACTION_PRECISION = 1
+"""The engine `precision` of a date field that holds the fraction, which the migration
+tool sets and the adapter's own date fields carry."""
+
+FILE_GDB_PROG_ID = "esriDataSourcesGDB.FileGDBWorkspaceFactory"
+"""The engine's `workspaceFactoryProgID` of a file geodatabase, the fake's default
+workspace; the adapter never names it, only the memory one."""
+
+MEMORY_WORKSPACE = "memory"
+"""The in-memory workspace's path, as the engine spells it."""
+
+FILE_WORKSPACE = "ws"
+"""The fake's default workspace, a stand-in file geodatabase."""
+
+FEATURE_DATASET = "FeatureDataset"
+"""The engine's `dataType` of a feature dataset, which the fake reports for the entries
+of `FakeEngine.feature_datasets`; the adapter never names it, it only walks past it."""
 
 
 def _no_rows() -> list[dict[str, object]]:
@@ -60,6 +99,7 @@ class FakeField:
     name: str
     type: str
     length: int = 0
+    precision: int = WHOLE_SECOND_PRECISION
 
 
 @dataclass
@@ -72,6 +112,8 @@ class FakeDataset:
     epsg: int = 25833
     has_z: bool = False
     has_m: bool = False
+    shape_type: str = ENGINE_SHAPE_TYPES[GeometryFamily.LINE]
+    workspace: str = FILE_WORKSPACE
     oid_name: str = "OBJECTID"
     shape_name: str = "Shape"
     length_name: str = "Shape_Length"
@@ -79,7 +121,7 @@ class FakeDataset:
 
     def engine_fields(self) -> list[FakeField]:
         found = [FakeField(self.oid_name, "OID")]
-        if self.data_type == "FeatureClass":
+        if self.data_type == FEATURE_CLASS:
             found.append(FakeField(self.shape_name, "Geometry"))
             for name in (self.length_name, self.area_name):
                 if name:
@@ -171,6 +213,13 @@ class FakeEngine(ModuleType):
         self.ExecuteError = FakeExecuteError
         self.buffer = ""
         self.datasets: dict[str, FakeDataset] = {}
+        self.workspaces: dict[str, str] = {
+            FILE_WORKSPACE: FILE_GDB_PROG_ID,
+            MEMORY_WORKSPACE: MEMORY_WORKSPACE_PROG_ID,
+        }
+        self.feature_datasets: dict[str, str] = {}
+        """Feature dataset path to the path it sits in; a test nests them to probe the
+        adapter's walk, though the engine does not."""
         self.calls: list[tuple[str, dict[str, object]]] = []
         self.failures: dict[str, str] = {}
         self.children: dict[str, Mapping[int, Sequence[object]]] = {}
@@ -189,6 +238,7 @@ class FakeEngine(ModuleType):
             CreateTable=self._create_table,
             AddField=self._add_field,
             DeleteField=self._delete_field,
+            **{MIGRATION_TOOL.split(".")[1]: self._migrate_date_field},
         )
         self.analysis = _Toolbox(
             self, "analysis", Select=self._select, TableSelect=self._select
@@ -217,8 +267,17 @@ class FakeEngine(ModuleType):
     def Describe(self, path: str) -> SimpleNamespace:
         dataset = self.datasets.get(path)
         if dataset is None:
+            prog_id = self.workspaces.get(path)
+            if prog_id is not None:
+                return SimpleNamespace(
+                    dataType=WORKSPACE_DATA_TYPE, workspaceFactoryProgID=prog_id
+                )
+            parent = self.feature_datasets.get(path)
+            if parent is not None:
+                return SimpleNamespace(dataType=FEATURE_DATASET, path=parent)
             raise OSError(f'"{path}" does not exist')
         return SimpleNamespace(
+            path=dataset.workspace,
             dataType=dataset.data_type,
             fields=[*dataset.engine_fields(), *dataset.fields],
             OIDFieldName=dataset.oid_name,
@@ -227,6 +286,7 @@ class FakeEngine(ModuleType):
             areaFieldName=dataset.area_name,
             hasZ=dataset.has_z,
             hasM=dataset.has_m,
+            shapeType=dataset.shape_type,
             spatialReference=SimpleNamespace(factoryCode=dataset.epsg),
         )
 
@@ -260,7 +320,14 @@ class FakeEngine(ModuleType):
         fields = [*source.fields]
         for name in self.reference_fields:
             fields.append(FakeField(name, "Integer"))
-        output = FakeDataset("FeatureClass", fields, epsg=source.epsg)
+        family = SHAPE_TYPES[source.shape_type].single
+        output = FakeDataset(
+            FEATURE_CLASS,
+            fields,
+            epsg=source.epsg,
+            shape_type=ENGINE_SHAPE_TYPES[family],
+            workspace=source.workspace,
+        )
         for row in source.rows:
             parent = int(str(row[OID_TOKEN]))
             for shape in scripted.get(parent, [row[WKB_TOKEN]]):
@@ -275,7 +342,9 @@ class FakeEngine(ModuleType):
         self.datasets[out_feature_class] = output
 
     def _create_table(self, *, out_path: str, out_name: str) -> None:
-        self.datasets[f"{out_path}/{out_name}"] = FakeDataset("Table", [])
+        self.datasets[f"{out_path}/{out_name}"] = FakeDataset(
+            TABLE, [], workspace=out_path
+        )
 
     def _add_field(
         self,
@@ -289,6 +358,16 @@ class FakeEngine(ModuleType):
             FakeField(field_name, ADDED_TYPES[field_type], field_length or 0)
         )
 
+    def _migrate_date_field(self, *, in_table: str, date_fields: str) -> None:
+        dataset = self.dataset(in_table)
+        if self.workspaces.get(dataset.workspace) == MEMORY_WORKSPACE_PROG_ID:
+            raise FakeExecuteError(
+                "ERROR 002764: The operation is not supported by this implementation."
+            )
+        for found in dataset.fields:
+            if found.name == date_fields:
+                found.precision = FRACTION_PRECISION
+
     def _delete_field(self, *, in_table: str, drop_field: str) -> None:
         dataset = self.dataset(in_table)
         dataset.fields = [f for f in dataset.fields if f.name != drop_field]
@@ -300,23 +379,46 @@ class FakeEngine(ModuleType):
             str(arguments.get("in_features", arguments.get("in_table")))
         )
         target = str(arguments.get("out_feature_class", arguments.get("out_table")))
-        output = FakeDataset(source.data_type, [*source.fields], epsg=source.epsg)
+        output = FakeDataset(
+            source.data_type,
+            [*source.fields],
+            epsg=source.epsg,
+            shape_type=source.shape_type,
+            workspace=source.workspace,
+        )
         for row in source.rows:
             output.rows.append({**row, OID_TOKEN: output.next_oid()})
         self.datasets[target] = output
 
 
-def seed(engine: FakeEngine, case: DatasetCase, *, path: str) -> FakeDataset:
-    """Writes `case` to `engine` under `path`, with native indices 1 to n in order."""
+def seed(
+    engine: FakeEngine,
+    case: DatasetCase,
+    *,
+    path: str,
+    date_precision: int = FRACTION_PRECISION,
+) -> FakeDataset:
+    """Writes `case` to `engine` under `path`, with native indices 1 to n in order; its
+    date fields at `date_precision`, the adapter's own by default, a whole-second store
+    when a test stands in for a raw source."""
     schema = case.schema
     fields = [
-        FakeField(f.name, ENGINE_TYPES[f.type], f.length or 0) for f in schema.fields
+        FakeField(
+            f.name,
+            ENGINE_TYPES[f.type],
+            f.length or 0,
+            date_precision if f.type is FieldType.DATE else WHOLE_SECOND_PRECISION,
+        )
+        for f in schema.fields
     ]
-    data_type = "FeatureClass" if schema.geometry_crs is not None else "Table"
-    dataset = FakeDataset(data_type, fields)
+    data_type = ENGINE_DATA_TYPES[schema.data_type]
+    workspace, _, _ = path.rpartition("/")
+    dataset = FakeDataset(data_type, fields, workspace=workspace or FILE_WORKSPACE)
+    if schema.geometry_family is not None:
+        dataset.shape_type = ENGINE_SHAPE_TYPES[schema.geometry_family]
     for position, row in enumerate(case.rows, start=1):
         values: dict[str, object] = {**row.attributes, OID_TOKEN: position}
-        if data_type == "FeatureClass":
+        if data_type == FEATURE_CLASS:
             values[WKB_TOKEN] = None if row.geometry is None else to_wkb(row.geometry)
         dataset.rows.append(values)
     engine.datasets[path] = dataset

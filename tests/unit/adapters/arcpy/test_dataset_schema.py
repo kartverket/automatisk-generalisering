@@ -1,5 +1,6 @@
-"""Describe to `Schema` on the fake engine: the type map, the omitted engine fields, the
-unrepresentable fields, the refusals and the one lookup. ADR-0019 PC-D17, PC-D27."""
+"""Describe to `Schema` on the fake engine: the type map, the shape-type map, the omitted
+engine fields, the unrepresentable fields, the refusals and the one lookup. ADR-0019
+PC-D17, PC-D22, PC-D27."""
 
 from __future__ import annotations
 
@@ -8,14 +9,35 @@ import pytest
 from ag.adapters.arcpy.session import ArcpySession
 from ag.adapters.arcpy.support.dataset_schema import (
     FIELD_TYPES,
+    SHAPE_TYPES,
+    WHOLE_SECOND_PRECISION,
+    DateGrain,
     declared_field,
     describe,
 )
 from ag.core.types import DataType
 from ag.ports.attributes import Field, FieldType
 from ag.ports.errors import EngineError, PortContractError
-from tests.support.cases import lookup, roads
-from tests.support.fake_arcpy import FakeDataset, FakeEngine, FakeField, seed
+from ag.ports.geometry import GeometryFamily
+from tests.support.cases import (
+    DatasetCase,
+    lookup,
+    multilines,
+    multipoints,
+    points,
+    polygons,
+    roads,
+)
+from tests.support.fake_arcpy import (
+    FEATURE_CLASS,
+    MEMORY_WORKSPACE,
+    FakeDataset,
+    FakeEngine,
+    FakeField,
+    seed,
+)
+
+FAMILY_CASES = [points(), multipoints(), multilines(), polygons()]
 
 
 def test_the_five_types_map_and_the_engine_fields_are_left_out(
@@ -29,6 +51,7 @@ def test_the_five_types_map_and_the_engine_fields_are_left_out(
     assert dataset.schema == roads().schema
     assert dataset.schema.data_type is DataType.FEATURE_CLASS
     assert dataset.schema.geometry_crs == "EPSG:25833"
+    assert dataset.schema.geometry_family is GeometryFamily.LINE
     assert dataset.engine_fields == {"OBJECTID", "Shape", "Shape_Length", "Shape_Area"}
     assert dataset.all_fields[:4] == ("OBJECTID", "Shape", "Shape_Length", "Shape_Area")
     assert dataset.unrepresentable == {}
@@ -40,8 +63,73 @@ def test_a_table_has_no_crs_and_only_the_native_index_as_engine_field(
     seed(engine, lookup(), path="lookup")
     dataset = describe(session, "lookup")
     assert dataset.schema == lookup().schema
+    assert dataset.schema.geometry_family is None
     assert dataset.engine_fields == {"OBJECTID"}
     assert dataset.schema.fields[0] == Field("code", FieldType.SHORT)
+
+
+def test_describe_names_each_date_fields_store_grain(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """Precision 0 holds seconds, 1 holds milliseconds; the schema is the same."""
+    seed(engine, roads(), path="raw", date_precision=WHOLE_SECOND_PRECISION)
+    seed(engine, roads(), path="own")
+    assert describe(session, "raw").date_grains == {"surveyed": DateGrain.SECOND}
+    assert describe(session, "own").date_grains == {"surveyed": DateGrain.MILLISECOND}
+    assert describe(session, "raw").schema == describe(session, "own").schema
+
+
+def test_the_workspace_is_found_through_a_feature_dataset(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """A feature class in a feature dataset is two `path` steps from its workspace."""
+    engine.feature_datasets[f"{MEMORY_WORKSPACE}/fd"] = MEMORY_WORKSPACE
+    engine.feature_datasets["ws/fd"] = "ws"
+    seed(engine, roads(), path="ws/fd/roads", date_precision=WHOLE_SECOND_PRECISION)
+    seed(
+        engine,
+        roads(),
+        path=f"{MEMORY_WORKSPACE}/fd/roads",
+        date_precision=WHOLE_SECOND_PRECISION,
+    )
+    assert describe(session, "ws/fd/roads").date_grains == {
+        "surveyed": DateGrain.SECOND
+    }
+    assert describe(session, f"{MEMORY_WORKSPACE}/fd/roads").date_grains == {
+        "surveyed": DateGrain.MILLISECOND
+    }
+
+
+def test_a_dataset_with_no_workspace_within_two_levels_is_refused(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """Feature datasets do not nest, so a walk that finds none in two steps is a
+    contract error naming the dataset, not a loop or an unrelated Describe failure."""
+    engine.feature_datasets["ws/a"] = "ws"
+    engine.feature_datasets["ws/a/b"] = "ws/a"
+    seed(engine, roads(), path="ws/a/b/roads", date_precision=WHOLE_SECOND_PRECISION)
+    with pytest.raises(
+        PortContractError, match="no workspace within 2 levels"
+    ) as caught:
+        describe(session, "ws/a/b/roads")
+    assert caught.value.context.handle == "ws/a/b/roads"
+
+
+def test_a_memory_workspace_date_field_is_at_the_millisecond_grain_at_any_precision(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    """The in-memory workspace holds milliseconds while reporting precision 0."""
+    path = f"{MEMORY_WORKSPACE}/roads"
+    seed(engine, roads(), path=path, date_precision=WHOLE_SECOND_PRECISION)
+    assert describe(session, path).date_grains == {"surveyed": DateGrain.MILLISECOND}
+
+
+@pytest.mark.parametrize("case", FAMILY_CASES, ids=[c.name for c in FAMILY_CASES])
+def test_describe_reads_the_family_from_the_shape_type(
+    engine: FakeEngine, session: ArcpySession, case: DatasetCase
+) -> None:
+    seed(engine, case, path=case.name)
+    assert describe(session, case.name).schema == case.schema
 
 
 def test_an_unrepresentable_field_is_recorded_not_refused_until_named(
@@ -71,8 +159,9 @@ def test_an_unrepresentable_field_is_recorded_not_refused_until_named(
         ({"has_m": True}, "carries M values"),
         ({"epsg": 0}, "no EPSG code"),
         ({"data_type": "FeatureDataset"}, "not a table or a feature class"),
+        ({"shape_type": "Annotation"}, "shape type 'Annotation'"),
     ],
-    ids=["z", "m", "no-epsg", "not-a-dataset"],
+    ids=["z", "m", "no-epsg", "not-a-dataset", "unknown-shape-type"],
 )
 def test_describe_refuses_before_any_row(
     engine: FakeEngine,
@@ -100,10 +189,16 @@ def test_a_describe_failure_is_an_engine_error_naming_the_call(
 
 def test_the_engine_type_names_are_the_expected_spellings() -> None:
     assert set(FIELD_TYPES) == {"SmallInteger", "Integer", "Double", "String", "Date"}
+    assert SHAPE_TYPES == {
+        "Point": GeometryFamily.POINT,
+        "Multipoint": GeometryFamily.MULTIPOINT,
+        "Polyline": GeometryFamily.LINE,
+        "Polygon": GeometryFamily.POLYGON,
+    }
 
 
 def test_an_empty_engine_name_is_not_an_engine_field(
     engine: FakeEngine, session: ArcpySession
 ) -> None:
-    engine.datasets["fc"] = FakeDataset("FeatureClass", [FakeField("a", "Double")])
+    engine.datasets["fc"] = FakeDataset(FEATURE_CLASS, [FakeField("a", "Double")])
     assert "" not in describe(session, "fc").engine_fields

@@ -36,6 +36,7 @@ from tests.support.cases import (
     multipoints,
     multipoints_children,
     roads,
+    stamps,
 )
 
 Children = dict[int, frozenset[Geometry]]
@@ -133,6 +134,23 @@ def test_a_date_comparison_selects_to_the_whole_second(adapter: Adapter) -> None
     seeded = adapter.seed(roads())
     since = Attr.cmp("surveyed", Comparison.GE, datetime(2024, 1, 1))
     assert _selected(adapter, seeded.handle, since, "a") == {"Alpha road", "Gamma"}
+
+
+def test_a_date_comparison_carries_its_fraction(adapter: Adapter) -> None:
+    """A literal with a fraction matches the stored fraction and nothing else, and a
+    whole-second literal does not match a value half a second past it."""
+    seeded = adapter.seed(stamps())
+    half = datetime(2024, 1, 1, 12, 0, 0, 500000)
+    assert _selected(
+        adapter, seeded.handle, Attr.cmp("at", Comparison.EQ, half), "a"
+    ) == {"half"}
+    whole = datetime(2024, 1, 1, 12, 0, 0)
+    assert _selected(
+        adapter, seeded.handle, Attr.cmp("at", Comparison.EQ, whole), "b"
+    ) == {"whole"}
+    assert _selected(
+        adapter, seeded.handle, Attr.cmp("at", Comparison.GT, whole), "c"
+    ) == {"half"}
 
 
 def test_select_on_a_table_keeps_the_matching_rows(adapter: Adapter) -> None:

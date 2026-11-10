@@ -1864,6 +1864,51 @@ constant holds the values, tuned by the team outside this record.
 
 ---
 
+## A33. Dates carry their fraction
+
+*Decided 2026-11-07.* The port carries a `DATE` as a naive `datetime` to microsecond
+precision, the native type. No adapter refuses a fraction, and none reduces one its store
+can hold. An adapter whose store holds less precision states its precision in its
+docstring, and a round trip is identity to the coarser of the two sides. Such an adapter
+reduces a fraction by truncation, never by rounding (the architect, 2026-11-07): the
+engine rounds on its own (PR A read 12:00:00.5 back as 12:00:01), so an adapter whose
+store rounds truncates the value itself before handing it over, and 23:59:59.6 stays on
+its day. Why: the production sources' editor-tracking date fields read back with
+microsecond parts and the read-side refusal fired on a production read
+(`temp/findings/slice_1b_read_rows_timing_evidence.md`); the date probe of 2026-11-08
+then showed those fields to be whole-second stores (engine `precision` 0) and the parts
+the double encoding's noise, so the contract line stands for stores that hold a fraction
+(`precision` 1, which the adapter creates), and a whole-second store is decoded to its
+second on read (`temp/findings/slice_1b_family_orientation_evidence.md`). The adapter
+side landed 2026-11-09, ahead of `write_rows`, which inherits it.
+
+**A33.1** The contract line: `DATE` takes a naive `datetime`, carried to microsecond
+precision; an adapter whose store holds less states its precision, and a round trip is
+identity to the coarser of the two sides. Replaces "with no sub-second part, since the port
+carries dates to the whole second".
+`destination:` ADR-0019 PC-D17.
+
+**A33.2** The adapters, landed 2026-11-09 ahead of `write_rows` (the architect,
+2026-11-09): `describe` names the date fields whose store holds whole seconds and
+`read_rows` reads them to the nearest second, since the encoding's noise lies on both
+sides of the stored second and rounding restores it; a store that holds the fraction is
+read as it is; the in-memory workspace keeps the fraction at any precision and has no
+whole-second field. `add_fields` migrates every date field it adds to the
+fraction-holding precision, outside the in-memory workspace, which refuses the tool, so
+nothing the adapter writes is reduced. `_shared/field_values.py` and the compiler's
+literal carry the fraction, `.ffffff`, which both workspaces compare (W25). W24 and W25
+closed by `temp/w24_w25_date_probe.py`. Break-once: P4 the literal, R3 and R4 the
+decode, D5 the precision, D6 and W2 the in-memory workspace, W1 the migration. The
+ArcPy adapter's engine stores hold a date to the millisecond at precision 1 and in the
+engine's in-memory workspace, and to the second at precision 0, each reading back with
+the double encoding's microsecond noise; `read_rows` rounds to the field's grain and
+`write_rows` truncates to it before handing over, so a round trip is identity to the
+grain (the architect, 2026-11-09; `temp/w26_w27_date_store_probe.py`: the engine's
+equality on the rounded literal selects every noisy read at both grains).
+`destination:` `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`,
+`dataset_schema.py`, `dataset_writer.py`, `tools/break_once/cases/arcpy_adapter.py`,
+`tests/conformance/`.
+
 # B. Open
 
 These are **not settled**. Nothing below should be treated as a decision.
@@ -2604,7 +2649,12 @@ tool, and whether the session environment's implicit reprojection of tool output
 a second line or is turned off once ingest conforms every input.
 `destination:` the ingest task and the session docstring when decided.
 
-**B30. Holes in multipolygon members.** Opened 2026-11-04 with the ArcPy adapter's WKB codec.
+**B30. Holes in multipolygon members.** *Closed 2026-11-07.* Read after `explode_multipart`
+is the contract: `Geometry` holds one ring per member of a multi kind and gains no nested
+form; a member with holes is refused on read, and a raw input that has one, which the
+pipeline neither expects nor produces, is exploded at ingest (T3.4) before any read. The
+timing run's polygon source, `ArealdekkeFlate_N10`, held none. Landed in
+`ports/geometry.py`. As opened: Opened 2026-11-04 with the ArcPy adapter's WKB codec.
 `Geometry` holds one ring per member of a multi kind, so a multipolygon member with holes, a
 lake with islands arriving as one row, is refused on read with `PortContractError` and is
 reachable only after `explode_multipart`, which yields one polygon with its holes per row.
@@ -2613,7 +2663,21 @@ is the contract. The first engine run adds: a one-member multipolygon is stored 
 so the one-row shape is a multipolygon with two or more members, one of them holed.
 `destination:` `ports/geometry.py` when decided.
 
-**B31. The geometry type of a feature class written through the port.** Opened 2026-11-06
+**B31. The geometry type of a feature class written through the port.** *Closed
+2026-11-08.* `Schema` carries a geometry family, `GeometryFamily` in `ports/geometry.py`,
+required for a feature class as the CRS is and refused on a table; the family folds the
+kinds as every engine does, lines together, polygons together, multipoint apart from
+point. The store refuses a row outside the family before anything is replaced, as every
+engine refuses it; `describe` fills the family from the engine's `shapeType` through
+`SHAPE_TYPES` and refuses a type none of the families holds; `explode_multipart` writes
+its output under the input family's `single`, multipoint to point. The empty dataset is
+answered by the schema: a partition in which one input has no rows still hands the
+method a dataset with every field and its geometry type, created from the schema alone,
+which the legacy partition iterator did with a template feature class and the port,
+having no template, does from `Schema`. The CreateFeatureclass vocabulary moved into the
+adapter as `GEOMETRY_TYPES` in `dataset_writer.py`, keyed by family, ahead of
+`write_rows`. Landed in `ports/table_ops.py`, `ports/geometry.py`, the store, `describe`
+and the test builders; ADR-0019 PC-D22 and PC-D26 adapted. As opened: Opened 2026-11-06
 with the `.gdb` builders. `Schema` carries fields, data type and CRS; the engine's create
 tool needs a geometry type, which the builders derive from the rows' kinds, test-side, in
 `tests/support/arcpy/gdb.py`. Open: how `write_rows` (PC-D22) learns it, a `Schema` field or
@@ -2622,7 +2686,23 @@ refuses what every engine refuses, one geometry type per feature class, which is
 mixed-kind case pass as engine-neutral until the first engine run.
 `destination:` `ports/table_ops.py` and the store when decided.
 
-**B32. Ring orientation at the port boundary.** Opened 2026-11-06 with the first engine run.
+**B32. Ring orientation at the port boundary.** *Closed 2026-11-08.* Orientation is part
+of the `Geometry` contract: a polygon's exterior and every multipolygon member run
+counter-clockwise and holes clockwise, applied on construction, so one polygon has one
+value and a round trip is identity on every adapter; a ring of zero signed area keeps
+its order, so B33's degenerate-ring candidate is untouched; line direction is never
+touched. The signed area is taken relative to the ring's first vertex, since the plain
+shoelace form loses the sign of a ring millimetres across at projected coordinates in
+the hundreds of kilometres (probe, 2026-11-08). Why in the value and not at an adapter's
+boundary: the rule is bad data in, bad data out, and the sources already read back
+canonical, so nothing on read changes; reversing a ring changes how a polygon is
+described, not what it is, since the position in `parts` already says which ring is the
+exterior; and a value canonical on construction cannot diverge between an engine that
+reads a ring's role from its orientation and a store that keeps what it is given. The
+price, 0.13 to 0.24 s per partition of polygons against A15.7's minute, was measured in
+the timing run with the plain form, which the relative form costs about a third more
+than. `oriented` left the test encoder. Landed in `ports/geometry.py`; ADR-0019 PC-D25
+adapted. As opened: Opened 2026-11-06 with the first engine run.
 The engine reads a WKB ring's role from its orientation, not from its position: exterior
 counter-clockwise, hole clockwise. Two counter-clockwise rings become two exterior members,
 and a lone clockwise ring becomes an empty shape, which is silent geometry loss on write. On
@@ -2634,3 +2714,65 @@ and the codec keeps rings as the engine writes them. Open: whether orientation i
 adapter concern at the boundary (PC-D25), the write side orienting and a value allowed to
 come back with its rings reversed.
 `destination:` `ports/geometry.py` when decided.
+
+**B33. True curves at the port boundary.** *Closed 2026-11-09.* The project does not
+support or deliver true curves: the port carries planar simple features with straight
+segments (ADR-0019 PC-D30), settled as B30 was. The guard is densifying where curves
+arise: an adapter method whose engine tool writes curves, buffer first, densifies its own
+output, never its input, within the deviation the session environment sets, and is
+accepted by a marked test reading `hasCurves` on every row in both workspaces; ingest
+(T3.4) densifies raw inputs before any stage reads them. The degenerate-ring refusal, a
+polygon ring under four coordinates or a line under two on every ring, exterior, hole and
+member alike, is the backstop for a curve that is a whole ring, which the engine exports
+as its two end vertices, and not the guard: a curved corner inside a longer ring reads as
+a straight chord, off by about 0.29 of the radius on a right angle, and keeps its
+coordinates. Not taken: a per-row `hasCurves` check on read, since nothing after ingest
+holds a curve and the check costs what the null pre-pass costs. Why the loss is new with
+the port: the legacy code reads geometry objects, which keep curves; the port reads WKB,
+which drops them. What the sources hold, counted 2026-11-09 on that day's copies of the
+three raw geodatabases, fifteen feature classes, 39.7 million rows
+(`temp/w28_curve_count_probe.py`): `AnleggsLinje_N50` 20 curved rows of 29,506,
+`Grunnriss_N10` 69 of 43,735, no other curve anywhere; `ArealdekkeFlate` 4,312 polygon
+rings under four coordinates in 14.7 million rows, no curve among them; so ingest has
+sources to clean today, and T3.4 records a rule, not these numbers, since sources change
+over the system's life. On the image a buffered point is one true curve, a buffered line
+and a buffered polygon straight segments, and `edit.Densify` with the offset method
+removes the curve in both workspaces (`temp/w29_buffer_densify_probe.py`); the
+architect saw curved corners on polygon buffers in Pro, recorded as observed (W29).
+Landed: the refusal in `ports/geometry.py`, the codec's mapping of it to the row's
+`PortContractError`, PC-D30, T3.4's cleanup order and rule, T4.11's follow-up; the gaps
+ingest's design needs are B34. As opened: Opened 2026-11-07 with the timing run. The engine
+exports a true curve through `SHAPE@WKB` as neither a densified ring nor a curve code but
+the arc's vertices alone: a buffered point read back as a planar polygon of one ring and
+two vertices (probe, 2026-11-06). The codec accepts it and `Geometry` validates only a
+point's shape, so a curve is silent geometry loss on read. Exposure: the raw sources,
+unknown, since the WKB walk cannot see a curve; the pipeline's own curve-producing tools,
+certain, since Buffer writes true curves into a file geodatabase and the stages buffer.
+Open, none applied: a degenerate-ring refusal in `Geometry`, a polygon ring under four
+coordinates or a line under two, cheap, catching a full arc and not a curved corner; the
+adapter densifying the output of each curve-producing method through a tool; a per-row
+`hasCurves` check through `SHAPE@`, a stub name and an unpriced per-row cost; a one-off
+probe counting true curves per source, which answers whether any of it is needed.
+Re-assessed once B31 and B32 have landed, before the pull request that carries them.
+`destination:` ADR-0019 PC-D30, `ports/geometry.py`, the codec, T3.4 and T4.11.
+
+**B34. Ingest's cleanup through port methods: the gaps.** Opened 2026-11-09 with B33's
+closing. The architect's constraints for ingest: lineage is stamped first and cleanup
+runs after, so every cleanup step is an ordinary port method whose lineage is carried or
+minted like any stage's; ingest removes raw rows without geometry, cleans topology, and
+fixes or removes short rings; the work itself waits until the legacy code moves into the
+new architecture. The order T3.4 records, (a) stamp through `calculate_field` reading no
+row, (b) clean through port methods backed by engine tools on the copy, (c) `read_rows`
+only after that, needs what the port does not yet have: a way to select rows by their
+geometry, null or degenerate, since `Attr.is_null` takes an attribute field and
+`read_rows` refuses such a row rather than filtering it; a densify and a repair method,
+with what the engine's repair tool does to a ring under four coordinates a W-item; and
+`calculate_field`, declared in PC-D22 and not landed. One more consequence to decide: a
+cleanup step that removes a row leaves its lineage id in the ingest map with no
+survivor, which an A23 walk must report as removed at ingest, a terminal kind the map's
+`boundary_kind` does not yet name. And what `native_index` in the map points at when
+ingest copies the raw source: `cp -a` keeps a geodatabase whole, an engine copy tool may
+renumber, which no run has shown; if the copy renumbers, the map points at the copy and
+not at the source, and the trace to RAW (A10.6, A23, A24.1) needs a stable raw id or a
+copy that keeps native indices. Open until ingest is designed; nothing built now.
+`destination:` the ingest task (T3.4) and ADR-0019 when decided.

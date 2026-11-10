@@ -17,7 +17,7 @@ from ag.adapters.fakes.memory.store import MemoryStore
 from ag.core.types import DataType
 from ag.ports import CHILD_ID, PARENT_ID, Attr, Comparison, Intersects, Predicate, Row
 from ag.ports.errors import EmptyGeometryError, PortContractError
-from ag.ports.geometry import Geometry
+from ag.ports.geometry import Geometry, GeometryFamily
 from ag.ports.table_ops import PARENTS_SCHEMA
 from tests.support.cases import (
     DatasetCase,
@@ -145,6 +145,29 @@ def test_explode_without_parents_writes_the_children_and_nothing_else() -> None:
     assert (
         seed(store, lookup()).indices[0] == seeded.indices[-1] + len(children.rows) + 1
     )
+
+
+def test_explode_of_a_multipoint_input_writes_a_point_family_output() -> None:
+    """The output's family is the input family's `single`, decided by the schema: an
+    empty multipoint input writes an empty point feature class, no row consulted."""
+    store = MemoryStore()
+    case = multipoints()
+    seeded = seed(store, case)
+    output = memory_handle("exploded")
+    MemoryGeometryOps(store=store).explode_multipart(input=seeded.handle, output=output)
+    exploded = store.read(output)
+    assert exploded.schema.geometry_family is GeometryFamily.POINT
+    assert exploded.schema.fields == case.schema.fields
+    assert len(exploded.rows) == 3
+    empty = memory_handle("no_points")
+    store.write(empty, schema=case.schema, rows=())
+    MemoryGeometryOps(store=store).explode_multipart(
+        input=empty, output=memory_handle("no_children")
+    )
+    none = store.read(memory_handle("no_children"))
+    assert none.schema.geometry_family is GeometryFamily.POINT
+    assert none.schema.fields == case.schema.fields
+    assert dict(none.rows) == {}
 
 
 Children = dict[int, frozenset[Geometry]]

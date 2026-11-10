@@ -1,7 +1,9 @@
 """The dataset-shape group of the in-memory `GeometryOps`: `explode_multipart`.
 
 How: a multi kind yields one row per part, each the single kind over that one part with
-the input row's attributes; a single kind yields its row unchanged. The pairs are the
+the input row's attributes; a single kind yields its row unchanged. The output's schema
+is the input's with the family's `single`, so an empty multipoint input writes an empty
+point feature class, decided by the schema and not by a row. The pairs are the
 input row's native index against the index the store assigned to each child, written as
 the port's parents table when `parents` is given and not built otherwise. A null
 geometry is refused before anything is written, and a table input is a contract error,
@@ -13,6 +15,7 @@ reaches this method as one row. ADR-0017 RS-D16.
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 
 from ag.adapters._shared.preconditions import distinct_paths
 from ag.adapters.fakes.memory._base import MemoryPortBase
@@ -23,7 +26,7 @@ from ag.core.types import DataType
 from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, PortContractError
 from ag.ports.geometry import Geometry, GeometryKind
-from ag.ports.table_ops import PARENTS_SCHEMA, Row
+from ag.ports.table_ops import PARENTS_SCHEMA, Row, Schema
 
 _SINGLE_KIND = {
     GeometryKind.MULTIPOINT: GeometryKind.POINT,
@@ -54,7 +57,9 @@ class Shape(MemoryPortBase):
             for part in _single_parts(geometry):
                 children.append(Row(attributes=row.attributes, geometry=part))
                 origins.append(index)
-        assigned = self._store.write(output, schema=dataset.schema, rows=children)
+        assigned = self._store.write(
+            output, schema=_exploded_schema(dataset.schema), rows=children
+        )
         if parents is None:
             return
         pairs = [
@@ -62,6 +67,13 @@ class Shape(MemoryPortBase):
             for parent, child in zip(origins, assigned, strict=True)
         ]
         self._store.write(parents, schema=PARENTS_SCHEMA, rows=pairs)
+
+
+def _exploded_schema(schema: Schema) -> Schema:
+    """`schema` with the family the children belong to."""
+    if schema.geometry_family is None:
+        return schema
+    return replace(schema, geometry_family=schema.geometry_family.single)
 
 
 def _subject_rows(*, dataset: Dataset, path: str) -> list[tuple[int, Row, Geometry]]:

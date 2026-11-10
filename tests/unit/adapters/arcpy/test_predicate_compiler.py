@@ -44,6 +44,10 @@ def compiled(
             Attr.cmp("surveyed", Comparison.GE, datetime(2024, 1, 2, 3, 4, 5)),
             "\"surveyed\" >= date '2024-01-02 03:04:05'",
         ),
+        (
+            Attr.cmp("surveyed", Comparison.EQ, datetime(2024, 1, 2, 3, 4, 5, 500000)),
+            "\"surveyed\" = date '2024-01-02 03:04:05.500000'",
+        ),
         (Attr.in_("rank", (1, 2)), '"rank" IN (1, 2)'),
         (Attr.cmp("width_m", Comparison.LT, 2.5), '"width_m" < 2.5'),
         (Attr.cmp("rank", Comparison.NE, 1), '"rank" <> 1'),
@@ -62,6 +66,7 @@ def compiled(
         "like",
         "quote-doubled",
         "date",
+        "date-with-fraction",
         "in",
         "double",
         "ne",
@@ -117,14 +122,6 @@ def test_a_like_pattern_is_held_to_the_type_and_not_the_length(
         )
         == f"\"name\" LIKE '{pattern}'"
     )
-
-
-def test_a_sub_second_date_is_refused_not_truncated(dataset: DescribedDataset) -> None:
-    with pytest.raises(PortContractError, match=r"replace\(microsecond=0\)"):
-        check(
-            Attr.cmp("surveyed", Comparison.GE, datetime(2024, 1, 1, 0, 0, 0, 500000)),
-            dataset=dataset,
-        )
 
 
 def test_a_bool_never_reaches_the_compiler() -> None:

@@ -7,10 +7,10 @@ what a seed produced, whichever store or engine produced it.
 
 Why: the same case runs under the in-memory adapter and under an engine in the
 conformance suite, so nothing here names an engine or a store, and nothing assumes the
-order an engine writes rows in. A case holds one engine geometry type, point, multipoint,
-line or polygon, because a feature class holds one: a line case may mix single and
-multipart lines, a polygon case single and multipart polygons, a multipoint case member
-counts, and nothing mixes families.
+order an engine writes rows in. A case's schema names its geometry family, because a
+feature class holds one: a line case may mix single and multipart lines, a polygon case
+single and multipart polygons, a multipoint case member counts, and nothing mixes
+families.
 """
 
 from __future__ import annotations
@@ -20,7 +20,15 @@ from datetime import datetime
 
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
-from ag.ports import Field, FieldType, Geometry, GeometryKind, Row, Schema
+from ag.ports import (
+    Field,
+    FieldType,
+    Geometry,
+    GeometryFamily,
+    GeometryKind,
+    Row,
+    Schema,
+)
 
 CRS = "EPSG:25833"
 
@@ -56,6 +64,7 @@ def roads() -> DatasetCase:
             Field("surveyed", FieldType.DATE),
         ),
         geometry_crs=CRS,
+        geometry_family=GeometryFamily.LINE,
     )
     line = Geometry.linestring(((0.0, 0.0), (1.0, 1.0)), crs=CRS)
     return DatasetCase(
@@ -97,15 +106,19 @@ def roads() -> DatasetCase:
     )
 
 
-def _named() -> Schema:
-    return Schema(fields=(Field("name", FieldType.TEXT, 5),), geometry_crs=CRS)
+def _named(family: GeometryFamily) -> Schema:
+    return Schema(
+        fields=(Field("name", FieldType.TEXT, 5),),
+        geometry_crs=CRS,
+        geometry_family=family,
+    )
 
 
 def multilines() -> DatasetCase:
     """A line, a three-part multiline and a two-part multiline, in that order."""
     return DatasetCase(
         name="multilines",
-        schema=_named(),
+        schema=_named(GeometryFamily.LINE),
         rows=(
             Row({"name": "a"}, Geometry.linestring(((0.0, 0.0), (1.0, 0.0)), crs=CRS)),
             Row(
@@ -161,7 +174,7 @@ def multipoints() -> DatasetCase:
     """A two-part multipoint and a one-member multipoint, in that order."""
     return DatasetCase(
         name="multipoints",
-        schema=_named(),
+        schema=_named(GeometryFamily.MULTIPOINT),
         rows=(
             Row(
                 {"name": "c"},
@@ -188,7 +201,7 @@ def points() -> DatasetCase:
     """Two single points."""
     return DatasetCase(
         name="points",
-        schema=_named(),
+        schema=_named(GeometryFamily.POINT),
         rows=(
             Row({"name": "p"}, Geometry.point(0.0, 4.0, crs=CRS)),
             Row({"name": "q"}, Geometry.point(1.0, 4.0, crs=CRS)),
@@ -199,8 +212,8 @@ def points() -> DatasetCase:
 def polygons() -> DatasetCase:
     """A square with a hole and a two-member multipolygon, in that order.
 
-    Rings are in the orientation an engine reads through well-known binary, exterior
-    counter-clockwise and hole clockwise, so a round trip returns the value as written.
+    Rings are written in the canonical orientation, exterior counter-clockwise and hole
+    clockwise, so the literals read as the value holds them.
     """
     square = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0), (0.0, 0.0))
     hole = ((1.0, 1.0), (1.0, 2.0), (2.0, 2.0), (2.0, 1.0), (1.0, 1.0))
@@ -208,10 +221,35 @@ def polygons() -> DatasetCase:
     west = ((8.0, 0.0), (9.0, 0.0), (9.0, 1.0), (8.0, 1.0), (8.0, 0.0))
     return DatasetCase(
         name="polygons",
-        schema=_named(),
+        schema=_named(GeometryFamily.POLYGON),
         rows=(
             Row({"name": "s"}, Geometry(GeometryKind.POLYGON, (square, hole), CRS)),
             Row({"name": "t"}, Geometry(GeometryKind.MULTIPOLYGON, (east, west), CRS)),
+        ),
+    )
+
+
+def stamps() -> DatasetCase:
+    """Two points stamped a half second apart, the first with a fraction, for the date
+    round trip and the fractional literal; the values are millisecond-aligned, which is
+    what every store that holds a fraction holds."""
+    schema = Schema(
+        fields=(Field("name", FieldType.TEXT, 5), Field("at", FieldType.DATE)),
+        geometry_crs=CRS,
+        geometry_family=GeometryFamily.POINT,
+    )
+    return DatasetCase(
+        name="stamps",
+        schema=schema,
+        rows=(
+            Row(
+                {"name": "half", "at": datetime(2024, 1, 1, 12, 0, 0, 500000)},
+                Geometry.point(0.0, 5.0, crs=CRS),
+            ),
+            Row(
+                {"name": "whole", "at": datetime(2024, 1, 1, 12, 0, 0)},
+                Geometry.point(1.0, 5.0, crs=CRS),
+            ),
         ),
     )
 

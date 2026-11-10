@@ -1,5 +1,6 @@
 """Cases for the ArcPy adapter's first methods: the described schema, the WKB codec, the
-predicate compiler, the three group modules and the capability record.
+predicate compiler, the write side's builders, the three group modules and the
+capability record.
 
 The session's own guards are in `arcpy_session.py`; the scan and stub rules there cover
 the adapter root as a whole and are not repeated. The memory adapter's case on the
@@ -11,10 +12,10 @@ from __future__ import annotations
 from ..engine import Case, tests_in
 
 ROOT_INIT = "src/ag/adapters/arcpy/__init__.py"
-FIELD_VALUES = "src/ag/adapters/_shared/field_values.py"
 SCHEMA = "src/ag/adapters/arcpy/support/dataset_schema.py"
 CODEC = "src/ag/adapters/arcpy/support/geometry_values.py"
 COMPILER = "src/ag/adapters/arcpy/support/predicate_compiler.py"
+WRITER = "src/ag/adapters/arcpy/support/dataset_writer.py"
 SELECTION = "src/ag/adapters/arcpy/geometry_ops/selection.py"
 SHAPE = "src/ag/adapters/arcpy/geometry_ops/shape.py"
 ROW_IO = "src/ag/adapters/arcpy/table_ops/row_io.py"
@@ -23,11 +24,10 @@ UNIT = "tests/unit/adapters/arcpy"
 T_SCHEMA = f"{UNIT}/test_dataset_schema.py"
 T_CODEC = f"{UNIT}/test_geometry_values.py"
 T_COMPILER = f"{UNIT}/test_predicate_compiler.py"
+T_WRITER = f"{UNIT}/test_dataset_writer.py"
 T_GEOMETRY = f"{UNIT}/test_geometry_ops.py"
 T_TABLE = f"{UNIT}/test_table_ops.py"
 T_CAPABILITIES = "tests/static/test_capabilities.py"
-T_MEMORY_EVAL = "tests/unit/adapters/fakes/memory/test_predicate_eval.py"
-T_MEMORY_STORE = "tests/unit/adapters/fakes/memory/test_store.py"
 T_SCANS = "tests/static/test_source_scans.py"
 
 REFUSES = f"{T_COMPILER}::test_check_refuses_before_anything_compiles"
@@ -51,6 +51,36 @@ CASES: tuple[Case, ...] = (
         tests_in(
             T_SCHEMA,
             "test_an_unrepresentable_field_is_recorded_not_refused_until_named",
+        ),
+    ),
+    Case(
+        "D3",
+        "an unmapped shape type described as a feature class with no family",
+        SCHEMA,
+        (
+            (
+                '        family = SHAPE_TYPES.get(raw.shape_type or "")\n'
+                "        if family is None:\n",
+                '        family = SHAPE_TYPES.get(raw.shape_type or "", GeometryFamily.LINE)\n'
+                "        if False:\n",
+            ),
+        ),
+        (f"{DESCRIBE_REFUSES}[unknown-shape-type]",),
+    ),
+    Case(
+        "D4",
+        "the family read from a fixed shape type instead of the described one",
+        SCHEMA,
+        (
+            (
+                "            shape_type = described.shapeType\n",
+                '            shape_type = "Polyline"\n',
+            ),
+        ),
+        (
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[points]",
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[multipoints]",
+            f"{T_SCHEMA}::test_describe_reads_the_family_from_the_shape_type[polygons]",
         ),
     ),
     Case(
@@ -100,14 +130,78 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "P4",
-        "a sub-second date accepted by the shared rule, so one adapter truncates",
-        FIELD_VALUES,
-        (("    if value.microsecond:\n", "    if False:\n"),),
+        "the compiler's literal drops a date's fraction silently",
+        COMPILER,
         (
-            f"{T_COMPILER}::test_a_sub_second_date_is_refused_not_truncated",
-            f"{T_MEMORY_EVAL}::test_check_refuses_what_the_adapter_cannot_evaluate[sub-second-date]",
-            f"{T_MEMORY_STORE}::test_a_row_that_does_not_fit_the_schema_is_refused[sub-second-date]",
+            (
+                '        fraction = f".{value.microsecond:06d}" if value.microsecond else ""\n',
+                '        fraction = ""\n',
+            ),
         ),
+        (f"{CLAUSE}[date-with-fraction]",),
+    ),
+    Case(
+        "D5",
+        "a date field's grain not read, so no reader rounds",
+        SCHEMA,
+        (
+            (
+                "            if field_type is FieldType.DATE:\n                grains[name] = (\n",
+                "            if False:\n                grains[name] = (\n",
+            ),
+        ),
+        (f"{T_SCHEMA}::test_describe_names_each_date_fields_store_grain",),
+    ),
+    Case(
+        "D6",
+        "a memory-workspace date field named a whole-second store, so its milliseconds are rounded away",
+        SCHEMA,
+        (
+            (
+                "    if DateGrain.SECOND in grains.values():\n        prog_id = _workspace_prog_id(",
+                "    if False:\n        prog_id = _workspace_prog_id(",
+            ),
+        ),
+        (
+            f"{T_SCHEMA}::"
+            "test_a_memory_workspace_date_field_is_at_the_millisecond_grain_at_any_precision",
+        ),
+    ),
+    Case(
+        "D7",
+        "the workspace walk unbounded, so a nested path is followed instead of refused",
+        SCHEMA,
+        (
+            (
+                "    for _ in range(WORKSPACE_DEPTH):\n",
+                "    while True:\n",
+            ),
+        ),
+        (f"{T_SCHEMA}::test_a_dataset_with_no_workspace_within_two_levels_is_refused",),
+    ),
+    Case(
+        "W2",
+        "the migration run in the memory workspace, which refuses it",
+        WRITER,
+        (
+            (
+                "        not in_memory_workspace(session, path)\n",
+                "        True\n",
+            ),
+        ),
+        (f"{T_WRITER}::test_a_date_field_in_the_memory_workspace_is_not_migrated",),
+    ),
+    Case(
+        "W1",
+        "a date field added without the migration, so the adapter's own store rounds",
+        WRITER,
+        (
+            (
+                "        if migrate and field.type is FieldType.DATE:\n",
+                "        if False:\n",
+            ),
+        ),
+        (f"{T_WRITER}::test_create_table_adds_every_field_and_migrates_the_date_ones",),
     ),
     Case(
         "S1",
@@ -156,7 +250,12 @@ CASES: tuple[Case, ...] = (
         "X6",
         "an input that already has the reference field accepted",
         SHAPE,
-        (("        if _REFERENCE in before.all_fields:\n", "        if False:\n"),),
+        (
+            (
+                "        if REFERENCE_FIELD in before.all_fields:\n",
+                "        if False:\n",
+            ),
+        ),
         tests_in(
             T_GEOMETRY,
             "test_explode_refuses_an_input_that_already_has_the_reference_field",
@@ -189,9 +288,8 @@ CASES: tuple[Case, ...] = (
         SHAPE,
         (
             (
-                "        self._session.run_tool(\n"
-                '            "management.DeleteField", in_table=target, drop_field=reference\n'
-                "        )\n",
+                "        self._session.run_tool("
+                "DELETE_FIELD_TOOL, in_table=target, drop_field=reference)\n",
                 "        pass\n",
             ),
         ),
@@ -222,16 +320,32 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "R3",
-        "a sub-second date read through and truncated on the next write",
+        "a store's encoding noise read through instead of rounded to its grain",
         ROW_IO,
         (
             (
-                "    if isinstance(value, datetime) and value.microsecond:\n",
-                "    if False:\n",
+                "        if grain is not None and value.microsecond:\n",
+                "        if False:\n",
             ),
         ),
         (
-            f"{T_TABLE}::test_a_sub_second_date_read_is_refused_naming_the_field_and_the_row",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-over]",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-under]",
+        ),
+    ),
+    Case(
+        "R4",
+        "a store's value truncated to its grain instead of rounded, a grain off",
+        ROW_IO,
+        (
+            (
+                "    shifted = value + grain.value / 2\n",
+                "    shifted = value\n",
+            ),
+        ),
+        (
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-under]",
+            f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[over-midnight]",
         ),
     ),
     Case(

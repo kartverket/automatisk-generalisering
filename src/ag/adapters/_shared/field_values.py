@@ -27,7 +27,7 @@ def type_mismatch(*, value: AttributeValue, field: Field) -> str | None:
 
     `SHORT` and `LONG` take an `int` within the type's range, `DOUBLE` takes `int` or
     `float`, `TEXT` takes a `str` of at most the field's length in characters, `DATE`
-    takes a naive `datetime` with no sub-second part; a `bool` fits no field and None
+    takes a naive `datetime`, its fraction included; a `bool` fits no field and None
     fits every one.
     ADR-0019 PC-D17.
     """
@@ -60,9 +60,4 @@ def type_mismatch(*, value: AttributeValue, field: Field) -> str | None:
         return f"{value!r} is not a datetime, which a date field takes"
     if value.tzinfo is not None:
         return f"{value!r} is an aware datetime; a date field holds a naive one"
-    if value.microsecond:
-        return (
-            f"{value!r} has a sub-second part; the port carries dates to the whole "
-            "second, so pass value.replace(microsecond=0)"
-        )
     return None

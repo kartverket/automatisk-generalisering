@@ -3,6 +3,8 @@ None, and what the port cannot hold is refused by name. ADR-0019 PC-D25."""
 
 from __future__ import annotations
 
+import struct
+
 import pytest
 
 from ag.adapters.arcpy.support.geometry_values import (
@@ -76,6 +78,25 @@ def test_what_the_port_cannot_hold_is_refused_naming_the_row(
     with pytest.raises(PortContractError, match=message) as caught:
         geometry_from_wkb(data, crs=CRS, where="'roads' row 3")
     assert "'roads' row 3" in str(caught.value)
+
+
+@pytest.mark.parametrize("points", [0, 2], ids=["empty-hole", "two-vertex-hole"])
+def test_a_ring_under_four_coordinates_is_refused_naming_the_row(points: int) -> None:
+    """A whole-ring curve exports as its two end vertices; the port carries no curve, and
+    the port's refusal is reported as the row's, not as an adapter defect."""
+    exterior = wkb.to_wkb(Geometry.linestring(SQUARE, crs=CRS))[5:]  # count and points
+    short = struct.pack("<I", points) + b"".join(
+        struct.pack("<dd", float(i), float(i)) for i in range(points)
+    )
+    data = (
+        b"\x01"
+        + struct.pack("<I", wkb.POLYGON)
+        + struct.pack("<I", 2)
+        + exterior
+        + short
+    )
+    with pytest.raises(PortContractError, match="'probe' row 3: .*needs at least 4"):
+        geometry_from_wkb(data, crs=CRS, where="'probe' row 3")
 
 
 def test_an_unreadable_type_is_not_null() -> None:

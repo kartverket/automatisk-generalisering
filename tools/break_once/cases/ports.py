@@ -1,6 +1,6 @@
-"""Cases for the port values: `ports/attributes.py`, `ports/geometry.py`,
-`ports/table_ops.py`, `ports/predicates.py`, `ports/toolbox.py`, and the pinned count of
-`Attr.raw` call sites.
+"""Cases for the port values: `ports/attributes.py`, `ports/geometry.py`, its canonical
+ring orientation included, `ports/table_ops.py`, `ports/predicates.py`,
+`ports/toolbox.py`, and the pinned count of `Attr.raw` call sites.
 """
 
 from __future__ import annotations
@@ -61,6 +61,123 @@ CASES: tuple[Case, ...] = (
         ),
         tests_in(
             T_TABLE, "test_a_feature_class_schema_needs_a_crs_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P25",
+        "feature class schema accepted without a family",
+        TABLE,
+        (
+            (
+                "        if self.data_type is DataType.FEATURE_CLASS and self.geometry_family is None:",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_feature_class_schema_needs_a_family_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P26",
+        "a table schema accepted with a family",
+        TABLE,
+        (
+            (
+                "        if (\n"
+                "            self.data_type is not DataType.FEATURE_CLASS\n"
+                "            and self.geometry_family is not None\n"
+                "        ):",
+                "        if False:",
+            ),
+        ),
+        tests_in(
+            T_TABLE, "test_a_feature_class_schema_needs_a_family_and_a_table_does_not"
+        ),
+    ),
+    Case(
+        "P27",
+        "polygon rings stored as given instead of canonical",
+        GEOMETRY,
+        (
+            (
+                "        if self.kind.family is GeometryFamily.POLYGON:\n"
+                '            object.__setattr__(self, "parts", _canonical(self.kind, self.parts))',
+                "        if False:\n            pass",
+            ),
+        ),
+        tests_in(
+            T_GEOM,
+            "test_a_polygon_is_canonical_on_construction",
+            "test_every_multipolygon_member_is_counter_clockwise",
+            "test_orientation_is_read_at_projected_coordinates",
+        ),
+    ),
+    Case(
+        "P28",
+        "the signed area taken from the origin, so a millimetre ring at UTM coordinates loses its sign",
+        GEOMETRY,
+        (
+            (
+                "    x0, y0 = ring[0]\n",
+                "    x0, y0 = 0.0, 0.0\n",
+            ),
+        ),
+        tests_in(T_GEOM, "test_orientation_is_read_at_projected_coordinates"),
+    ),
+    Case(
+        "P29",
+        "a new parts tuple built when nothing reverses",
+        GEOMETRY,
+        (
+            (
+                "    return tuple(oriented) if changed else parts\n",
+                "    return tuple(oriented)\n",
+            ),
+        ),
+        tests_in(T_GEOM, "test_a_canonical_value_keeps_the_parts_tuple_it_was_given"),
+    ),
+    Case(
+        "P30",
+        "a zero-area ring reversed",
+        GEOMETRY,
+        (
+            (
+                "    if area == 0.0 or (area < 0.0) is clockwise:\n",
+                "    if (area < 0.0) is clockwise:\n",
+            ),
+        ),
+        tests_in(T_GEOM, "test_a_collinear_ring_of_zero_area_keeps_its_order"),
+    ),
+    Case(
+        "P31",
+        "a ring under four coordinates or a line under two accepted, so a whole-ring curve passes as data",
+        GEOMETRY,
+        (
+            (
+                "        least = _LEAST_COORDINATES.get(self.kind.family)\n",
+                "        least = None\n",
+            ),
+        ),
+        tests_in(
+            T_GEOM, "test_a_ring_under_four_coordinates_or_a_line_under_two_is_refused"
+        ),
+    ),
+    Case(
+        "P32",
+        "the codec lets the port's refusal out as a bare ValueError instead of naming the row",
+        "src/ag/adapters/arcpy/support/geometry_values.py",
+        (
+            (
+                "    except ValueError as error:\n"
+                '        raise PortContractError(f"{where}: {error}") from error\n',
+                "    except ValueError as error:\n        raise error\n",
+            ),
+        ),
+        (
+            "tests/unit/adapters/arcpy/test_geometry_values.py::"
+            "test_a_ring_under_four_coordinates_is_refused_naming_the_row[empty-hole]",
+            "tests/unit/adapters/arcpy/test_geometry_values.py::"
+            "test_a_ring_under_four_coordinates_is_refused_naming_the_row[two-vertex-hole]",
         ),
     ),
     Case(

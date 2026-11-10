@@ -41,9 +41,12 @@ from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.errors import EmptyGeometryError, EngineError, PortContractError
 from ag.ports.table_ops import PARENTS_SCHEMA
 
-_EXPLODE = "management.MultipartToSinglepart"
-_REFERENCE = "ORIG_FID"
+EXPLODE_TOOL = "management.MultipartToSinglepart"
+"""The engine's multipart tool; public so that a measurement names the same tool."""
+REFERENCE_FIELD = "ORIG_FID"
 """The field the tool writes each child's parent native index to."""
+DELETE_FIELD_TOOL = "management.DeleteField"
+"""The tool that drops the reference from the output on every call."""
 
 
 class Shape(ArcpyPortBase):
@@ -67,23 +70,23 @@ class Shape(ArcpyPortBase):
                 "explode; explode_multipart takes a feature class.",
                 context=ErrorContext(handle=source),
             )
-        if _REFERENCE in before.all_fields:
+        if REFERENCE_FIELD in before.all_fields:
             raise PortContractError(
-                f"{source!r} has a field named {_REFERENCE!r}, which {_EXPLODE} writes "
+                f"{source!r} has a field named {REFERENCE_FIELD!r}, which {EXPLODE_TOOL} writes "
                 "its parent reference into instead of adding one; rename the field "
                 "before exploding.",
                 context=ErrorContext(handle=source),
             )
         _refuse_null_shapes(self._session, path=source)
-        self._session.run_tool(_EXPLODE, in_features=source, out_feature_class=target)
+        self._session.run_tool(
+            EXPLODE_TOOL, in_features=source, out_feature_class=target
+        )
         after = describe(self._session, target)
         reference = _reference_field(before=before, after=after)
         if parents is not None:
             pairs = _read_pairs(self._session, path=target, reference=reference)
             _write_pairs(self._session, path=os.fspath(parents), pairs=pairs)
-        self._session.run_tool(
-            "management.DeleteField", in_table=target, drop_field=reference
-        )
+        self._session.run_tool(DELETE_FIELD_TOOL, in_table=target, drop_field=reference)
 
 
 def _refuse_null_shapes(session: ArcpySession, *, path: str) -> None:
@@ -114,10 +117,10 @@ def _reference_field(*, before: DescribedDataset, after: DescribedDataset) -> Fi
     ]
     if len(added) != 1:
         raise EngineError(
-            f"arcpy: {_EXPLODE} added {added} to {after.path!r}; one reference field was "
+            f"arcpy: {EXPLODE_TOOL} added {added} to {after.path!r}; one reference field was "
             "expected.",
             context=ErrorContext(
-                tool=_EXPLODE,
+                tool=EXPLODE_TOOL,
                 tool_messages=(
                     f"input fields {list(before.all_fields)}",
                     f"output fields {list(after.all_fields)}",

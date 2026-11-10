@@ -94,8 +94,9 @@ constructors on a namespace, not a type, and the raw escape hatch is counted.
   comparison can never disagree. `SHORT` and `LONG` take an `int` within the type's range,
   `DOUBLE` takes `int` or `float`, `TEXT` takes a `str` of at most the field's length in
   characters, except a `LIKE` pattern, which is held to the type and not the length, since
-  `%` may match nothing; `DATE` takes a naive `datetime` with no sub-second part, since the
-  port carries dates to the whole second; a `bool` is refused at that boundary.
+  `%` may match nothing; `DATE` takes a naive `datetime`, carried to microsecond
+  precision, and an adapter whose store holds less states its precision, a round trip
+  being identity to the coarser of the two sides; a `bool` is refused at that boundary.
 - **PC-D18** A predicate has no truth value in Python: `and`, `or` and `not` raise. A
   connective has at least two terms.
 - **PC-D19** The leaves are frozen dataclasses `Compare`, `IsIn`, `IsNull` and `RawAttr`, so
@@ -118,7 +119,9 @@ on a stable id and may carry geometry.
 
 - **PC-D22** `TableOps` has no cursor. `calculate_field(input, field, expression)` declares an
   expression update; `read_rows(input, fields) -> Iterable[Row]` reads in bulk;
-  `write_rows(output, schema, rows)` writes in bulk; `update_rows(input, key, fields, rows)`
+  `write_rows(output, schema, rows)` writes in bulk, a feature class's `Schema` naming its
+  CRS and its geometry family, the one geometry type the dataset holds, so that an empty
+  dataset is created from the schema alone; `update_rows(input, key, fields, rows)`
   writes back rows computed in Python, keyed on a stable id, with no iteration protocol,
   writing the changed rows and not every row, and may carry `Row.geometry`. The key must be
   stable; `lineage_id` provides one.
@@ -128,15 +131,27 @@ on a stable id and may carry geometry.
   `write_rows`; an update cursor becomes `calculate_field` where an expression suffices and
   `update_rows` where values are computed in Python.
 - **PC-D25** `ports/geometry.py` defines an immutable `Geometry` value type: geometry kind,
-  coordinate sequence, CRS. `read_rows` yields it and `write_rows` accepts it. Domain code
-  manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy geometry and
-  convert at the boundary.
+  coordinate sequence, CRS. Polygon rings are canonical on construction, the exterior and
+  every multipolygon member counter-clockwise and holes clockwise, a ring of zero area
+  kept as given, so one polygon has one value and a round trip is identity on every
+  adapter; line direction is never touched. `read_rows` yields it and `write_rows` accepts
+  it. Domain code manipulates `Geometry`; adapters implement it with shapely, GEOS or arcpy
+  geometry and convert at the boundary.
 - **PC-D26** A row written through the port is held to the field types and ranges of
-  PC-D17, with `None` a null in a cell; a mismatch is a `PortContractError` from the
-  adapter, raised before anything is written.
+  PC-D17, with `None` a null in a cell, and its geometry to the schema's CRS and geometry
+  family; a mismatch is a `PortContractError` from the adapter, raised before anything is
+  written.
 - **PC-D27** Coordinates are planar. No Z and no M cross a port; heights and depths are
   attribute values on points. An adapter refuses a dataset carrying Z or M values before
   any row is read.
+- **PC-D30** No true curve crosses a port: the port carries planar simple features with
+  straight segments. An adapter's method whose engine tool writes curves densifies its
+  own output, never its input, within the deviation the session environment sets, before
+  anything reads it; ingest densifies raw inputs before any stage reads them. A polygon
+  ring under four coordinates or a line under two is refused on construction, on every
+  ring, exterior, hole and member alike: the backstop for a curve that is a whole ring,
+  which an engine exports as its two end vertices, and not the guard, since a curved
+  corner inside a longer ring reads as a straight chord.
 
 ## PC-5 Parents capability
 
