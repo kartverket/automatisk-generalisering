@@ -10,9 +10,9 @@ from enum import StrEnum
 
 
 class Severity(StrEnum):
-    SUCCESS: str = "SUCCESS"
-    WARNING: str = "WARNING"
-    ERROR: str = "ERROR"
+    SUCCESS = "SUCCESS"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
 
 
 @dataclass
@@ -83,19 +83,12 @@ class ValidationStatus:
     # Main validation
     ##########################
 
-    def status_update(self, stats: dict) -> tuple[Counter, str]:
+    def status_update(self, stats: dict) -> tuple[Counter, str, dict]:
         status = Counter()
         messages = defaultdict(list)
 
         for rule in self.permanent_rules + self.temporary_rules:
             data = stats.get(rule.key)
-
-            try:
-                is_dict = (
-                    True if isinstance(data[list(data.keys())[0]], dict) else False
-                )
-            except Exception:
-                is_dict = False
 
             if data is None:
                 severity = Severity.ERROR
@@ -104,7 +97,15 @@ class ValidationStatus:
                     f"{severity}: Missing data for key '{rule.key}'"
                 )
                 continue
-            elif data.get("changed_type"):
+
+            try:
+                is_dict = (
+                    True if isinstance(data[list(data.keys())[0]], dict) else False
+                )
+            except Exception:
+                is_dict = False
+
+            if data.get("changed_type"):
                 severity = Severity.ERROR
                 status[severity] += 1
                 messages[severity].append(
@@ -129,7 +130,7 @@ class ValidationStatus:
     # Helper functions
     ##########################
 
-    def _iter_rule_data(self, data: dict) -> iter:
+    def _iter_rule_data(self, data: dict):
         if any(isinstance(v, dict) for v in data.values()):
             yield from data.values()
         else:
@@ -142,13 +143,20 @@ class ValidationStatus:
         return None
 
     def _evaluate_rule(self, rule: Rule, data: dict) -> Severity:
-        if rule.operator == "ratio":
+        if (
+            rule.operator == "ratio"
+            and isinstance(rule.value, list)
+            and isinstance(rule.severity, list)
+        ):
             ratio = abs(data.get("ratio", 0))
             for threshold, severity in zip(rule.value, rule.severity[:-1]):
                 if ratio < threshold:
                     return severity
 
             return rule.severity[-1]
+
+        if isinstance(rule.severity, list):
+            return rule.severity[0]
 
         passed = OPERATORS[rule.operator](data, rule.value)
 

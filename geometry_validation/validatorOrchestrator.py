@@ -20,7 +20,7 @@ class ValidatorOrchestrator:
         self.id: int = int(time.time())
         self.step: int = 0
 
-        self.previous_path: Path = None
+        self.previous_path: Path | None = None
 
         self.validator = ValidationStatus()
 
@@ -31,7 +31,7 @@ class ValidatorOrchestrator:
     ##########################
 
     def save_validation_results(
-        self, results: dict, output_dir: str = "./validation_results"
+        self, results: dict, output_dir: Path = Path("./validation_results")
     ) -> None:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -88,6 +88,12 @@ class ValidatorOrchestrator:
                     "new": new_value,
                     "diff": new_value,
                     "ratio": 0,
+                }
+            elif new_value is None:
+                diff[key] = {
+                    "old": old_value,
+                    "new": new_value,
+                    "diff": None,
                 }
             elif type(old_value) == type(new_value):
                 if isinstance(old_value, bool):

@@ -4,7 +4,10 @@ import arcpy
 
 from collections import Counter
 
-from generalization.n10.arealdekke.parameters.parameter_worker import get_min_area
+from generalization.n10.arealdekke.parameters.parameter_worker import (
+    get_min_area,
+    MinArea,
+)
 from geometry_validation.geometryTypeStatistics import LineStatistics, PolygonStatistics
 from geometry_validation.validationStatus import Rule, Severity
 
@@ -38,13 +41,13 @@ class RoadStatistics(LineStatistics):
 
     def get_num_types(self, fc: str) -> dict:
         field = "vegkategori"
+        counts = Counter()
 
         try:
             with arcpy.da.SearchCursor(fc, [field]) as cursor:
-                counts = Counter([row[0] for row in cursor])
+                counts = Counter(row[0] for row in cursor)
         except Exception as e:
-            print(f"Error collecting landuse stats: {e}")
-            counts = Counter()
+            print(f"Error collecting road category stats: {e}")
 
         return {"road_categories": dict(counts)}
 
@@ -98,11 +101,18 @@ class LanduseStatistics(PolygonStatistics):
         field_count = Counter()
 
         try:
-            minimum_area: dict = get_min_area(map_scale=self.scale).features
+            minimum_area: int | MinArea = get_min_area(map_scale=self.scale)
+
+            if isinstance(minimum_area, int):
+                raise ValueError(
+                    "Expected minimum_area to be a MinArea instance, got int instead."
+                )
+
+            minimum_features: dict = minimum_area.features
 
             with arcpy.da.SearchCursor(fc, ["SHAPE@", field]) as cursor:
                 for g, f in cursor:
-                    if g.area < minimum_area.get(f, 0):
+                    if g.area < minimum_features.get(f, 0):
                         min_count += 1
                     field_count[f] += 1
         except Exception as e:

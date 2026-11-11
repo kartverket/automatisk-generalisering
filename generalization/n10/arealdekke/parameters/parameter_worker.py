@@ -15,7 +15,9 @@ from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
 # ========================
 
 
-PARAMS_PATH = Path(__file__).parent.parent / "parameters" / "parameters.yml"
+PARAMS_PATH = Path.joinpath(
+    Path(__file__).parent.parent, "parameters", "parameters.yml"
+)
 AREA_CLASS = "MinArea"
 WIDTH_CLASS = "MinWidth"
 
@@ -59,7 +61,7 @@ def get_min_width(
 
 def get_min_area(
     map_scale: str,
-    target: str = None,
+    target: str | None = None,
 ) -> int | MinArea:
     """
     Extracts the minimum area for the target land use from the parameters.yml file in the parameters folder.
@@ -72,7 +74,7 @@ def get_min_area(
         int | MinArea: Minimum area for relevant land use type
     """
     scale_parameters = initialize_params(
-        params_path=PARAMS_PATH,
+        params_path=str(PARAMS_PATH),
         class_name=AREA_CLASS,
         map_scale=map_scale,
         dataclass=MinArea,
