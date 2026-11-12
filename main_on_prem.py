@@ -32,7 +32,8 @@ R = TypeVar("R")
 
 OPERATION_RETRY_ATTEMPTS = 6
 OPERATION_RETRY_TOTAL_DELAY_S = 600
-OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / (OPERATION_RETRY_ATTEMPTS - 1)
+OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / OPERATION_RETRY_ATTEMPTS
+COMPLETED_OUTPUT_CUTOFF = datetime(2026, 11, 10, tzinfo=timezone.utc)
 
 
 def is_transient_error(error: BaseException) -> bool:
@@ -99,6 +100,17 @@ def upload_file(
         file_path=file_path,
         content_type="application/zip",
     )
+
+
+@retry_on_transient_error
+def get_object_last_modified(
+    client: Minio, bucket_name: str, object_name: str
+) -> datetime:
+    """Return an object's last-modified timestamp, retrying transient errors."""
+    return client.stat_object(
+        bucket_name=bucket_name,
+        object_name=object_name,
+    ).last_modified
 
 
 class RetryingScalityPipelineCheckpoint(ScalityPipelineCheckpoint):
@@ -352,12 +364,12 @@ def main():
     secret_key = os.environ.get("scality_pass")
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
+    args = parse_args()
     job_completion_index = None
     if os.environ.get("JOB_COMPLETION_INDEX"):
         job_completion_index = os.environ.get("JOB_COMPLETION_INDEX")
         os.environ["PARTITION_INDEX"] = job_completion_index
 
-    args = parse_args()
     check_uid_gid()
     check_read_only()
     if not args.scale or not args.obj:
@@ -370,6 +382,29 @@ def main():
         access_key=access_key,
         secret_key=secret_key,
     )
+
+    if job_completion_index:
+        object_name = (
+            f"outputs/{args.scale}_{args.obj}/output_{job_completion_index}.gdb.zip"
+        )
+        try:
+            last_modified = get_object_last_modified(
+                client=s3,
+                bucket_name=bucket_name,
+                object_name=object_name,
+            )
+        except S3Error as error:
+            logger.info("S3 error when looking up last modified of output: %s", error)
+        else:
+            if last_modified >= COMPLETED_OUTPUT_CUTOFF:
+                logger.info(
+                    "Skipping completion index %s: s3://%s/%s was last modified at %s",
+                    job_completion_index,
+                    bucket_name,
+                    object_name,
+                    last_modified,
+                )
+                return
 
     download_scality_folder(
         client=s3,
