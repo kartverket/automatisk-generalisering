@@ -10,9 +10,10 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class VectorStatistics:
-    ##########################
-    # Rules
-    ##########################
+    """
+    VectorStatistics class is responsible for gathering statistics for vector datasets
+    and defining the rules that all vector datasets must satisfy to be considered valid
+    """
 
     RULES: list[Rule] = [
         Rule("exists", "eqn", True, Severity.ERROR),
@@ -37,6 +38,14 @@ class VectorStatistics:
     ##########################
 
     def get_stats(self, fc: str) -> dict:
+        """Gathers statistics for the given feature class.
+
+        Args:
+            fc (str): Path to the feature class
+
+        Returns:
+            dict: Dictionary containing statistics for the feature class
+        """
         exists = self.data_exists(fc)
 
         object_count = self.get_num_obj(fc) if exists else 0
@@ -64,6 +73,16 @@ class VectorStatistics:
         return int(arcpy.management.GetCount(fc)[0])
 
     def get_geom_data(self, fc: str) -> tuple[int, int]:
+        """
+        Gathers geometry-related statistics for the given feature class.
+
+        Args:
+            fc (str): Path to the feature class
+
+        Returns:
+            - total_vertices (int): Total number of vertices in the feature class
+            - null_obj (int): Number of null geometries in the feature class
+        """
         total_vertices, null_obj = 0, 0
         with arcpy.da.SearchCursor(fc, ["SHAPE@"]) as cursor:
             for (geom,) in cursor:

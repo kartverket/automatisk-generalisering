@@ -14,16 +14,27 @@ from geometry_validation.validationStatus import ValidationStatus
 
 
 class ValidatorOrchestrator:
+    """
+    ValidatorOrchestrator class is responsible for orchestrating the validation process
+    for different types of datasets. It manages the collection of statistics,
+    comparison of current and previous results, and maintains the overall validation status
+    during the pipeline.
+    """
+
     def __init__(self, stats_provider):
+        # One of RoadStatistics, LanduseStatistics, etc.
         self.stats_provider = stats_provider
 
+        # Unique ID for this validator because of parallell processing
         self.id: int = int(time.time())
+        # Which step in the pipeline is validated
         self.step: int = 0
 
         self.previous_path: Path | None = None
 
         self.validator = ValidationStatus()
 
+        # Add the rules defined by the stats provider (e.g., RoadStatistics...)
         self.validator.add_permanent_rule(stats_provider.RULES)
 
     ##########################
@@ -33,8 +44,10 @@ class ValidatorOrchestrator:
     def save_validation_results(
         self, results: dict, output_dir: Path = Path("./validation_results")
     ) -> None:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Error creating output directory: {e}")
 
         self.step += 1
 

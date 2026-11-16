@@ -4,6 +4,7 @@ import arcpy
 
 from collections import Counter
 
+from data_orchestrator_2.constants.columns import ColumnName
 from generalization.n10.arealdekke.parameters.parameter_worker import (
     get_min_area,
     MinArea,
@@ -17,6 +18,12 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class RoadStatistics(LineStatistics):
+    """
+    RoadStatistics class is responsible for gathering statistics for road datasets
+    and defining the rules that all road datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for line datasets.
+    """
+
     RULES: list[Rule] = [
         Rule(
             "road_categories",
@@ -31,8 +38,8 @@ class RoadStatistics(LineStatistics):
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = self.get_num_types(fc=fc)
+        r1 = super().get_stats(fc=fc)  # vector + line statistics
+        r2 = self.get_num_types(fc=fc)  # road statistics
         return {**r1, **r2}
 
     ##########################
@@ -40,7 +47,7 @@ class RoadStatistics(LineStatistics):
     ##########################
 
     def get_num_types(self, fc: str) -> dict:
-        field = "vegkategori"
+        field = ColumnName.VEGKATEGORI.value
         counts = Counter()
 
         try:
@@ -49,17 +56,23 @@ class RoadStatistics(LineStatistics):
         except Exception as e:
             print(f"Error collecting road category stats: {e}")
 
-        return {"road_categories": dict(counts)}
+        return {f"{field}": dict(counts)}
 
 
 class RiverStatistics(LineStatistics):
+    """
+    RiverStatistics class is responsible for gathering statistics for river datasets
+    and defining the rules that all river datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for line datasets.
+    """
+
     ##########################
     # Main functions
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = {}
+        r1 = super().get_stats(fc=fc)  # vector + line statistics
+        r2 = {}  # river statistics
         return {**r1, **r2}
 
     ##########################
@@ -70,6 +83,12 @@ class RiverStatistics(LineStatistics):
 
 
 class LanduseStatistics(PolygonStatistics):
+    """
+    LanduseStatistics class is responsible for gathering statistics for landuse datasets
+    and defining the rules that all landuse datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for polygon datasets.
+    """
+
     RULES: list[Rule] = [
         Rule(
             "landuse_categories",
@@ -87,8 +106,8 @@ class LanduseStatistics(PolygonStatistics):
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = self.get_landuse_stats(fc=fc)
+        r1 = super().get_stats(fc=fc)  # vector + polygon statistics
+        r2 = self.get_landuse_stats(fc=fc)  # landuse statistics
         return {**r1, **r2}
 
     ##########################
@@ -96,7 +115,7 @@ class LanduseStatistics(PolygonStatistics):
     ##########################
 
     def get_landuse_stats(self, fc: str) -> dict:
-        field = "arealdekke"
+        field = ColumnName.AREALDEKKE.value
         min_count = 0
         field_count = Counter()
 

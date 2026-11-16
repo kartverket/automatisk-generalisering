@@ -10,6 +10,8 @@ from enum import StrEnum
 
 
 class Severity(StrEnum):
+    """Different statuses that a processed feature class can have"""
+
     SUCCESS = "SUCCESS"
     WARNING = "WARNING"
     ERROR = "ERROR"
@@ -17,6 +19,15 @@ class Severity(StrEnum):
 
 @dataclass
 class Rule:
+    """
+    Represents how a characteristic of a feature class should be validated.
+
+    The key describes the characteristic that should be tested for the feature
+    class being validated. Value is the different threshold values used to
+    determine the status of the control, and severity describes of which level
+    the feature class is qualified according to this rule.
+    """
+
     key: str
     operator: str
     value: float | int | bool | list[float]
@@ -34,6 +45,7 @@ class Rule:
                 )
 
 
+# Operators used during evalutaion of specific rules
 OPERATORS = {
     "eqn": lambda d, v: d["new"] == v,
     "eqd": lambda d, v: d["diff"] == v,
@@ -47,6 +59,10 @@ OPERATORS = {
 
 class ValidationStatus:
     def __init__(self):
+        """
+        Permanent rules are rules that should be applied for the entire pipeline of a feature class, or larger parts of it
+        Temporary rules are rules that should only be applied for a specific task of the pipeline, f.ex. a function that should change the feature class significantly
+        """
         self.permanent_rules: list[Rule] = []
         self.temporary_rules: list[Rule] = []
 
@@ -84,6 +100,18 @@ class ValidationStatus:
     ##########################
 
     def status_update(self, stats: dict) -> tuple[Counter, str, dict]:
+        """
+        Validates the status of the feature class depending on the provided statistics
+
+        Args:
+            stats (dict): Dictionary describing changes in the feature class
+
+        Returns:
+            - status (Counter): Number of occurrences for each severity level
+            - most_severe (str): The most severe status encountered
+            - messages (dict): Dictionary containing messages for each severity level
+                (if any messages exist for that severity)
+        """
         status = Counter()
         messages = defaultdict(list)
 
@@ -143,6 +171,9 @@ class ValidationStatus:
         return None
 
     def _evaluate_rule(self, rule: Rule, data: dict) -> Severity:
+        """
+        Evaluates a rule against the provided data and returns the corresponding severity
+        """
         if (
             rule.operator == "ratio"
             and isinstance(rule.value, list)
@@ -168,6 +199,10 @@ class ValidationStatus:
     def _get_message(
         self, rule: Rule, severity: str, category: str | None = None
     ) -> str:
+        """
+        Creates a message describing a warning or error that occured
+        during processing of a feature class, and where it occured
+        """
         warning_message = (
             "triggered a warning"
             if severity == Severity.WARNING
@@ -180,6 +215,7 @@ class ValidationStatus:
         return f"{severity}: '{rule.key}' {warning_message}"
 
     def _most_severe_status(self, status: Counter) -> str:
+        """Returns the most severe status occuring during processing of a feature class"""
         for label in reversed(self.STATUS_SEVERITY):
             if status[label] > 0:
                 return label

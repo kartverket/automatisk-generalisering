@@ -13,6 +13,12 @@ from geometry_validation.validationStatus import Rule, Severity
 
 
 class PolygonStatistics(VectorStatistics):
+    """
+    PolygonStatistics class is responsible for gathering statistics for polygon datasets
+    and defining the rules that all polygon datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for vector datasets.
+    """
+
     RULES: list[Rule] = [
         Rule("total_area", "eqd", 0, Severity.ERROR),
         Rule(
@@ -40,8 +46,8 @@ class PolygonStatistics(VectorStatistics):
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = self.get_poly_stats(fc=fc)
+        r1 = super().get_stats(fc=fc)  # vector statistics
+        r2 = self.get_poly_stats(fc=fc)  # polygon-specific statistics
         return {**r1, **r2}
 
     ##########################
@@ -73,6 +79,12 @@ class PolygonStatistics(VectorStatistics):
 
 
 class LineStatistics(VectorStatistics):
+    """
+    LineStatistics class is responsible for gathering statistics for line datasets
+    and defining the rules that all line datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for vector datasets.
+    """
+
     RULES: list[Rule] = [
         Rule(
             "total_length",
@@ -117,8 +129,8 @@ class LineStatistics(VectorStatistics):
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = self.get_line_stats(fc=fc)
+        r1 = super().get_stats(fc=fc)  # vector statistics
+        r2 = self.get_line_stats(fc=fc)  # line statistics
         return {**r1, **r2}
 
     ##########################
@@ -172,13 +184,19 @@ class LineStatistics(VectorStatistics):
 
 
 class PointStatistics(VectorStatistics):
+    """
+    PointStatistics class is responsible for gathering statistics for point datasets
+    and defining the rules that all point datasets must satisfy to be considered valid.
+    This data must also pass all the tests defined for vector datasets.
+    """
+
     ##########################
     # Main functions
     ##########################
 
     def get_stats(self, fc: str) -> dict:
-        r1 = super().get_stats(fc=fc)
-        r2 = {}
+        r1 = super().get_stats(fc=fc)  # vector statistics
+        r2 = {}  # point statistics
         return {**r1, **r2}
 
     ##########################
