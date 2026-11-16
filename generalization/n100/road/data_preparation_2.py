@@ -64,6 +64,7 @@ from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
 from typing import Callable
 from custom_tools.general_tools.integrate_diff import IntegrateDiff
+from partition_validation.fetch_partitions import FetchPartitionBorders
 
 
 import logging
@@ -122,7 +123,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
 
     data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.object_veg_sti)
     area_data = data_orc.get_dataset(dn.area)
-    building_data = data_orc.get_dataset(dn.building)
+    # building_data = data_orc.get_dataset(dn.building)
 
     def _write_workfile_count():
         with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
@@ -144,34 +145,34 @@ def main(checkpoint: PipelineCheckpoint | None = None):
         ("remove_roadblock", lambda: remove_roadblock(data=area_data)),
         ("trim_road_details", trim_road_details),
         ("ramp_partition", ramp_partition),
-        ("admin_boarder", admin_boarder),
-        ("adding_fields", adding_fields),
-        ("collapse_road_detail", collapse_road_detail),
-        ("simplify_road", simplify_road),
-        ("thin_roads", thin_roads),
-        ("thin_sti_and_forest_roads", thin_sti_and_forest_roads),
-        ("merge_divided_roads", merge_divided_roads),
-        ("smooth_line", smooth_line),
-        ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
-        (
-            "pre_resolve_road_conflicts",
-            pre_resolve_road_conflicts,
-        ),
-        ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
-        (
-            "generalize_dam",
-            lambda: generalize_dam(area_data=area_data, building_data=building_data),
-        ),
-        ("final_output", final_output),
-        (
-            "ramps_part_2",
-            lambda: ramps_part_2(
-                input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
-                input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-                output_points_fc=Road_N100.ramps__final_points__n100_road.value,
-            ),
-        ),
-        ("write_workfile_count", _write_workfile_count),
+        # ("admin_boarder", admin_boarder),
+        # ("adding_fields", adding_fields),
+        # ("collapse_road_detail", collapse_road_detail),
+        # ("simplify_road", simplify_road),
+        # ("thin_roads", thin_roads),
+        # ("thin_sti_and_forest_roads", thin_sti_and_forest_roads),
+        # ("merge_divided_roads", merge_divided_roads),
+        # ("smooth_line", smooth_line),
+        # ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
+        # (
+        #     "pre_resolve_road_conflicts",
+        #     pre_resolve_road_conflicts,
+        # ),
+        # ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
+        # (
+        #     "generalize_dam",
+        #     lambda: generalize_dam(area_data=area_data, building_data=building_data),
+        # ),
+        # ("final_output", final_output),
+        # (
+        #     "ramps_part_2",
+        #     lambda: ramps_part_2(
+        #         input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+        #         input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+        #         output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+        #     ),
+        # ),
+        # ("write_workfile_count", _write_workfile_count),
     ]
 
     last_completed = checkpoint.load() if checkpoint else None
@@ -344,6 +345,11 @@ def run_thin_roads(
         ),
     )
     partition_thin_roads.run()
+
+    FetchPartitionBorders(
+        partition_iterator=partition_thin_roads,
+        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+    )
 
 
 def run_consensus_thin_roads(
@@ -553,14 +559,20 @@ def ramp_partition():
         run_partition_optimization=False,
     )
 
-    PartitionIterator(
+    partition_iterator = PartitionIterator(
         partition_io_config=ramps_io_config,
         partition_method_inject_config=method_config,
         partition_iterator_run_config=run_config,
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Road_N100.data_preparation__partition_ramps_root__n100_road.value
         ),
-    ).run()
+    )
+    partition_iterator.run()
+
+    FetchPartitionBorders(
+        partition_iterator=partition_iterator,
+        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+    )
 
 
 @timing_decorator
@@ -689,6 +701,11 @@ def collapse_road_detail():
         ),
     )
     partition_collapse_road_detail.run()
+
+    FetchPartitionBorders(
+        partition_iterator=partition_collapse_road_detail,
+        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+    )
 
 
 @timing_decorator
@@ -1108,6 +1125,11 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
     )
 
     partition_resolve_road_conflicts.run()
+
+    FetchPartitionBorders(
+        partition_iterator=partition_resolve_road_conflicts,
+        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+    )
 
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
