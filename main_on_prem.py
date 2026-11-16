@@ -1,15 +1,22 @@
 import argparse
+import functools
 import io
 import json
 import os
+import random
 import sys
 import logging
+import time
 import traceback
 from datetime import datetime, timezone
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, ParamSpec, Tuple, TypeVar
 from pathlib import Path
 import shutil
+import tempfile
+import zipfile
+import urllib3
 from minio import Minio
+from minio.error import S3Error, ServerError
 from generalization.n100.road.pipeline_checkpoint import ScalityPipelineCheckpoint
 
 logging.basicConfig(
@@ -19,6 +26,107 @@ logging.basicConfig(
 
 
 logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+OPERATION_RETRY_ATTEMPTS = 6
+OPERATION_RETRY_TOTAL_DELAY_S = 600
+OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / OPERATION_RETRY_ATTEMPTS
+COMPLETED_OUTPUT_CUTOFF = datetime(2026, 11, 10, tzinfo=timezone.utc)
+
+
+def is_transient_error(error: BaseException) -> bool:
+    """True for errors worth retrying: network failures and 5xx responses."""
+    if isinstance(error, S3Error):
+        return error.response.status >= 500
+    if isinstance(error, ServerError):
+        return error.status_code >= 500
+    return isinstance(
+        error,
+        (
+            urllib3.exceptions.HTTPError,
+            ConnectionError,
+            TimeoutError,
+        ),
+    )
+
+
+def retry_on_transient_error(func: Callable[P, R]) -> Callable[P, R]:
+    """Retry the whole operation, sleeping a fixed delay between attempts."""
+
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        for attempt in range(1, OPERATION_RETRY_ATTEMPTS + 1):
+            try:
+                return func(*args, **kwargs)
+            except Exception as error:
+                if not is_transient_error(error) or attempt == OPERATION_RETRY_ATTEMPTS:
+                    raise
+                logger.warning(
+                    "%s failed (attempt %d/%d): %s. Retrying in %.1fs",
+                    func.__name__,
+                    attempt,
+                    OPERATION_RETRY_ATTEMPTS,
+                    error,
+                    OPERATION_RETRY_DELAY_S,
+                )
+                time.sleep(OPERATION_RETRY_DELAY_S)
+        raise AssertionError("unreachable")
+
+    return wrapper
+
+
+@retry_on_transient_error
+def download_file(
+    client: Minio, bucket_name: str, object_name: str, file_path: Path
+) -> None:
+    """Download an object, retrying the whole download on transient errors."""
+    client.fget_object(
+        bucket_name=bucket_name,
+        object_name=object_name,
+        file_path=str(file_path),
+    )
+
+
+@retry_on_transient_error
+def upload_file(
+    client: Minio, bucket_name: str, object_name: str, file_path: str
+) -> None:
+    """Upload a local zip file, retrying the whole upload on transient errors."""
+    client.fput_object(
+        bucket_name=bucket_name,
+        object_name=object_name,
+        file_path=file_path,
+        content_type="application/zip",
+    )
+
+
+@retry_on_transient_error
+def get_object_last_modified(
+    client: Minio, bucket_name: str, object_name: str
+) -> datetime:
+    """Return an object's last-modified timestamp, retrying transient errors."""
+    return client.stat_object(
+        bucket_name=bucket_name,
+        object_name=object_name,
+    ).last_modified
+
+
+class RetryingScalityPipelineCheckpoint(ScalityPipelineCheckpoint):
+    """Scality checkpoint whose save, load and delete retry on transient errors."""
+
+    @retry_on_transient_error
+    def save(self, step_name: str) -> None:
+        super().save(step_name)
+
+    @retry_on_transient_error
+    def load(self) -> str | None:
+        return super().load()
+
+    @retry_on_transient_error
+    def delete(self) -> None:
+        super().delete()
 
 
 def create_s3_client(
@@ -71,11 +179,12 @@ def download_scality_folder(
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
-        client.fget_object(
+        """client.fget_object(
             bucket_name=bucket_name,
             object_name=obj.object_name,
             file_path=str(local_path),
-        )
+        )"""
+        download_file(client, bucket_name, obj.object_name, local_path)
 
         logger.info(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
 
@@ -111,12 +220,14 @@ def upload_results_to_scality(
 
     logger.info(f"Uploading {local_zip_path} -> s3://{bucket_name}/{object_name}")
 
+    """
     client.fput_object(
         bucket_name=bucket_name,
         object_name=object_name,
         file_path=local_zip_path,
         content_type="application/zip",
-    )
+    )"""
+    upload_file(client, bucket_name, object_name, local_zip_path)
 
     logger.info("ZIP upload completed.")
 
@@ -154,6 +265,7 @@ def upload_error_to_scality(
             length=len(data),
             content_type="application/json",
         )
+
         logger.info("Uploaded error file to s3://%s/%s", bucket_name, object_name)
     except Exception:
         logger.exception("Failed to upload error file to Scality")
@@ -252,12 +364,12 @@ def main():
     secret_key = os.environ.get("scality_pass")
     bucket_name = os.environ.get("SCALITY_BUCKET")
 
+    args = parse_args()
     job_completion_index = None
     if os.environ.get("JOB_COMPLETION_INDEX"):
         job_completion_index = os.environ.get("JOB_COMPLETION_INDEX")
         os.environ["PARTITION_INDEX"] = job_completion_index
 
-    args = parse_args()
     check_uid_gid()
     check_read_only()
     if not args.scale or not args.obj:
@@ -270,6 +382,29 @@ def main():
         access_key=access_key,
         secret_key=secret_key,
     )
+
+    if job_completion_index:
+        object_name = (
+            f"outputs/{args.scale}_{args.obj}/output_{job_completion_index}.gdb.zip"
+        )
+        try:
+            last_modified = get_object_last_modified(
+                client=s3,
+                bucket_name=bucket_name,
+                object_name=object_name,
+            )
+        except S3Error as error:
+            logger.info("S3 error when looking up last modified of output: %s", error)
+        else:
+            if last_modified >= COMPLETED_OUTPUT_CUTOFF:
+                logger.info(
+                    "Skipping completion index %s: s3://%s/%s was last modified at %s",
+                    job_completion_index,
+                    bucket_name,
+                    object_name,
+                    last_modified,
+                )
+                return
 
     download_scality_folder(
         client=s3,
@@ -289,7 +424,7 @@ def main():
         namespace = f"{args.scale}_{args.obj}_{job_completion_index}"
     else:
         namespace = f"{args.scale}_{args.obj}"
-    checkpoint = ScalityPipelineCheckpoint(
+    checkpoint = RetryingScalityPipelineCheckpoint(
         client=s3,
         bucket_name=bucket_name,
         gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),

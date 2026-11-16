@@ -16,9 +16,15 @@ logger = logging.getLogger(__name__)
 NAMESPACE = os.environ.get("NAMESPACE")
 RUN_ID = os.environ.get("RUN_ID")
 PARTITION_COUNT = int(os.environ.get("PARTITION_COUNT"))
-PARALLELISM = int(os.environ.get("PARALLELISM", "2"))
+PARALLELISM = 10  # int(os.environ.get("PARALLELISM", "2"))
 
 PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
+
+EXTRACTED_DATA_GI = 40
+# Temporary zip, extracted data and outputs coexist in /tmp.
+EPHEMERAL_STORAGE = "60Gi"
+WORKER_MEMORY_REQUEST = "8Gi"
+WORKER_MEMORY_LIMIT = "16Gi"
 
 
 def load_kube_config():
@@ -116,7 +122,16 @@ def create_indexed_job(batch_api):
                                     mount_path="/tmp",
                                 )
                             ],
-                            resources={},
+                            resources=client.V1ResourceRequirements(
+                                requests={
+                                    "memory": WORKER_MEMORY_REQUEST,
+                                    "ephemeral-storage": EPHEMERAL_STORAGE,
+                                },
+                                limits={
+                                    "memory": WORKER_MEMORY_LIMIT,
+                                    "ephemeral-storage": EPHEMERAL_STORAGE,
+                                },
+                            ),
                             security_context=client.V1SecurityContext(
                                 allow_privilege_escalation=False,
                                 capabilities=client.V1Capabilities(drop=["ALL"]),
@@ -157,10 +172,9 @@ def create_indexed_job(batch_api):
                                     )
                                 ]
                             ),
-                            match_label_keys=["pod-template-hash"],
                             max_skew=1,
                             topology_key="kubernetes.io/hostname",
-                            when_unsatisfiable="ScheduleAnyway",
+                            when_unsatisfiable="DoNotSchedule",
                         ),
                         client.V1TopologySpreadConstraint(
                             label_selector=client.V1LabelSelector(
@@ -181,7 +195,9 @@ def create_indexed_job(batch_api):
                     volumes=[
                         client.V1Volume(
                             name="tmp",
-                            empty_dir=client.V1EmptyDirVolumeSource(medium="Memory"),
+                            empty_dir=client.V1EmptyDirVolumeSource(
+                                size_limit=EPHEMERAL_STORAGE
+                            ),
                         )
                     ],
                 ),
@@ -330,7 +346,7 @@ def main():
     delete_partition_job(batch_api, wait=True, timeout_seconds=60)
     create_indexed_job(batch_api)
     wait_for_job(batch_api)
-    delete_partition_job(batch_api, wait=False)
+    # delete_partition_job(batch_api, wait=False)
 
     logger.info("Pipeline driver completed successfully")
 
