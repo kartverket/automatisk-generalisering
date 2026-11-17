@@ -51,7 +51,7 @@ it, and each lift cites its verdict. Slice 1 is a walking skeleton in three revi
 ArcPy, lands the row-shape grammar, the `In`/`Out`/`Mutates`/`ParentsOut` markers, the port
 errors, three Protocol methods (`read_rows`, `select`, `explode_multipart`), the in-memory fake
 for them, and a facade spike with no lineage logic. 1b adds the ArcPy session and adapter for the
-same methods, conformance on both adapters, the Windows run and a capped `read_rows` timing at
+same methods, conformance on both adapters, the run in the image and a capped `read_rows` timing at
 2.3 M rows. 1c adds the scratch manager, a filesystem `ArchiveClient`, settings, the local
 runner, a fixture stage end to end under both adapters, and the port-method guide. Slice 2 adds identity above the ports (minter, id map,
 facade) and, in parallel, the dissolve parents mechanism inside the ArcPy adapter, which already
@@ -74,9 +74,9 @@ in `template_review.md`. Where the review found a defect (five were confirmed by
 template) the lift fixes it. Target paths follow `project_tree.md`: `core/operations.py` splits
 into `core/handles.py` and `core/operations.py`; the predicate algebra moves to
 `ports/predicates.py`; an adapter is a package per port with one module per method group plus a
-`support/` package; domain code sits under `ag/generalization/`. "Task B" in the last column is
-the hand-off of §3.1: it starts when the first pull request of 1a (the architect's core lift)
-has merged, and lifts the rest of the core declaration modules.
+`support/` package; domain code sits under `ag/generalization/`. "The declarations work" in the
+last column is the architect's lift of the six core declaration modules (§3, PR 9); "Task B" is
+the hand-off of §3.1, the two validation checks, which starts when that lift has merged.
 
 Legend (state of the template module): **lift** = move with small edits; **rework** = keep the shape, rewrite parts;
 **stale** = contradicts a decision and must change before use; **new** = written from nothing.
@@ -88,14 +88,14 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 | `types.py` | lift | nothing | 1a, first pull request (the architect's core lift) |
 | `injection.py` | lift | nothing | 1a, first pull request |
 | `operations.py` | lift, then extend | `ScratchHandle` (frozen, `path` `compare=False`, `namespace` in equality) matches A15.3's retained clause and A12.5a's needs exactly. `Direction`/`In`/`Out` exist; add the two markers A12.5a needs (`Mutates` for T2.8's in-place mutators, `ParentsOut` for A11.15) as `Direction` members with aliases, and make `@operation` reject them on an operation signature (an operation parameter is only ever `In` or `Out`). `@operation`, `OperationCall`, `ScratchScope`, `INJECTED` are decided (ADR-0020 OP-1, ADR-0020 OP-2) and lift as is. | 1a, first pull request: the split into `handles.py` and `operations.py`, the restamp guard, the internal-handle namespace, the markers, and the pyright-strict restructuring of `@operation` |
-| `pipeline.py` | lift, plus one guard | `StageInput.__post_init__` rejects a non-spatial object with role PROCESSING (A31.2), with a break-it case (A30); the `context_radius_m` docstring states that operations never see partitions (ADR-0019 PC-1), so the radius is the one place a stage author reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can challenge. `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | Task B |
-| `data_objects.py` | lift | T7.2 rename (`lineage_roots()` becomes `origin_roots()`) | Task B |
-| `locations.py` | lift, one edit | `StorageRoots.for_environment` hardcodes bucket names; that is deployment configuration and moves to the settings object of §7.1. Path builders stay. | 1c (dump path), 5 (payloads) |
-| `graph.py` | lift | nothing | Task B |
+| `pipeline.py` | lift, plus one guard | `StageInput.__post_init__` rejects a non-spatial object with role PROCESSING (A31.2), with a break-it case (A30); the `context_radius_m` docstring states that operations never see partitions (ADR-0019 PC-1), so the radius is the one place a stage author reasons about partition boundaries, and that 0 m is a claim about the logic a reviewer can challenge. `LineageRoot` becomes `OriginRoot` (T7.2), applied inside the template and the documents in slice 0, so every later lift carries the new name; TASKS says it must precede the lineage vocabulary landing in the same documents. | the declarations work (§3) |
+| `data_objects.py` | lift | T7.2 rename (`lineage_roots()` becomes `origin_roots()`) | the declarations work (§3) |
+| `locations.py` | lift, one edit | `StorageRoots` holds one set of roots, read from the settings object of §7.1; `for_environment` and its two bucket sets are not lifted, since there is one environment (ADR-0018 Direction 6). Path builders stay. | 1c (dump path), 5 (payloads) |
+| `graph.py` | lift | nothing | the declarations work (§3) |
 | `selection.py` | lift | `check_upstream_available` stays `NotImplementedError` until slice 5 | 5 |
-| `policy.py` | lift | nothing | Task B |
-| `planning.py` | lift as stub | `build_run_plan` and `downstream_closure` stay unimplemented; nothing before slice 5 needs a `RunPlan` (the local runner of §7.5 drives a `Stage` directly). | 5 |
-| `validation.py` | lift | `check_stage_graph_acyclic`, `check_no_coarser_input`, `check_publications` are `NotImplementedError` and fully specified by their docstrings and `02-runtime.md` §8. Hand-off work (§3). | Task B |
+| `policy.py` | lift, one omission | `pipeline_environment` is not lifted: placement has one answer, and ADR-0018 AR-R9 says when it returns. | the declarations work (§3) |
+| `planning.py` | lift as stub | `build_run_plan` and `downstream_closure` stay unimplemented; `PlannedStage.environment` and `RunPlan.environments` are not lifted; nothing before slice 5 needs a `RunPlan` (the entries of §7.5 drive a `Stage` directly). | 5 |
+| `validation.py` | lift | `check_stage_graph_acyclic` and `check_no_coarser_input` are `NotImplementedError`, fully specified by their docstrings and `02-runtime.md` §8, and are Task B (§3). `check_publications` stays `NotImplementedError` until the destinations item names a location a classification forbids (§3.1). | the declarations work (§3); Task B |
 
 ### 1.2 `ports/`
 
@@ -108,7 +108,7 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 | `cartographic_ops.py` | rework | `aggregate`, `collapse_to_centerline` need `parents` (A11.15); `displace_features.displacement` stays undeclared until B11; `select_network.exempt: Predicate` stays. Row shapes per A12.11. | 4 |
 | `graph_ops.py` | lift | `NodeId` becomes `NewType` (A3); Q-C / B2 stays open, deferring is cheap by the module's own argument. | 4 |
 | `archive.py` | lift, and it wins a conflict | Two-method `upload`/`download` on `str` paths. **`staging/transfer.py` declares a second, incompatible `ArchiveClient` Protocol** (`read(location, into: ScratchHandle)` / `write(source, location)`) that predates `ports/`. Keep `ports/archive.py`; delete the one in `transfer.py`; `transfer.py` is the one place a handle is turned into a path for it. | 1c |
-| `cluster.py` | lift, unused | `JobSpec`/`JobStatus`/`ClusterClient` as decided; no adapter until the orchestrator pass, which is outside this plan. | not in this pass |
+| `cluster.py` | lift, one omission | `JobSpec` without `environment`, `JobStatus` and `ClusterClient` as decided; both adapters, local processes first and then Kubernetes Jobs on SKIP, arrive in slice 5 (ADR-0018 AR-D26). | 5 |
 | `__init__.py` | rework | Re-export list changes with the surface: drop `DissolveOption`, add `Statistic`, `StatisticSpec`, `Rows`, `Cardinality`, `Ids`, `Mutates`, `ParentsOut`. | 1a |
 | `row_shape.py` | **new** | `Rows`, `Cardinality`, `Ids`, `@row_shape` keyed by output parameter name, `__row_shape__` on the Protocol method (A12.1-A12.5, T4.1). | 1a |
 | `errors.py` | **new** | `PortError` base plus `EmptyGeometryError`, `UnmatchedInputError`, `ParentsUnavailableError`, `EngineError` (§6). | 1a |
@@ -125,20 +125,20 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 | `fakes/recording_toolbox.py` | lift | It is a spy, not a fake. Stays for the "every operation runs to completion against the surface" check and for B14's trace candidate. | 1c |
 | `fakes/memory/` | **new** | The in-memory adapter (§5.7). | 1a (three methods), then with every widened method |
 | `networkx/graph_ops.py` | **new** | Thin; `custom_tools/general_tools/graph.py` is the source. | 4 |
-| `storage/filesystem.py`, `storage/s3.py`, `storage/gcs.py` | **new** | Filesystem first (slice 1c, for scratch dumps and local runs); object storage with fan-out (slice 5). `temp_skip_folder/core/infrastructure/archive/` and `main_on_*.py` hold the MinIO and GCS code to lift from. | 1c (filesystem), 5 (S3, GCS) |
-| `cluster/` | not in this pass | | |
+| `storage/filesystem.py`, `storage/s3.py` | **new** | Filesystem first (slice 1c, for scratch dumps and local runs); S3 for stage inputs and outputs with fan-out (slice 5). `temp_skip_folder/core/infrastructure/archive/` holds the MinIO code to lift from. | 1c (filesystem), 5 (S3) |
+| `cluster/` | **new** | The dispatch adapters behind `ClusterClient` (ADR-0018 AR-D26): local processes first, then Kubernetes Jobs on SKIP, which mounts the transfer volume by claim name and needs the kubernetes client and a row 8 entry in `.importlinter`, both by explicit request when the slice starts. | 5 |
 
 ### 1.4 `staging/`, `runtime/`, `orchestrator/`, `observability/`, `helpers/`
 
 | module | state | notes | slice |
 |---|---|---|---|
-| `staging/workspace.py` | lift | `normalize_layer_name` unimplemented and specified; hand-off. `posixpath` joins are used deliberately; slice 1b confirms ArcPy on Windows accepts them for `.gdb` layer paths (§8.2). | 1c; `normalize_layer_name` as a hand-off |
+| `staging/workspace.py` | lift | `normalize_layer_name` unimplemented and specified; hand-off. `posixpath` joins are used deliberately; slice 1b checks that ArcPy in the image accepts them for `.gdb` layer paths (§8.2). | 1c; `normalize_layer_name` as a hand-off |
 | `staging/scratch.py` | lift, one gap | `ScratchFileManager` is the decided design (02-runtime §4.2). `create_workspaces` is unimplemented and its docstring says `CreateFileGDB`, which `staging/` may not call. Decided 2026-09-21 (A5.7): `TableOps.create_workspace`. The manager calls it through the toolbox; implemented in 1c. | 1c |
-| `staging/transfer.py` | stale | Duplicate `ArchiveClient` (above); `stage_down`/`stage_up`/`dump_scratch` unimplemented; `PinnedInput`/`PlannedOutput` typed as `object`. Rewrite in slice 1c for the local case (dump only) and slice 5 for the remote case. | 1c (dump), 5 (stage down and up) |
+| `staging/transfer.py` | stale | Duplicate `ArchiveClient` (above); `stage_down`/`stage_up`/`dump_scratch` unimplemented; `PinnedInput`/`PlannedOutput` typed as `object`. Rewrite in slice 1c for the local case (dump only) and slice 5 for the tree on the volume and the stage boundary (ADR-0021 ST-D26). | 1c (dump), 5 (stage down and up) |
 | `runtime/stage_entry.py` | lift | `run_operations`, `_supply`, `sweep_outputs` are the decided pod dispatch loop. Slice 3 wraps it with the lineage session; the function itself does not change shape. | 1c, 3 |
-| `runtime/env.py`, `runtime/local.py` | **new** | Settings object and the local single-pod runner (§7.1, §7.5). | 1c |
+| `runtime/env.py`, `runtime/pod.py`, `runtime/pod_entry.py`, `runtime/local.py` | **new** | The settings object; the entry names and the role enum; the engine entry; the fake entry (§7.1, §7.5, ADR-0018 AR-D25). | 1c |
 | `runtime/fan_out.py`, `fan_in.py`, `partition.py`, `ingest.py` | **new** | slice 5 | 5 |
-| `orchestrator/execute.py` | lift as stub | Outside this pass except the dispatch registry's counter (T3.3), which is orchestration and lands as a small module in slice 5. | 5 |
+| `orchestrator/execute.py` | lift as stub | `execute` takes one `ClusterClient`, not a map by environment. Outside this pass except the dispatch registry's counter (T3.3), which is orchestration and lands as a small module in slice 5. | 5 |
 | `observability/` | **new** | JSONL records, `ContextVar` context, timing (03-architecture §6). Minimal in slice 3, merge in slice 5. | 3, 5 |
 | `helpers/` | empty by rule | Fills on the first second-caller during slice 6. | 6 |
 | `lineage/` | **new** | Not in the template at all. Minter, id map, facade, edge log, session, errors, later `query.py`. | 1a (the facade spike), 2a, 3 |
@@ -160,9 +160,10 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 explicitly retains the handle's equality rule. The review still found two defects in the handle
 code, both confirmed by running it and both fixed at the lift in 1a: a handle bound in two class
 bodies is silently restamped with the second namespace, and internal scratch handles compare
-equal across operations, which A15.3's handle-keyed cache cannot tolerate. It found three more
-in `staging/` (the leaf-collision check is keyed without the operation, `sidecar()` splits on the
-wrong dot, and `In`/`Out` must stay `TypeAlias`); see `template_review.md`. The row-shape piece does not exist: the template
+equal across operations, which A15.3's handle-keyed cache cannot tolerate. It found two more
+in `staging/` (the leaf-collision check is keyed without the operation, and `In`/`Out` must stay
+`TypeAlias`); the template's `sidecar()` retires with the transfer directory (ADR-0021 ST-D26); see
+`template_review.md`. The row-shape piece does not exist: the template
 predates A12 entirely, so `row_shape.py`, the annotations on every port handle parameter and the
 T4.1 check are all new. The port *surfaces* are about 70 % right by method count and wrong in
 the five places §1.2 lists, all of which are decided.
@@ -208,7 +209,7 @@ Kept: the slice boundaries 0 to 6 and the order. Changed, with reasons:
   blocking. `exists` and `data_type_of` join in 1c because the output sweep needs them.
 - **`ArchiveClient` moves from slice 2 to slice 1c** as the port plus a filesystem adapter, because
   the walking skeleton's scratch dump and the local runner need a transport and the port is two
-  methods. The S3 and GCS adapters wait for slice 5, where fan-out needs them.
+  methods. The S3 adapter waits for slice 5, where the stage boundary needs it.
 - **Slice 2 splits into 2a (identity above the ports) and 2b (dissolve parents inside the ArcPy
   adapter).** 2b is adapter-internal by A14.1, already exists as staging code with goldens, and is
   `[PARALLEL]` by T4.14; running it as its own review keeps the facade review about the facade.
@@ -362,9 +363,9 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
   `core/injection.py`, `core/handles.py` and `core/operations.py`, with the split, the restamp
   guard, the internal-handle namespace, the `Mutates` and `ParentsOut` markers rejected on
   operation signatures, and the pyright-strict restructuring of `@operation`. It is its own pull
-  request because the restructuring is architecture work, and because Task B starts the moment it
-  merges: a hand-off never lifts or edits `core/operations.py`, so no structural change is ever
-  rebased onto a plain lift.
+  request because the restructuring is architecture work, and because the declarations work
+  follows it: a hand-off never lifts or edits `core/operations.py`, so no structural change is
+  ever rebased onto a plain lift.
 - Further lifts, each citing its verdict: `ports/toolbox.py`,
   `ports/geometry.py`, the value types of `ports/table_ops.py` (`Field`, `FieldType`, `Schema`,
   `Row` with slots, `AttributeValue`), `ports/predicates.py` with structured `Attr`
@@ -425,7 +426,7 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
 - The three illegal-cell messages state their reasons, and `MANY + CARRY` names A11.2.
 - The fake's group classes hold Protocol methods only.
 
-##### Slice 1b: the ArcPy session and adapter, conformance, the Windows run, the timing run
+##### Slice 1b: the ArcPy session and adapter, conformance, the run in the image, the timing run
 
 **Contains.**
 - `stubs/arcpy_constrained/arcpy/`: the local stub, declaring only the non-tool names the
@@ -456,9 +457,8 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
   at the top of a test module: collection imports test modules and CI has no ArcPy. The 1b
   static scan covers both roots.
 - The run of the conformance suite under an interpreter that has ArcPy (`pytest -m arcpy`,
-  `docs/contributing/testing.md`), with its log kept. The environment for that run is B23,
-  settled in this slice by trying its candidates on one Windows machine; the result lands
-  on the toolchain and testing pages.
+  `docs/contributing/testing.md`), with its log kept. The environment for that run is the
+  image (B23; ADR-0018 Direction 6), and the command is on the testing page.
 - **The `read_rows` timing run**, `tools/time_read_rows.py`, on
   `data_preparation___road_single_part___n100_road` (2,320,817 rows), two passes: attributes only
   (three fields), then with geometry.
@@ -480,8 +480,8 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
 **Depends on.** 1a.
 
 **Done when.**
-- The conformance cases for the three methods pass under the fake in CI and under ArcPy on
-  Windows: row count and attributes preserved by `select`; `ORIG_FID`-derived pairs equal the
+- The conformance cases for the three methods pass under the fake in CI and under ArcPy in
+  the image: row count and attributes preserved by `select`; `ORIG_FID`-derived pairs equal the
   expected partition; **on a `.gdb` input whose `OBJECTID`s are non-dense after deletes**, the
   input's native index set is unchanged by both methods and the reported `PARENT_ID`s are the
   pre-call indices (T4.11 case 1a); `EngineError` carries the tool name and the drained messages
@@ -502,17 +502,17 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
 - What the adapter's `select` does to `OBJECTID`, and how `explode_multipart` maps `ORIG_FID`
   back to the pre-call native index; this is A9.2's contract meeting a real engine for the first
   time.
-- Whether ArcPy on Windows accepts the `posixpath`-joined layer paths the staging code will
+- Whether ArcPy in the image accepts the `posixpath`-joined layer paths the staging code will
   produce (checked here with hand-built paths, before 1c depends on it).
 
 ##### Slice 1c: the runtime around it, a fixture stage end to end, the guide
 
 **Contains.**
-- Lifts, each citing its verdict: `core/locations.py` (bucket names out to settings;
-  `core/data_objects.py` and `core/pipeline.py`, which it imports, arrive with Task B, the
-  latter with its non-spatial PROCESSING guard and radius docstring, A31.2);
-  `staging/workspace.py` with the
-  `sidecar` fix; `staging/scratch.py` with the collision check keyed on (call identity, layer)
+- Lifts, each citing its verdict: `core/locations.py` (one set of storage roots from settings,
+  `for_environment` not lifted; `core/data_objects.py` and `core/pipeline.py`, which it
+  imports, arrive with the declarations work (§3), the latter with its non-spatial PROCESSING guard and radius docstring, A31.2);
+  `staging/workspace.py` without the template's `sidecar()`, since the loose files sit beside
+  the one workspace in the transfer directory (ADR-0021 ST-D26); `staging/scratch.py` with the collision check keyed on (call identity, layer)
   per A29 and T2.13, and its contract test: a repeated (trail, leaf) within one bound
   materialiser raises rather than returning a second path;
   `runtime/stage_entry.py` with its errors moved into the taxonomy; the recording spy;
@@ -521,35 +521,37 @@ holds none); B27 opened (when the facade is wrapped); T4.3 stays open for 2a. Ev
   `ports/archive.py` (lifted as is; the duplicate Protocol in `transfer.py` is not).
 - New: `adapters/storage/filesystem.py`; `runtime/env.py` (`Settings`, §7.1); `runtime/
   compose.py` (`PortSet` in, `Toolbox` out); `runtime/stage_ref.py` (the one import by string,
-  `ag.generalization.` only); `runtime/local.py` (§7.5); `runtime/errors.py`;
+  `ag.generalization.` only); `runtime/pod.py`, `runtime/pod_entry.py` and `runtime/local.py`
+  (§7.5, ADR-0018 AR-D25); `runtime/errors.py`;
   `TableOps.exists` and `data_type_of` in both adapters; **`TableOps.create_workspace`** (A5.7,
   T2.12) in both adapters with its conformance cases, `WorkspaceFormat` moved to
   `ports/workspace_format.py`, and `ScratchFileManager.create_workspaces` implemented through it
-  (the stage workspace, one per operation, and the sidecar directories, which the manager makes
-  itself).
+  (the stage workspace, one per operation, and the directory of loose files the manager names
+  once).
 - The example fixtures go live: the `tests/fixtures/example_pipelines` exclusions in
   `[tool.pyright]` and `[tool.ruff]` of `pyproject.toml` are both removed in this slice, so the
   fixtures are type-checked, formatted, linted and collected from here on; with the skeleton's fixture
   stage, two operations using only `select` and `explode_multipart`, derived from the building
   example.
-- That stage run through `run_operations` under the fake in CI and under ArcPy on Windows.
+- That stage run through `run_operations` under the fake in CI and under ArcPy in the image.
 - No test-support stopgap for workspaces: under both adapters the manager creates what it names,
   through the port.
 - Docs: `docs/contributing/adding-a-port-method.md`, `docs/architecture/errors.md`,
   `docs/contributing/testing.md` (§4).
 
-**Depends on.** 1b; Task B's lift of `core/data_objects.py` and `core/pipeline.py`.
+**Depends on.** 1b; the declarations work's lift of `core/data_objects.py` and `core/pipeline.py`
+(§3).
 
 **Done when.**
 - `create_workspace` conformance passes on both adapters: the workspace exists afterwards;
   creating one that exists is a `PortContractError`; a missing parent is an `EngineError` naming
   the tool. The manager creates three or four workspaces per pod, not one per handle.
-- The fixture stage runs to completion under the fake in CI and under ArcPy on Windows through
+- The fixture stage runs to completion under the fake in CI and under ArcPy in the image through
   the same `run_operations`; the output sweep is real under the fake (it answers `exists` from
   writes) and fails when an operation is edited to skip an output.
-- The three `staging/` defects are covered by tests that fail on the template's code: the same
+- The two `staging/` defects are covered by tests that fail on the template's code: the same
   leaf name in two operations of one stage is accepted; a repeated leaf in one scope still
-  raises; `sidecar` is right for a root containing a dot and for the directory format.
+  raises.
 - The scratch root is dumped through the filesystem `ArchiveClient`, manifest included.
 - `runtime/stage_ref.py` rejects `ag.adapters.fakes.*`, `ag.runtime.*` and a non-`Stage`
   attribute before importing anything; import-linter row 18 fails when `runtime/compose.py` is
@@ -613,7 +615,7 @@ frozen; T0.6(a)'s curve for the resource-ceiling method, not blocking. T2.8.
 - The fixture stage under the fake: `select` carries ids; `explode_multipart` mints per part and
   the id map resolves parents; a domain `parents=` on a lineage-bearing subject receives
   `lineage_id` pairs; on a non-bearing subject it raises before the port is called.
-- Under ArcPy on Windows: `lineage_id` is BIGINT on every output of the fixture stage (T0.1 case
+- In the image: `lineage_id` is BIGINT on every output of the fixture stage (T0.1 case
   6 for the skeleton tools); Path A's `join_field` on a BIGINT key works (case 8).
 - Path B is exercised by a fake adapter that declares the native index not addressable, at 10^5
   rows, with the block cache smaller than the map and the read loop honouring map order.
@@ -693,15 +695,16 @@ is in the `dissolve` docstring without any XY-tolerance wording (audit §2.10).
 - T4.4 lineage-aware pipe under A12.7a: `read_rows` on a lineage-bearing handle returns the
   tracked iterable; `write_rows`/`write_table` take the call-site ids declaration.
 - `mint(parents=...)` reachable by domain code through the surface T4.3 chose.
-- T3.5: the per-job log written pod-local and uploaded through `ArchiveClient` on success.
+- T3.5: the per-job log written pod-local and copied to the attempt's transfer directory
+  before the marker (ADR-0021 ST-D26).
 - `observability/`: JSONL records with the 03-architecture §6 fields, `ContextVar` context,
   timing; warnings routed through it (§6.6).
 - `runtime/stage_entry.py` gains the session around each operation and the failure path
   (annotate the error, dump scratch, write the failure record). `run_operations`' signature
   stays.
 - One operation over real data end to end: the fixture `simplify_polygons` and
-  `build_displacement_feature` (buffer, merge, dissolve) run on a Windows extract of real building
-  and road data at K = 1, producing a `StageOutput` from the buildings, a scratch handle from
+  `build_displacement_feature` (buffer, merge, dissolve) run in the image on an extract of real
+  building and road data at K = 1, producing a `StageOutput` from the buildings, a scratch handle from
   the roads (A31.3), an edge log and the pod-local halves of the A16 assertions (which are
   complete at K = 1 with `D` unpromoted).
 - **Fan-out and fan-in as signatures only.** `runtime/fan_out.py` and `runtime/fan_in.py` are
@@ -819,31 +822,41 @@ small. The risk that partitioning is wrong is measured by the legacy track (T1.4
   A31.3), K-way log merge and `DROPPED` promotion (T5.1), completeness assertions (T5.2),
   origin-closure check (T5.3), ownership recomputation (T5.4), all appending here (7.4).
 - T3.7 foreign-id guard at stage entry folded into A13's check, and again at fan-in.
-- `adapters/storage/s3.py`, `gcs.py`; `staging/transfer.py`'s `stage_down`/`stage_up` with pack
-  and unpack after handle release; `core/planning.py`'s `build_run_plan` and
+- `adapters/storage/s3.py`; `staging/transfer.py`: the tree on the volume per ADR-0021 ST-D26
+  (transfer directories per index and per attempt, the hard-linked marker, fan-in's selection
+  by marker), copied as directories with no pack or unpack between Jobs, and
+  `stage_down`/`stage_up` with pack and unpack after handle release at the stage boundary only;
+  `core/planning.py`'s `build_run_plan`, with no environment on the plan or its stages, and
   `selection.check_upstream_available`.
+- The dispatch adapters behind `ClusterClient` (ADR-0018 AR-D26): local processes first, then
+  Kubernetes Jobs on SKIP, batch/v1 Indexed Jobs mounting the transfer volume by claim name,
+  with per-pod local disk as a job-spec setting; the kubernetes client and a row 8 entry in
+  `.importlinter` are explicit requests when the slice starts.
+- T3.8: the volume's lifecycle, the sweep, the free-space wait, the copy-time measurement and
+  the debug archive.
 - `observability/` log merge (`heapq.merge`) and the warnings summary (§6.6).
 - The K-invariance harness under `tests/invariance/`: a stage at K = 4 and K = 16 through the
-  new fan-out and fan-in, outputs diffed by multiset on (id, geometry) (A7.2).
+  new fan-out and fan-in under the local-process dispatch adapter, outputs diffed by multiset on (id, geometry) (A7.2).
 - `PartitionIterator` is untouched; it keeps running the legacy pipeline until slice 6 retires
   its callers stage by stage.
 
 **Depends on.** Slice 3; B9 signed; T1.4's verdict (or accept the risk explicitly and keep the
 legacy shadow track open).
 
-**Done when.** The fixture pipeline runs at K = 1, 4 and 16 locally (a process per pod, no
-Kubernetes) with identical outputs, edge logs that merge to the same completeness verdict, and a
+**Done when.** The fixture pipeline runs at K = 1, 4 and 16 locally, through the local-process
+dispatch adapter with the same tree in an ordinary directory, with identical outputs, edge logs that merge to the same completeness verdict, and a
 cold-start run from an archived input with no `lineage_id`; a deliberately missed fan-out join
 is caught by T3.7(a).
 
-**Design record.** T3.3, T3.4, T3.6, T3.7, T5.1 to T5.4 marked done; A6 to A8, A10.6, A10.7, A16, A21 to A25 migrated to `02-runtime.md` §6, §7, §8 and the ADRs and struck; B9 and B20 resolved. **Then, as the last pull request of the slice, the design documents move to `docs/` (§4.8).**
+**Design record.** T3.3, T3.4, T3.6, T3.7, T3.8, T5.1 to T5.4 marked done; A6 to A8, A10.6, A10.7, A16, A21 to A25 migrated to `02-runtime.md` §6, §7, §8 and the ADRs and struck; B9 and B20 resolved. **Then, as the last pull request of the slice, the design documents move to `docs/` (§4.8).**
 
 **Size.** Three to four weeks. The largest slice, and the one with the most decided text to
 implement rather than design.
 
 **Review hard.** Fan-in emits no `DROPPED` for discarded halo copies (A6.5); no ownership
 field ever appears in the data (A6.1); the record format carries no own/halo-copy flag (A16.1);
-partition pods reach only their own payload and the shared non-spatial payload.
+partition pods reach only their own transfer directories, the payload at their index and the
+shared non-spatial one; fan-in reads a marked attempt only.
 
 #### Slice 6: migration of the first real stages
 
@@ -900,18 +913,31 @@ inventory of tool call sites per legacy stage that slice 6 needs. None touches `
 
 ## 3. Work the other developers can take, and when
 
+**Ownership.** The architect owns partitioning, fan-out and fan-in, the declarations, the
+composition root and the entries, lineage identity, and ingest. Three streams are hand-offs:
+geometry validation over `Row` values (the engine's validity tools as port methods, from the
+guide), the DAG and orchestration, and porting the pipelines as operations. Task A is legacy
+work and Task C is unchanged; Task B is the two validation checks of §3.1.
+
+**Build order, by pull request.** PR 9 the declarations (the six core declaration modules);
+PR 10 `exists`; PR 11 the runner, the scratch manager and the stage entry; PR 12 the fixture
+stage; PR 13 `count`; PR 17 the lineage session and the sweeps; PR 21 the first migrated stage
+as the recipe. The numbers between are the architect's to fill. The catalog methods (PR 10 and
+PR 13) may land before PR 9: they depend on nothing in the declarations and are what the
+geometry-validation stream needs first.
+
 | slice | hand-off ready | needs the architect |
 |---|---|---|
 | **now**, before slice 0 | **Task A** (T0.2 + T1.1) and **T7.5**: both touch only legacy code and depend on nothing in this plan | the two review documents; the decisions of §8.0 |
 | 0 | running T0.1 and T0.6(a) in the image; the CI matrix and pre-commit wiring; `docs/README.md`, the CURRENT banners, the Python-floor page; moving the examples to fixtures | creating the tree; `.importlinter` against `project_tree.md` §6, each contract broken once |
-| 1a | **Task B**, from the moment 1a's first pull request (the architect's core lift) merges; it lifts the rest of the core declaration modules, citing their verdicts; T1.3 once T1.1 is in; the fake's `MemoryStore` once its interface is sketched | row shape, markers, errors, the three Protocol methods, the facade spike |
-| 1b | the engine-neutral fixture builders in `tests/support/`; running the Windows conformance run and the timing run | the session and `run_tool`, the ArcPy adapter's first three methods |
-| 1c | `normalize_layer_name`; the filesystem `ArchiveClient`; the `sidecar` and collision-key fixes with their tests | settings, compose, the local runner, the fixture stage, the guide. **Task C** starts when the guide exists |
+| 1a | **Task B**, once the declarations work merges: `check_stage_graph_acyclic` and `check_no_coarser_input`; T1.3 once T1.1 is in; the fake's `MemoryStore` once its interface is sketched | row shape, markers, errors, the three Protocol methods, the facade spike; the lift of the six core declaration modules (PR 9) |
+| 1b | the engine-neutral fixture builders in `tests/support/`; running the conformance run in the image and the timing run | the session and `run_tool`, the ArcPy adapter's first three methods |
+| 1c | `normalize_layer_name`; the filesystem `ArchiveClient`; the collision-key fix with its test | settings, compose, the local runner, the fixture stage, the guide. **Task C** starts when the guide exists |
 | 2a | Path B's packed map with the block cache once the map interface is fixed; T2.5, T2.6, T2.7 (touch only `geometry.py`/`table_ops.py` docstrings and the value type) | minter, facade, capability record, the `lineage/` contract; T2.8's mutator declaration and key contract |
 | 2b | the 904-unmatched diagnostic; the proximity second pass; goldens on the image (T4.11 case 1b) | B17's closing wording in the docstring |
 | 3 | `observability/` (03-architecture §6 is a complete spec); T3.5's upload; the real-data K = 1 run and its report | session, sweeps, pipe, B10 |
 | 4 | everything (one method per task) | reviewing against the guide; B11 if `displace_features` comes up; B2's verdict |
-| 5 | S3 and GCS adapters; pack/unpack; the K-invariance harness runner; T5.3, T5.4 | fan-out ownership, ingest, dispatch, log merge, completeness |
+| 5 | the S3 adapter; pack and unpack at the stage boundary; the K-invariance harness runner; T5.3, T5.4 | fan-out ownership, ingest, dispatch and both its adapters, the transfer volume's lifecycle (T3.8), log merge, completeness |
 | 6 | the second and later stages once the first is a recipe; `sources.py`/`products.py` transcription from `data_orchestrator` and `file_manager`; the arcpy call-site inventory per stage | the first stage; the split of constants |
 
 **Who reviews the legacy track while it runs beside slices 0 to 3.** The two developers review
@@ -935,28 +961,30 @@ the shadow is not selectable by callers, and a run of `data_preparation_2.py` on
 produces the JSON. Runs on Windows with the ArcGIS interpreter. Nothing in it depends on a
 design decision; A6 and A7 are settled and this is their test. Two to four days.
 
-**Task B: the three unimplemented validation checks.**
-**Starts when the first pull request of 1a has merged.** That pull request is the architect's
-core lift (`core/types.py`, `injection.py`, `handles.py`, `operations.py`, with the `@operation`
-restructuring). Task B then lifts the rest it needs, each module citing its verdict in
-`template_review.md`: `core/data_objects.py`, `pipeline.py`, `graph.py`, `policy.py`,
-`findings.py`, `validation.py`. All six are "keep as is" or "keep with changes" with the changes
-listed, so the lift is mechanical, and none of them is `core/operations.py`, which no hand-off
-touches. `pipeline.py`'s one change: `StageInput.__post_init__` rejects a non-spatial object
-with role PROCESSING (A31.2), with a break-it case (A30), and the `context_radius_m` docstring
-carries A31.2's radius sentence. Files: `src/ag/core/validation.py`, `tests/unit/core/test_validation.py`, and
-purpose-built minimal fixture stages with portless operations beside the tests, because the
-example pipelines import `ag.ports` and stay inert until 1c. Implement `check_stage_graph_acyclic` (Kahn over
-`graph.derive_stage_dependencies`, report cycle members and the inducing object chain),
-`check_no_coarser_input` (rank via `ScaleRanking.rank`, RAW never trips) and `check_publications`
-(`policy.publication_classification` must permit the identity's location; a PREM_ONLY object
-bound for `gs://` is the error). Each check's docstring already states what it catches and why it
-cannot move earlier; `02-runtime.md` §8 items 11, 13, 15 are the spec. Acceptance: a minimal fixture
-with a PREM_ONLY object published to a `gs://` identity is reported by `check_publications` (the
-building example's deliberately inconsistent `N100_BUILDING_POLYGONS` publication becomes a
-second assertion when the example fixtures go live in 1c); a fixture with `op1(A) -> op2(B) -> op3(A)` is reported as a cycle naming
+**Task B: two of the three unimplemented validation checks.**
+**Starts when the declarations work has merged.** That work is the architect's: the lift of
+`core/data_objects.py`, `pipeline.py`, `graph.py`, `policy.py`, `findings.py` and
+`validation.py`, each citing its verdict in `template_review.md`, with `pipeline.py`'s one change
+(`StageInput.__post_init__` rejects a non-spatial object with role PROCESSING, A31.2, with a
+break-it case, A30, and the `context_radius_m` docstring carries A31.2's radius sentence). Files:
+`src/ag/core/validation.py`, `tests/unit/core/test_validation.py`, and purpose-built minimal
+fixture stages with portless operations beside the tests, because the example pipelines import
+`ag.ports` and stay inert until 1c. Implement `check_stage_graph_acyclic` (Kahn over
+`graph.derive_stage_dependencies`, report cycle members and the inducing object chain) and
+`check_no_coarser_input` (rank via `ScaleRanking.rank`, RAW never trips). Each check's docstring
+states what it catches and why it cannot move earlier; `02-runtime.md` §8 items 11 and 13 are the
+spec. `check_publications` stays `NotImplementedError` and belongs to the destinations item
+(below). Acceptance: a fixture with `op1(A) -> op2(B) -> op3(A)` is reported as a cycle naming
 both stages; N25 reading N100 is reported; `validate()` on the two fixture pipelines reports
-exactly those and nothing else. No ArcPy. Two to three days.
+exactly those and nothing else. No ArcPy. One to two days.
+
+**`check_publications` and the destinations item.** `02-runtime.md` §8 item 15:
+`policy.publication_classification` must permit the identity's location. Today no location
+carries a storage classification, so nothing can fail, and the check waits for the destinations
+item to name an on-prem destination a classification forbids. Acceptance when that item closes: a
+minimal fixture with a restricted object published to a location its classification does not
+permit is reported; the building example's deliberately inconsistent `N100_BUILDING_POLYGONS`
+publication, and the fixtures' `gs://` locations and their docstrings, are rewritten there.
 
 **Task C: the first widening method, `GeometryOps.buffer`.**
 **Starts after 1c, when the guide exists.** Files: `src/ag/ports/geometry_ops.py`,
@@ -1004,7 +1032,7 @@ needs it.
 | `docs/architecture/errors.md` | the taxonomy of §6, the raise/warn/log rules, what every error carries | 1a (with the error modules), completed 1c |
 | `docs/architecture/lineage.md` | short: the seam in one page (parents at the port, ids above it, edges at the boundary), pointing at the ADRs and the `lineage/` docstrings | 3 |
 | `docs/contributing/adding-a-port-method.md` | the guide (§4.5) | 1c |
-| `docs/contributing/toolchain.md` | uv as the environment and tool manager: installing it, `uv sync --extra dev`, `uv.lock`, hooks through uv, the two environments on Windows (A27) | 0 |
+| `docs/contributing/toolchain.md` | uv as the environment and tool manager: installing it, `uv sync --extra dev`, `uv.lock`, hooks through uv, the three environments (A27) | 0 |
 | `docs/contributing/python-version.md` | the Python target and how to raise the floor (§4.7) | 0 |
 | `docs/contributing/testing.md` | the layers of §5, markers, what runs where (the four buckets from the platform decision) | 0, updated 1c and 5 |
 | `docs/contributing/writing-an-operation.md` | operation authoring: In/Out, config, scratch, ports only, `mint(parents=)`, ref columns, what not to do | 3 |
@@ -1105,8 +1133,8 @@ retired altogether on 2026-10-02 (A28).
 
 - **The target is Python 3.13.** There is no fixed lower constraint. The project follows its
   runtimes upward: the target is the lowest Python minor version across the supported runtimes
-  (the ArcGIS Pro interpreter the team develops with, and the Linux image). Nothing is in
-  production yet, so no older build constrains it.
+  (the image, ADR-0018 Direction 6; the legacy packages' ArcGIS Pro interpreter does not
+  constrain `src/ag`). Nothing is in production yet, so no older build constrains it.
 - **Four settings state it, and they always change together:** `requires-python`, pyright's
   `pythonVersion` and ruff's `target-version` in `pyproject.toml`, and `.python-version`, which
   uv reads locally and in CI.
@@ -1211,8 +1239,8 @@ tests/
 ```
 
 Buckets, per the platform decision already recorded: pure-Python checks in pre-commit and CI on
-both runners; `arcpy`-marked tests under an ArcGIS Pro Python environment and in the image under
-Docker; conformance also gates image promotion; the two gates are one-off in the image.
+both runners; `arcpy`-marked tests in the image under Docker (ADR-0018 Direction 6); conformance
+also gates image promotion; the two gates are one-off in the image.
 `pytest -m "not arcpy"` in pre-commit and CI, excluding by marker; an unmarked test that imports
 ArcPy fails on `ImportError`, which is the property the marker exists for. `tests/conftest.py`
 makes the marker behave the same everywhere: without ArcPy a bare run skips marked tests with a
@@ -1285,15 +1313,15 @@ diff already compares against itself.
 
 Marked `arcpy`; conformance and everything above that needs an engine, T0.1's cases kept as a
 permanent module once the gate has run, the image checks (locale decimal mark in anything the
-adapter parses, `memory\` paths, the goldens replayed in the image). On a developer machine:
-`pytest -m arcpy` under an ArcGIS Pro Python environment. In the image: the same command
-under Docker, triggered by image rebuilds and by changes under `adapters/arcpy/`. The licence
+adapter parses, `memory\` paths, the goldens replayed in the image). They run in the image under Docker, on a
+developer machine and as the gate triggered by image rebuilds and by changes under
+`adapters/arcpy/` (`docs/contributing/testing.md`). The licence
 question for the image is open and decides whether that gate is automatic.
 
 ### 5.6 The smoke test
 
 `tests/smoke/test_stage_end_to_end.py`: the first migrated stage (§2.2 slice 6) over the
-study-area extract, through `runtime/local.py` with the ArcPy adapter: outputs exist with the
+study-area extract, through `ag.runtime.pod_entry` in the image: outputs exist with the
 declared types; row counts within a recorded band; the edge log passes the three completeness
 assertions at K = 1; the scratch dump lands through the filesystem `ArchiveClient`; total time
 under a recorded budget. It is the test a developer runs before opening a migration PR.
@@ -1381,8 +1409,8 @@ module) raises `EngineError(engine="arcpy", tool=name, messages=...)` from it. E
 method calls tools through it; nothing else in `adapters/arcpy/` names an `arcpy` exception. Two
 checks make that a property rather than a habit: a static test that the strings `ExecuteError`
 and `except arcpy` appear only in `session.py`, and the conformance case that a fake told to fail
-yields `EngineError`. The same shape applies to `networkx` and to the storage clients (`boto3`,
-`google.cloud` exceptions wrap into a `TransportError(PortError)` in their adapters).
+yields `EngineError`. The same shape applies to `networkx` and to the storage client (`boto3` exceptions wrap
+into a `TransportError(PortError)` in its adapter).
 
 ### 6.5 Warnings
 
@@ -1413,8 +1441,9 @@ One frozen `Settings` dataclass in `ag/runtime/env.py`, built once by the entry 
 environment through typed parsers (`require_str`, `require_bool` accepting only `true`/`false`
 case-insensitively, `require_int`, `optional`), never read at import time, and passed down as a
 value. Fields for this pass: scratch root, workspace format, keep-scratch flag,
-log level, the study-area extent for local runs, storage roots (the buckets `locations.py`
-hardcodes today) and later the pod identity (`JOB_COMPLETION_INDEX`, run id, stage name). The
+log level, the study-area extent for local runs, storage roots (one set; the per-environment
+buckets `locations.py` hardcodes today collapse to it), the transfer volume's mount path, and
+later the pod identity (`JOB_COMPLETION_INDEX`, run id, stage name). The
 composition root is the only reader; nothing under `core/`, `ports/`, `operations/` sees an
 environment variable, and an import-linter contract forbids `os.environ` there through a small
 static test. T7.5 fixes the legacy readers in the same convention so the two codebases agree
@@ -1434,9 +1463,10 @@ operation and per tool call make the merged log a partition profile, which is wh
 Per 02-runtime §4 and 03-architecture §4.6: the pod scratch root starts empty; declared handles
 are always kept until the dump; adapter-internal intermediates are deleted on a method's success
 and kept on its failure; the whole root is dumped at exit under the policy (default on) and dies
-with the pod. For local runs on Windows nothing dies, so the local runner creates a fresh root per
-run under the configured scratch root, dumps to a filesystem archive location, and deletes the
-root unless `keep-scratch` is set. The legacy `WorkFileManager` and the `in_memory\` literals do
+with the pod. For local runs nothing dies, so the entry creates a fresh root per run under the
+configured scratch root, dumps to a filesystem archive location, and deletes the root unless
+`keep-scratch` is set. The transfer volume's own lifecycle, the sweep and the capacity rule, is
+T3.8 (slice 5). The legacy `WorkFileManager` and the `in_memory\` literals do
 not carry over; the migrated stage's intermediates come only from `ScratchScope`.
 
 ### 7.4 The capability record (slice 2a)
@@ -1448,19 +1478,26 @@ at construction (A14.1). Consumers: the facade (which parents channel to expect,
 path, which duplicate names to fail on) and `validate()` as data once B14 gives it a derivation
 of which port methods a stage calls. The record names methods, never mechanisms.
 
-### 7.5 A local entry point for running a stage (slice 1c)
+### 7.5 The entries for running a stage (slice 1c)
 
-`python -m ag.runtime.local --stage <module:STAGE> --root <dir> --adapter arcpy|fake
-[--extent ...] [--keep-scratch]`. It is the driving adapter for development and the walking
-skeleton's proof. Its core is a function that takes a `Stage` object; the command line resolves
-the reference through `runtime/stage_ref.py`, which accepts only modules under
-`ag.generalization.`, and tests pass a fixture `Stage` directly. There is no adapter setting: a
-pod has one engine, and the fake is chosen only by this module's flag, which is also the only
-module allowed to import it (`project_tree.md` §4). It builds `Settings`, builds a `PortSet`
-(ArcPy through `compose.arcpy_ports`, or the fake), hands it to `compose.build_toolbox` (the one
-composition; the facade joins it in 2a), constructs the `ScratchFileManager` at `Tier.PARTITION` with index 0, copies stage inputs
-from local paths into the stage workspace (a stand-in for `stage_down`), runs `run_operations`,
-dumps scratch. The pod entry point of slice 5 is the same function with `stage_down` and
+Three modules under `runtime/` (ADR-0018 AR-D25). `runtime/stage_entry.py` holds the stage
+function, which takes a `Stage` object. `runtime/pod.py` declares both entry module names and
+the pod's role enum (fan-out, partition, fan-in) with no imports, and
+`tests/unit/runtime/test_pod.py` asserts each entry's `__name__` equals its constant.
+`ag.runtime.pod_entry` composes the engine through `compose.arcpy_ports` and nothing else; in
+this slice it is run directly, as a process in the image, and from slice 5 the dispatch
+adapters run it, local processes first and Kubernetes Jobs on SKIP after (ADR-0018 AR-D26).
+`ag.runtime.local` is the fake's entry:
+`python -m ag.runtime.local --stage <module:STAGE> --root <dir> [--extent ...] [--keep-scratch]`,
+the driving adapter for development under the fake and the walking skeleton's proof. The
+command line resolves the reference through `runtime/stage_ref.py`, which accepts only modules
+under `ag.generalization.`, and tests pass a fixture `Stage` directly. There is no adapter
+setting: a pod has one engine, and the fake is chosen by running this module, the only module
+allowed to import it (`project_tree.md` §4). Both entries build `Settings`, build their
+`PortSet`, hand it to `compose.build_toolbox` (the one composition; the facade joins it in 2a),
+construct the `ScratchFileManager` at `Tier.PARTITION` with index 0, copy stage inputs from
+local paths into the stage workspace (a stand-in for `stage_down`), run the stage function and
+dump scratch. In slice 5 `ag.runtime.pod_entry` calls the same function with `stage_down` and
 `stage_up` around it. The orchestrator CLI is outside this pass.
 
 ### 7.6 Things the template assumes that the decisions do not cover
@@ -1482,9 +1519,9 @@ dumps scratch. The pod entry point of slice 5 is the same function with `stage_d
 
 ### 7.7 Deliberately not in this pass
 
-Kubernetes execution (`orchestrator/execute.py`, the cluster adapter, Job specs); the publish
+The orchestrator's CLI and run selection beyond what slice 5's dispatch needs; the publish
 step and T0.4 (B9); the lineage query API and edge storage format (T6.1, T6.2); the
-`cartography/` package; any engine adapter beyond ArcPy and the fake; NFS substrate; trail
+`cartography/` package; any engine adapter beyond ArcPy and the fake; trail
 elision (`render_trail` errors deliberately); `dissolve_multipart` and an unsplit method (no
 caller until migration reaches them); the displacement declaration (B11); GraphOps
 dataset-awareness (B2 stays open); `SYMBOLOGY` inputs and how `displace_features` receives one
@@ -1549,7 +1586,7 @@ in which the answer is needed.
 | `read_rows` as `Row` dataclasses over millions of rows is too slow or too large for the pipe and for parents mapping (A4.4) | the bulk-IO design under ADR-0019 PC-4 needs a columnar path | the capped, incrementally logged timing run of slice 1b over the 2.3 M-row national road set; if the projection is minutes for a partition-sized input, add a columnar read before slice 3 rather than after | 1b |
 | Lineage overhead on real partitions exceeds A15.7 on `buffer_dissolve` or polygons (unmeasured) | `build_displacement_feature` is A15.5's worst case | run the promoted resolver on a real building-polygon partition and the displacement buffer in 2b | 2b |
 | The K = 1 code path hides a partition dependence (halo, ownership) that only shows at K > 1 | slice 5 finds it after slices 2 to 4 are built | the legacy shadow track (T1.1, T1.4) runs from now on the current implementation, which is the same data and the same tools | legacy track |
-| ArcPy on Windows rejects `posixpath`-joined `.gdb` layer paths or the name budget miscounts | every local run fails on the developers' machines | hand-built paths in the slice 1b Windows run, then the fixture stage in 1c | 1b, 1c |
+| ArcPy rejects `posixpath`-joined `.gdb` layer paths or the name budget miscounts | every run fails | hand-built paths in the slice 1b run in the image, then the fixture stage in 1c | 1b, 1c |
 | pyright strict forces `cast`s into `@operation`, weakening call-site checking | the declaration mechanism is the design's strongest selling point | the first pull request of 1a is the architect's core lift and carries the `@operation` restructuring; no hand-off lifts or edits `core/operations.py`, so there is no race and nothing to rebase | 1a |
 
 ### 8.3 What not to build yet, and why

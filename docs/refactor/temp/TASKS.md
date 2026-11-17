@@ -129,6 +129,7 @@ work but have different lifetimes and different modules.
 | 20b | T3.6 | Lineage retention alongside products | not started |
 | 20c | T3.7 | Foreign-id guard | not started |
 | 21 | T3.2 | Work-key API | not started |
+| 21b | T3.8 | Transfer-volume lifecycle: sweep, capacity, debug archive | not started |
 | 22 | T4.1 | `@row_shape` types and CI check | **done** (slice 1a) |
 | 23 | T4.2 | Declare shapes across the port surface | not started |
 | 24 | T4.3 | Generic lineage facade | spike landed (slice 1a); open for 2a |
@@ -187,8 +188,6 @@ work but have different lifetimes and different modules.
   finding as `docs/refactor/temp/findings/t0_1_bigint_gate.md`, stating whether
   `FieldType.BIGINT` is viable, the per-tool type-survival table, and the answers to the "if
   this fails" branches. It resolves B1 into an A-item and is consumed by slice 2a.
-- *Windows Pro cross-check* (optional): the same command under an ArcGIS Pro Python
-  environment, with its own log; name any divergence in the finding.
 
 **what done means**
 
@@ -303,8 +302,7 @@ up.
 10. File-geodatabase version: community reports say a target fgdb at version 10.0 or below rejects
     the Pro 3.2 field types, while the docs say the fgdb version has not changed since 10.0.
     Ambiguous enough to test rather than reason about.
-11. **The exact ArcPy build and image reference**, recorded. If the Windows Pro cross-check below
-    is run, record its build too and name any divergence between the two. Test the **archive
+11. **The exact ArcPy build and image reference**, recorded. Test the **archive
     creation path** as well as scratch — B9 may put `lineage_id` on the archived product, and an
     archive written by a different code path is a different test.
 12. **The concatenation group-size case.** Measures the cost and completeness of a `CONCATENATE`
@@ -322,9 +320,9 @@ up.
 
 **Where it runs.** T0.1 is a one-off gate, not a CI step, and it runs **in the Linux production
 image**. That is the environment whose results count: production is Linux, and field-type
-behaviour is exactly the kind of thing that can differ between builds. **Windows Pro is an
-optional cross-check**, useful as a divergence detector since the team develops there, but a pass
-on Windows Pro does not substitute for a pass in the image.
+behaviour is exactly the kind of thing that can differ between builds. The ArcGIS Pro
+interpreter is not an environment of the system (ADR-0018 Direction 6), so there is no
+cross-check there.
 
 Esri documents the 53-bit limit, and says values outside it error in Pro while in other clients
 they may be rounded and break functionality:
@@ -1339,9 +1337,11 @@ ingests a national N50 product on every execution, so this branch runs constantl
 
 **status:** not started
 
-**what done means** The per-job lineage log is an output artifact written **pod-local and uploaded
-on success**, never streamed to shared storage — otherwise a dead attempt's records collide with
-its retry's. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another
+**what done means** The per-job lineage log is an output artifact written **pod-local and copied
+to the attempt's transfer directory with the outputs, before the marker** (ADR-0021 ST-D26), never
+streamed to a shared path — otherwise a dead attempt's records collide with its retry's. Fan-in
+reads the marked attempt's log only; a failed attempt's log stays on the volume for diagnosis
+until the sweep (T3.8). The transfer substrate inside a stage is B35. A job exceeding 2³²−1 mints fails loudly rather than wrapping into another
 minter's space. If live progress is wanted it goes to a separate diagnostic channel that fan-in
 never reads.
 
@@ -1349,7 +1349,7 @@ never reads.
 
 **depends on** T3.3.
 
-**decision refs** A10.4, A10.5, A15.4.
+**decision refs** A10.4, A10.5, A15.4, B35.
 
 **doc migration** A10.4, A10.5 → the ADR from T3.3.
 
@@ -1475,6 +1475,41 @@ A9.8, A9.9 → `04-migration.md`.
 
 ---
 
+## 21b. T3.8 — Transfer-volume lifecycle: sweep, capacity, debug archive
+
+**status:** not started
+
+**what done means** The transfer volume is fixed and the platform cleans nothing (B35), so its
+whole lifecycle is this task:
+
+- **The sweep** deletes only directories of finished runs, or directories older than the longest
+  a run can take; it decides "finished" from the orchestrator's run identity and dispatch
+  registry (T3.3), never from the log artifact. Code never deletes the claim.
+- **Stage end**: the stage directory is renamed into a trash directory, which is instant, and
+  deleted in the background.
+- **Capacity**: free space is measured on the mount path (`shutil.disk_usage`), since the
+  volume's declared size is not enforced on NFS. Before a stage starts the orchestrator waits if
+  space is low rather than failing; a stage that can never fit fails with a clear error; usage
+  past a threshold warns; stage-directory size and free space are logged so capacity changes
+  rest on measured figures. The planning rule, stages running at once times 10 GB per stage at
+  most, plus leftovers, plus a margin, is the capacity input and not a constant in code.
+- **Copy time**: the copy in and out per pod is measured beside the free-space logging, against
+  A15.7's fan-out and fan-in budget, under 5 minutes and never over 15.
+- **The debug archive**: the stage directory is packed into one object and uploaded to the object
+  store on failure or on request, with retention on the store's side.
+- **Local disk per pod** for payload, outputs and scratch is a job-spec setting on the Kubernetes
+  Jobs adapter, not record text.
+
+**files touched** `orchestrator/`, `staging/transfer.py`, the Kubernetes Jobs adapter.
+
+**depends on** T3.3.
+
+**decision refs** B35, A15.7.
+
+**doc migration** nothing: the tree, the marker and fan-in's selection are ADR-0021 ST-D26.
+
+---
+
 ## 22. T4.1 — `@row_shape` types and CI check
 
 **status:** done — slice 1a, 2026-10-19 (`ports/row_shape.py`, `tests/static/test_row_shape.py`,
@@ -1597,7 +1632,7 @@ Owns B10's facade-side pieces, if B10 is adopted:
 - **the post-call assertion**: after every port call that produces or mutates a lineage-bearing
   handle, `lineage_id` exists with the declared type, and no adapter-declared duplicate of it
   exists. One `describe_fields`, no row scan. Pure Python, so it runs identically in every
-  environment, local Windows runs included;
+  environment, local runs included;
 - **no accessor to the inner port** on the facade;
 - **the `lineage/` protected contract** in `.importlinter`, with `allowed_importers` set from where
   ingest, fan-out and fan-in actually live, not from B10's minimal probe;
@@ -1741,12 +1776,15 @@ replace this acceptance text.
 - `CARRY` with no parent **fails**; it does not mint. `FOREIGN` never gets a `lineage_id` and never
   emits an edge, and a null ref column is legitimate data.
 - A test covers the `resolve_ramps` multi-output shape specifically.
+- The sweep's read of each output's id set and the minting write are measured on the ArcPy
+  adapter against A15.7 when `write_rows` lands; an attributes-only read joins the port if the
+  number says so. The sweep's read cost on the ArcPy adapter is B36.
 
 **files touched** `template_code/ag/lineage/`, `template_code/ag/runtime/stage_entry.py`.
 
 **depends on** T4.3, T3.4.
 
-**decision refs** A11.2–A11.9, A11.12, A11.14, A13.
+**decision refs** A11.2–A11.9, A11.12, A11.14, A13, A15.7, B36.
 
 **doc migration** A11.1–A11.10 and A11.14 → the new ADR on lineage. A11.4's authoring consequence
 and A11.13 → `02-runtime.md` §2.4. A11.8, A11.9, A11.12, A13 → the lineage module docstring.
@@ -1945,8 +1983,8 @@ A15.7 when it lands, since read cost scales with vertex count. The degenerate-ri
 refusal in `Geometry` catches only a curve that is a whole ring. W29: on the image a
 buffered polygon had no curve where the architect saw curved corners in Pro.
 
-**what done means** Three halves. The environment the ArcPy half runs in is B23, settled
-with the first marked test.
+**what done means** Three halves. The ArcPy half runs in the image (B23; ADR-0018
+Direction 6).
 
 **(1) `MINT` parents.** One case per `MINT` method: run it over a known input set, obtain the
 pairs through the Protocol's `parents=` out-param (A11.15), and assert they match the oracle. The
@@ -1966,7 +2004,7 @@ explodes a raw input that carries such a member.
 
 **(1b) Image checks.** On `arcpy-linux`: the locale decimal mark in any text the adapter parses;
 `memory\\name` scratch paths; and the keyed resolver's locators on the same goldens. Acceptance:
-the goldens replay on the image with the same pairs as on Windows.
+the goldens replay on the image with the recorded pairs.
 
 **(2) `CARRY` presence and type.** One case per `CARRY` method in A12.11 and A12.11a: assert
 `lineage_id` **exists with the declared type on each output**. This makes T0.1's type-survival
@@ -1985,9 +2023,8 @@ declared with a location (A31.5); where that parameter sits on the port is B11's
 
 **Where it runs — not a CI step.** Conformance needs ArcPy and CI has none. It **gates image
 promotion**: run in the freshly built Linux image, triggered by image rebuilds and by changes under
-`adapters/arcpy/`. It is also runnable **locally against Windows Pro**, as a convenience and a
-divergence detector, and in the image under Docker. It is not a pre-commit hook, for the same
-reason it is not CI.
+`adapters/arcpy/`. It is also runnable locally, in the image under Docker
+(`docs/contributing/testing.md`). It is not a pre-commit hook, for the same reason it is not CI.
 
 **Licence activation:** settled at image build (2026-11-05). The test run needs no step of its
 own, so the promotion gate can run wherever the image runs.

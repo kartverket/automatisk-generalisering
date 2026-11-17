@@ -48,9 +48,8 @@ import those leaves and never each other.
   producing stage's computation with `reclassify_to` applied. An identity nothing here
   publishes falls back to rules and fails closed.
 - **ST-D7** No pipeline imports another pipeline. Pipelines import the leaves.
-- **ST-D8** `locations.py` owns environment prefixing: the remote-path builders
-  (`scratch_location`, `scratch_dump_location`, `payload_location` and the archive location)
-  live there.
+- **ST-D8** `locations.py` owns the remote-path builders (`scratch_location`,
+  `scratch_dump_location`, `payload_location` and the archive location).
 - **ST-D9** `Scale` and `ObjectName` are `StrEnum`, so a member renders as its value in a
   path builder; `RAW` is `Scale.RAW`. `ObjectName` is closed, so adding an object edits a
   shared module.
@@ -141,6 +140,20 @@ goes into not losing pods.
 - **ST-D24** An operator whose runtime approaches its payload's re-run cost is promoted
   to its own stage: a declaration change, not an architecture change. Whether the trade pays
   is Q-G, measurable once one operator is reimplemented.
+- **ST-D26** Intra-stage transfer goes through transfer directories on one shared volume
+  under `<run_id>/<stage_id>/`: fan-out writes `fan_out/<i>/` per index and one shared
+  directory for non-spatial CONTEXT; a partition pod reads its two, works pod-local (ST-D23)
+  and copies its outputs and log into `pod/<i>/<attempt>/`, writes its attempt id into a
+  file there, then hard-links that file to `pod/<i>/DONE`. The link creates the marker whole
+  or fails because an earlier attempt completed, and that attempt exits without writing.
+  Fan-in reads, per index, the marker and the attempt directory it names; an index with no
+  marker, an unreadable marker or a marker naming an absent directory fails the stage by
+  index. Fan-in merges pod-local, writes its log into `fan_in/<attempt>/`, and uploads the
+  merged transfer directory to the object store from local disk; the upload completes the
+  stage, which the orchestrator observes through the Job. Stage inputs and outputs live in
+  the object store, each transfer directory packed as one object. The object-store
+  locations come from `locations.py` (ST-D8); the paths on the volume are built once, in
+  `staging/transfer.py`. A local run uses the same tree in an ordinary directory.
 
 ## Rejected
 
@@ -158,8 +171,8 @@ goes into not losing pods.
   kind whose transfer and legality rules are identical to symbology's; until then, the next
   file kind gets its own member and its own decision.
 - **ST-R6** Intra-pod resume. The stage workspace is pod-local, so resuming from operation N
-  means persisting inter-operation handles to run-scratch, roughly 2K transfers plus a merge
-  per stage, the cost stage grouping exists to avoid. Reopened by a payload whose runtime makes it likely
+  means copying every inter-operation handle to the pod's transfer directory after each
+  operation, the cost stage grouping exists to avoid. Reopened by a payload whose runtime makes it likely
   to be disrupted, for example by platform maintenance, after splitting the stage's
   operations across more stages and tuning the partition size have both been tried; the mint
   counter then becomes checkpoint state.

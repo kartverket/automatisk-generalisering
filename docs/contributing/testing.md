@@ -76,12 +76,12 @@ tests_legacy/      the tests of the legacy packages
 
 ## Where each kind of test runs
 
-| tests | pre-commit and CI (both runners) | ArcGIS Pro environment | the image |
-|---|---|---|---|
-| unit, conformance under the in-memory adapter | yes | yes | yes |
-| static | yes | no: they run pyright and the hooks' tools | no: the same |
-| conformance under ArcPy, `engine/`, goldens that replay the engine, invariance, smoke | never | yes, on request | yes, gating image promotion (later) |
-| `tests_legacy/` | never | by hand | never |
+| tests | pre-commit and CI (both runners) | the image |
+|---|---|---|
+| unit, conformance under the in-memory adapter | yes | yes |
+| static | yes | no: they run pyright and the hooks' tools |
+| conformance under ArcPy, `engine/`, goldens that replay the engine, invariance, smoke | never | yes; the conformance suite gates image promotion (later) |
+| `tests_legacy/` | never | never: by hand under the ArcGIS Pro interpreter, which is legacy's environment and not the system's (ADR-0018 Direction 6) |
 
 Neither GitHub runner has ArcPy, on purpose: an `import arcpy` anywhere outside the adapter
 fails there, which enforces the no-ArcPy-in-core rule for free.
@@ -94,7 +94,7 @@ the same behaviour in every environment:
 - **A bare `pytest` where ArcPy cannot be imported** skips every marked test, with the import
   error as the skip reason. So `pytest` works in WSL, in CI and under any Windows Python.
 - **`pytest -m arcpy` where ArcPy cannot be imported** ends the session at once with exit
-  code 1. A misconfigured Pro environment cannot report green with every ArcPy test skipped.
+  code 1. A misconfigured image cannot report green with every ArcPy test skipped.
 - **An unmarked test that imports ArcPy** is not touched: it fails on its `ImportError`. That
   is the property the marker exists for. Mark the test, or stop importing ArcPy.
 
@@ -105,9 +105,10 @@ importable. The auto-skip is for bare manual runs only.
 ## Running the ArcPy tests
 
 The marked tests are the ArcPy parameter of `tests/conformance/` and every test under
-`tests/engine/`. They run in the project's image, `ghcr.io/kartverket/arcpy-linux:12.1`,
-where the conformance suite gates image promotion. The image has ArcPy and none of the dev
-tools, so the run brings the `dev` extra with it at `uv.lock`'s versions and names the two
+`tests/engine/`. They run in the project's image, the one the `Dockerfile` declares and the
+only environment of the system that has the engine (ADR-0018 Direction 6); the command
+below spells its tag as a copy of that declaration. The conformance suite gates image
+promotion there. The image has ArcPy and none of the dev tools, so the run brings the `dev` extra with it at `uv.lock`'s versions and names the two
 roots, because the static tests import the dev tools at collection. From the repository
 root in WSL, with the repository on the Linux filesystem:
 
@@ -135,8 +136,8 @@ environment, the mount is read-only, and the geodatabases land under pytest's te
 directory in the container. The same command without `-m arcpy` and with `tests/unit` added
 runs the unit tests on the fake engine beside the marked ones in one session: the adapter
 imports the engine inside the function that reaches it, and the unit fixture installs its
-fake per test. The Windows Pro interpreter is a divergence check, not the gate, and that
-route is untried; B23 in the design record records how the environment was settled.
+fake per test. The ArcGIS Pro interpreter is not an environment of the system; B23 in the
+design record records how the environment was settled.
 
 ## `tests_legacy/`
 

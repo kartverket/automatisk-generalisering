@@ -544,8 +544,8 @@ def check_publications(
     """
     raise NotImplementedError(
         "for each Publish: policy.publication_classification(publish.obj, ...) must "
-        "permit storage at publish.identity.location; PREM_ONLY bound for gs:// is "
-        "the error to catch"
+        "permit storage at publish.identity.location; a restricted object bound for a "
+        "location its classification does not permit is the error to catch"
     )
 
 

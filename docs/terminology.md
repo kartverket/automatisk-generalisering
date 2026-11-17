@@ -48,6 +48,7 @@ the wrong review comments.
 | **operation workspace** | The workspace holding one operation's internal scratch. Names carry the trail. | [02-runtime §4.2](refactor/02-runtime.md#42-scratch-workspaces-and-naming) |
 | **pod scratch root** | The pod's ephemeral directory. Holds several workspaces plus a sibling directory of loose files. Not itself a workspace. | [02-runtime §4.2](refactor/02-runtime.md#42-scratch-workspaces-and-naming) |
 | **payload** | One partition's data, written by fan-out at the key the worker and fan-in independently recompute. | [02-runtime §4.2](refactor/02-runtime.md#42-scratch-workspaces-and-naming) |
+| **transfer directory** | A writer's directory on the volume, or its packed form at a stage boundary: one workspace plus the files a workspace cannot hold. No two writers share one; fan-out writes one per index and one shared, a partition pod one per attempt, fan-in reads the marked one per index. | ADR-0021 ST-D26 |
 | **fan-out** | The single pod that filters and partitions a stage's spatial inputs, writes K payloads plus one shared payload for the non-spatial inputs, and records K. | [02-runtime §6.3](refactor/02-runtime.md#63-the-loop) |
 | **partition pod** | One of K workers running the stage's operations against its own payload. Must be idempotent. | [02-runtime §7.4](refactor/02-runtime.md#74-partition-pods-must-be-idempotent) |
 | **fan-in** | The single pod that merges K outputs, discards non-center-in features, and uploads. | [02-runtime §6.3](refactor/02-runtime.md#63-the-loop) |
@@ -60,7 +61,7 @@ the wrong review comments.
 | **closure** | Expansion of a run selection along the graph. Downstream = what my change affects; upstream = what I need to run at all. | [02-runtime §6.1](refactor/02-runtime.md#61-a-run-is-a-selection) |
 | **pod-local** | Storage scope that dies with the pod. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
 | **run-scratch** | Storage scope living for the run plus a retention window. Retention is the resume window. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
-| **archive** | Permanent storage. Scality on-prem, GCS in cloud. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
+| **archive** | Permanent storage: the on-prem object store, Scality S3. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
 | **classification** | Where an output *may* be stored. Policy, computed over stage wiring. Independent of URI scheme. | [02-runtime §5.2](refactor/02-runtime.md#52-classification-is-computed-over-stage-wiring) |
 | **placement** | Which cluster pods run in. Reachability, decided once per pipeline. | [02-runtime §5.3](refactor/02-runtime.md#53-placement-is-per-pipeline) |
 | **port** | A `Protocol` naming one purposeful conversation with something outside the core. | [03-architecture §2.1](refactor/03-architecture.md#21-the-six) |
