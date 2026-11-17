@@ -59,7 +59,7 @@ def fan_in_partitions(
     unclaimed_output: str,
     unmatched_output: str,
     work_file_config: core_config.WorkFileConfig,
-    output_name_prefix: str = "p",
+    output_name_prefix: str = "final_output_",
     mode: FanInMode = "strict",
     match_tolerance_m: float = 1.0,
     border_step_m: float = 0.02,
@@ -737,7 +737,7 @@ def _log_summary(
 if __name__ == "__main__":
     environment_setup.main()
 
-    INDEXED_OUTPUTS_GDB = r"C:\GIS_Files\imported\091126only_outputs.gdb"
+    INDEXED_OUTPUTS_GDB = r"C:\GIS_Files\imported\double_thin_only_output.gdb"
     partitioning_gdb = GIS_FILES_ROOT / dn.raw_data / f"{dn.partitioning.lower()}.gdb"
 
     fan_in_partitions(
