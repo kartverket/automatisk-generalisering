@@ -81,6 +81,10 @@ def create_indexed_job(batch_api):
                     block_owner_deletion=False,
                 )
             ],
+            annotations={
+                "argocd.argoproj.io/tracking-id": f"{os.environ.get('ARGOTRACKING')}{PARTITION_JOB_NAME}",
+                "argocd.argoproj.io/sync-options": "Prune=false",
+            },
         ),
         spec=client.V1JobSpec(
             completion_mode="Indexed",
