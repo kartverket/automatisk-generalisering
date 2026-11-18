@@ -303,6 +303,30 @@
 
 
 
+<div class="viewcode-block" id="SimplifyLineKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.SimplifyLineKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimplifyLineKwargs</span><span class="p">:</span>
+    <span class="n">input_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">tolerance_m</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="MergeDividedRoadsKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.MergeDividedRoadsKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MergeDividedRoadsKwargs</span><span class="p">:</span>
+    <span class="n">input_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_displacement_features</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_merge_table</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">merge_field</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">merge_distance_m</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">character_field</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
 <div class="viewcode-block" id="RrcInitKwargs">
 <a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RrcInitKwargs">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
