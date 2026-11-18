@@ -123,7 +123,7 @@ def main(checkpoint: PipelineCheckpoint | None = None):
 
     data_orc = InputDataOrchestrator(map_scale=SCALE, pipeline=dn.object_veg_sti)
     area_data = data_orc.get_dataset(dn.area)
-    # building_data = data_orc.get_dataset(dn.building)
+    building_data = data_orc.get_dataset(dn.building)
 
     def _write_workfile_count():
         with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
@@ -145,34 +145,34 @@ def main(checkpoint: PipelineCheckpoint | None = None):
         ("remove_roadblock", lambda: remove_roadblock(data=area_data)),
         ("trim_road_details", trim_road_details),
         ("ramp_partition", ramp_partition),
-        # ("admin_boarder", admin_boarder),
-        # ("adding_fields", adding_fields),
-        # ("collapse_road_detail", collapse_road_detail),
-        # ("simplify_road", simplify_road),
-        # ("thin_roads", thin_roads),
-        # ("thin_sti_and_forest_roads", thin_sti_and_forest_roads),
-        # ("merge_divided_roads", merge_divided_roads),
-        # ("smooth_line", smooth_line),
-        # ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
-        # (
-        #     "pre_resolve_road_conflicts",
-        #     pre_resolve_road_conflicts,
-        # ),
-        # ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
-        # (
-        #     "generalize_dam",
-        #     lambda: generalize_dam(area_data=area_data, building_data=building_data),
-        # ),
-        # ("final_output", final_output),
-        # (
-        #     "ramps_part_2",
-        #     lambda: ramps_part_2(
-        #         input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
-        #         input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
-        #         output_points_fc=Road_N100.ramps__final_points__n100_road.value,
-        #     ),
-        # ),
-        # ("write_workfile_count", _write_workfile_count),
+        ("admin_boarder", admin_boarder),
+        ("adding_fields", adding_fields),
+        ("collapse_road_detail", collapse_road_detail),
+        ("simplify_road", simplify_road),
+        ("thin_roads", thin_roads),
+        ("thin_sti_and_forest_roads", thin_sti_and_forest_roads),
+        ("merge_divided_roads", merge_divided_roads),
+        ("smooth_line", smooth_line),
+        ("generalize_road_triangles", lambda: generalize_road_triangles(scale=SCALE)),
+        (
+            "pre_resolve_road_conflicts",
+            pre_resolve_road_conflicts,
+        ),
+        ("resolve_road_conflicts", lambda: resolve_road_conflicts(data_orc=data_orc)),
+        (
+            "generalize_dam",
+            lambda: generalize_dam(area_data=area_data, building_data=building_data),
+        ),
+        ("final_output", final_output),
+        (
+            "ramps_part_2",
+            lambda: ramps_part_2(
+                input_roads_fc=Road_N100.data_preparation___road_final_output___n100_road.value,
+                input_points_fc=Road_N100.ramps__potential_points__n100_road.value,
+                output_points_fc=Road_N100.ramps__final_points__n100_road.value,
+            ),
+        ),
+        ("write_workfile_count", _write_workfile_count),
     ]
 
     last_completed = checkpoint.load() if checkpoint else None

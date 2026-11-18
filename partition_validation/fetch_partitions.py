@@ -1,5 +1,7 @@
 # Libraries
 
+from typing import defaultdict
+
 import arcpy
 
 from custom_tools.general_tools.partition_iterator import PartitionIterator
@@ -9,7 +11,9 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 ##########################
 
 
-def FetchPartitionBorders(partition_iterator: PartitionIterator, output_file: str):
+def FetchPartitionBorders(
+    partition_iterator: PartitionIterator, output_file: str
+) -> None:
     if arcpy.Exists(partition_iterator.partition_features_all):
         arcpy.management.CopyFeatures(
             in_features=partition_iterator.partition_features_all,
@@ -26,7 +30,7 @@ def BufferPartitionLines(
     output_line: str,
     output_buffer: str,
     buffer_distance: int = 500,
-):
+) -> None:
     CreatePartitionLines(partition_lines, output_line)
 
     if arcpy.Exists(output_buffer):
@@ -37,15 +41,20 @@ def BufferPartitionLines(
         out_feature_class=output_buffer,
         buffer_distance_or_field=buffer_distance,
         line_end_type="FLAT",
+        dissolve_option="ALL",  # Old: Drop it
     )
 
 
-def AnalysePartitionBuffer(partition_buffer: str, input_fc: str, output_fc: str):
+def AnalysePartitionBuffer(
+    partition_buffer: str, input_fc: str, output_fc: str
+) -> None:
     tmp_lyr = "temp_layer"
 
-    # results = {"input": [], "output": []}
+    results = {"input": dict(), "output": dict()}
 
-    for fc in [input_fc, output_fc]:
+    for key, fc in zip(["input", "output"], [input_fc, output_fc]):
+        _delete_layer(tmp_lyr)
+
         arcpy.management.MakeFeatureLayer(in_features=fc, out_layer=tmp_lyr)
         arcpy.management.SelectLayerByLocation(
             in_layer=tmp_lyr,
@@ -54,13 +63,23 @@ def AnalysePartitionBuffer(partition_buffer: str, input_fc: str, output_fc: str)
             selection_type="NEW_SELECTION",
         )
 
+        end_points = GetRelevantEndPoints(tmp_lyr, partition_buffer)
+
+        results[key] = {"dangle_count": len(end_points)}
+
+    print("Partition result:")
+    for key, value in results.items():
+        print(f"{key}:\n{value}")
+
+    _delete_layer(tmp_lyr)
+
 
 ##########################
 # Helpers
 ##########################
 
 
-def CreatePartitionLines(partition_layer: str, output_file: str):
+def CreatePartitionLines(partition_layer: str, output_file: str) -> None:
     if arcpy.Exists(output_file):
         arcpy.management.Delete(output_file)
 
@@ -80,35 +99,57 @@ def CreatePartitionLines(partition_layer: str, output_file: str):
     )
     arcpy.management.DeleteFeatures(tmp_lyr)
 
-    if arcpy.Exists(tmp_lyr):
-        arcpy.management.Delete(tmp_lyr)
+    _delete_layer(tmp_lyr)
 
 
-def CountEndPoints(line_layer: str, buffer_layer: str):
-    return
+def GetRelevantEndPoints(line_layer: str, buffer_fc: str) -> defaultdict:
+    end_points = defaultdict(list)
+
+    buffer_geom = None
+    with arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"]) as buffer_cursor:
+        buffer_geom = next(buffer_cursor)[0]
+
+    if buffer_geom is None:
+        raise ValueError("Buffer geometry could not be retrieved.")
+    with arcpy.da.SearchCursor(line_layer, ["OID@", "SHAPE@"]) as cursor:
+        for oid, geom in cursor:
+            start_point = geom.firstPoint
+            end_point = geom.lastPoint
+
+            start_geom = arcpy.PointGeometry(start_point, geom.spatialReference)
+            end_geom = arcpy.PointGeometry(end_point, geom.spatialReference)
+
+            if buffer_geom.contains(start_geom):
+                end_points[(start_point.X, start_point.Y)].append(oid)
+            if buffer_geom.contains(end_geom):
+                end_points[(end_point.X, end_point.Y)].append(oid)
+
+    return end_points
 
 
-def PointWithinBuffer(point: arcpy.PointGeometry, buffer_fc: str):
-    return arcpy.management.SelectLayerByLocation(
-        in_layer=buffer_fc,
-        overlap_type="INTERSECT",
-        select_features=point,
-        selection_type="NEW_SELECTION",
-    )
+def _delete_layer(layer: str) -> None:
+    if arcpy.Exists(layer):
+        arcpy.management.Delete(layer)
 
 
 ##########################
 
-INPUT = r"..."
-OUTPUT = r"..."
-PARTITIONS = r"..."
-PARTITION_LINES = r"..."
-PARTITION_BUFFER = r"..."
+INPUT = r""
+OUTPUT = r""
+PARTITIONS = r""
+PARTITION_LINES = r""
+PARTITION_BUFFER = r""
 
 
 def test():
     BufferPartitionLines(
-        PARTITIONS, PARTITION_LINES, PARTITION_BUFFER, buffer_distance=1000
+        partition_lines=PARTITIONS,
+        output_line=PARTITION_LINES,
+        output_buffer=PARTITION_BUFFER,
+        buffer_distance=1000,
+    )
+    AnalysePartitionBuffer(
+        partition_buffer=PARTITION_BUFFER, input_fc=INPUT, output_fc=OUTPUT
     )
 
 
