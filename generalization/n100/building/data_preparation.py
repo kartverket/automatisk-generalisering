@@ -43,6 +43,35 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+FAN_OUT_HALO_M = 2000
+
+
+def _study_area_settings() -> tuple[bool, int | None]:
+    study_area_mode = require("SELECT_STUDY_AREA")
+    if study_area_mode not in ("True", "False", "Partition"):
+        raise ValueError(
+            "SELECT_STUDY_AREA must be True, False or Partition, "
+            f"got {study_area_mode!r}"
+        )
+
+    if study_area_mode == "Partition":
+        try:
+            partition_index = int(require("PARTITION_INDEX"))
+        except ValueError:
+            raise ValueError(
+                "PARTITION_INDEX must be an integer, "
+                f"got {os.environ['PARTITION_INDEX']!r}"
+            ) from None
+    elif os.environ.get("PARTITION_INDEX") is not None:
+        raise ValueError(
+            "PARTITION_INDEX is only valid with SELECT_STUDY_AREA=Partition, "
+            f"got SELECT_STUDY_AREA={study_area_mode}"
+        )
+    else:
+        partition_index = None
+
+    return study_area_mode == "True", partition_index
+
 
 @timing_decorator
 def main() -> InputDataOrchestrator:
@@ -125,6 +154,11 @@ def data_selection(
     matrikkel: DatasetNamespace = data_orc.get_dataset(dn.matrikkel)
     railway: DatasetNamespace = data_orc.get_dataset(dn.railway)
     road: DatasetNamespace = data_orc.get_dataset(dn.road)
+    select_study_area, partition_index = _study_area_settings()
+    partition_feature = None
+    if partition_index is not None:
+        partitioning: DatasetNamespace = data_orc.get_dataset(dn.partitioning)
+        partition_feature = partitioning.road_partitions_fan_out
 
     input_output_file_dict = {
         area.Begrensningskurve_N50: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
@@ -141,15 +175,14 @@ def data_selection(
         building.AnleggsLinje_N50: Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
-    if require("SELECT_STUDY_AREA") == "False":
-        SELECT_STUDY_AREA = False
-    else:
-        SELECT_STUDY_AREA = True
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selector,
-        select_local=SELECT_STUDY_AREA,
+        select_local=select_study_area,
+        partition_feature=partition_feature,
+        partition_index=partition_index,
+        halo_m=(FAN_OUT_HALO_M if partition_index is not None else None),
     )
 
     selector.run()

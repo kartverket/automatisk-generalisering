@@ -15,8 +15,22 @@ logger = logging.getLogger(__name__)
 
 NAMESPACE = os.environ.get("NAMESPACE")
 RUN_ID = os.environ.get("RUN_ID")
+OWNER_JOB_NAME = os.environ["OWNER_JOB_NAME"]
+OWNER_JOB_UID = os.environ["OWNER_JOB_UID"]
 PARTITION_COUNT = int(os.environ.get("PARTITION_COUNT"))
-PARALLELISM = 10  # int(os.environ.get("PARALLELISM", "2"))
+PARALLELISM = int(os.environ.get("PARALLELISM", "2"))
+PIPELINE_CONFIGS: dict[str, tuple[str, str]] = {
+    "n100_roads": ("n100", "road"),
+    "n100_buildings": ("n100", "building"),
+}
+PIPELINE_NAME = os.environ.get("PIPELINE_NAME", "n100_roads")
+try:
+    PIPELINE_SCALE, PIPELINE_OBJECT = PIPELINE_CONFIGS[PIPELINE_NAME]
+except KeyError:
+    raise ValueError(
+        f"PIPELINE_NAME must be one of {', '.join(PIPELINE_CONFIGS)}, "
+        f"got {PIPELINE_NAME!r}"
+    ) from None
 
 PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
 
@@ -57,10 +71,16 @@ def create_indexed_job(batch_api):
                 "run-id": RUN_ID,
                 "pipeline-role": "partition-worker",
             },
-            annotations={
-                "argocd.argoproj.io/tracking-id": f"{os.environ.get('ARGOTRACKING')}{PARTITION_JOB_NAME}",
-                "argocd.argoproj.io/sync-options": "Prune=false",
-            },
+            owner_references=[
+                client.V1OwnerReference(
+                    api_version="batch/v1",
+                    kind="Job",
+                    name=OWNER_JOB_NAME,
+                    uid=OWNER_JOB_UID,
+                    controller=False,
+                    block_owner_deletion=False,
+                )
+            ],
         ),
         spec=client.V1JobSpec(
             completion_mode="Indexed",
@@ -100,8 +120,20 @@ def create_indexed_job(batch_api):
                                     value="on_prem",
                                 ),
                                 client.V1EnvVar(
+                                    name="SCALE",
+                                    value=PIPELINE_SCALE,
+                                ),
+                                client.V1EnvVar(
+                                    name="OBJECT",
+                                    value=PIPELINE_OBJECT,
+                                ),
+                                client.V1EnvVar(
+                                    name="SELECT_STUDY_AREA",
+                                    value="Partition",
+                                ),
+                                client.V1EnvVar(
                                     name="PIPELINE_NAME",
-                                    value="n100_roads",
+                                    value=PIPELINE_NAME,
                                 ),
                             ],
                             env_from=[

@@ -110,7 +110,7 @@ SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
 
 # Halo around a fan-out partition that a partition run selects its inputs within.
-FAN_OUT_HALO_M = 5_000
+FAN_OUT_HALO_M = 25_000
 
 # Temporary: thin roads runs twice with different partition sizes and context radii,
 # (max_elements_per_partition, context_radius_meters), and a road is only dropped
