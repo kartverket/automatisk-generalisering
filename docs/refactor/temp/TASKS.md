@@ -156,6 +156,7 @@ work but have different lifetimes and different modules.
 | 44 | T7.6 | Legacy lint baseline: undefined names `[INDEPENDENT]` | not started |
 | 45 | T7.7 | Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]` | not started |
 | 46 | T7.8 | `02-runtime` and `03-architecture` without placement or the cloud | not started; before slice 1c merges |
+| 47 | T2.14 | `open_session` contains the engine's import | not started; with the first PR that lands `ag.runtime.pod_entry` or `ag.runtime.local`, before it merges |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -2547,6 +2548,49 @@ Not in this task: §2.5 and the example's locations, which are already rewritten
 **decision refs** ADR-0018 Direction 6, AR-5, AR-R9; ADR-0021 ST-D5, ST-D23, ST-D26.
 
 **doc migration** none; this task is the migration.
+
+---
+
+## 47. T2.14 — `open_session` contains the engine's import
+
+**status:** not started. Lands with the first pull request that lands `ag.runtime.pod_entry`
+or `ag.runtime.local`, and before it merges: both entries are `__main__` when run, and the
+module convention alone would leave the rule as a run form nothing guards.
+
+**what done means** `open_session` (`src/ag/adapters/arcpy/session.py`) is the process's
+first engine import and contains it (ADR-0018 AR-D27): it snapshots the `__main__` namespace
+before the import, restores afterwards every name the import added or rebound, and refuses,
+as an adapter defect and not an `EngineError`, when the engine is already imported, since a
+snapshot taken after that import protects nothing. The engine's effect on `__main__`, as
+recorded in `slice_1b_read_rows_timing_evidence.md`: `arcpy`, `math`, `numpy`, `sys` and
+`time` added, `datetime` rebound to the module; the restoration covers the rebinding as well
+as the additions.
+
+- Unit tests on the fake engine: the refusal fires when the engine is already imported; a
+  name bound in `__main__` before `open_session` is the same object after it, and a name the
+  import added is gone. How the tests reach the import step under the fake is the
+  implementer's design and is presented with the change.
+- A break-once case for the refusal in `tools/break_once/cases/arcpy_session.py`, a file
+  that needs an explicit request by name.
+- The image probe: the marked suite under `tests/conformance` and `tests/engine` passes with
+  the snapshot, the restoration and the refusal in place, output pasted by the architect
+  into the evidence file of the pull request that lands this, before the guard is called
+  verified.
+
+Fallback: if the probe shows the restoration breaks the engine, the response becomes the
+module convention alone, and AR-D27 changes only on the architect's approval of the new text.
+
+**files touched** `src/ag/adapters/arcpy/session.py`, `tests/unit/adapters/arcpy/test_session.py`,
+`tools/break_once/cases/arcpy_session.py` (explicit request), the evidence file of the pull
+request that lands it.
+
+**depends on** nothing; the session exists. The entries (`findings/implementation_plan.md`
+§7.5) depend on it.
+
+**decision refs** ADR-0018 AR-D23, AR-D25, AR-D27.
+
+**doc migration** `tools/engine/__init__.py` and `docs/contributing/testing.md` keep the
+module form for tools and cite AR-D27 for why it is a fallback and not the rule.
 
 ---
 

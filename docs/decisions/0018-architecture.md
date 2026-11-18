@@ -105,6 +105,12 @@ decides, per port, which adapter carries it.
   an adapter enforces this is its own. The ArcPy adapter enforces the names with a
   constrained type stub and the direct uses with a static scan; a call on an engine object
   is a review rule.
+- **AR-D27** The ArcPy session owns what the engine's import does to the process:
+  `open_session` performs the process's first engine import, snapshots the `__main__`
+  namespace before it and afterwards restores every name the import added or rebound, and
+  refuses when the engine is already imported, because a snapshot taken after that import
+  protects nothing. A process that cannot route its first engine import through the session
+  runs as a module (`python -m`), which keeps its own namespace out of `__main__`.
 
 ## AR-3 Ports are Protocols
 

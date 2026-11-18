@@ -1498,7 +1498,10 @@ allowed to import it (`project_tree.md` §4). Both entries build `Settings`, bui
 construct the `ScratchFileManager` at `Tier.PARTITION` with index 0, copy stage inputs from
 local paths into the stage workspace (a stand-in for `stage_down`), run the stage function and
 dump scratch. In slice 5 `ag.runtime.pod_entry` calls the same function with `stage_down` and
-`stage_up` around it. The orchestrator CLI is outside this pass.
+`stage_up` around it. The orchestrator CLI is outside this pass. Before either entry merges,
+`open_session` contains the engine's import (ADR-0018 AR-D27, T2.14): both entries are
+`__main__` when run, and the module convention alone would leave the rule as a run form
+nothing guards.
 
 ### 7.6 Things the template assumes that the decisions do not cover
 
