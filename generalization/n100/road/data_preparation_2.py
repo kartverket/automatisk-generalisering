@@ -22,6 +22,7 @@ from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
+from custom_tools.generalization_tools.road.simplify_line import simplify_line
 from custom_tools.generalization_tools.road.remove_road_triangles import (
     generalize_road_triangles,
 )
@@ -49,7 +50,9 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from generalization.n100.road.ramps import main as ramps
 from generalization.n100.road.ramps import main_part_2 as ramps_part_2
-from generalization.n100.road.ramps import correct_ramp_id_after_merge_divided_roads
+from generalization.n100.road.merge_divided_roads import (
+    merge_divided_roads_with_ramp_ids,
+)
 from generalization.n100.road.resolve_road_conflict_preparation import (
     remove_road_points_in_water,
     run_dissolve_with_intersections,
@@ -107,12 +110,18 @@ SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
 
 # Halo around a fan-out partition that a partition run selects its inputs within.
-FAN_OUT_HALO_M = 25_000
+FAN_OUT_HALO_M = 5_000
 
 # Temporary: thin roads runs twice with different partition sizes and context radii,
 # (max_elements_per_partition, context_radius_meters), and a road is only dropped
 # when both runs drop it. This damps the variance from differing context at seams.
 THIN_ROAD_RUNS = ((100_000, 7_000), (100_000, 10_000))
+
+# Partition settings shared by simplify_road and merge_divided_roads. The context radius
+# is well above the 150 m merge distance, so both carriageways of a divided road and the
+# neighbours SimplifyLine checks for topology errors are present in every partition.
+SIMPLIFY_AND_MERGE_OBJECT_LIMIT = 50_000
+SIMPLIFY_AND_MERGE_CONTEXT_RADIUS_M = 2_000
 
 
 @timing_decorator
@@ -693,13 +702,61 @@ def collapse_road_detail():
 
 @timing_decorator
 def simplify_road():
-    arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___simplified_road___n100_road.value,
-        algorithm="POINT_REMOVE",
-        tolerance="2 meters",
-        error_option="RESOLVE_ERRORS",
+    road = "road"
+    simplified_road = "simplified_road"
+
+    simplify_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+            )
+        ]
     )
+
+    simplify_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=simplified_road,
+                path=Road_N100.data_preparation___simplified_road___n100_road.value,
+            )
+        ]
+    )
+
+    simplify_road_io_config = core_config.PartitionIOConfig(
+        input_config=simplify_road_input_config,
+        output_config=simplify_road_output_config,
+        documentation_directory=Road_N100.simplify_road_docu___n100_road.value,
+    )
+
+    simplify_road_func_config = core_config.FuncMethodEntryConfig(
+        func=simplify_line,
+        params=logic_config.SimplifyLineKwargs(
+            input_line=core_config.InjectIO(object=road, tag="input"),
+            output_line=core_config.InjectIO(object=road, tag=simplified_road),
+            tolerance_m=2,
+        ),
+    )
+
+    simplify_road_method_config = core_config.MethodEntriesConfig(
+        entries=[simplify_road_func_config]
+    )
+
+    simplify_road_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=SIMPLIFY_AND_MERGE_OBJECT_LIMIT,
+        context_radius_meters=SIMPLIFY_AND_MERGE_CONTEXT_RADIUS_M,
+        run_partition_optimization=False,
+    )
+
+    PartitionIterator(
+        partition_io_config=simplify_road_io_config,
+        partition_method_inject_config=simplify_road_method_config,
+        partition_iterator_run_config=simplify_road_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___simplify_road_partition_root___n100_road.value
+        ),
+    ).run()
 
 
 @timing_decorator
@@ -879,22 +936,69 @@ def merge_divided_roads():
             code_block=define_character_field,
         )
 
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        merge_field="merge_divided_id",
-        merge_distance="150 Meters",
-        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
-        character_field="character",
-        out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
+    road = "road"
+    merged_road = "merged_road"
+
+    merge_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+            )
+        ]
     )
 
-    # we need to correct ramp ids after merge divided roads to ensure all possible ramps points are included in the output
-    correct_ramp_id_after_merge_divided_roads(
-        merge_input=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        merge_output=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        merge_out_table=Road_N100.data_preparation___merge_divided_roads_out_table___n100_road.value,
+    merge_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=merged_road,
+                path=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+            )
+        ]
     )
+
+    merge_road_io_config = core_config.PartitionIOConfig(
+        input_config=merge_road_input_config,
+        output_config=merge_road_output_config,
+        documentation_directory=Road_N100.merge_divided_roads_docu___n100_road.value,
+    )
+
+    # The displacement features and merge table stay per-partition work files: the
+    # merge table's object ids only hold within one partition, and neither is read later.
+    merge_road_func_config = core_config.FuncMethodEntryConfig(
+        func=merge_divided_roads_with_ramp_ids,
+        params=logic_config.MergeDividedRoadsKwargs(
+            input_road_line=core_config.InjectIO(object=road, tag="input"),
+            output_road_line=core_config.InjectIO(object=road, tag=merged_road),
+            output_displacement_features=core_config.InjectIO(
+                object=road, tag="merge_displacement"
+            ),
+            output_merge_table=core_config.InjectIO(object=road, tag="merge_table"),
+            merge_field="merge_divided_id",
+            merge_distance_m=150,
+            character_field="character",
+        ),
+    )
+
+    merge_road_method_config = core_config.MethodEntriesConfig(
+        entries=[merge_road_func_config]
+    )
+
+    merge_road_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=SIMPLIFY_AND_MERGE_OBJECT_LIMIT,
+        context_radius_meters=SIMPLIFY_AND_MERGE_CONTEXT_RADIUS_M,
+        run_partition_optimization=False,
+    )
+
+    PartitionIterator(
+        partition_io_config=merge_road_io_config,
+        partition_method_inject_config=merge_road_method_config,
+        partition_iterator_run_config=merge_road_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___merge_divided_roads_partition_root___n100_road.value
+        ),
+    ).run()
 
 
 @timing_decorator
