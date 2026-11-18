@@ -33,7 +33,18 @@ R = TypeVar("R")
 OPERATION_RETRY_ATTEMPTS = 6
 OPERATION_RETRY_TOTAL_DELAY_S = 600
 OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / OPERATION_RETRY_ATTEMPTS
-COMPLETED_OUTPUT_CUTOFF = datetime(2026, 11, 10, tzinfo=timezone.utc)
+COMPLETED_OUTPUT_CUTOFF = datetime(2026, 18, 10, tzinfo=timezone.utc)
+
+
+def output_archive_object_name(
+    scale: str,
+    obj: str,
+    archive_name: str,
+    job_completion_index: str | None,
+) -> str:
+    if job_completion_index:
+        archive_name = f"{archive_name}_{job_completion_index}"
+    return f"outputs/{scale}_{obj}/{archive_name}.gdb.zip"
 
 
 def is_transient_error(error: BaseException) -> bool:
@@ -384,27 +395,48 @@ def main():
     )
 
     if job_completion_index:
-        object_name = (
-            f"outputs/{args.scale}_{args.obj}/output_{job_completion_index}.gdb.zip"
-        )
-        try:
-            last_modified = get_object_last_modified(
-                client=s3,
-                bucket_name=bucket_name,
-                object_name=object_name,
+        completion_object_names = [
+            output_archive_object_name(
+                scale=args.scale,
+                obj=args.obj,
+                archive_name="output",
+                job_completion_index=job_completion_index,
             )
-        except S3Error as error:
-            logger.info("S3 error when looking up last modified of output: %s", error)
-        else:
-            if last_modified >= COMPLETED_OUTPUT_CUTOFF:
-                logger.info(
-                    "Skipping completion index %s: s3://%s/%s was last modified at %s",
-                    job_completion_index,
-                    bucket_name,
-                    object_name,
-                    last_modified,
+        ]
+        if args.scale == "n100" and args.obj == "building":
+            completion_object_names.append(
+                output_archive_object_name(
+                    scale=args.scale,
+                    obj=args.obj,
+                    archive_name="final_outputs",
+                    job_completion_index=job_completion_index,
                 )
-                return
+            )
+
+        for object_name in completion_object_names:
+            try:
+                last_modified = get_object_last_modified(
+                    client=s3,
+                    bucket_name=bucket_name,
+                    object_name=object_name,
+                )
+            except S3Error as error:
+                logger.info(
+                    "S3 error when looking up last modified of output %s: %s",
+                    object_name,
+                    error,
+                )
+                break
+            if last_modified < COMPLETED_OUTPUT_CUTOFF:
+                break
+        else:
+            logger.info(
+                "Skipping completion index %s: all indexed outputs were last "
+                "modified at or after %s",
+                job_completion_index,
+                COMPLETED_OUTPUT_CUTOFF,
+            )
+            return
 
     download_scality_folder(
         client=s3,
@@ -443,12 +475,12 @@ def main():
             )
         sys.exit(1)
 
-    if job_completion_index:
-        object_name = (
-            f"outputs/{args.scale}_{args.obj}/output_{job_completion_index}.gdb.zip"
-        )
-    else:
-        object_name = f"outputs/{args.scale}_{args.obj}/output.gdb.zip"
+    object_name = output_archive_object_name(
+        scale=args.scale,
+        obj=args.obj,
+        archive_name="output",
+        job_completion_index=job_completion_index,
+    )
     upload_results_to_scality(
         client=s3,
         bucket_name=bucket_name,
@@ -456,11 +488,17 @@ def main():
         object_name=object_name,
     )
     if args.scale == "n100" and args.obj == "building":
+        final_outputs_object_name = output_archive_object_name(
+            scale=args.scale,
+            obj=args.obj,
+            archive_name="final_outputs",
+            job_completion_index=job_completion_index,
+        )
         upload_results_to_scality(
             client=s3,
             bucket_name=bucket_name,
             local_path=Path("/tmp/GIS_Files/ag_outputs/n100/final_outputs.gdb/"),
-            object_name=f"outputs/{args.scale}_{args.obj}/final_outputs.gdb.zip",
+            object_name=final_outputs_object_name,
         )
 
 

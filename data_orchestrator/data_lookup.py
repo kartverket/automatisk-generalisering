@@ -77,6 +77,7 @@ PIPELINE_INPUT = {
                 dn.JernbaneStasjon_N50,
             ],
             dn.road: [dn.VegSti_N50],
+            dn.partitioning: [dn.road_partitions_fan_out],
         },
         dn.object_arealdekke_flate: [],
         dn.object_veg_sti: {
