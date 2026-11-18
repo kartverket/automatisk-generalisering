@@ -29,10 +29,10 @@ Location: TypeAlias = str
 """A storage location for a remote scope.
 
 The composition root routes it to an archive client by its form: `"s3://bucket/path"`
-to the object store, a filesystem location to the filesystem client, for a local run and
-the scratch dump. Transfer inside a stage goes through transfer directories on the volume
-(ADR-0021 ST-D26), never through locations. Pod-local paths are carried by materialised
-handles, never by locations.
+to the object store, a filesystem location to the filesystem client, for a local run,
+including its scratch dump. Transfer inside a stage goes through transfer directories on
+the volume (ADR-0021 ST-D26), never through locations. Pod-local paths are carried by
+materialised handles, never by locations.
 """
 
 RunId: TypeAlias = str
