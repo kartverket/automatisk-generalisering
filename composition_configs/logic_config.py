@@ -180,6 +180,24 @@ class CollapseRoadDetailsKwargs:
 
 
 @dataclass(frozen=True)
+class SimplifyLineKwargs:
+    input_line: io_types.GdbIOArg
+    output_line: io_types.GdbIOArg
+    tolerance_m: int
+
+
+@dataclass(frozen=True)
+class MergeDividedRoadsKwargs:
+    input_road_line: io_types.GdbIOArg
+    output_road_line: io_types.GdbIOArg
+    output_displacement_features: io_types.GdbIOArg
+    output_merge_table: io_types.GdbIOArg
+    merge_field: str
+    merge_distance_m: int
+    character_field: str
+
+
+@dataclass(frozen=True)
 class RrcInitKwargs:
     input_data_structure: List[SymbologyLayerSpec]
     work_file_manager_config: core_config.WorkFileConfig

@@ -504,6 +504,28 @@ class Road_N100(Enum):
         description="collapse_road_docu",
     )
 
+    data_preparation___simplify_road_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="simplify_road_partition_root",
+        )
+    )
+
+    simplify_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="simplify_road_docu",
+    )
+
+    data_preparation___merge_divided_roads_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merge_divided_roads_partition_root",
+        )
+    )
+
+    merge_divided_roads_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="merge_divided_roads_docu",
+    )
+
     data_preparation___thin_road_docu_2___n100_road = (
         file_manager.generate_file_name_general_files(
             script_source_name=data_preparation,
