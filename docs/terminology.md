@@ -63,7 +63,6 @@ the wrong review comments.
 | **run-scratch** | Storage scope living for the run plus a retention window. Retention is the resume window. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
 | **archive** | Permanent storage: the on-prem object store, Scality S3. | [02-runtime §4.1](refactor/02-runtime.md#41-four-scopes) |
 | **classification** | Where an output *may* be stored. Policy, computed over stage wiring. Independent of URI scheme. | [02-runtime §5.2](refactor/02-runtime.md#52-classification-is-computed-over-stage-wiring) |
-| **placement** | Which cluster pods run in. Reachability, decided once per pipeline. | [02-runtime §5.3](refactor/02-runtime.md#53-placement-is-per-pipeline) |
 | **port** | A `Protocol` naming one purposeful conversation with something outside the core. | [03-architecture §2.1](refactor/03-architecture.md#21-the-six) |
 | **adapter** | An implementation of a port. The only place a vendor library is imported. | [03-architecture §4.1](refactor/03-architecture.md#41-the-rules) |
 | **driven port** | A port the core calls out through. All six declared ports. | ADR-0018 Direction 2, AR-D5 |
@@ -179,6 +178,7 @@ produce wrong code when guessed.
 | **`ValidationError`** | Retired. | **`Finding`**, which carries a `Severity`. |
 | **work file** | Retired. | **internal scratch**, allocated through a `ScratchScope`. |
 | **layout** | Retired for storage. Not a concept when storage is not a tree. | Nothing. Locations come from declarations; scratch paths from `ScratchFileManager`. |
+| **placement** | Retired. The system runs in one place, on SKIP (ADR-0018 Direction 6); AR-R9 names what brings the word back. | **classification** for where a product may be stored; nothing for where a stage runs. |
 | **container format** | Retired. | **`WorkspaceFormat`**. |
 | **`origin_id`** | Retired before it was written. It named a feature-level field that is re-minted on every cardinality change, so it never held an origin — and it sat one character from `origin`, which is object-level and plan-time. | **`lineage_id`** for the feature-level field; **`origin`** stays the object-level `Derived` declaration. Nothing should say `origin_id`. |
 | **`LineageRoot`** | Retired. It used "lineage" for the object level while `lineage_id` uses it for the feature level, and the two never join. | **`OriginRoot`**, aligning with `Derived.origin`; `lineage_roots()` became `origin_roots()`. Renamed in the template and the documents by T7.2 (slice 0), so every lift carries the new name. |

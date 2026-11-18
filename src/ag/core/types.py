@@ -26,11 +26,13 @@ ParamName: TypeAlias = str
 """A keyword name in an operation function's signature."""
 
 Location: TypeAlias = str
-"""A storage URI for a remote scope; the scheme selects the archive client.
+"""A storage location for a remote scope.
 
-Today `"s3://bucket/path"` for the on-prem object store and `"gs://bucket/path"` in
-cloud; a shared filesystem, if the platform offers one, is another scheme and another
-client. Pod-local paths are carried by materialised handles, never by locations.
+The composition root routes it to an archive client by its form: `"s3://bucket/path"`
+to the object store, a filesystem location to the filesystem client, for a local run and
+the scratch dump. Transfer inside a stage goes through transfer directories on the volume
+(ADR-0021 ST-D26), never through locations. Pod-local paths are carried by materialised
+handles, never by locations.
 """
 
 RunId: TypeAlias = str
@@ -177,13 +179,6 @@ class Classification(Enum):
     def permits(self, storage: Classification) -> bool:
         """Whether data of this classification may be stored where `storage` applies."""
         return self.join(storage) is storage
-
-
-class Environment(Enum):
-    """Where pods run. Determined by reachability, not by classification."""
-
-    ON_PREM = "on_prem"
-    ON_CLOUD = "on_cloud"
 
 
 class StorageScope(Enum):

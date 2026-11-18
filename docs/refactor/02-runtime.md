@@ -106,7 +106,8 @@ because an operation that knew its halo could behave differently near a partitio
 ### 2.2 Data objects
 
 Three kinds of thing, in two leaf modules plus the pipeline. Collapsing any two loses
-something.
+something. The locations below are illustrative; the declared ones are in `sources.py` and
+`products.py`.
 
 ```python
 # ── sources.py — every external source in the project, one declaration each ──
@@ -116,9 +117,9 @@ NVDB_ROADS  = ExternalSource(dataset="NVDB_Roads", scale=Scale.RAW,
 
 # ── products.py — every published identity, one declaration each ─────────────
 N50_BUILDING_POLYGONS = ProductIdentity(scale=Scale.N50, dataset="BuildingPolygons",
-                                        location="gs://kv-products/n50/building_polygons.gdb")
+                                        location="s3://kv-products/n50/building_polygons.gdb")
 N100_BUILDING_POLYGONS = ProductIdentity(scale=Scale.N100, dataset="BuildingPolygons",
-                                         location="gs://kv-products/n100/building_polygons.gdb")
+                                         location="s3://kv-products/n100/building_polygons.gdb")
 
 # ── the pipeline's own objects module ────────────────────────────────────────
 SELECTED  = Derived("selected_polygons",  origin=(N50_BUILDING_POLYGONS,))
@@ -253,11 +254,9 @@ It owns exactly two things: the stage membership list, and the publication list.
 legality are *not* among them — those live in `sources.py` and `products.py`, one declaration
 per identity for the whole project.
 
-Its `external_inputs` is a derived property over its stages, not a declaration — a hand-written
-list would go stale, and since placement is its only consumer, a stale list means a pipeline
-silently scheduled in the wrong environment. It covers both kinds of origin root, because
-placement is a reachability question: reading an `s3://` published product pins a pipeline
-on-prem for exactly the same reason as reading an `s3://` external source.
+It carries no list of external inputs. Legality is per object, computed over the stage wiring
+(ADR-0021 ST-D5), and where a run executes is not a property of a pipeline (ADR-0018
+Direction 6).
 
 ### 2.6 Declarations must be constructible without touching data
 

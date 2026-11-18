@@ -153,7 +153,10 @@ goes into not losing pods.
   stage, which the orchestrator observes through the Job. Stage inputs and outputs live in
   the object store, each transfer directory packed as one object. The object-store
   locations come from `locations.py` (ST-D8); the paths on the volume are built once, in
-  `staging/transfer.py`. A local run uses the same tree in an ordinary directory.
+  `staging/transfer.py`. An output's object key is fixed per run, stage and object (ST-D8's
+  builders take no attempt), so a retried fan-in overwrites what an earlier attempt uploaded,
+  and a completed stage holds only the completing attempt's outputs. A local run uses the
+  same tree in an ordinary directory.
 
 ## Rejected
 

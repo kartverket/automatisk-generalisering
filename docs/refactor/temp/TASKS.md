@@ -155,6 +155,7 @@ work but have different lifetimes and different modules.
 | 43 | T7.5 | `run_partition_optimization` default bug `[INDEPENDENT]` | not started |
 | 44 | T7.6 | Legacy lint baseline: undefined names `[INDEPENDENT]` | not started |
 | 45 | T7.7 | Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]` | not started |
+| 46 | T7.8 | `02-runtime` and `03-architecture` without placement or the cloud | not started; before slice 1c merges |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -2498,6 +2499,54 @@ should see. A directory counts as done when `ruff check` on it passes with no ba
 **decision refs** A28.
 
 **doc migration** none.
+
+---
+
+## 46. T7.8 — `02-runtime` and `03-architecture` without placement or the cloud
+
+**status:** not started. Done before slice 1c merges.
+
+**what done means** The two narrative documents describe one environment, as ADR-0018
+Direction 6, AR-5 and AR-R9 to AR-R11 decide, and no passage argues from a second one. The
+sections that do today, each rewritten or removed:
+
+- `02-runtime.md` §1, the sentence "compute placement per tag group".
+- §3, "placement follows from input locations" among the reasons IO must be declared.
+- §4.1, the scopes table: the archive substrate is the object store, Scality S3; the
+  intra-stage substrate is the shared volume (ADR-0021 ST-D26).
+- §4, the scratch dump's "goes to the runtime environment's storage" paragraph and its argument
+  from cloud placement.
+- §5.1, the placement row of the table and "only one direction needs guarding", which assumes a
+  cloud side.
+- §5.3, removed: placement is per nothing. The heading goes with it, so every citation of
+  `#53-placement-is-per-pipeline` is re-pointed first.
+- §5.4, "forces the pipeline on-prem" and "runs on-prem forever": classification still forces
+  nothing about where a stage runs; it decides where a product may be stored.
+- §5.5, publication as "physically the on-prem → cloud copy": publication is the copy to the
+  product's declared location.
+- §11 open items: cluster topology, on-prem to GCS with credentials and the shared filesystem's
+  availability are settled (ADR-0018 Direction 6, ADR-0021 ST-D26) and leave the list.
+- `03-architecture.md` §1, the external-system table: GCS and "Kubernetes, two clusters" go;
+  SKIP, one cluster, and the shared volume come in. The sentence after it that cites
+  `02-runtime` §5 for legality is re-pointed to ADR-0021 ST-D5.
+
+The terminology rows that anchor into the rewritten sections: **classification** moves to the
+authority ADR-0021 ST-D5, and **pod-local** to ADR-0021 ST-D23, because an ADR states each.
+**run-scratch** and **archive** stay on `02-runtime` §4.1, which this task rewrites in place
+under the same heading, because no ADR defines the storage scopes. **placement** is already
+retired. The check-terminology hook is the acceptance for the anchors.
+
+Not in this task: §2.5 and the example's locations, which are already rewritten; the fixtures'
+`gs://` locations and their docstrings, which belong to the destinations item.
+
+**files touched** `docs/refactor/02-runtime.md`, `docs/refactor/03-architecture.md`,
+`docs/terminology.md`.
+
+**depends on** nothing; the decisions it applies are recorded.
+
+**decision refs** ADR-0018 Direction 6, AR-5, AR-R9; ADR-0021 ST-D5, ST-D23, ST-D26.
+
+**doc migration** none; this task is the migration.
 
 ---
 
