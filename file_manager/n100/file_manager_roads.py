@@ -1035,6 +1035,14 @@ class Road_N100(Enum):
     #                             PARTITIONING
     # ========================================
 
-    partitioning__partition_boarders__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=partitioning, description="partition_boarders"
+    partitioning__partition_areas__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=partitioning, description="partition_areas"
+    )
+
+    partitioning__partition_lines__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=partitioning, description="partition_lines"
+    )
+
+    partitioning__partition_buffer__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=partitioning, description="partition_buffer"
     )

@@ -64,7 +64,7 @@ from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
 from typing import Callable
 from custom_tools.general_tools.integrate_diff import IntegrateDiff
-from partition_validation.fetch_partitions import FetchPartitionBorders
+from partition_validation.partition_analyzer import analyse_partition_edges
 
 
 import logging
@@ -346,9 +346,14 @@ def run_thin_roads(
     )
     partition_thin_roads.run()
 
-    FetchPartitionBorders(
+    analyse_partition_edges(
         partition_iterator=partition_thin_roads,
-        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+        input_fc=input_feature,
+        output_fc=output_feature,
+        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
+        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
+        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
+        buffer_distance=context_radius_m,
     )
 
 
@@ -569,9 +574,14 @@ def ramp_partition():
     )
     partition_iterator.run()
 
-    FetchPartitionBorders(
+    analyse_partition_edges(
         partition_iterator=partition_iterator,
-        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+        input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        output_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
+        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
+        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
+        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
+        buffer_distance=1000,
     )
 
 
@@ -702,9 +712,14 @@ def collapse_road_detail():
     )
     partition_collapse_road_detail.run()
 
-    FetchPartitionBorders(
+    analyse_partition_edges(
         partition_iterator=partition_collapse_road_detail,
-        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+        input_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
+        output_fc=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
+        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
+        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
+        buffer_distance=SEARCH_DISTANCE,
     )
 
 
@@ -1126,9 +1141,14 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
     partition_resolve_road_conflicts.run()
 
-    FetchPartitionBorders(
+    analyse_partition_edges(
         partition_iterator=partition_resolve_road_conflicts,
-        output_file=Road_N100.partitioning__partition_boarders__n100_road.value,
+        input_fc=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
+        output_fc=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
+        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
+        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
+        buffer_distance=2000,
     )
 
     run_dissolve_with_intersections(
