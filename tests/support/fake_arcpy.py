@@ -11,12 +11,16 @@ adapter's own table inverted, so the fake spells nothing of the adapter's twice;
 engine's strings are the marked run's to confirm. A toolbox is a namespace
 whose attributes are the tools, the structure `run_tool` resolves a dotted name against,
 and a tool records itself under that path. A search cursor over an unknown name raises
-`RuntimeError` and Describe of an unknown path `OSError`, as the engine's do; a tool records its keyword arguments,
+`RuntimeError` and Describe of an unknown path `OSError`, as the engine's do; `Exists`
+answers for a dataset, a workspace or a feature dataset, and raises `RuntimeError` when
+`failures` names it; a tool records its keyword arguments,
 raises `FakeExecuteError` when `failures` names it, and otherwise does the least that
 lets the adapter continue: the
 select tools copy every row and keep the clause, the explode tool writes the children
 `children` scripts for each parent, or one child per row, and adds the fields named in
-`reference_fields`, `ORIG_FID` unless a test says otherwise. Nothing here evaluates SQL
+`reference_fields`, `ORIG_FID` unless a test says otherwise, and the file geodatabase
+tool records a workspace at the folder and the name with the suffix appended, as the
+engine does. Nothing here evaluates SQL
 or geometry; the engine's behaviour is the marked run's to confirm.
 """
 
@@ -38,9 +42,11 @@ from ag.adapters.arcpy.support.dataset_schema import (
 )
 from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES, MIGRATION_TOOL
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
+from ag.adapters.arcpy.table_ops.catalog import FILE_GDB_TOOL
 from ag.core.types import DataType
 from ag.ports.attributes import FieldType
 from ag.ports.geometry import GeometryFamily
+from ag.ports.workspace_format import WorkspaceFormat
 from tests.support.cases import DatasetCase
 from tests.support.wkb import to_wkb
 
@@ -238,7 +244,10 @@ class FakeEngine(ModuleType):
             CreateTable=self._create_table,
             AddField=self._add_field,
             DeleteField=self._delete_field,
-            **{MIGRATION_TOOL.split(".")[1]: self._migrate_date_field},
+            **{
+                MIGRATION_TOOL.split(".")[1]: self._migrate_date_field,
+                FILE_GDB_TOOL.split(".")[1]: self._create_file_gdb,
+            },
         )
         self.analysis = _Toolbox(
             self, "analysis", Select=self._select, TableSelect=self._select
@@ -263,6 +272,15 @@ class FakeEngine(ModuleType):
             raise RuntimeError(self.failures["AddFieldDelimiters"])
         self.quoted.append((datasource, field))
         return f'"{field}"'
+
+    def Exists(self, path: str) -> bool:
+        if "Exists" in self.failures:
+            raise RuntimeError(self.failures["Exists"])
+        return (
+            path in self.datasets
+            or path in self.workspaces
+            or path in self.feature_datasets
+        )
 
     def Describe(self, path: str) -> SimpleNamespace:
         dataset = self.datasets.get(path)
@@ -367,6 +385,10 @@ class FakeEngine(ModuleType):
         for found in dataset.fields:
             if found.name == date_fields:
                 found.precision = FRACTION_PRECISION
+
+    def _create_file_gdb(self, *, out_folder_path: str, out_name: str) -> None:
+        path = f"{out_folder_path}/{out_name}{WorkspaceFormat.FILE_GDB.suffix}"
+        self.workspaces[path] = FILE_GDB_PROG_ID
 
     def _delete_field(self, *, in_table: str, drop_field: str) -> None:
         dataset = self.dataset(in_table)

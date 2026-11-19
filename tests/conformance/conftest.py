@@ -2,7 +2,9 @@
 
 What: `Adapter`, what a conformance case needs from an adapter beyond its port classes:
 a handle in the adapter's workspace, a case seeded with the native indices it got, a
-non-dense seeding, and a dataset's native indices read back. `adapter` yields the
+non-dense seeding, a dataset's native indices read back, whether a workspace is at a
+path as the adapter's own side sees it, and the tool name the adapter's `create_workspace`
+reports when the engine refuses, so no case spells one. `adapter` yields the
 in-memory adapter always and the ArcPy adapter under the `arcpy` marker, each with a
 fresh store or a fresh file geodatabase per test.
 
@@ -29,6 +31,7 @@ from ag.adapters.fakes.memory import capabilities as memory_capabilities
 from ag.adapters.fakes.memory.geometry_ops import MemoryGeometryOps
 from ag.adapters.fakes.memory.store import MemoryStore
 from ag.adapters.fakes.memory.table_ops import MemoryTableOps
+from ag.adapters.fakes.memory.table_ops.catalog import WORKSPACE_TOOL
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports.capabilities import AdapterCapabilities
@@ -57,6 +60,14 @@ class Adapter(Protocol):
         ...
 
     def indices(self, handle: ScratchHandle) -> tuple[int, ...]: ...
+    def workspace_present(self, path: str) -> bool:
+        """Whether a workspace is at `path`, read outside the port."""
+        ...
+
+    @property
+    def workspace_tool(self) -> str:
+        """What `create_workspace` names as the tool in an `EngineError`."""
+        ...
 
 
 @dataclass(frozen=True)
@@ -95,6 +106,13 @@ class _Memory:
     def indices(self, handle: ScratchHandle) -> tuple[int, ...]:
         return tuple(self.store.read(handle).rows)
 
+    def workspace_present(self, path: str) -> bool:
+        return self.store.is_workspace(path)
+
+    @property
+    def workspace_tool(self) -> str:
+        return WORKSPACE_TOOL
+
 
 def _arcpy(directory: Path) -> Adapter:
     """The ArcPy adapter on a fresh file geodatabase under `directory`."""
@@ -102,6 +120,7 @@ def _arcpy(directory: Path) -> Adapter:
     from ag.adapters.arcpy.geometry_ops import ArcpyGeometryOps
     from ag.adapters.arcpy.session import ArcpySession, open_session
     from ag.adapters.arcpy.table_ops import ArcpyTableOps
+    from ag.adapters.arcpy.table_ops.catalog import FILE_GDB_TOOL
     from tests.support import gdb_cases
     from tests.support.arcpy import gdb
 
@@ -141,6 +160,13 @@ def _arcpy(directory: Path) -> Adapter:
 
         def indices(self, handle: ScratchHandle) -> tuple[int, ...]:
             return gdb.indices(self.session, path=str(handle.path))
+
+        def workspace_present(self, path: str) -> bool:
+            return gdb.is_workspace(self.session, path=path)
+
+        @property
+        def workspace_tool(self) -> str:
+            return FILE_GDB_TOOL
 
     session = open_session()
     workspace = gdb.file_gdb(session, directory=str(directory), name="conformance")

@@ -11,10 +11,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ag.adapters.arcpy.table_ops.catalog import Catalog
 from ag.adapters.arcpy.table_ops.row_io import RowIO
 
 
-class ArcpyTableOps(RowIO):
+class ArcpyTableOps(RowIO, Catalog):
     """`TableOps` through the ArcPy session, composed from its method groups."""
 
 

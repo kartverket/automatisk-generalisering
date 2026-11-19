@@ -1,7 +1,9 @@
 """Small `.gdb` fixtures written with the engine: the builders behind the ArcPy half of
 the conformance suite and the engine tests.
 
-What: `file_gdb`, a file geodatabase through the engine's tool; `seed`, a dataset
+What: `file_gdb`, a file geodatabase through the port's `create_workspace`, so no tool
+is spelled here; `is_workspace`, whether the engine describes a path as a workspace, for
+the conformance fixture's check outside the port; `seed`, a dataset
 created from a port `Schema` and filled from cell tuples, returning the native indices in
 row order; `indices`, a dataset's native indices; `read_cells`, one search cursor's rows
 as cell tuples; `delete_rows`, chosen rows removed so that a native index is non-dense.
@@ -24,10 +26,11 @@ opens (ADR-0018 AR-D23).
 
 from __future__ import annotations
 
+import os
 from collections.abc import Collection, Sequence
 
 from ag.adapters.arcpy.session import ArcpySession
-from ag.adapters.arcpy.support.dataset_schema import OID_TOKEN
+from ag.adapters.arcpy.support.dataset_schema import OID_TOKEN, WORKSPACE_DATA_TYPE
 from ag.adapters.arcpy.support.dataset_writer import (
     GEOMETRY_TYPES,
     add_fields,
@@ -35,17 +38,33 @@ from ag.adapters.arcpy.support.dataset_writer import (
     insert_rows,
 )
 from ag.adapters.arcpy.support.geometry_values import WKB_TOKEN
+from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.types import DataType
 from ag.ports.geometry import CRS
 from ag.ports.table_ops import Schema
+from ag.ports.workspace_format import WorkspaceFormat
 
 
 def file_gdb(session: ArcpySession, *, directory: str, name: str) -> str:
-    """A new file geodatabase `name` under `directory`; returns its path."""
-    session.run_tool(
-        "management.CreateFileGDB", out_folder_path=directory, out_name=name
+    """A new file geodatabase `name` under `directory`, through the port; returns its
+    path."""
+    path = f"{directory}/{name}{WorkspaceFormat.FILE_GDB.suffix}"
+    ArcpyTableOps(session=session).create_workspace(
+        path=path, fmt=WorkspaceFormat.FILE_GDB
     )
-    return f"{directory}/{name}.gdb"
+    return path
+
+
+def is_workspace(session: ArcpySession, *, path: str) -> bool:
+    """Whether the engine describes `path` as a workspace; a path that is not a
+    directory is not one, and the engine is not asked, since Describe fails on a missing
+    path rather than answering."""
+    if not os.path.isdir(path):
+        return False
+    with session.guard("Describe"):
+        import arcpy
+
+        return arcpy.Describe(path).dataType == WORKSPACE_DATA_TYPE
 
 
 def seed(

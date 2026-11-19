@@ -193,7 +193,7 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "R15",
-        "a method with no Out that is not in the query list",
+        "a method with no Out that is not in the list of methods outside the grammar",
         GEOMETRY_OPS,
         (
             (

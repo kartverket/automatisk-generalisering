@@ -1,6 +1,6 @@
 """Cases for the in-memory adapter: the store, the shared field rule, the predicate
-evaluator, the two geometry groups, the row IO group, and the group rules in
-`tests/static/test_adapter_groups.py`.
+evaluator, the two geometry groups, the row IO group, the catalog group, and the group
+rules in `tests/static/test_adapter_groups.py`.
 
 Two guards have no case here because no text edit reaches them: the root-contents rule
 needs a stray file in the adapter root, and the static matrix is checked by pyright, not
@@ -20,6 +20,7 @@ SHAPE = "src/ag/adapters/fakes/memory/geometry_ops/shape.py"
 GEOMETRY_INIT = "src/ag/adapters/fakes/memory/geometry_ops/__init__.py"
 CARTOGRAPHIC_INIT = "src/ag/adapters/fakes/memory/cartographic_ops/__init__.py"
 ROW_IO = "src/ag/adapters/fakes/memory/table_ops/row_io.py"
+CATALOG = "src/ag/adapters/fakes/memory/table_ops/catalog.py"
 
 UNIT = "tests/unit/adapters/fakes/memory"
 T_STORE = f"{UNIT}/test_store.py"
@@ -32,6 +33,7 @@ ROW_REFUSED = f"{T_STORE}::test_a_row_that_does_not_fit_the_schema_is_refused"
 CHECK_REFUSES = f"{T_EVAL}::test_check_refuses_what_the_adapter_cannot_evaluate"
 EMPTY_RAISES = f"{T_GEOMETRY}::test_a_bad_predicate_on_an_empty_dataset_raises"
 ONE_GROUP = f"{T_GROUPS}::test_every_protocol_method_is_implemented_by_one_group"
+CATALOG_ANSWERS = f"{T_TABLE}::test_exists_and_data_type_of_answer_what_the_store_holds"
 
 SELECT_DEF = (
     "    def select(\n"
@@ -393,6 +395,46 @@ CASES: tuple[Case, ...] = (
         STORE,
         (("    if row.geometry.crs != schema.geometry_crs:\n", "    if False:\n"),),
         (f"{ROW_REFUSED}[wrong-crs]",),
+    ),
+    Case(
+        "M32",
+        "a workspace recorded over a path something is already at",
+        STORE,
+        (("        if self.present(path):\n", "        if False:\n"),),
+        (
+            f"{T_STORE}::test_a_workspace_is_recorded_once_whatever_is_at_the_path[workspace]",
+            f"{T_STORE}::test_a_workspace_is_recorded_once_whatever_is_at_the_path[dataset]",
+            f"{T_TABLE}::test_create_workspace_records_once_and_refuses_a_taken_path",
+        ),
+    ),
+    Case(
+        "M33",
+        "a workspace path answered as a dataset's kind",
+        CATALOG,
+        (("        if self._store.is_workspace(path):\n", "        if False:\n"),),
+        (CATALOG_ANSWERS,),
+    ),
+    Case(
+        "M34",
+        "a missing path read as a dataset instead of refused",
+        STORE,
+        (
+            (
+                "        found = self._datasets.get(path)\n        if found is None:\n",
+                "        found = self._datasets.get(path)\n        if False:\n",
+            ),
+        ),
+        (CATALOG_ANSWERS,),
+    ),
+    Case(
+        "M35",
+        "a workspace recorded under a parent that is not a directory",
+        CATALOG,
+        (("    if not os.path.isdir(parent):\n", "    if False:\n"),),
+        (
+            f"{T_TABLE}::"
+            "test_create_workspace_under_a_missing_parent_names_its_own_method_as_the_tool",
+        ),
     ),
     Case(
         "M29",

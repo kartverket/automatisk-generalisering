@@ -120,7 +120,7 @@ work but have different lifetimes and different modules.
 | 14 | T2.9 | Port surface surgery — splits, `DANGLE`, delete `union` | not started |
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
-| 16b | T2.12 | `TableOps.create_workspace` | not started |
+| 16b | T2.12 | `TableOps.create_workspace` | port half **done** (slice 1c); the manager's use lands with the runner |
 | 16c | T2.13 | Call identity: per-call workspace and scope namespace | not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
@@ -1148,7 +1148,7 @@ because `source` already means `ExternalSource` in this repository.
 
 ## 16b. T2.12 — `TableOps.create_workspace`
 
-**status:** not started
+**status:** port half done (slice 1c); the manager's use lands with the runner.
 
 **what done means** `TableOps.create_workspace(*, path: str, fmt: WorkspaceFormat) -> None`
 exists and creates one empty workspace. `WorkspaceFormat` lives in `ports/`, since a port
@@ -1168,8 +1168,8 @@ slice 1c of `findings/implementation_plan.md`.
 
 **decision refs** A5.7, B21.
 
-**doc migration** A5.7 → `ports/table_ops.py`, the `staging/scratch.py` docstring and
-`02-runtime.md` §4.2.
+**doc migration** A5.7 → ADR-0019 PC-6 and `ports/table_ops.py` (landed); the
+`staging/scratch.py` docstring and `02-runtime.md` §4.2 with the runner.
 
 ---
 

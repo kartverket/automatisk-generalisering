@@ -170,7 +170,10 @@ and the conformance suite covers it on every adapter.
 > which hides a failure inside an unrelated call and makes the scratch dump's layout depend on
 > call order.
 
-`destination:` `ports/table_ops.py`; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
+*Port half landed:* ADR-0019 Direction 6, PC-6, PC-D31, PC-D32, PC-R6, PC-R7 and the
+`ports/table_ops.py` docstrings. *Still to land with the runner:* the manager's call
+through the toolbox, the `staging/scratch.py` docstring, `02-runtime.md` §4.2.
+`destination:` ADR-0019 PC-6; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
 
 ## A6. Partitioning — ownership
 

@@ -16,7 +16,7 @@ from ag.adapters.arcpy.support.dataset_writer import ADD_FIELD_TYPES
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.ports import FieldType
 from ag.ports.errors import EngineError
-from tests.engine.arcpy.conftest import MEMORY_WORKSPACE, Pro
+from tests.engine.arcpy.conftest import Pro
 from tests.support.cases import (
     DatasetCase,
     multilines,
@@ -25,6 +25,7 @@ from tests.support.cases import (
     polygons,
     roads,
 )
+from tests.support.fake_arcpy import MEMORY_WORKSPACE
 
 pytestmark = pytest.mark.arcpy
 

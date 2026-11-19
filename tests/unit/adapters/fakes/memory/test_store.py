@@ -25,6 +25,7 @@ from ag.ports import (
     Row,
 )
 from ag.ports.errors import PortContractError
+from ag.ports.workspace_format import WorkspaceFormat
 from tests.support.cases import CRS, lookup, polygons, roads
 from tests.support.memory import memory_handle, seed
 
@@ -236,3 +237,26 @@ def test_mutating_the_callers_mapping_after_a_write_leaves_the_stored_row_unchan
     stored = next(iter(store.read(table).rows.values()))
     assert dict(stored.attributes) == {"code": 1, "label": "one"}
     assert isinstance(stored.attributes, MappingProxyType)
+
+
+def test_a_recorded_workspace_is_present_and_a_dataset_needs_no_workspace() -> None:
+    store = MemoryStore()
+    store.record_workspace("/scratch/stage.gdb", fmt=WorkspaceFormat.FILE_GDB)
+    assert store.present("/scratch/stage.gdb")
+    assert store.is_workspace("/scratch/stage.gdb")
+    assert not store.present("/scratch/other.gdb")
+    seeded = seed(store, roads())
+    assert store.present(str(seeded.handle.path))
+    assert not store.is_workspace(str(seeded.handle.path))
+
+
+@pytest.mark.parametrize("taken_by", ["workspace", "dataset"])
+def test_a_workspace_is_recorded_once_whatever_is_at_the_path(taken_by: str) -> None:
+    store = MemoryStore()
+    if taken_by == "workspace":
+        store.record_workspace("memory:/roads", fmt=WorkspaceFormat.FILE_GDB)
+    else:
+        seed(store, roads())
+    with pytest.raises(PortContractError, match="already there") as caught:
+        store.record_workspace("memory:/roads", fmt=WorkspaceFormat.FILE_GDB)
+    assert caught.value.context.handle == "memory:/roads"

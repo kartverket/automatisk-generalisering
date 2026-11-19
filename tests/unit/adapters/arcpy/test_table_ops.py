@@ -1,6 +1,8 @@
 """`read_rows` through the session on the fake engine: exactly the named fields with
 the geometry, laziness under one guard, and what is refused before the cursor opens.
-ADR-0018 AR-D23, ADR-0019 PC-D22."""
+The catalog: presence through the engine's own call, the kind after presence, and a
+workspace created once at the path the caller spells, with every refusal before the
+tool. ADR-0018 AR-D23, ADR-0019 PC-D22, PC-D31, PC-D32."""
 
 from __future__ import annotations
 
@@ -12,11 +14,24 @@ import pytest
 from ag.adapters.arcpy.session import ArcpySession
 from ag.adapters.arcpy.support.dataset_schema import WHOLE_SECOND_PRECISION
 from ag.adapters.arcpy.table_ops import ArcpyTableOps
+from ag.adapters.arcpy.table_ops.catalog import FILE_GDB_TOOL
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports.errors import EngineError, PortContractError
+from ag.ports.workspace_format import WorkspaceFormat
 from tests.support.cases import lookup, roads
-from tests.support.fake_arcpy import FakeEngine, FakeField, seed
+from tests.support.fake_arcpy import (
+    FILE_GDB_PROG_ID,
+    FILE_WORKSPACE,
+    MEMORY_WORKSPACE,
+    FakeDataset,
+    FakeEngine,
+    FakeField,
+    seed,
+)
+
+RASTER = "RasterDataset"
+"""An engine `dataType` no port method takes, as a test stands one in."""
 
 
 def handle(path: str, data_type: DataType = DataType.FEATURE_CLASS) -> ScratchHandle:
@@ -184,3 +199,104 @@ def test_a_cell_of_an_unknown_type_is_an_adapter_defect_not_wrapped(
     next(rows)
     with pytest.raises(TypeError, match="'lookup' row 1"):
         next(rows)
+
+
+def test_exists_answers_a_dataset_a_workspace_and_nothing(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    ops = ArcpyTableOps(session=session)
+    assert ops.exists(input=handle("roads"))
+    assert ops.exists(input=handle(FILE_WORKSPACE))
+    assert ops.exists(input=handle(MEMORY_WORKSPACE))
+    assert not ops.exists(input=handle("absent"))
+
+
+def test_an_exists_failure_is_an_engine_error_naming_the_call(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    engine.failures["Exists"] = "The catalog is unreachable."
+    with pytest.raises(EngineError) as caught:
+        ArcpyTableOps(session=session).exists(input=handle("roads"))
+    assert caught.value.context.tool == "Exists"
+
+
+def test_data_type_of_reads_the_kind_of_a_feature_class_and_a_table(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    seed(engine, roads(), path="roads")
+    seed(engine, lookup(), path="lookup")
+    ops = ArcpyTableOps(session=session)
+    assert ops.data_type_of(input=handle("roads")) is DataType.FEATURE_CLASS
+    assert ops.data_type_of(input=handle("lookup", DataType.TABLE)) is DataType.TABLE
+
+
+@pytest.mark.parametrize(
+    ("path", "message"),
+    [("raster", RASTER), (FILE_WORKSPACE, "Workspace"), ("absent", "names nothing")],
+    ids=["raster", "workspace", "missing"],
+)
+def test_data_type_of_refuses_any_other_kind_and_a_missing_path(
+    engine: FakeEngine, session: ArcpySession, path: str, message: str
+) -> None:
+    engine.datasets["raster"] = FakeDataset(RASTER, [])
+    with pytest.raises(PortContractError, match=message) as caught:
+        ArcpyTableOps(session=session).data_type_of(input=handle(path))
+    assert caught.value.context.handle == path
+
+
+def test_create_workspace_hands_the_tool_the_folder_and_the_stem(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    fmt = WorkspaceFormat.FILE_GDB
+    path = f"/scratch/stage{fmt.suffix}"
+    ArcpyTableOps(session=session).create_workspace(path=path, fmt=fmt)
+    assert engine.calls == [
+        (FILE_GDB_TOOL, {"out_folder_path": "/scratch", "out_name": "stage"})
+    ]
+    assert engine.workspaces[path] == FILE_GDB_PROG_ID
+
+
+@pytest.mark.parametrize(
+    ("path", "message"),
+    [
+        ("/scratch/stage", "does not end in"),
+        ("/scratch/stage.gpkg", "does not end in"),
+        (MEMORY_WORKSPACE, "does not end in"),
+        (FILE_WORKSPACE + WorkspaceFormat.FILE_GDB.suffix, "already there"),
+        ("roads" + WorkspaceFormat.FILE_GDB.suffix, "already there"),
+    ],
+    ids=[
+        "no-suffix",
+        "other-suffix",
+        "memory-path",
+        "workspace-exists",
+        "dataset-exists",
+    ],
+)
+def test_create_workspace_refuses_before_any_tool(
+    engine: FakeEngine, session: ArcpySession, path: str, message: str
+) -> None:
+    suffix = WorkspaceFormat.FILE_GDB.suffix
+    engine.workspaces[FILE_WORKSPACE + suffix] = FILE_GDB_PROG_ID
+    seed(engine, roads(), path="roads" + suffix)
+    with pytest.raises(PortContractError, match=message) as caught:
+        ArcpyTableOps(session=session).create_workspace(
+            path=path, fmt=WorkspaceFormat.FILE_GDB
+        )
+    assert caught.value.context.handle == path
+    assert engine.calls == []
+
+
+def test_a_tool_failure_on_create_workspace_is_an_engine_error_naming_the_tool(
+    engine: FakeEngine, session: ArcpySession
+) -> None:
+    engine.failures[FILE_GDB_TOOL] = "ERROR 000210: Cannot create output"
+    path = f"/no_such_folder/stage{WorkspaceFormat.FILE_GDB.suffix}"
+    with pytest.raises(EngineError) as caught:
+        ArcpyTableOps(session=session).create_workspace(
+            path=path, fmt=WorkspaceFormat.FILE_GDB
+        )
+    assert caught.value.context.tool == FILE_GDB_TOOL
+    assert "ERROR 000210" in " ".join(caught.value.context.tool_messages)
+    assert path not in engine.workspaces

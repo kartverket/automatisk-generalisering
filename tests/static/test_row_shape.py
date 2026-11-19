@@ -4,8 +4,9 @@ What: every module under `ag.ports` is imported, every Protocol in it found, and
 method's parameters classified by the direction marker in their annotation. One
 parametrised test per rule, so a break-it case can name the rule it breaks: every `Out`
 has a row; every row names an `Out`; subject, context and refs name `In` parameters; a
-handle parameter without a marker fails; a method with no `Out` is in the query list or
-fails; a `Mutates` parameter fails closed until its declaration form is decided.
+handle parameter without a marker fails; a method with no `Out` is in the list of
+methods outside the grammar, those that write no handle, or fails; a `Mutates` parameter
+fails closed until its declaration form is decided.
 `ParentsOut` is exempt from the first rule and never carries a row. The cells and the
 subject rules are `Rows`' own business at construction, covered in the unit tests.
 
@@ -38,9 +39,17 @@ import ag.ports
 from ag.core.handles import Direction, ScratchHandle
 from ag.ports.row_shape import Rows, declared_rows
 
-QUERIES: frozenset[str] = frozenset({"TableOps.read_rows"})
-"""Methods outside the grammar: they return values and write no handle. Listed, not
-inferred, so an output that lost its marker cannot pass as a query."""
+OUTSIDE_THE_GRAMMAR: frozenset[str] = frozenset(
+    {
+        "TableOps.read_rows",
+        "TableOps.exists",
+        "TableOps.data_type_of",
+        "TableOps.create_workspace",
+    }
+)
+"""Methods outside the grammar: they write no handle, a query that returns values or
+the creation of a workspace. Listed, not inferred, so an output that lost its marker
+cannot pass as one of them. ADR-0017 RS-D12."""
 
 RULES = (
     "out-without-row",
@@ -187,20 +196,21 @@ def violations(method: Method) -> list[tuple[str, str]]:
                 "surface may not carry one until it is.",
             )
         )
-    is_query = not outs and not mutates
-    if is_query and method.name not in QUERIES:
+    writes_no_handle = not outs and not mutates
+    if writes_no_handle and method.name not in OUTSIDE_THE_GRAMMAR:
         found.append(
             (
                 "unlisted-query",
-                f"{method.name}: writes no handle and is not in the query list; a "
-                "query is listed, never inferred from a missing Out.",
+                f"{method.name}: writes no handle and is not in the list of methods "
+                "outside the grammar; such a method is listed, never inferred from a "
+                "missing Out.",
             )
         )
-    if not is_query and method.name in QUERIES:
+    if not writes_no_handle and method.name in OUTSIDE_THE_GRAMMAR:
         found.append(
             (
                 "unlisted-query",
-                f"{method.name}: is in the query list but writes a handle.",
+                f"{method.name}: is listed as outside the grammar but writes a handle.",
             )
         )
     return found
@@ -218,6 +228,7 @@ def test_the_surface_is_seen(methods: list[Method]) -> None:
         "GeometryOps.select",
         "GeometryOps.explode_multipart",
         "TableOps.read_rows",
+        "TableOps.create_workspace",
     } <= (names.keys())
     explode = names["GeometryOps.explode_multipart"]
     assert explode.directions["parents"] is Direction.PARENTS_OUT

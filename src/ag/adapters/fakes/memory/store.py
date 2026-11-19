@@ -2,7 +2,11 @@
 
 What: datasets keyed by the handle's path, each a `Schema` and an ordered mapping from
 native index to `Row`; `write` replaces a dataset and `read` returns one; values are held
-to the shared field rule.
+to the shared field rule. Workspaces keyed by path, each its `WorkspaceFormat`:
+`record_workspace` records one, `is_workspace` answers whether a path is one, and
+`present` whether anything, dataset or workspace, is at a path. A dataset write does not
+require its workspace to be recorded: the fake computes no path and the store holds what
+the port was told. ADR-0019 PC-D32.
 
 How: the native index is a dense integer range taken from one counter for the whole
 store, so a rewrite of the same rows gets new indices and a pairs table can never be
@@ -33,6 +37,7 @@ from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports.errors import PortContractError
 from ag.ports.table_ops import Row, Schema
+from ag.ports.workspace_format import WorkspaceFormat
 
 
 @dataclass(frozen=True)
@@ -48,7 +53,26 @@ class MemoryStore:
 
     def __init__(self) -> None:
         self._datasets: dict[str, Dataset] = {}
+        self._workspaces: dict[str, WorkspaceFormat] = {}
         self._next_index = 1
+
+    def present(self, path: str) -> bool:
+        """Whether a dataset or a workspace is at `path`."""
+        return path in self._datasets or path in self._workspaces
+
+    def is_workspace(self, path: str) -> bool:
+        """Whether a workspace was recorded at `path`."""
+        return path in self._workspaces
+
+    def record_workspace(self, path: str, *, fmt: WorkspaceFormat) -> None:
+        """Records an empty workspace at `path`; a path something is already at is a
+        contract error, raised before anything is recorded."""
+        if self.present(path):
+            raise PortContractError(
+                f"{path!r} is already there; a workspace is created once.",
+                context=ErrorContext(handle=path),
+            )
+        self._workspaces[path] = fmt
 
     def read(self, handle: ScratchHandle) -> Dataset:
         """The dataset `handle` names; a handle nothing was written to is a contract error."""
