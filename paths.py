@@ -1,24 +1,9 @@
-"""
-Project paths bindings.
+"""Project path bindings.
 
-Derives every project path from one environment variable (GIS_FILES_ROOT),
-which points at the data root containing the canonical project layout.
-
-Canonical layout under GIS_FILES_ROOT — see docs/canonical_layout.md:
-  ag_inputs/        read-only inputs, supplied by data hydration
-    raw_data/       Source data
-      area.gdb        Area source data
-      building.gdb    Building source data
-      matrikkel.gdb   Matrikkel source data
-      railway.gdb     Railway source data
-      road.gdb        Road source data
-    symbology/      .lyrx symbology files
-      n100
-      n250
-      ...
-  ag_outputs/       writable, pipeline-controlled structure
-    n100/           N100 outputs
-    ...
+``GIS_FILES_ROOT`` points at the input directory containing ``raw_data/`` and
+``symbology/``. ``GIS_OUTPUTS_ROOT`` optionally points at the directory that holds
+``ag_outputs/``; set it to a writable location such as ``/tmp/GIS_Files`` when the
+inputs are on a read-only mount. When unset, the parent of ``GIS_FILES_ROOT`` is used.
 """
 
 ###########################
@@ -66,4 +51,9 @@ load_env()
 
 DEFAULT_PROJECT_WORKSPACE = Path(require("DEFAULT_PROJECT_WORKSPACE"))
 GIS_FILES_ROOT = Path(require("GIS_FILES_ROOT"))
+GIS_OUTPUTS_ROOT = (
+    Path(os.environ["GIS_OUTPUTS_ROOT"])
+    if "GIS_OUTPUTS_ROOT" in os.environ
+    else GIS_FILES_ROOT.parent
+)
 PYTHONPATH = Path(require("PYTHONPATH"))

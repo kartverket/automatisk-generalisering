@@ -3,7 +3,6 @@ import functools
 import io
 import json
 import os
-import random
 import sys
 import logging
 import time
@@ -13,7 +12,6 @@ from typing import Callable, Dict, ParamSpec, Tuple, TypeVar
 from pathlib import Path
 import shutil
 import tempfile
-import zipfile
 import urllib3
 from minio import Minio
 from minio.error import S3Error, ServerError
@@ -33,7 +31,7 @@ R = TypeVar("R")
 OPERATION_RETRY_ATTEMPTS = 6
 OPERATION_RETRY_TOTAL_DELAY_S = 600
 OPERATION_RETRY_DELAY_S = OPERATION_RETRY_TOTAL_DELAY_S / OPERATION_RETRY_ATTEMPTS
-COMPLETED_OUTPUT_CUTOFF = datetime(2026, 18, 10, tzinfo=timezone.utc)
+COMPLETED_OUTPUT_CUTOFF = datetime(2026, 11, 18, tzinfo=timezone.utc)
 
 
 def output_archive_object_name(
@@ -89,18 +87,6 @@ def retry_on_transient_error(func: Callable[P, R]) -> Callable[P, R]:
 
 
 @retry_on_transient_error
-def download_file(
-    client: Minio, bucket_name: str, object_name: str, file_path: Path
-) -> None:
-    """Download an object, retrying the whole download on transient errors."""
-    client.fget_object(
-        bucket_name=bucket_name,
-        object_name=object_name,
-        file_path=str(file_path),
-    )
-
-
-@retry_on_transient_error
 def upload_file(
     client: Minio, bucket_name: str, object_name: str, file_path: str
 ) -> None:
@@ -151,58 +137,9 @@ def create_s3_client(
     return Minio(endpoint=endpoint_url, access_key=access_key, secret_key=secret_key)
 
 
-def download_scality_folder(
-    client: Minio,
-    bucket_name: str,
-    scality_folder: str,
-    local_folder: str,
-) -> None:
-    """
-    Download all files from a Scality/S3 folder/prefix to a local folder.
-
-    Args:
-        bucket_name: Name of the Scality bucket.
-        scality_folder: Folder/prefix inside the bucket, e.g. "data/input/"
-        local_folder: Local destination folder, e.g. "/tmp/mydata"
-    """
-
-    # Ensure prefix ends with /
-    if scality_folder and not scality_folder.endswith("/"):
-        scality_folder += "/"
-
-    objects = client.list_objects(
-        bucket_name=bucket_name,
-        prefix=scality_folder,
-        recursive=True,
-    )
-
-    local_base = Path(local_folder)
-    local_base.mkdir(parents=True, exist_ok=True)
-
-    for obj in objects:
-        # Skip "directory marker" objects
-        if obj.object_name.endswith("/"):
-            continue
-
-        # Preserve folder structure relative to scality_folder
-        relative_path = obj.object_name[len(scality_folder) :]
-        local_path = local_base / relative_path
-
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-
-        """client.fget_object(
-            bucket_name=bucket_name,
-            object_name=obj.object_name,
-            file_path=str(local_path),
-        )"""
-        download_file(client, bucket_name, obj.object_name, local_path)
-
-        logger.info(f"Downloaded s3://{bucket_name}/{obj.object_name} -> {local_path}")
-
-
 def upload_results_to_scality(
-    client: Minio, bucket_name: str, local_path: str, object_name: str | None = None
-):
+    client: Minio, bucket_name: str, local_path: Path, object_name: str
+) -> None:
     """
     Upload a local ZIP file to a Scality bucket.
 
@@ -288,29 +225,16 @@ def check_uid_gid():
     logger.info("current uid: %s current gid: %s", current_uid, current_gid)
 
 
-def check_read_only():
-    tmp_file = "/tmp/file.txt"
-    with open(tmp_file, "w", encoding="utf-8") as f:
+def check_tmp_writable() -> None:
+    with tempfile.NamedTemporaryFile(
+        mode="w+",
+        encoding="utf-8",
+        dir="/tmp",
+    ) as f:
         f.write("written to and read from /tmp")
-
-    with open(tmp_file, "r", encoding="utf-8") as f:
+        f.seek(0)
         content = f.read()
-
     logger.info(content)
-    os.remove(tmp_file)
-
-    root_file = "file.txt"
-    try:
-        with open(root_file, "w", encoding="utf-8") as f:
-            f.write("written to and read from root")
-
-        with open(root_file, "r", encoding="utf-8") as f:
-            content2 = f.read()
-        logger.info(content2)
-        os.remove(root_file)
-    except Exception as e:
-        logger.info("Failed to write to root: ")
-        logger.info(e)
 
 
 # pipeline imports
@@ -382,7 +306,7 @@ def main():
         os.environ["PARTITION_INDEX"] = job_completion_index
 
     check_uid_gid()
-    check_read_only()
+    check_tmp_writable()
     if not args.scale or not args.obj:
         logger.error("Error: --scale and --object required (or set SCALE/OBJECT env)")
         print_available()
@@ -438,13 +362,6 @@ def main():
             )
             return
 
-    download_scality_folder(
-        client=s3,
-        bucket_name=bucket_name,
-        scality_folder="GIS_Files/",
-        local_folder="/tmp/GIS_Files",
-    )
-
     key = (args.scale, args.obj)
     handler = DISPATCH.get(key)
     if handler is None:
@@ -452,6 +369,11 @@ def main():
         print_available()
         sys.exit()
 
+    from env_setup.project_layout import ProjectLayout
+    from paths import GIS_OUTPUTS_ROOT
+
+    layout = ProjectLayout(output_root=GIS_OUTPUTS_ROOT)
+    output_gdb_path = layout.gdb(scale=args.scale, name=args.obj)
     if job_completion_index:
         namespace = f"{args.scale}_{args.obj}_{job_completion_index}"
     else:
@@ -459,7 +381,7 @@ def main():
     checkpoint = RetryingScalityPipelineCheckpoint(
         client=s3,
         bucket_name=bucket_name,
-        gdb_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb"),
+        gdb_path=output_gdb_path,
         namespace=namespace,
     )
     try:
@@ -484,7 +406,7 @@ def main():
     upload_results_to_scality(
         client=s3,
         bucket_name=bucket_name,
-        local_path=Path(f"/tmp/GIS_Files/ag_outputs/{args.scale}/{args.obj}.gdb/"),
+        local_path=output_gdb_path,
         object_name=object_name,
     )
     if args.scale == "n100" and args.obj == "building":
@@ -497,7 +419,7 @@ def main():
         upload_results_to_scality(
             client=s3,
             bucket_name=bucket_name,
-            local_path=Path("/tmp/GIS_Files/ag_outputs/n100/final_outputs.gdb/"),
+            local_path=layout.gdb(scale="n100", name="final_outputs"),
             object_name=final_outputs_object_name,
         )
 
