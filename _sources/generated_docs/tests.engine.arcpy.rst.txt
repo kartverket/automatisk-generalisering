@@ -12,6 +12,14 @@ tests.engine.arcpy.conftest module
    :show-inheritance:
    :undoc-members:
 
+tests.engine.arcpy.test\_catalog module
+---------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_catalog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.engine.arcpy.test\_dataset\_schema module
 -----------------------------------------------
 
