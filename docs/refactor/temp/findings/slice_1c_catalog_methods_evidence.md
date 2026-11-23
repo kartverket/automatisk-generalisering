@@ -82,11 +82,13 @@ The new cases and what covered them:
 ## Engine run: the probe
 
 `docs/refactor/temp/slice_1c_catalog_probe.py`, run as a module in the image with the
-command in its docstring, three times: on 2026-11-19, and twice on 2026-11-23, the second
-time after the locked-folder cases were corrected to ask about a geodatabase and a table
-that exist behind the locked folder, since the earlier form asked only about an absent
-path there and so could not tell "absent" from "unreachable". Every observation held over
-the runs; the timing lines of each are kept below so one run is not taken for the band.
+command in its docstring, four times: on 2026-11-19, and three times on 2026-11-23. The
+second of those came after the locked-folder cases were corrected to ask about a
+geodatabase and a table that exist behind the locked folder, since the earlier form asked
+only about an absent path there and so could not tell "absent" from "unreachable"; the
+third after the tool was added on that geodatabase while locked. Every observation held
+over the runs; the timing lines of each are kept below so one run is not taken for the
+band.
 The process runs as euid 150, not root, so the removed permissions bind for ordinary
 access and the locked rows are a reachability test.
 
@@ -114,8 +116,16 @@ access and the locked rows are a reachability test.
    or is not supported`; the tool did not create the parent, so the conformance case
    `test_create_workspace_under_a_missing_parent_is_an_engine_error_naming_the_tool`
    stands as written. Under the locked folder the same error class and tool, with
-   `ERROR 999999: Something unexpected caused the tool to fail`. The engine spells the
-   path in its messages with a drive letter, `Z:/tmp/...`, where the call gave `/tmp/...`.
+   `ERROR 999999: Something unexpected caused the tool to fail`. On the geodatabase that
+   exists behind the locked folder, where `exists` answers False and so the port's
+   refusal of a taken path does not fire, the tool through the port failed the same way,
+   `EngineError` naming the tool with `ERROR 999999`, and once the permissions were
+   restored the table in it answered `Exists -> True` and Describe `'Table'`: the tool did
+   not touch what it could not read, so PC-D32's guarantee holds there on the tool's own
+   failure. A defensive check of the engine and not a case the design expects, since the
+   scratch manager chooses every path and names none behind a folder the process cannot
+   read. The engine spells the path in its messages with a drive letter, `Z:/tmp/...`,
+   where the call gave `/tmp/...`.
    The engine's lines appear three times in one `EngineError`: in the exception text, as
    the first entry of `tool_messages`, and again as the per-line messages between
    `Start Time` and `Failed at`; recorded as a follow-up under T2.14 in `TASKS.md`.
@@ -130,6 +140,9 @@ access and the locked rows are a reachability test.
    - 2026-11-23, corrected: file geodatabase fresh 0.0353, 0.0376, 0.0394; repeated
      0.0333, 0.0356, 0.0396; memory fresh 0.0002, 0.0003, 0.0004; repeated 0.0002, 0.0002,
      0.0003.
+   - 2026-11-23, with the tool on the locked geodatabase: file geodatabase fresh 0.0357,
+     0.0363, 0.0427; repeated 0.0349, 0.0376, 0.0427; memory fresh 0.0002, 0.0003, 0.0005;
+     repeated 0.0002, 0.0002, 0.0003.
 
    Every call sat under the band's floor of 0.1 s, with no difference between a first call
    and a repeated one, and the memory workspace two orders of magnitude below the file
@@ -156,13 +169,6 @@ access and the locked rows are a reachability test.
 
 ## Still pending
 
-- The probe's added attempt: the tool, through the port, on the geodatabase that exists
-  behind the locked folder, and after the permissions are restored whether the table in
-  it is still there. `create_workspace` refuses a taken path on `exists` answering True,
-  which it does not there, so PC-D32's guarantee rests on the tool failing. A defensive
-  check of the engine, not a case the design expects: the scratch manager chooses every
-  path, so no path it names is behind a folder the process cannot read. If the table does
-  not survive, that is a contract question for the architect, not a fix in place.
 - The marked tests, with the command in `docs/contributing/testing.md`: the ArcPy
   parameter of every case in `tests/conformance/test_table_ops.py` (the catalog cases over
   `WorkspaceFormat.FILE_GDB`), `tests/engine/arcpy/test_catalog.py`, and the rest of
