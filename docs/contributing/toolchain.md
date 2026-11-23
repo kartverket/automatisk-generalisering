@@ -34,9 +34,10 @@ pre-commit install
   the versions in `uv.lock`. It is also the command to run again after a pin changes.
 - Activating is optional and only for your own shell: it makes `pytest`, `ruff` and the rest
   resolve to the project's copies when you type them. Nothing else needs it. The hooks run
-  through uv whether a shell is activated or not (below), and scripts that use ArcPy run with
-  the ArcGIS Pro interpreter, never from `.venv` (see
-  [running legacy scripts](#running-legacy-scripts)).
+  through uv whether a shell is activated or not (below). Legacy scripts that use ArcPy run
+  with the ArcGIS Pro interpreter, never from `.venv` (see
+  [running legacy scripts](#running-legacy-scripts)); `src/ag` reaches the engine only in
+  the project's image (below).
 - `pre-commit install` makes every commit run the hooks.
 
 ## `uv.lock`
@@ -70,14 +71,15 @@ remains a working fallback for the project itself. If uv is ever replaced, the w
 regenerating the lock file in the new tool's format and changing the hook invocations and
 the CI step; the dependency declarations do not change.
 
-## Two environments on Windows
+## Environments
 
-A developer on Windows uses two interpreters, each for one purpose.
+A developer uses three environments, each for one purpose.
 
-| interpreter | comes from | for |
+| environment | comes from | for |
 |---|---|---|
-| `.venv` in the repository | `uv sync --extra dev` | `src/ag`, every check, every commit |
-| the ArcGIS Pro interpreter, the default `arcgispro-py3` environment | the ArcGIS Pro install (`C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3` on the team's machines) | legacy scripts, `tests_legacy/`, scratch scripts |
+| `.venv` in the repository | `uv sync --extra dev` | `src/ag` without the engine: every check, every commit, the tests under the fake |
+| the project's image, the one the `Dockerfile` declares | pulling that tag | everything of `src/ag` that needs the engine: the `arcpy`-marked tests and every engine run. It is production's environment (ADR-0018 Direction 6); the command is in [testing and checks](testing.md) |
+| the ArcGIS Pro interpreter, the default `arcgispro-py3` environment | the ArcGIS Pro install (`C:\ArcGIS_Pro\bin\Python\envs\arcgispro-py3` on the team's machines) | legacy scripts, `tests_legacy/`, scratch scripts; never `src/ag` |
 
 - Nothing is installed into the Pro environment, by pip or by uv: Esri's package manager
   treats it as read-only, and a Pro upgrade replaces it. A legacy script needs no install
@@ -89,7 +91,7 @@ A developer on Windows uses two interpreters, each for one purpose.
   active does not matter, because the hooks run through uv.
 - `pytest -m arcpy` runs in the project's image with the `dev` extra's closure exported
   from `uv.lock`; the command is in [testing and checks](testing.md). The Pro interpreter
-  route is untried (B23 in the design record).
+  is not an environment of the system (ADR-0018 Direction 6; B23 in the design record).
 
 ## Running legacy scripts
 
@@ -141,9 +143,9 @@ nothing else. The fix is not to widen the constrained stub and not to add a `stu
 `src/ag/adapters/arcpy/`, `tests/support/arcpy/` and `tools/engine/` the editor shows the
 constrained ArcPy stub whichever interpreter is selected: a tool call, an `arcpy.env` access or
 `arcpy.ExecuteError` is an error there, exactly as in the hooks. A submodule import such as
-`import arcpy.management` is not held by the stub: under `.venv` it is an unresolved import;
-under the Pro interpreter it is expected to resolve past the stub to ArcPy itself, which the
-first run under the engine confirms; the source scan refuses that form on both. The response
+`import arcpy.management` is not held by the stub: under `.venv` it is an unresolved import,
+and in the image it resolves past the stub to ArcPy itself; the source scan refuses that
+form on both. The response
 is never to widen the stub for the editor's sake: a tool goes through `session.run_tool`, and
 a non-tool name is added to `stubs/arcpy_constrained/` with its reason in the same pull
 request. Elsewhere in `src/ag`, `tests/` and `tools/`, ArcPy is not importable at all, which

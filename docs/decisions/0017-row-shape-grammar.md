@@ -106,9 +106,9 @@ static test over every port Protocol, with each rule broken once.
   and refs name `In` parameters; both axes are present; `CARRY` and `MINT` have a subject;
   `FOREIGN` has refs and no subject; the three illegal cells are refused with their
   reasons; `ParentsOut` is exempt and carries no row; a handle parameter without a marker
-  fails, walking `Annotated`, unions, tuples and sequences; a method with no `Out` is in an
-  explicit query list or fails; a `Mutates` parameter fails closed until its declaration
-  form is decided.
+  fails, walking `Annotated`, unions, tuples and sequences; a method with no `Out` is in
+  the explicit list of methods outside the grammar, those that write no handle, or fails;
+  a `Mutates` parameter fails closed until its declaration form is decided.
 - **RS-D13** Two things no rule sees, stated so they are not mistaken for omissions: a
   handle inside a `Spatial` predicate is a value, outside any marker; a method that changes
   its input in place has no output to declare, and a join on a non-unique key would change

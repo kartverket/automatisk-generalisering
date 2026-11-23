@@ -30,6 +30,13 @@ ADR-0017 (row shape).
    adapter never inherits from a port.
 5. A port exists only for a distinct external capability with a foreseeable second
    implementation. Logging and helpers are not ports.
+6. The system runs on prem only, on SKIP, the organisation's Kubernetes platform, and has
+   one engine environment: the project image, declared once in the Dockerfile. Every run
+   and every test against the engine, and production, execute in it; engine-free checks
+   and runs under the fake run wherever uv provides the pinned tools. The ArcGIS Pro
+   interpreter is not an environment of the system. A run on a developer's machine goes
+   through the same stage entry, settings reader and ports as a run on SKIP, with local
+   adapters for storage and dispatch in place of SKIP's.
 
 ## AR-1 What is adopted, and on what grounds
 
@@ -46,7 +53,7 @@ revisited on those grounds.
   constructed together. A large, implementation-oriented Protocol is the shape PEP 544
   cautions against; it is accepted knowingly. Whether the generalization port splits per
   operator is Q-B, settled by measurement once one operator is reimplemented.
-- **AR-D3** Fakes over mocks: the real dependency is licensed, Windows-adjacent and slow.
+- **AR-D3** Fakes over mocks: the real dependency is licensed, container-bound and slow.
 - **AR-D4** The driving side is the orchestrator's CLI, the pod entry points and
   `tests/invariance/`; it sits outside the `core → ports → adapters` layering as the adapters
   on the driving side, and a composition root is where the two sides meet.
@@ -62,8 +69,9 @@ decides, per port, which adapter carries it.
 
 - **AR-D5** The ports: `GeometryOps` (operations on spatial datasets), `TableOps` (schema,
   attributes and bulk row IO), `CartographicOps` (named generalization operators), `GraphOps`
-  (graph algorithms over abstract topology), `ArchiveClient` (object storage transport),
-  `ClusterClient` (Kubernetes job lifecycle).
+  (graph algorithms over abstract topology), `ArchiveClient` (storage transport: a
+  filesystem adapter for local runs and the volume, an S3 adapter for stage inputs and
+  outputs), `ClusterClient` (job dispatch: local processes or Kubernetes Jobs on SKIP).
 - **AR-D6** `TableOps` is separate from `GeometryOps`: a different conversation, schema and
   rows rather than geometry; it applies to non-spatial tables; and `GeometryOps.add_field()`
   reads wrong.
@@ -97,6 +105,12 @@ decides, per port, which adapter carries it.
   an adapter enforces this is its own. The ArcPy adapter enforces the names with a
   constrained type stub and the direct uses with a static scan; a call on an engine object
   is a review rule.
+- **AR-D27** The ArcPy session owns what the engine's import does to the process:
+  `open_session` performs the process's first engine import, snapshots the `__main__`
+  namespace before it and afterwards restores every name the import added or rebound, and
+  refuses when the engine is already imported, because a snapshot taken after that import
+  protects nothing. A process that cannot route its first engine import through the session
+  runs as a module (`python -m`), which keeps its own namespace out of `__main__`.
 
 ## AR-3 Ports are Protocols
 
@@ -137,6 +151,26 @@ and no second implementation, and helpers compose port calls without being sched
   helpers package: a helper composes port calls and is never scheduled, a shared operation is
   declared in a stage like any other.
 
+## AR-5 Environments
+
+**Direction.** One engine environment and one code path from a developer's machine to SKIP:
+where a run executes is an adapter choice at the composition root, never a branch in the
+code it runs.
+
+**Details.**
+
+- **AR-D24** The Dockerfile holds the one declaration of the image and its tag. A document
+  names the image by that declaration; a command that must spell the tag copies it from
+  there.
+- **AR-D25** The orchestrator composes a run with `ClusterClient` and names a pod's entry
+  module through its constant in `runtime/pod.py`; `ag.runtime.pod_entry` composes a stage
+  with `ArchiveClient` and the engine ports and calls the stage function in
+  `runtime/stage_entry.py`; `ag.runtime.local` composes the same function with the fake.
+  Neither entry branches on where it runs, and no pod dispatched to SKIP can run on the
+  fake.
+- **AR-D26** The dispatch port's first adapter is local processes; Kubernetes Jobs on SKIP
+  joins when partitioning lands. The K-invariance harness drives the local adapter.
+
 ## Rejected
 
 - **AR-R1** Repository and Unit of Work. No transactional aggregate store: the datasets the
@@ -161,3 +195,19 @@ and no second implementation, and helpers compose port calls without being sched
   multipart-geometry vocabulary here. Reopened by the terminology retiring the collision:
   `tool` leaving the retired-words list, or multipart geometry leaving the vocabulary. The
   rename itself is one `git mv` and one `.importlinter` line.
+- **AR-R9** A cloud runtime beside the on-prem one. A second runtime doubles the storage and
+  dispatch adapters and brings placement into every stage. No cloud environment is built;
+  the legality tracking on stage inputs is kept so that one costs as little as possible to
+  add. Reopened by an organisational platform decision, at the price of a storage adapter, a
+  dispatch adapter and the return of placement to the stage model, since `Classification`
+  would again decide where a stage may run and not only where a product may be stored.
+- **AR-R10** The ArcGIS Pro interpreter as an environment of the system. Developers have it
+  and legacy runs on it, but its build is not production's and a pass there is not a pass
+  in the image. Reopened only if production moved to Pro's build, which Direction 6
+  excludes.
+- **AR-R11** Packing per hop between the Jobs of a stage. Packing stays at the stage
+  boundary, one object per transfer directory in the object store; inside a stage it is
+  rejected, because a geodatabase is a directory and packing it per hop costs CPU, wall
+  clock and a class of lock bugs the shared volume avoids. Reopened by the volume's
+  throughput or metadata load failing at hundreds of pods per stage, or by the platform
+  withdrawing ReadWriteMany.

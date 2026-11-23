@@ -459,8 +459,9 @@ missing Describe attribute leaves as a raw `AttributeError`).
   do not nest, and refuses with `PortContractError` naming the dataset past that. Unit
   tests on the fake, which models feature datasets and nests them to reach the refusal;
   break-once D7; a marked case in `tests/engine/arcpy/test_dataset_schema.py`, a feature
-  class with a bare date field inside a feature dataset, described and read, awaiting
-  the image.
+  class with a bare date field inside a feature dataset, described and read. It passed on
+  the image on 2026-11-23, in the marked run of the catalog methods (57 passed, evidence
+  in `slice_1c_catalog_methods_evidence.md`).
 - **The arcpy break-once set in full**, after the date rule and these changes:
 
 ```

@@ -280,3 +280,4 @@ def test_the_scan_sees_the_groups(adapter: str) -> None:
     assert by_name["Selection"].defined == ("select",)
     assert by_name["Shape"].defined == ("explode_multipart",)
     assert by_name["RowIO"].defined == ("read_rows",)
+    assert by_name["Catalog"].defined == ("exists", "data_type_of", "create_workspace")

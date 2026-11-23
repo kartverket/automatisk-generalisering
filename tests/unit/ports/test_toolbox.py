@@ -16,7 +16,9 @@ import pytest
 from ag.core.errors import InjectionError
 from ag.core.handles import In, Out, ParentsOut, handle
 from ag.core.operations import operation
+from ag.core.types import DataType
 from ag.ports import NOT_INJECTED, FieldName, Predicate, Row, Toolbox
+from ag.ports.workspace_format import WorkspaceFormat
 
 
 class Example:
@@ -39,6 +41,14 @@ class TableStub:
 
     def read_rows(self, *, input: In, fields: tuple[FieldName, ...]) -> Iterable[Row]:
         return ()
+
+    def exists(self, *, input: In) -> bool:
+        return False
+
+    def data_type_of(self, *, input: In) -> DataType:
+        return DataType.TABLE
+
+    def create_workspace(self, *, path: str, fmt: WorkspaceFormat) -> None: ...
 
 
 class EmptyStub:

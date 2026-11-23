@@ -26,6 +26,10 @@ Declared, and why:
   tell the in-memory workspace apart, where a date keeps its fraction untreated.
 - `AddFieldDelimiters`: identifier quoting per workspace type for a compiled predicate,
   which is the engine's table and not one to restate.
+- `Exists`: the engine's answer to presence for every catalog kind, a workspace
+  included, which `TableOps.exists` returns and `data_type_of` and `create_workspace`
+  read first; Describe answers presence only by failing on a missing path, and a
+  failure path is not a presence check.
 """
 
 from collections.abc import Iterator, Sequence
@@ -95,4 +99,5 @@ class da:
         def deleteRow(self) -> None: ...
 
 def Describe(value: str) -> _Describe: ...
+def Exists(dataset: str) -> bool: ...
 def AddFieldDelimiters(datasource: str, field: str) -> str: ...

@@ -170,7 +170,10 @@ and the conformance suite covers it on every adapter.
 > which hides a failure inside an unrelated call and makes the scratch dump's layout depend on
 > call order.
 
-`destination:` `ports/table_ops.py`; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
+*Port half landed:* ADR-0019 Direction 6, PC-6, PC-D31, PC-D32, PC-R6, PC-R7 and the
+`ports/table_ops.py` docstrings. *Still to land with the runner:* the manager's call
+through the toolbox, the `staging/scratch.py` docstring, `02-runtime.md` §4.2.
+`destination:` ADR-0019 PC-6; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
 
 ## A6. Partitioning — ownership
 
@@ -1889,13 +1892,11 @@ carries dates to the whole second".
 `destination:` ADR-0019 PC-D17.
 
 **A33.2** The adapters, landed 2026-11-09 ahead of `write_rows` (the architect,
-2026-11-09): `describe` names the date fields whose store holds whole seconds and
-`read_rows` reads them to the nearest second, since the encoding's noise lies on both
-sides of the stored second and rounding restores it; a store that holds the fraction is
-read as it is; the in-memory workspace keeps the fraction at any precision and has no
-whole-second field. `add_fields` migrates every date field it adds to the
-fraction-holding precision, outside the in-memory workspace, which refuses the tool, so
-nothing the adapter writes is reduced. `_shared/field_values.py` and the compiler's
+2026-11-09): `describe` names each date field's store grain and `read_rows` rounds to it,
+since the encoding's noise lies on both sides of the stored value and rounding restores
+it. `add_fields` migrates every date field it adds to the millisecond precision, outside
+the in-memory workspace, which holds milliseconds already and refuses the tool.
+`_shared/field_values.py` and the compiler's
 literal carry the fraction, `.ffffff`, which both workspaces compare (W25). W24 and W25
 closed by `temp/w24_w25_date_probe.py`. Break-once: P4 the literal, R3 and R4 the
 decode, D5 the precision, D6 and W2 the in-memory workspace, W1 the migration. The
@@ -2573,7 +2574,10 @@ folder, `src` and that folder go on `PYTHONPATH`, nothing is installed into the 
 environment, and the command names `tests/conformance` and `tests/engine`, since the static
 tests import the dev tools at collection. The command is on `docs/contributing/testing.md`,
 the authority. The Windows Pro interpreter route is untried and is a divergence check, not
-the gate; its expected shape is (b) below with the same exported closure. As opened:
+the gate; its expected shape is (b) below with the same exported closure. Superseded on
+that point: the ArcGIS Pro interpreter is not an environment of the system (ADR-0018
+Direction 6), so the divergence check is not run and candidates (a) to (c) below are of
+record only. As opened:
 Opened 2026-10-09, due with slice 1b, when
 the first `arcpy`-marked tests (the conformance cases and the timing run) land. The run
 needs two things beside ArcPy: `ag` importable, and pytest at the version `pyproject.toml`
@@ -2776,3 +2780,42 @@ renumber, which no run has shown; if the copy renumbers, the map points at the c
 not at the source, and the trace to RAW (A10.6, A23, A24.1) needs a stable raw id or a
 copy that keeps native indices. Open until ingest is designed; nothing built now.
 `destination:` the ingest task (T3.4) and ADR-0019 when decided.
+
+**B35. Storage and transfer between the Jobs of a stage on SKIP.** *Closed 2026-11-13.*
+The architect's decision after the platform owner's reply: transfer between the Jobs
+inside a stage uses one fixed ReadWriteMany volume, a static PersistentVolume on NFS 4.x
+with reclaim policy Retain plus a PersistentVolumeClaim in the namespace, set up outside
+this code and never deleted by it; its size is planned ahead and changed by a platform
+request, not while runs are going. Stage inputs and outputs live in Scality S3, the
+on-prem S3-compatible store. Dispatch on SKIP is plain batch/v1 Indexed Jobs created
+through the Kubernetes API by an in-cluster ServiceAccount, the adapter named "Kubernetes
+Jobs on SKIP"; Jobs mount the volume by claim name. `ArchiveClient` has two adapters,
+filesystem for local runs and S3 for SKIP. Superseded, each with why: a fresh claim per
+stage and dynamic provisioning (a claim's lifecycle in code, and rights the
+ServiceAccount need not have); claim create and delete rights for the ServiceAccount
+(not needed once the volume is fixed); pod-scoped volumes as the transfer (they die with
+the pod and cannot cross Jobs); ReadWriteOnce on one node (a stage runs hundreds of pods
+across nodes); S3 packed payloads as the transfer (a geodatabase is a directory, and
+packing per hop costs CPU, wall clock and lock bugs, ADR-0018 AR-R11); SKIPJob (a stage
+is one Indexed Job whose pods read their completion index; SKIPJob describes a single-pod
+job, and more of them is not an Indexed Job). Deferred to implementation, found with the
+first write test: the uid and gid the pods write as, the Scality endpoint and egress
+rule, and whether `df` on the mount shows a dedicated or a shared volume. The tree on the volume, the marker and fan-in's selection are ADR-0021
+ST-D26; the sweep, the free-space wait and the debug archive are T3.8. As opened: Opened
+2026-11-11 with the platform decision. Transfer between the Jobs of one stage run,
+fan-out writing payloads, indexed pods reading theirs and writing outputs, fan-in
+reading, needs a substrate. The options were a fresh ReadWriteMany claim per stage run, a
+fixed ReadWriteMany volume with one directory per stage run, and Scality S3 with one
+packed object per payload and per output; pod-scoped volumes and single-node
+ReadWriteOnce were out. Two questions went to the platform owner: whether a
+ReadWriteMany StorageClass exists, and whether the ServiceAccount may create and delete
+claims.
+`destination:` ADR-0018 AR-5 and ADR-0021 ST-D26; the slice 5 entries of the plan.
+
+**B36. The per-call lineage cost on the ArcPy adapter.** Opened 2026-11-11 with the
+platform decision. The sweep at operation exit reads each output's id set, and the ArcPy
+adapter has no attributes-only pass over a feature class, so that read carries the
+geometry; the minting write is the other per-call cost. Both are measured on the three
+raw sets against A15.7 when `write_rows` lands, and an attributes-only read joins the
+port if the number says so. Open until measured.
+`destination:` ADR-0019 and T4.6.

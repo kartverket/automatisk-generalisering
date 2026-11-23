@@ -25,6 +25,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import get_protocol_members, get_type_hints
 
 import pytest
@@ -43,6 +44,7 @@ from ag.ports.geometry_ops import GeometryOps
 from ag.ports.row_shape import Cardinality, Ids, Rows, declared_rows, row_shape
 from ag.ports.table_ops import TableOps
 from ag.ports.toolbox import Toolbox
+from ag.ports.workspace_format import WorkspaceFormat
 from tests.support.cases import DatasetCase, multilines, roads
 from tests.support.memory import memory_handle, seed
 
@@ -63,6 +65,9 @@ DECLARED: frozenset[tuple[type, str]] = frozenset(
         (GeometryOps, "select"),
         (GeometryOps, "explode_multipart"),
         (TableOps, "read_rows"),
+        (TableOps, "exists"),
+        (TableOps, "data_type_of"),
+        (TableOps, "create_workspace"),
     }
 )
 """What the three Protocols declare today; `CartographicOps` has no member yet."""
@@ -78,40 +83,57 @@ ADAPTERS: dict[type, Callable[[MemoryStore], object]] = {
 class Scenario:
     """One call of a member: the case to seed, its arguments, and what to compare.
 
-    `arguments` builds the call's keyword arguments from the seeded handle; `outputs`
-    names the arguments whose datasets are compared after the call; `returns_rows` says
-    the result is an iterable of rows to materialise and compare.
+    `arguments` builds the call's keyword arguments from the seeded handle and a real
+    directory; `datasets` names the handle arguments whose datasets are compared after
+    the call, and `workspaces` the path arguments compared as workspaces; `returns_rows`
+    says the result is an iterable of rows to materialise and compare.
     """
 
     case: Callable[[], DatasetCase]
-    arguments: Callable[[ScratchHandle], dict[str, object]]
-    outputs: tuple[str, ...] = ()
+    arguments: Callable[[ScratchHandle, Path], dict[str, object]]
+    datasets: tuple[str, ...] = ("input",)
+    workspaces: tuple[str, ...] = ()
     returns_rows: bool = False
 
 
 SCENARIOS: dict[tuple[type, str], Scenario] = {
     (GeometryOps, "select"): Scenario(
         case=roads,
-        arguments=lambda handle: {
+        arguments=lambda handle, _: {
             "input": handle,
             "where": Attr.cmp("rank", Comparison.GE, 2),
             "output": memory_handle("kept"),
         },
-        outputs=("output",),
+        datasets=("input", "output"),
     ),
     (GeometryOps, "explode_multipart"): Scenario(
         case=multilines,
-        arguments=lambda handle: {
+        arguments=lambda handle, _: {
             "input": handle,
             "output": memory_handle("exploded"),
             "parents": memory_handle("pairs", DataType.TABLE),
         },
-        outputs=("output", "parents"),
+        datasets=("input", "output", "parents"),
     ),
     (TableOps, "read_rows"): Scenario(
         case=roads,
-        arguments=lambda handle: {"input": handle, "fields": ("name", "rank")},
+        arguments=lambda handle, _: {"input": handle, "fields": ("name", "rank")},
         returns_rows=True,
+    ),
+    (TableOps, "exists"): Scenario(
+        case=roads, arguments=lambda handle, _: {"input": handle}
+    ),
+    (TableOps, "data_type_of"): Scenario(
+        case=roads, arguments=lambda handle, _: {"input": handle}
+    ),
+    (TableOps, "create_workspace"): Scenario(
+        case=roads,
+        arguments=lambda _, directory: {
+            "path": f"{directory}/stage{WorkspaceFormat.FILE_GDB.suffix}",
+            "fmt": WorkspaceFormat.FILE_GDB,
+        },
+        datasets=(),
+        workspaces=("path",),
     ),
 }
 
@@ -132,7 +154,7 @@ def test_every_walked_member_has_a_scenario() -> None:
 
 @pytest.mark.parametrize(("protocol", "member"), MEMBERS, ids=_ids())
 def test_a_call_through_the_facade_equals_the_direct_call(
-    protocol: type, member: str
+    protocol: type, member: str, tmp_path: Path
 ) -> None:
     scenario = SCENARIOS[protocol, member]
     direct_store, wrapped_store = MemoryStore(), MemoryStore()
@@ -141,7 +163,7 @@ def test_a_call_through_the_facade_equals_the_direct_call(
     direct_seeded = seed(direct_store, scenario.case())
     wrapped_seeded = seed(wrapped_store, scenario.case())
     assert direct_seeded == wrapped_seeded
-    arguments = scenario.arguments(direct_seeded.handle)
+    arguments = scenario.arguments(direct_seeded.handle, tmp_path)
 
     direct_result = getattr(direct, member)(**arguments)
     wrapped_result = getattr(wrapped, member)(**arguments)
@@ -150,10 +172,15 @@ def test_a_call_through_the_facade_equals_the_direct_call(
         assert list(wrapped_result) == list(direct_result)
     else:
         assert wrapped_result == direct_result
-    for name in ("input", *scenario.outputs):
+    for name in scenario.datasets:
         handle = arguments[name]
         assert isinstance(handle, ScratchHandle)
         assert wrapped_store.read(handle) == direct_store.read(handle), name
+    for name in scenario.workspaces:
+        path = arguments[name]
+        assert isinstance(path, str)
+        assert wrapped_store.is_workspace(path) == direct_store.is_workspace(path), name
+        assert direct_store.is_workspace(path), name
 
 
 def test_the_hooks_see_the_call_with_the_protocols_rows_in_order() -> None:

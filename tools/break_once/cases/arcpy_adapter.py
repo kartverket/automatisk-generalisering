@@ -1,5 +1,5 @@
 """Cases for the ArcPy adapter's first methods: the described schema, the WKB codec, the
-predicate compiler, the write side's builders, the three group modules and the
+predicate compiler, the write side's builders, the four group modules and the
 capability record.
 
 The session's own guards are in `arcpy_session.py`; the scan and stub rules there cover
@@ -19,6 +19,7 @@ WRITER = "src/ag/adapters/arcpy/support/dataset_writer.py"
 SELECTION = "src/ag/adapters/arcpy/geometry_ops/selection.py"
 SHAPE = "src/ag/adapters/arcpy/geometry_ops/shape.py"
 ROW_IO = "src/ag/adapters/arcpy/table_ops/row_io.py"
+CATALOG = "src/ag/adapters/arcpy/table_ops/catalog.py"
 
 UNIT = "tests/unit/adapters/arcpy"
 T_SCHEMA = f"{UNIT}/test_dataset_schema.py"
@@ -34,6 +35,8 @@ REFUSES = f"{T_COMPILER}::test_check_refuses_before_anything_compiles"
 CLAUSE = f"{T_COMPILER}::test_the_clause"
 DESCRIBE_REFUSES = f"{T_SCHEMA}::test_describe_refuses_before_any_row"
 CODEC_REFUSES = f"{T_CODEC}::test_what_the_port_cannot_hold_is_refused_naming_the_row"
+KIND_REFUSES = f"{T_TABLE}::test_data_type_of_refuses_any_other_kind_and_a_missing_path"
+CREATE_REFUSES = f"{T_TABLE}::test_create_workspace_refuses_before_any_tool"
 
 CASES: tuple[Case, ...] = (
     Case(
@@ -347,6 +350,56 @@ CASES: tuple[Case, ...] = (
             f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[just-under]",
             f"{T_TABLE}::test_a_date_from_a_whole_second_store_is_read_to_its_nearest_second[over-midnight]",
         ),
+    ),
+    Case(
+        "K1",
+        "a workspace path without the format's suffix reaches the tool",
+        CATALOG,
+        (("        if not path.endswith(fmt.suffix):\n", "        if False:\n"),),
+        (
+            f"{CREATE_REFUSES}[no-suffix]",
+            f"{CREATE_REFUSES}[other-suffix]",
+            f"{CREATE_REFUSES}[memory-path]",
+        ),
+    ),
+    Case(
+        "K2",
+        "a workspace created over a path something is already at",
+        CATALOG,
+        (
+            (
+                "        if _exists(self._session, path):\n"
+                "            raise PortContractError(\n"
+                '                f"{path!r} is already there;',
+                "        if False:\n"
+                "            raise PortContractError(\n"
+                '                f"{path!r} is already there;',
+            ),
+        ),
+        (
+            f"{CREATE_REFUSES}[workspace-exists]",
+            f"{CREATE_REFUSES}[dataset-exists]",
+        ),
+    ),
+    Case(
+        "K3",
+        "a kind no port method takes answered as a dataset",
+        SCHEMA,
+        (
+            (
+                "    kind = DATA_TYPES.get(engine_data_type)\n    if kind is None:\n",
+                "    kind = DATA_TYPES.get(engine_data_type, DataType.TABLE)\n"
+                "    if False:\n",
+            ),
+        ),
+        (f"{KIND_REFUSES}[raster]", f"{KIND_REFUSES}[workspace]"),
+    ),
+    Case(
+        "K4",
+        "the kind of a missing path asked of the engine instead of refused",
+        CATALOG,
+        (("        if not _exists(self._session, path):\n", "        if False:\n"),),
+        (f"{KIND_REFUSES}[missing]",),
     ),
     Case(
         "C1",

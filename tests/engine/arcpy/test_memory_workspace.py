@@ -15,8 +15,9 @@ from ag.adapters.arcpy.table_ops import ArcpyTableOps
 from ag.core.handles import ScratchHandle
 from ag.core.types import DataType
 from ag.ports import Attr, Comparison, Predicate
-from tests.engine.arcpy.conftest import MEMORY_WORKSPACE, Pro
+from tests.engine.arcpy.conftest import Pro
 from tests.support.cases import lookup, roads
+from tests.support.fake_arcpy import MEMORY_WORKSPACE
 
 pytestmark = pytest.mark.arcpy
 

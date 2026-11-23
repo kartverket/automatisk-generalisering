@@ -1,8 +1,11 @@
-"""Schema and bulk row IO: the `TableOps` Protocol and the values that cross it.
+"""Schema, bulk row IO and the catalog: the `TableOps` Protocol and the values that cross it.
 
 What: `Schema`, what a write needs to create a dataset from nothing, a feature class with
-its CRS and geometry family; `PARENTS_SCHEMA`, the one schema every parents table has; `Row`, one record as attributes plus an optional
-geometry; and the Protocol, which gains its methods as their callers arrive.
+its CRS and geometry family; `PARENTS_SCHEMA`, the one schema every parents table has;
+`Row`, one record as attributes plus an optional geometry; and the Protocol, which gains
+its methods as their callers arrive. The catalog methods, `exists`, `data_type_of` and
+`create_workspace`, answer presence and kind for a handle and create a workspace at the
+path the caller names, in the format `WorkspaceFormat` spells. ADR-0019 PC-6.
 
 Why: a separate port from geometry because schema and rows are a different conversation,
 because it applies to non-spatial lookup tables, which are a real case here, and because
@@ -22,6 +25,7 @@ from ag.core.types import DataType
 from ag.ports.attributes import AttributeValue, Field, FieldName, FieldType
 from ag.ports.columns import CHILD_ID, PARENT_ID
 from ag.ports.geometry import CRS, Geometry, GeometryFamily
+from ag.ports.workspace_format import WorkspaceFormat
 
 
 @dataclass(frozen=True)
@@ -98,11 +102,12 @@ class Row:
 
 
 class TableOps(Protocol):
-    """Schema, attributes and bulk row IO.
+    """Schema, attributes, bulk row IO and the catalog.
 
     Every handle parameter carries a direction marker, and every output declares its row
-    shape on the method; a method that returns values and writes no handle is outside
-    the row-shape grammar and is listed as such by the check over the surface. ADR-0017.
+    shape on the method; a method that writes no handle, a query that returns values or
+    the creation of a workspace, is outside the row-shape grammar and is listed as such
+    by the check over the surface. ADR-0017.
 
     A native index a port method reports, as the columns of a parents table do, is valid
     until its dataset is next written: a method reads its input's indices as they are and
@@ -124,5 +129,42 @@ class TableOps(Protocol):
 
         Why: bulk reads carrying `Row` values replace the row loops, so the slowest
         engine-shaped pattern never becomes part of the contract. ADR-0019 PC-D22.
+        """
+        ...
+
+    def exists(self, *, input: In) -> bool:
+        """Whether anything is at `input`'s path: a dataset of any kind, or a workspace.
+        False means nothing was found at the path; an adapter may report a path it
+        cannot reach as absent.
+
+        Presence and nothing more: the kind is `data_type_of`'s question, and neither
+        reads a row. The output sweep asks this first for every declared output, which is
+        why it is on a port at all, since otherwise the sweep is the one engine import left
+        above the adapters. Outside the row-shape grammar: it writes no handle.
+        ADR-0019 PC-D31.
+        """
+        ...
+
+    def data_type_of(self, *, input: In) -> DataType:
+        """The kind of dataset at `input`'s path: `FEATURE_CLASS` or `TABLE`.
+
+        The one place a handle's declared `DataType` is checked against real data, which
+        the output sweep does after presence. Precondition: something is at the path,
+        checked with `exists` first; a missing path is a `PortContractError`. Any other
+        kind, a raster included, is a `PortContractError` that names what the engine
+        reports, until a method that takes a raster arrives. Outside the row-shape
+        grammar: it writes no handle. ADR-0019 PC-D31.
+        """
+        ...
+
+    def create_workspace(self, *, path: str, fmt: WorkspaceFormat) -> None:
+        """One empty workspace at `path`, in the format `fmt` spells.
+
+        The caller names the full path, suffix included, and the port chooses nothing: no
+        path, no format, no default. Precondition: nothing is at `path`; an existing path
+        is a `PortContractError` before any tool runs, so a workspace is never emptied by
+        being created twice. A path whose parent is missing is an `EngineError` naming the
+        tool. Outside the row-shape grammar: it writes a workspace, not rows, and no
+        handle names a workspace. ADR-0019 PC-D32.
         """
         ...

@@ -3,10 +3,11 @@
 **Status:** Accepted, 2026-10-22.
 
 **Scope:** The values and method contracts of `ag/ports/`: handles at the boundary,
-`ports/predicates.py`, `ports/attributes.py`, `ports/geometry.py`, row IO on `TableOps`, and
-the capability record in `ports/capabilities.py`. Absorbs A2.1, A2.2 and A2.3, and from A14.1
-the capability record and the refusal; A4.1, A4.2 and A4.3 land here. The rest of A14.1 and
-single-part dissolve (A18) join when they migrate. Row shape is ADR-0017.
+`ports/predicates.py`, `ports/attributes.py`, `ports/geometry.py`, row IO and the catalog on
+`TableOps`, `ports/workspace_format.py`, and the capability record in
+`ports/capabilities.py`. Absorbs A2.1, A2.2 and A2.3, A5.7, and from A14.1 the capability
+record and the refusal; A4.1, A4.2 and A4.3 land here. The rest of A14.1 and single-part
+dissolve (A18) join when they migrate. Row shape is ADR-0017.
 
 Related: ADR-0018 (the ports as a package), ADR-0017 (row shape), ADR-0020 (operations).
 
@@ -23,6 +24,9 @@ Related: ADR-0018 (the ports as a package), ADR-0017 (row shape), ADR-0020 (oper
    stable id; expression updates are declarative; `Geometry` is an immutable value type.
 5. An adapter states at construction, as data, the `MINT` methods it honours `parents=` for;
    a request for parents on any other method is an error, never an empty table.
+6. The catalog is on `TableOps`: presence and kind are answered for a handle, and a
+   workspace is created at the full path the caller names, as its format spells it. The
+   port chooses no path and no format.
 
 ## PC-1 Handles at the boundary
 
@@ -165,6 +169,30 @@ on a stable id and may carry geometry.
 - **PC-D29** An adapter that cannot honour `parents=` for a method raises
   `ParentsUnavailableError`; it never returns an empty table.
 
+## PC-6 Catalog
+
+**Direction.** Presence is answered before kind, and neither reads rows; creation makes
+one empty workspace and chooses nothing.
+
+**Details.**
+
+- **PC-D31** `exists(input) -> bool` answers whether anything is at the handle's path, a
+  dataset of any kind or a workspace. `data_type_of(input) -> DataType` answers
+  `FEATURE_CLASS` or `TABLE` on every adapter and refuses anything else, a raster
+  included, with a `PortContractError` naming what the engine reports, until a method
+  that takes a raster arrives; a missing path is a `PortContractError`, stated as a
+  precondition, so a caller reads presence first. The output sweep reads presence then
+  kind for every declared output. Neither method reads a row, no order is imposed on any
+  other caller, and nothing is said about reachability. False means nothing was found at
+  the path; an adapter may report a path it cannot reach as absent.
+- **PC-D32** `create_workspace(path, fmt) -> None` creates one empty workspace at the full
+  path, as the format spells it: the caller names the path, suffix included, and the port
+  chooses no path, no format and no default. A path something is already at is a
+  `PortContractError` before any tool runs; a path whose parent is missing is an
+  `EngineError` naming the tool. `WorkspaceFormat` lives in `ports/`, since a port
+  signature names it; the join rule, name legality and the name budget stay with the
+  scratch manager. The in-memory adapter records the workspace.
+
 ## Rejected
 
 - **PC-R1** `any()` on the port. It pays only where a backend can short-circuit; arcpy's
@@ -183,3 +211,15 @@ on a stable id and may carry geometry.
   plus a join where there was one in-place pass. Reopened by an engine with no keyed bulk
   update, where the adapter would implement `update_rows` this way; the port shape does not
   change.
+- **PC-R6** A creation callable injected into the scratch manager by the runtime and taken
+  from the adapter. It opens a second channel from adapter to staging that bypasses the
+  `Toolbox`, so the one way an engine is reached would no longer be the one way. Reopening
+  this changes Direction 6.
+- **PC-R7** Lazy creation by the adapter on the first write into a missing workspace. It
+  hides a creation failure inside an unrelated call, and the scratch dump's layout then
+  depends on call order. Reopening this changes Direction 6.
+- **PC-R8** A `WorkspaceFormat` member no adapter creates. A member is a format some adapter
+  creates, and the conformance cases run over every member, so a new member fails
+  everywhere until each adapter creates or refuses it with its own case. Reopened by an
+  adapter that creates a second format; if adapters then differ, the formats join the
+  capability record as Direction 5 does for parents.

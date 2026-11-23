@@ -6,7 +6,9 @@ every field name the engine reports; the engine's own field names, the native in
 the shape, and the length and area it maintains; and the grain each date field's store
 holds, a second or a millisecond, which `read_rows` rounds to. `describe(session, path)` builds
 it inside the session's guard; `declared_field(dataset, name)` is the one lookup that
-`read_rows` and the predicate compiler share. `OID_TOKEN` is the cursor token for the
+`read_rows` and the predicate compiler share; `data_type(session, path)` reads the kind
+alone, one Describe for `dataType` and nothing a workspace's Describe does not carry, for
+the catalog's `data_type_of`. `OID_TOKEN` is the cursor token for the
 native index, and `FIELD_TYPES`, `DATA_TYPES` and `SHAPE_TYPES` the engine's type names
 against the port's, each spelled here and nowhere else.
 
@@ -224,6 +226,24 @@ def describe(session: ArcpySession, path: str, /) -> DescribedDataset:
         engine_fields=engine_fields,
         date_grains=MappingProxyType(grains),
     )
+
+
+def data_type(session: ArcpySession, path: str, /) -> DataType:
+    """The kind of the dataset at `path`, from one Describe; a kind the port has no
+    method for, a workspace or a raster among them, is a `PortContractError` naming
+    what the engine reports. ADR-0019 PC-D31."""
+    with session.guard("Describe"):
+        import arcpy
+
+        engine_data_type = arcpy.Describe(path).dataType
+    kind = DATA_TYPES.get(engine_data_type)
+    if kind is None:
+        raise PortContractError(
+            f"{path!r} is a {engine_data_type}, which no port method takes; the kinds "
+            f"are {sorted(DATA_TYPES)}.",
+            context=ErrorContext(handle=path),
+        )
+    return kind
 
 
 def in_memory_workspace(session: ArcpySession, path: str, /) -> bool:

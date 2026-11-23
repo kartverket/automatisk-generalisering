@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ag.adapters.fakes.memory.table_ops.catalog import Catalog
 from ag.adapters.fakes.memory.table_ops.row_io import RowIO
 
 
-class MemoryTableOps(RowIO):
+class MemoryTableOps(RowIO, Catalog):
     """`TableOps` over the in-memory store, composed from its method groups."""
 
 
