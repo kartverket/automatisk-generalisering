@@ -1959,7 +1959,11 @@ canonical, the builders seed from the schema and orient nothing, and the marked 
 `tests/engine/arcpy/test_dataset_schema.py` and `test_shape.py` pin W23's four
 `shapeType` spellings and the multipoint explode's point output, confirmed on the image
 the same day (43 marked tests green); evidence in
-`temp/findings/slice_1b_family_orientation_evidence.md`.
+`temp/findings/slice_1b_family_orientation_evidence.md`. The catalog methods ran on the
+image on 2026-11-23 (57 marked tests green): the 14 past 43 are the 4 added on 2026-11-10
+after that run, the feature-dataset walk among them, and the 10 of the catalog, six
+conformance cases on the ArcPy parameter and four in `tests/engine/arcpy/test_catalog.py`;
+evidence in `temp/findings/slice_1c_catalog_methods_evidence.md`.
 
 **follow-up (`write_rows`):** when `TableOps.write_rows` lands, the `CreateFeatureclass`
 call in `tests/support/arcpy/gdb.py` moves into the adapter's write side, the builders call

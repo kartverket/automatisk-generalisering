@@ -1,6 +1,6 @@
 # Slice 1c evidence: the catalog methods on `TableOps`
 
-**Status:** EVIDENCE, 2026-11-23, probe run, marked tests pending. Produced for the change
+**Status:** EVIDENCE, 2026-11-23, probe and marked tests run. Produced for the change
 that lands `TableOps.exists`, `TableOps.data_type_of` and `TableOps.create_workspace` on
 both adapters (A5.7, T2.12): `ports/workspace_format.py` with `FILE_GDB` only, the catalog
 group module `table_ops/catalog.py` in each adapter, the kind reader `data_type` in
@@ -11,8 +11,8 @@ builder `file_gdb` now calling the port, ADR-0019 Direction 6, PC-6 with PC-D31 
 PC-R6 to PC-R8, ADR-0017 RS-D12 in its adapted form, and the break-once cases K1 to K4,
 M32 to M35 and R15's description. The first two sections come from the fake engine
 installed as `arcpy` through `sys.modules`, from pyright and from the hooks. The engine
-section holds what the probe printed in the image, pasted by the architect; the marked
-tests have not run yet, and nothing below states a result of theirs.
+section holds what the probe printed in the image and the marked run's summary, both
+pasted by the architect.
 
 ## What the fake engine and the hooks show
 
@@ -167,15 +167,32 @@ access and the locked rows are a reachability test.
   `ExecuteError` from the tool, wrapped as `EngineError` naming
   `management.CreateFileGDB`. No contract question.
 
-## Still pending
+## The marked tests
 
-- The marked tests, with the command in `docs/contributing/testing.md`: the ArcPy
-  parameter of every case in `tests/conformance/test_table_ops.py` (the catalog cases over
-  `WorkspaceFormat.FILE_GDB`), `tests/engine/arcpy/test_catalog.py`, and the rest of
-  `tests/conformance` and `tests/engine`, since `file_gdb` now goes through the port and
-  every marked test creates its workspace through it. T4.11's count of marked tests
-  changes only after this run.
-- The feature-dataset walk case recorded as "awaiting the image" in
-  `slice_1b_family_orientation_evidence.md`
-  (`test_a_feature_class_in_a_feature_dataset_finds_its_workspace`) runs in the same
-  session; its result goes into that file, beside its item.
+Run by the architect on 2026-11-23 in the image, with the command of
+`docs/contributing/testing.md` (`python -m pytest tests/conformance tests/engine -m arcpy
+-ra -p no:cacheprovider`, the dev pins installed into the container first):
+
+```
+collected 86 items / 29 deselected / 57 selected
+tests/conformance/test_geometry_ops.py        13 passed
+tests/conformance/test_table_ops.py           16 passed
+tests/engine/arcpy/test_catalog.py             4 passed
+tests/engine/arcpy/test_dataset_schema.py     10 passed
+tests/engine/arcpy/test_memory_workspace.py    2 passed
+tests/engine/arcpy/test_row_io.py              3 passed
+tests/engine/arcpy/test_session.py             5 passed
+tests/engine/arcpy/test_shape.py               4 passed
+57 passed, 29 deselected in 116.59s
+```
+
+No failure, no test removed for a contract question. Every marked test created its
+workspace through `TableOps.create_workspace`, since `file_gdb` goes through the port.
+The 57 against the 43 recorded under T4.11 on 2026-11-08: 10 are this change's, the six
+catalog cases in `tests/conformance/test_table_ops.py` on the ArcPy parameter (two plain,
+four over the one `WorkspaceFormat` member) and the four in
+`tests/engine/arcpy/test_catalog.py`; the other 4 were added on 2026-11-10 with the
+read-rows timing change after its run, the feature-dataset walk in
+`tests/engine/arcpy/test_dataset_schema.py` among them, and ran on the image for the
+first time here. The walk's result is recorded beside its item in
+`slice_1b_family_orientation_evidence.md`.
