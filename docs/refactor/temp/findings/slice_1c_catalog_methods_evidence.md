@@ -1,18 +1,18 @@
 # Slice 1c evidence: the catalog methods on `TableOps`
 
-**Status:** EVIDENCE, 2026-11-19, engine run pending. Produced for the change that lands
-`TableOps.exists`, `TableOps.data_type_of` and `TableOps.create_workspace` on both adapters
-(A5.7, T2.12): `ports/workspace_format.py` with `FILE_GDB` only, the catalog group module
-`table_ops/catalog.py` in each adapter, the kind reader `data_type` in
+**Status:** EVIDENCE, 2026-11-23, probe run, marked tests pending. Produced for the change
+that lands `TableOps.exists`, `TableOps.data_type_of` and `TableOps.create_workspace` on
+both adapters (A5.7, T2.12): `ports/workspace_format.py` with `FILE_GDB` only, the catalog
+group module `table_ops/catalog.py` in each adapter, the kind reader `data_type` in
 `support/dataset_schema.py`, `Exists` in the constrained stub, the store's workspace record,
 the conformance cases over every `WorkspaceFormat` member, the unit tests on the fake engine
 and on the store, the marked tests in `tests/engine/arcpy/test_catalog.py`, the test-side
 builder `file_gdb` now calling the port, ADR-0019 Direction 6, PC-6 with PC-D31 and PC-D32,
 PC-R6 to PC-R8, ADR-0017 RS-D12 in its adapted form, and the break-once cases K1 to K4,
-M32 to M35 and R15's description. No engine ran for this file yet: every result below
-comes from the fake engine installed as `arcpy` through `sys.modules`, from pyright, or from
-the hooks. The engine section at the end lists what the image run records and holds no
-result until the architect pastes one.
+M32 to M35 and R15's description. The first two sections come from the fake engine
+installed as `arcpy` through `sys.modules`, from pyright and from the hooks. The engine
+section holds what the probe printed in the image, pasted by the architect; the marked
+tests have not run yet, and nothing below states a result of theirs.
 
 ## What the fake engine and the hooks show
 
@@ -79,50 +79,85 @@ The new cases and what covered them:
 - **R15** unchanged edit, description reworded: `test_rule_holds[unlisted-query]` fails
   naming `Probe.count` as not in the list of methods outside the grammar.
 
-## Engine run: what the image records
+## Engine run: the probe
 
-Awaiting the image. Nothing below is a result. The architect runs the marked tests and the
-probe and pastes the output; the observations then go here, and the open questions under
-them are answered from the paste and nowhere else.
+`docs/refactor/temp/slice_1c_catalog_probe.py`, run as a module in the image with the
+command in its docstring, three times: on 2026-11-19, and twice on 2026-11-23, the second
+time after the locked-folder cases were corrected to ask about a geodatabase and a table
+that exist behind the locked folder, since the earlier form asked only about an absent
+path there and so could not tell "absent" from "unreachable". Every observation held over
+the runs; the timing lines of each are kept below so one run is not taken for the band.
+The process runs as euid 150, not root, so the removed permissions bind for ordinary
+access and the locked rows are a reachability test.
 
-Marked tests, with the command in `docs/contributing/testing.md`: the ArcPy parameter of
-every case in `tests/conformance/test_table_ops.py` (the catalog cases over
-`WorkspaceFormat.FILE_GDB`), `tests/engine/arcpy/test_catalog.py`, and the rest of
-`tests/conformance` and `tests/engine`, since `file_gdb` now goes through the port and
-every marked test creates its workspace through it. T4.11's count of marked tests changes
-only after this run.
+1. **A fresh file geodatabase.** `Describe(...).dataType` is `'Workspace'`, equal to
+   `WORKSPACE_DATA_TYPE`; `workspaceFactoryProgID` is
+   `'esriDataSourcesGDB.FileGDBWorkspaceFactory'`, the value the fake records as
+   `FILE_GDB_PROG_ID`. The builder's `is_workspace` check and the fake agree with the
+   engine.
+2. **`Exists` and `Describe` at the margins.** `Exists` answered `False` for a missing
+   dataset in the geodatabase, a missing `.gdb`, a `.gdb` under a missing parent folder, an
+   absent `.gdb` under the locked folder and a missing dataset in the memory workspace;
+   `True` for the locked folder itself (Describe `'Folder'`) and for the memory workspace
+   (Describe `'Workspace'`). Describe on every path `Exists` denied raised `OSError` with
+   the message `"<path>" does not exist`, the memory one spelled `"memory/nothing"`.
+   Reachability: the geodatabase that exists behind the locked folder and the table in it
+   both answered `Exists -> False` and `Describe -> OSError ... does not exist`, the same
+   two answers as the absent path beside them. The engine keeps "absent" and
+   "unreachable" apart nowhere: a path it cannot reach is reported as a path that does not
+   exist, by both calls.
+3. **The tool where the port expects the engine to fail.** Under a missing parent the
+   port raised `EngineError` with `context.tool == 'management.CreateFileGDB'` and the
+   engine's `ERROR 000732: File GDB Location: Dataset Z:/tmp/.../no_folder does not exist
+   or is not supported`; the tool did not create the parent, so the conformance case
+   `test_create_workspace_under_a_missing_parent_is_an_engine_error_naming_the_tool`
+   stands as written. Under the locked folder the same error class and tool, with
+   `ERROR 999999: Something unexpected caused the tool to fail`. The engine spells the
+   path in its messages with a drive letter, `Z:/tmp/...`, where the call gave `/tmp/...`.
+   The engine's lines appear three times in one `EngineError`: in the exception text, as
+   the first entry of `tool_messages`, and again as the per-line messages between
+   `Start Time` and `Failed at`; recorded as a follow-up under T2.14 in `TASKS.md`.
+4. **`Exists` timings**, seconds per call, min, median and max:
 
-The probe, `docs/refactor/temp/slice_1c_catalog_probe.py`, run as a module in the image
-(the command is in its docstring), records:
+   - 2026-11-19: file geodatabase fresh (n=5) 0.0320, 0.0326, 0.0380; repeated (n=20)
+     0.0316, 0.0342, 0.0386; memory fresh 0.0002, 0.0002, 0.0004; repeated 0.0002, 0.0002,
+     0.0003.
+   - 2026-11-23, before the correction: file geodatabase fresh 0.0365, 0.0392, 0.0407;
+     repeated 0.0356, 0.0372, 0.0391; memory fresh 0.0003, 0.0003, 0.0006; repeated
+     0.0002, 0.0002, 0.0003.
+   - 2026-11-23, corrected: file geodatabase fresh 0.0353, 0.0376, 0.0394; repeated
+     0.0333, 0.0356, 0.0396; memory fresh 0.0002, 0.0003, 0.0004; repeated 0.0002, 0.0002,
+     0.0003.
 
-1. `Describe` of a freshly created file geodatabase: `dataType` against
-   `WORKSPACE_DATA_TYPE`, and `workspaceFactoryProgID`.
-2. `Exists` and `Describe` on a missing dataset, a missing `.gdb`, a `.gdb` under a missing
-   parent folder, a folder whose permissions were removed and a `.gdb` under it, the memory
-   workspace and a missing dataset in it: the answer or the exception class per call.
-3. The file geodatabase tool, through the port, under a missing parent and under the
-   unreadable folder: the error class, the tool named in the context, and the engine's
-   messages.
-4. `Exists` timings, 20 repeated and 5 fresh, in a file geodatabase and in the memory
-   workspace, against the band of `slice_1b_read_rows_timing_evidence.md`: 0.1 to 0.5 s
-   per call acceptable, 1 to 5 s not.
-5. The tool on a geodatabase that holds a table, with the session's overwrite setting as
-   applied: whether the table survives.
+   Every call sat under the band's floor of 0.1 s, with no difference between a first call
+   and a repeated one, and the memory workspace two orders of magnitude below the file
+   geodatabase. Presence before Describe in `data_type_of` costs one such call, which was
+   the condition on that decision.
+5. **The tool on an existing geodatabase, overwrite as applied.** `overwriteOutput` read
+   back `True`; the tool ran on the geodatabase holding a table, and afterwards the table
+   answered `Exists -> False` and Describe `OSError ... does not exist`. The refusal of a
+   taken path before any tool, PC-D32, is justified by the engine's own behaviour.
 
-The feature-dataset walk case recorded as "awaiting the image" in
-`slice_1b_family_orientation_evidence.md` (`test_a_feature_class_in_a_feature_dataset_finds_its_workspace`)
-runs in the same session; its result goes into that file, beside its item.
+## Answered by the probe
 
-## Open after the paste
+- `Exists` does not separate "absent" from "unreachable" (item 2), so `exists` has no
+  second signal to offer and the order present, reachable, has rows cannot be built on
+  the engine: a caller that needs reachability reads it elsewhere. The sentence the
+  `exists` docstring and PC-D31 then carry is the architect's decision.
+- The `Exists` timing is inside the band (item 4).
+- The engine's failure on a missing parent is what the adapter expects (item 3): an
+  `ExecuteError` from the tool, wrapped as `EngineError` naming
+  `management.CreateFileGDB`. No contract question.
 
-- Whether `Exists` keeps "absent" apart from "unreachable" (item 2), and the sentence the
-  `exists` docstring then needs, if a second signal is wanted to keep the order present,
-  reachable, has rows.
-- Whether "reachable" joins PC-6 as a detail or as a proposed Direction change.
-- The `Exists` timing against the band (item 4), the condition on the architect's
-  `data_type_of` decision.
-- Whether the engine's own failure on a missing parent (item 3) is what the adapter
-  expects: an `ExecuteError` from the tool, wrapped as `EngineError` naming
-  `management.CreateFileGDB`. If the tool creates the parent instead, the conformance case
-  `test_create_workspace_under_a_missing_parent_is_an_engine_error_naming_the_tool` is a
-  contract question for the architect, not a test to fix in place.
+## Still pending
+
+- The marked tests, with the command in `docs/contributing/testing.md`: the ArcPy
+  parameter of every case in `tests/conformance/test_table_ops.py` (the catalog cases over
+  `WorkspaceFormat.FILE_GDB`), `tests/engine/arcpy/test_catalog.py`, and the rest of
+  `tests/conformance` and `tests/engine`, since `file_gdb` now goes through the port and
+  every marked test creates its workspace through it. T4.11's count of marked tests
+  changes only after this run.
+- The feature-dataset walk case recorded as "awaiting the image" in
+  `slice_1b_family_orientation_evidence.md`
+  (`test_a_feature_class_in_a_feature_dataset_finds_its_workspace`) runs in the same
+  session; its result goes into that file, beside its item.

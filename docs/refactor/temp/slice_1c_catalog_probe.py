@@ -15,12 +15,14 @@ What it does, on synthetic data under a temporary directory:
 1. Creates a file geodatabase through the port and prints what `Describe` reports for it:
    `dataType`, against the adapter's `WORKSPACE_DATA_TYPE`, and `workspaceFactoryProgID`.
 2. Asks `Exists` and `Describe` about: a missing dataset in that geodatabase; a missing
-   `.gdb`; a `.gdb` under a missing parent folder; a `.gdb` under a folder whose
-   permissions were removed inside the temporary directory; the memory workspace itself
+   `.gdb`; a `.gdb` under a missing parent folder; under a folder whose permissions were
+   removed inside the temporary directory, an absent `.gdb`, a geodatabase with one table
+   created there before the folder was locked, and that table; the memory workspace itself
    and a missing dataset in it. Per path: the `Exists` answer or the exception class, and
    the `Describe` `dataType` or the exception class and message. The adapter's `exists`
    returns the engine's answer; whether the engine keeps "absent" apart from
-   "unreachable" is what this part shows.
+   "unreachable" is what the locked rows show, read with the process's effective uid
+   printed first, since as root the removed permissions block ordinary access to nothing.
 3. Runs the file geodatabase tool against a `.gdb` under a missing parent and under the
    unreadable folder, and prints the exception class and message: the adapter relies on
    the engine's own failure there, wrapped as `EngineError` naming the tool.
@@ -160,6 +162,14 @@ def overwrite_probe(session: ArcpySession, directory: str) -> None:
 
 def main() -> None:
     session = open_session()
+    euid = os.geteuid()
+    reading = (
+        "root: the removed permissions block ordinary access to nothing, so the locked "
+        "rows are not a reachability test"
+        if euid == 0
+        else "not root: the locked rows test reachability"
+    )
+    print(f"process euid: {euid} ({reading})")
     directory = tempfile.mkdtemp(prefix="catalog_")
     locked = f"{directory}/locked"
     os.mkdir(locked)
@@ -167,6 +177,8 @@ def main() -> None:
         print("== 1. a fresh file geodatabase ==")
         workspace = gdb.file_gdb(session, directory=directory, name="probe")
         describe_workspace(session, workspace)
+        held = gdb.file_gdb(session, directory=locked, name="held")
+        create_table(session, path=f"{held}/kept", fields=(Field("n", FieldType.LONG),))
 
         print("== 2. Exists and Describe at the margins ==")
         os.chmod(locked, 0)
@@ -177,6 +189,8 @@ def main() -> None:
             ("missing parent folder", f"{directory}/no_folder/x{suffix}"),
             ("unreadable folder itself", locked),
             (".gdb under unreadable folder", f"{locked}/x{suffix}"),
+            ("existing .gdb under it", held),
+            ("table in that .gdb", f"{held}/kept"),
             ("memory workspace", MEMORY_WORKSPACE),
             ("missing dataset in memory", f"{MEMORY_WORKSPACE}/nothing"),
         ):

@@ -2580,6 +2580,12 @@ as the additions.
 Fallback: if the probe shows the restoration breaks the engine, the response becomes the
 module convention alone, and AR-D27 changes only on the architect's approval of the new text.
 
+**follow-up (`EngineError` messages):** `guard` puts the `ExecuteError` text in the exception
+message and again as the first of `tool_messages`, and `GetMessages` repeats the same lines
+with the start and failed stamps, so an engine failure prints its lines three times (seen in
+`findings/slice_1c_catalog_methods_evidence.md`). Which of the three the context keeps is
+decided when T2.14 lands; `ErrorContext` does not change shape for it.
+
 **files touched** `src/ag/adapters/arcpy/session.py`, `tests/unit/adapters/arcpy/test_session.py`,
 `tools/break_once/cases/arcpy_session.py` (explicit request), the evidence file of the pull
 request that lands it.
