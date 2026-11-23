@@ -38,7 +38,8 @@ class Catalog(ArcpyPortBase):
     """The catalog methods of `TableOps`, through the session."""
 
     def exists(self, *, input: ScratchHandle) -> bool:
-        """Whether anything is at `input`'s path."""
+        """Whether anything is at `input`'s path; the engine reports a path it cannot
+        reach as absent, by Exists and by Describe."""
         return _exists(self._session, os.fspath(input))
 
     def data_type_of(self, *, input: ScratchHandle) -> DataType:
@@ -47,7 +48,7 @@ class Catalog(ArcpyPortBase):
         path = os.fspath(input)
         if not _exists(self._session, path):
             raise PortContractError(
-                f"{input!r} names nothing: there is nothing at {path!r}, and the kind "
+                f"{input!r} names nothing: nothing was found at {path!r}, and the kind "
                 "of a dataset is asked after its presence.",
                 context=ErrorContext(handle=path),
             )

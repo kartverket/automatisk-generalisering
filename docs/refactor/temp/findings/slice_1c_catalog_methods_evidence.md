@@ -103,9 +103,11 @@ access and the locked rows are a reachability test.
    the message `"<path>" does not exist`, the memory one spelled `"memory/nothing"`.
    Reachability: the geodatabase that exists behind the locked folder and the table in it
    both answered `Exists -> False` and `Describe -> OSError ... does not exist`, the same
-   two answers as the absent path beside them. The engine keeps "absent" and
-   "unreachable" apart nowhere: a path it cannot reach is reported as a path that does not
-   exist, by both calls.
+   two answers as the absent path beside them. `Exists` and `Describe` do not keep
+   "absent" and "unreachable" apart: a path behind a folder the process cannot read is
+   reported as a path that does not exist, by both calls. The tool's failure differs
+   (000732 under a missing parent, 999999 under the locked folder, item 3), but no
+   catalog call reads it.
 3. **The tool where the port expects the engine to fail.** Under a missing parent the
    port raised `EngineError` with `context.tool == 'management.CreateFileGDB'` and the
    engine's `ERROR 000732: File GDB Location: Dataset Z:/tmp/.../no_folder does not exist
@@ -140,10 +142,13 @@ access and the locked rows are a reachability test.
 
 ## Answered by the probe
 
-- `Exists` does not separate "absent" from "unreachable" (item 2), so `exists` has no
-  second signal to offer and the order present, reachable, has rows cannot be built on
-  the engine: a caller that needs reachability reads it elsewhere. The sentence the
-  `exists` docstring and PC-D31 then carry is the architect's decision.
+- `Exists` and `Describe` do not separate "absent" from "unreachable" (item 2), so
+  `exists` has no second signal to offer. "Reachable" leaves the order present,
+  reachable, has rows: an unreachable path reads as absent, and the first call that
+  needs access fails as an `EngineError`. The port's `exists` docstring and PC-D31 say
+  that False means nothing was found at the path and that an adapter may report a path it
+  cannot reach as absent; the ArcPy adapter's docstring says its engine does, by `Exists`
+  and by `Describe`.
 - The `Exists` timing is inside the band (item 4).
 - The engine's failure on a missing parent is what the adapter expects (item 3): an
   `ExecuteError` from the tool, wrapped as `EngineError` naming
@@ -151,6 +156,13 @@ access and the locked rows are a reachability test.
 
 ## Still pending
 
+- The probe's added attempt: the tool, through the port, on the geodatabase that exists
+  behind the locked folder, and after the permissions are restored whether the table in
+  it is still there. `create_workspace` refuses a taken path on `exists` answering True,
+  which it does not there, so PC-D32's guarantee rests on the tool failing. A defensive
+  check of the engine, not a case the design expects: the scratch manager chooses every
+  path, so no path it names is behind a folder the process cannot read. If the table does
+  not survive, that is a contract question for the architect, not a fix in place.
 - The marked tests, with the command in `docs/contributing/testing.md`: the ArcPy
   parameter of every case in `tests/conformance/test_table_ops.py` (the catalog cases over
   `WorkspaceFormat.FILE_GDB`), `tests/engine/arcpy/test_catalog.py`, and the rest of

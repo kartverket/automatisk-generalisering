@@ -25,7 +25,11 @@ What it does, on synthetic data under a temporary directory:
    printed first, since as root the removed permissions block ordinary access to nothing.
 3. Runs the file geodatabase tool against a `.gdb` under a missing parent and under the
    unreadable folder, and prints the exception class and message: the adapter relies on
-   the engine's own failure there, wrapped as `EngineError` naming the tool.
+   the engine's own failure there, wrapped as `EngineError` naming the tool. Then the
+   tool, through the port, on the geodatabase that exists behind the locked folder: the
+   port's refusal of a taken path rests on `Exists`, which answers False there, so the
+   outcome shows what the tool does to a geodatabase it cannot read; after the
+   permissions are restored, whether the table in it is still there.
 4. Times `Exists`: 20 repeated calls on one seeded table in the file geodatabase and
    5 first calls on fresh tables, then the same in the memory workspace, printed as
    min, median and max in seconds, the way Describe was timed before. The band: 0.1 to
@@ -199,7 +203,9 @@ def main() -> None:
         print("== 3. the tool where the port expects the engine to fail ==")
         create_attempt(session, "missing parent folder", f"{directory}/no_folder/x{suffix}")
         create_attempt(session, ".gdb under unreadable folder", f"{locked}/x{suffix}")
+        create_attempt(session, "existing .gdb under it, locked", held)
         os.chmod(locked, stat.S_IRWXU)
+        exists_and_describe(session, "table in held.gdb, unlocked", f"{held}/kept")
 
         print("== 4. Exists timings ==")
         time_exists(session, workspace, "file geodatabase")

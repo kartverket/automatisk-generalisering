@@ -134,6 +134,8 @@ class TableOps(Protocol):
 
     def exists(self, *, input: In) -> bool:
         """Whether anything is at `input`'s path: a dataset of any kind, or a workspace.
+        False means nothing was found at the path; an adapter may report a path it
+        cannot reach as absent.
 
         Presence and nothing more: the kind is `data_type_of`'s question, and neither
         reads a row. The output sweep asks this first for every declared output, which is
