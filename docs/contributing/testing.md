@@ -113,13 +113,11 @@ roots, because the static tests import the dev tools at collection. From the rep
 root in WSL, with the repository on the Linux filesystem:
 
 ```
-uv export --locked --extra dev --no-emit-project --no-hashes -o /tmp/ag-dev-pins.txt
+uv export --locked --extra dev --no-emit-project --no-hashes -o /tmp/ag-dev-pins.txt && \
 docker run --rm -i -v "$PWD":/work:ro -w /work \
   -e PYTHONPATH=/work/src:/tmp/pt -e PYTHONDONTWRITEBYTECODE=1 \
   ghcr.io/kartverket/arcpy-linux:12.1 \
-  bash -c 'cat > /tmp/pins.txt &&
-           pip install -q --no-cache-dir --no-deps --target /tmp/pt -r /tmp/pins.txt &&
-           python -m pytest tests/conformance tests/engine -m arcpy -ra -p no:cacheprovider' \
+  bash -c 'cat > /tmp/pins.txt && pip install -q --no-cache-dir --no-deps --target /tmp/pt -r /tmp/pins.txt && python -m pytest tests/conformance tests/engine -m arcpy -ra -p no:cacheprovider' \
   < /tmp/ag-dev-pins.txt
 ```
 
