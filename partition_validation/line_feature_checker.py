@@ -13,15 +13,23 @@ class LineFeatureChecker(FeatureChecker):
 
     def analyze(self) -> dict[str, Any]:
         """
-        Analyze line features against partition buffer.
+        Analyze line features against partition features.
 
-        For line features, we detect dangles (line endpoints within the buffer).
+        **For line features, we detect:**
+        - Dangles (line endpoints within the area of interest)
 
         Returns:
-            Dictionary with dangle_count key
+            Dictionary with statistics for the relevant feature class
         """
-        end_points = self._get_relevant_end_points()
-        return {"dangle_count": len(end_points)}
+        end_points = {
+            k: v for k, v in self._get_relevant_end_points().items() if len(v) == 1
+        }
+        return {
+            "dangle_count": len(end_points),
+            "feature_ids": list(
+                set(item for sublist in end_points.values() for item in sublist)
+            ),
+        }
 
     def _get_relevant_end_points(self) -> defaultdict:
         """
@@ -32,22 +40,26 @@ class LineFeatureChecker(FeatureChecker):
         """
         end_points = defaultdict(list)
 
-        buffer_geom = self._get_buffer_geometry(self.buffer_fc)
-        if buffer_geom is None:
-            print("Buffer geometry could not be retrieved.")
+        geom = self._get_geometry(self.fc)
+        if geom is None:
+            print("Feature class geometry could not be retrieved.")
             return end_points
 
-        with arcpy.da.SearchCursor(self.feature_layer, ["OID@", "SHAPE@"]) as cursor:
-            for oid, geom in cursor:
-                start_point = geom.firstPoint
-                end_point = geom.lastPoint
+        with arcpy.da.SearchCursor(
+            self.feature_layer, ["SHAPE@", self.id_field]
+        ) as cursor:
+            for line_geom, id_value in cursor:
+                start_point = line_geom.firstPoint
+                end_point = line_geom.lastPoint
 
-                start_geom = arcpy.PointGeometry(start_point, geom.spatialReference)
-                end_geom = arcpy.PointGeometry(end_point, geom.spatialReference)
+                start_geom = arcpy.PointGeometry(
+                    start_point, line_geom.spatialReference
+                )
+                end_geom = arcpy.PointGeometry(end_point, line_geom.spatialReference)
 
-                if buffer_geom.contains(start_geom):
-                    end_points[(start_point.X, start_point.Y)].append(oid)
-                if buffer_geom.contains(end_geom):
-                    end_points[(end_point.X, end_point.Y)].append(oid)
+                if geom.contains(start_geom):
+                    end_points[(start_point.X, start_point.Y)].append(id_value)
+                if geom.contains(end_geom):
+                    end_points[(end_point.X, end_point.Y)].append(id_value)
 
         return end_points

@@ -12,7 +12,8 @@ class FeatureChecker(ABC):
     def __init__(
         self,
         feature_layer: str,
-        buffer_fc: str,
+        fc: str,
+        id_field: str,
         temp_layer_name: str = "temp_layer",
     ) -> None:
         """
@@ -20,11 +21,13 @@ class FeatureChecker(ABC):
 
         Args:
             feature_layer: The feature layer to analyze
-            buffer_fc: The buffer feature class to intersect with
+            fc: Feature class with buffer geometry
+            id_field: The field used to identify features in the feature layer
             temp_layer_name: Name for temporary layers
         """
         self.feature_layer = feature_layer
-        self.buffer_fc = buffer_fc
+        self.fc = fc
+        self.id_field = id_field
         self.temp_layer_name = temp_layer_name
 
     @abstractmethod
@@ -38,12 +41,12 @@ class FeatureChecker(ABC):
         pass
 
     @staticmethod
-    def _get_buffer_geometry(buffer_fc: str) -> Any | None:
-        """Retrieve the geometry from the buffer feature class."""
+    def _get_geometry(fc: str) -> Any | None:
+        """Retrieve the geometry from the feature class."""
         try:
-            with arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"]) as buffer_cursor:
-                buffer_geom = next(buffer_cursor)[0]
-                return buffer_geom
+            with arcpy.da.SearchCursor(fc, ["SHAPE@"]) as cursor:
+                geom = next(cursor)[0]
+                return geom
         except StopIteration:
-            print("Buffer feature class is empty.")
+            print("Feature class is empty.")
             return None

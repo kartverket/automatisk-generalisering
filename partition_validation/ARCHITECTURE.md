@@ -73,6 +73,7 @@ graph TB
 ```mermaid
 graph LR
     arcpy["🔌 arcpy"]
+    typing["🔤 analyze_typing.py<br/>AnalysisMetrics<br/>LogRecord"]
     
     analyzer["partition_analyzer.py"]
     factory["feature_checker_factory.py"]
@@ -85,6 +86,7 @@ graph LR
     arcpy -->|geometry ops| base
     
     analyzer -->|uses| factory
+    analyzer -->|uses| typing
     factory -->|imports| point
     factory -->|imports| line
     factory -->|imports| polygon
@@ -95,6 +97,10 @@ graph LR
     polygon -->|extends| base
     
     base -->|uses| arcpy
+    
+    point -->|returns| typing
+    line -->|returns| typing
+    polygon -->|returns| typing
 
     style analyzer fill:#2196F3,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
     style factory fill:#9C27B0,stroke:#4A148C,stroke-width:2px,color:#fff,font-weight:bold
@@ -102,7 +108,8 @@ graph LR
     style point fill:#00897B,stroke:#00251A,stroke-width:2px,color:#fff,font-weight:bold
     style line fill:#00897B,stroke:#00251A,stroke-width:2px,color:#fff,font-weight:bold
     style polygon fill:#00897B,stroke:#00251A,stroke-width:2px,color:#fff,font-weight:bold
-    style arcpy fill:#D32F2F,stroke:#B71C1C,stroke-width:2px,color:#fff,font-weight:bold
+    style typing fill:#D32F2F,stroke:#B71C1C,stroke-width:2px,color:#fff,font-weight:bold
+    style arcpy fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
     
     linkStyle default stroke:#1565C0,stroke-width:3px
 ```
@@ -229,17 +236,62 @@ class FeatureChecker(ABC):
 
 ## Feature Type Results
 
-Each analyzer returns metrics specific to its feature type:
+Each analyzer returns metrics specific to its feature type. All results conform to the flexible `AnalysisMetrics` TypedDict:
 
-| Type | Metric | Returns |
-|------|--------|---------|
-| **Line** | Dangle detection | `{"dangle_count": int}` |
+| Type | Metrics | Returns |
+|------|---------|---------|
+| **Line** | Dangle detection | `{"dangle_count": int, "feature_ids": list}` |
 | **Point** | Containment count | `{"point_count": int}` |
 | **Polygon** | Overlap analysis | `{"overlap_count": int, "overlap_area": float}` |
 
+**Note:** `AnalysisMetrics` uses `total=False` to allow optional fields, enabling each feature type to return only its relevant metrics without requiring unused fields.
+
 ---
 
-## Extension: Adding New Feature Types
+## Type System: `analyze_typing.py`
+
+The module provides two TypedDict classes that define the structure of analysis data:
+
+### AnalysisMetrics
+```python
+class AnalysisMetrics(TypedDict, total=False):
+    # Point metrics
+    point_count: int
+    
+    # Line metrics
+    dangle_count: int
+    feature_ids: list[Any]
+    
+    # Polygon metrics
+    overlap_count: int
+    overlap_area: float
+```
+
+**Key design:**
+- `total=False` makes all fields optional
+- Each feature checker returns only its relevant metrics
+- Type-safe while remaining flexible
+- Easy to add new metrics for new feature types
+
+### LogRecord
+```python
+class LogRecord(TypedDict, total=False):
+    caller: str
+    timestamp: str
+    buffer_distance: int
+    input: dict[str, AnalysisMetrics]
+    output: dict[str, AnalysisMetrics]
+    difference: dict[str, int | float]
+```
+
+**Usage in partition_analyzer.py:**
+- Wraps analysis results with metadata (caller, timestamp, buffer distance)
+- Stores separate metrics for input and output feature classes
+- Computed difference field for comparative analysis
+
+---
+
+
 
 ```mermaid
 graph LR

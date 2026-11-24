@@ -1039,6 +1039,12 @@ class Road_N100(Enum):
         script_source_name=partitioning, description="partition_areas"
     )
 
+    partitioning__partition_areas_dissolved__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=partitioning, description="partition_areas_dissolved"
+        )
+    )
+
     partitioning__partition_lines__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=partitioning, description="partition_lines"
     )
