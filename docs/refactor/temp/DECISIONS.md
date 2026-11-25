@@ -171,8 +171,9 @@ and the conformance suite covers it on every adapter.
 > call order.
 
 *Port half landed:* ADR-0019 Direction 6, PC-6, PC-D31, PC-D32, PC-R6, PC-R7 and the
-`ports/table_ops.py` docstrings. *Still to land with the runner:* the manager's call
-through the toolbox, the `staging/scratch.py` docstring, `02-runtime.md` §4.2.
+`ports/table_ops.py` docstrings. *Landed 2026-11-25* in `staging/scratch.py`:
+`create_workspaces` calls `create_workspace` through the toolbox's `TableOps`, once for
+the stage workspace and once per call, and `02-runtime.md` §4.2 says so.
 `destination:` ADR-0019 PC-6; `staging/scratch.py` docstring; `02-runtime.md` §4.2.
 
 ## A6. Partitioning — ownership
@@ -1803,6 +1804,10 @@ in a scratch dump, and still ambiguous for two calls of one function).
 `destination:` `core/pipeline.py` (`Stage` docstring and check, Task B); `staging/scratch.py`
 and `runtime/stage_entry.py` (slice 1c); `02-runtime.md` §4.2.
 
+> *Landed in part 2026-11-25* in `staging/scratch.py`: the workspace stem renders from the
+> call identity and a repeated (trail, leaf) within one call raises. The `Stage` check and
+> the stage entry point's binding are still to land.
+
 ## A30. Break-it-once evidence is reproducible and scoped
 
 *Decided 2026-10-07.* **Every new guard, static rule and import contract ships with a
@@ -1909,6 +1914,23 @@ equality on the rounded literal selects every noisy read at both grains).
 `destination:` `row_io.py`, `_shared/field_values.py`, `predicate_compiler.py`,
 `dataset_schema.py`, `dataset_writer.py`, `tools/break_once/cases/arcpy_adapter.py`,
 `tests/conformance/`.
+
+## A34. Pod output opens on Windows
+
+*Decided 2026-11-25, before the scratch manager was drafted.* **Every name the scratch
+manager writes, and every name in a transfer directory, is legal on Linux and on
+Windows.** Workspace names, layer names and loose-file names use ASCII letters, digits
+and underscores, and start with a letter or underscore. Names are unique without regard
+to case: the engine treats two names that differ only in case as one, and with overwrite
+on, the second silently replaces the first. A layer name is at most 160 characters. Every
+file a pod writes, a geodatabase's internal files included, has a path of at most 259
+characters, and every folder at most 247, counted from a Windows folder of a declared
+allowance plus the path from the scratch root. This is checked on every pod, not only on
+Windows. The system never runs on Windows or under ArcGIS Pro (ADR-0018 Direction 6,
+AR-R10); the requirement exists so that a person can open a scratch dump or transfer
+directory there without an exporter. Evidence:
+`findings/slice_1c_scratch_manager_evidence.md`.
+`destination:` `02-runtime.md` §4.2 and §4.3; the `staging/workspace.py` docstring.
 
 # B. Open
 
@@ -2819,3 +2841,11 @@ geometry; the minting write is the other per-call cost. Both are measured on the
 raw sets against A15.7 when `write_rows` lands, and an attributes-only read joins the
 port if the number says so. Open until measured.
 `destination:` ADR-0019 and T4.6.
+
+**B37. What a stage's identity is.** Opened 2026-11-25 with the scratch manager. Four
+things name a stage and none is typed: ADR-0021 ST-D26's `<stage_id>` on the volume,
+the stage half of A29's call identity, the stem the scratch manager renders into a
+workspace name, and the location of a scratch dump. The manager takes the stage's
+qualified name as an opaque string and only renders it. Open: whether one typed value
+in `core/` carries all four, and what it renders to in each place.
+`destination:` `core/pipeline.py` and `staging/scratch.py`.

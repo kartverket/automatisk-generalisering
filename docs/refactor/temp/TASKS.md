@@ -1148,7 +1148,8 @@ because `source` already means `ExternalSource` in this repository.
 
 ## 16b. T2.12 — `TableOps.create_workspace`
 
-**status:** port half done (slice 1c); the manager's use lands with the runner.
+**status:** done (slice 1c): the port, both adapters, the conformance cases and the
+manager's call through the toolbox.
 
 **what done means** `TableOps.create_workspace(*, path: str, fmt: WorkspaceFormat) -> None`
 exists and creates one empty workspace. `WorkspaceFormat` lives in `ports/`, since a port
@@ -1175,7 +1176,11 @@ slice 1c of `findings/implementation_plan.md`.
 
 ## 16c. T2.13 — Call identity: per-call workspace and scope namespace
 
-**status:** not started
+**status:** manager half done (slice 1c); the `Stage` check and the stage entry point's
+binding not started. Still to land here: the per-file check on a loose file, its path from
+the scratch root against the Windows file-path limit less the root allowance (A34), with
+the first method that hands out such a path; `staging/workspace.py` checks the directory
+now.
 
 **what done means** `Stage` gives each `OperationCall` a call identity in declaration order:
 the operation's short name, with `_2`, `_3`, ... on repeats, and rejects at import two
@@ -1199,7 +1204,7 @@ scope's namespace and names internal handles by trail and leaf; nothing there ch
 
 **depends on** nothing.
 
-**decision refs** A29, A15.3.
+**decision refs** A29, A15.3, A34, B37.
 
 **doc migration** A29 → the `Stage` docstring in `core/pipeline.py`, the `staging/scratch.py`
 docstring and `02-runtime.md` §4.2.

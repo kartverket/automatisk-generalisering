@@ -1,7 +1,8 @@
 # Slice 1c evidence: the scratch manager
 
-**Status:** PREPARATION, 2026-11-25, limits not yet established. Opened for the change
-that lifts `staging/workspace.py` and `staging/scratch.py` and implements
+**Status:** PARTLY FILLED, 2026-11-25: both scripts have run and the rows the paste shows
+are recorded below; the rows a terminal folded away, and the Explorer steps, are still
+placeholders. Opened for the change that lifts `staging/workspace.py` and `staging/scratch.py` and implements
 `ScratchFileManager.create_workspaces` through `TableOps.create_workspace` (A5.7, A29,
 T2.12, T2.13). Before the manager is drafted, two by-hand checks establish the name and
 path limits it will enforce, so the limits are measured rather than assumed. Pod output
@@ -67,17 +68,71 @@ environment for the system (ADR-0018 AR-R10 is not reopened).
 
 ## Engine run: the name limits probe
 
-*Placeholder. Filled from the output the architect pastes after running the probe in the
-image; nothing here is stated until then.*
+Run by the architect in the image on 2026-11-25 with the command in the probe's docstring.
+The paste folded 101 lines, so rows a4t, b1 to b8, c1, c2, d1 to d3 and e1 to e4 are
+not recorded yet; what follows is what the visible lines show.
+
+- **a. Layer name length.** At 159 and at 160 a feature class and a table were both
+  created, `Exists` answered true and the listing gained the requested name (a1f, a1t,
+  a2f, a2t). At 161 both were refused with `EngineError (from ExecuteError)` carrying
+  `ERROR 160331: The table name is invalid`, `Exists` answered false and the listing gained
+  nothing (a3f, a3t). At 200 the feature class was refused with the same classes (a4f; the
+  message and a4t are in the folded lines). So the limit is 160 for both kinds, and an
+  over-long name is refused, not truncated.
+- **b. Characters.** *Placeholder: in the folded lines.*
+- **c. Case.** *Placeholder: in the folded lines.*
+- **d. Workspace name.** *Placeholder: in the folded lines.*
+- **e. Internal file names.** *Placeholder: in the folded lines.*
 
 ## Observation on the architect's machine: Windows paths
 
-*Placeholder. Filled from the output the architect pastes after running the check by
-hand on Windows, with the Explorer extraction noted as a manual step. An observation on
-one machine, not an engine result.*
+Run by the architect on 2026-11-25. Part 1 ran under Pro's Python 3.13, since no other
+Python was on the path; part 2 under the same interpreter. An observation on one machine,
+not an engine result. The paste folded the start of the output, so 1a and the file rows
+of 1b are not recorded yet.
+
+- **1a.** *Placeholder: in the folded lines.*
+- **1b.** The deepest folder created had a total path of 247 characters, so the folder at
+  248 was not created. The file rows are in the folded lines.
+- **1c.** After the standard library's extraction, the members at 49, 74, 99, 124, 149,
+  174, 199, 224 and 249 characters existed and the member at 274 did not. Whether the
+  extraction raised or skipped is in the folded lines.
+- **Manual steps.** *Placeholder: the architect has not yet reported the Explorer
+  extraction or the copy of the deepest 1b folder.*
+- **2a.** The geodatabase at a total path of 140 was created. Feature classes whose
+  catalog paths totalled 255, 259, 260, 261 and 300 characters, with names of 114 to 159
+  characters, were every one created, present to `Exists`, listed, and opened by a search
+  cursor that read zero rows. The catalog path is not bounded at 260 under Pro.
+- **2b.** The longest internal file name of the shallow geodatabase was 48 characters.
+  Geodatabases placed so that their longest internal file path ended at 258, 259, 260 and
+  261 were created, and a two-character feature class in each was created, present, listed
+  and opened; the longest internal file path was read back at each of the four totals. So
+  Pro's own file layer writes past 260 on this machine, while the same process's Python
+  stopped at a folder of 248 and lost a zip member at 274: the tools that copy and extract
+  are what bind, not the engine.
 
 ## What the limits settle for the manager
 
-*Placeholder. Written once both sections above are filled: the layer-name budget, the
-name legality rules the engine already enforces and the ones the manager must add, the
-case rule, and the workspace-stem bound.*
+Written from the rows recorded above; the rows still in the folded lines are noted where
+they would bear on a rule. A34 states the rules; `staging/workspace.py` declares the
+numbers.
+
+- **Layer-name budget.** 160, the engine's own limit for both kinds (a2, a3), with no
+  path term: catalog paths of 300 opened under Pro (2a), so a layer name counts toward no
+  path limit.
+- **Workspace name.** Bounded so that a geodatabase's longest internal file, 48
+  characters (2b), fits a file path of 259 under a root allowance of 100: a workspace
+  name of at most 110 characters, suffix included. That bound is below the folder limit
+  less the allowance (247 less 100) and below the Linux name limit of 255 bytes, so one
+  check covers all three; the loose-files directory is the workspace name without its
+  suffix and is covered by the same check, leaving a loose file 52 characters. The file
+  limit of 259 rests on A34 and the 1b file rows, which are still folded; the folder
+  limit of 247 is in the visible 1b line.
+- **Legality.** The manager refuses anything but ASCII letters, digits and underscores
+  starting with a letter or underscore, and never rewrites. Which of those rules the engine
+  itself enforces, and whether it rewrites, is row b, still folded; the manager's rule is
+  the stricter one either way, since a name legal on both systems must be ASCII.
+- **Case.** Row c is still folded; A34's rule, that names are unique without regard to
+  case, is the one the manager applies.
+- **Workspace-stem bound on Linux.** Row d is still folded; the 110-character bound above
+  is well under 255 bytes for an ASCII name, so the row cannot move the rule.

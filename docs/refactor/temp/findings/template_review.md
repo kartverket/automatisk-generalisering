@@ -129,7 +129,7 @@ which is the wrong layer for the three errors T2.4 puts in `ports/errors.py`. Wh
 | `ScratchHandle.__fspath__` on an unmaterialised handle; `_unbound` scope; `_NotInjected.__getattr__` | `RuntimeError` | **change** to `InjectionError(AgError)` in `core/errors.py`. They are raised from `core/` and `ports/`, so the type cannot live in `runtime/`. |
 | `stage_entry._supply` unknown injected kind | `TypeError` | **change** to `InjectionError`. |
 | `stage_entry.OutputMissing` | `RuntimeError` subclass | **change** base to `StageRunError(AgError)` in `runtime/errors.py`. |
-| `ScratchFileManager` leaf collision; `render_trail` over budget | `ValueError` | **change** to `WorkspaceError(StageRunError)`; they happen in a pod, not at import. |
+| `ScratchFileManager` leaf collision; `render_trail` over budget | `ValueError` | **change** to `WorkspaceError(StagingError)` in `staging/errors.py`; they happen in a pod, not at import, and staging cannot name runtime's errors. |
 | `policy.external_classification` mismatch | `ValueError` | **keep**; it is a plan-time declaration fault reported beside `Finding`s. |
 | `_node_id` in the road example | `TypeError` | **change** to `DataContractError(DomainError)` in the fixture. |
 

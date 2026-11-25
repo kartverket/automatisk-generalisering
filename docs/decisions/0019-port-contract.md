@@ -182,9 +182,9 @@ one empty workspace and chooses nothing.
   included, with a `PortContractError` naming what the engine reports, until a method
   that takes a raster arrives; a missing path is a `PortContractError`, stated as a
   precondition, so a caller reads presence first. The output sweep reads presence then
-  kind for every declared output. Neither method reads a row, no order is imposed on any
-  other caller, and nothing is said about reachability. False means nothing was found at
-  the path; an adapter may report a path it cannot reach as absent.
+  kind for every declared output. Neither method reads a row, and no order is imposed on
+  any other caller. False means nothing was found at the path; an adapter may report a
+  path it cannot reach as absent.
 - **PC-D32** `create_workspace(path, fmt) -> None` creates one empty workspace at the full
   path, as the format spells it: the caller names the path, suffix included, and the port
   chooses no path, no format and no default. A path something is already at is a

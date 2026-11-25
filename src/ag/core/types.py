@@ -1,8 +1,8 @@
 """Names and enums shared across the planning layer.
 
 What: the string aliases for the open-ended names, and the closed sets the system
-reasons over: scales, objects, data types, input roles, classification, environment and
-storage scope.
+reasons over: scales, objects, data types, input roles, classification, environment,
+storage scope and pod role.
 
 Why: the aliases are `TypeAlias` rather than `NewType` because every one of them is a
 string at every boundary (configuration, object storage keys, job labels) and `NewType`
@@ -196,3 +196,18 @@ class StorageScope(Enum):
     INTRA_STAGE = "intra_stage"
     RUN_SCRATCH = "run_scratch"
     ARCHIVE = "archive"
+
+
+class PodRole(Enum):
+    """Which pod of a stage is running: the three segments ADR-0021 ST-D26 gives a
+    stage's transfer directories.
+
+    Why: the scratch manager renders the role into every workspace name it writes, and
+    the pod entry reads it to choose what the pod does; one closed set in `core/` keeps
+    the two spellings equal. `POD` is the partition pod and the only role that carries an
+    index.
+    """
+
+    FAN_OUT = "fan_out"
+    POD = "pod"
+    FAN_IN = "fan_in"

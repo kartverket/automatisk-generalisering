@@ -373,30 +373,48 @@ The ScratchFileManager owns every path in the pod scratch root, and nothing else
   read what operation A wrote, so these cannot live in a per-operation workspace.
 - **Operation workspaces** — internal scratch. Names carry the trail below the operation.
 
-Putting the operation name in the *workspace* rather than the layer name buys back a level of
-name budget and organizes the scratch dump for free.
+Putting the call in the *workspace* rather than the layer name keeps the whole layer-name
+budget for the trail and organizes the scratch dump for free. A workspace name is the rendered
+stage or call identity (A29) and the pod's stem, the role with the partition index:
 
 ```
-/tmp/n100_road_network_part00003.gdb/                       declared handles
-/tmp/n100_road_network_part00003/                           loose files (.lyrx, .csv, logs)
-/tmp/n100_road_network_part00003__thin_road_network.gdb/
+/tmp/thin_roads__pod00003.gdb/                              declared handles
+/tmp/thin_roads__pod00003/                                  loose files (.lyrx, .csv, logs)
+/tmp/thin_roads_dissolve__pod00003.gdb/                     one call's internal scratch
     dissolved
     build_topology__nodes
     build_topology_2__nodes
+/tmp/thin_roads_dissolve_2__pod00003.gdb/                   the second call of the same operation
 ```
 
 **Nest in the name, not the path.** A trail rendered as a layer-name prefix gives the full
 provenance while keeping paths two segments deep. Four levels is about 74 characters against a
 160-character file-GDB limit.
 
-**Compute the name budget, do not hardcode it.** On Linux only the 160-character layer limit
-applies. On Windows it is `min(160, 260 − len(workspace) − 1)`, so a deep developer root makes
-`MAX_PATH` bind first. Computing it turns a mysterious ArcPy failure into a clear message.
+**Every name opens on Windows (A34).** Names are ASCII letters, digits and underscores starting
+with a letter or underscore, checked once where a name joins a path and refused rather than
+rewritten. A layer name is at most 160 characters and counts toward no path limit. A workspace
+name is bounded so that the geodatabase's longest internal file fits a Windows file path of
+259 characters under a root allowance of 100, which also keeps every folder under 247; the
+loose-files directory is the workspace name without its suffix and is covered by the same
+bound. The checks run on every pod and are measured, not assumed
+(`temp/findings/slice_1c_scratch_manager_evidence.md`).
+
+**Names are unique without regard to case.** The engine treats two names that differ only in
+case as one and, with overwrite on, the second silently replaces the first. The manager keys
+every path it issues on its casefolded form: a repeated (trail, leaf) within one call raises,
+two declared handles whose names differ only in case raise, and two call identities whose
+rendered workspace names agree without regard to case raise.
 
 **Error, never truncate**, on over-budget names — truncation silently collides. When trails do
 start exceeding budget, render first-two + `t<hash8>` + last-two; the manager's manifest maps
 every rendered name to its full trail, so an elided name stays readable. That change lives in
 one function.
+
+**The manager names, the port creates.** `create_workspaces` creates the stage workspace and one
+workspace per call through `TableOps.create_workspace` on the toolbox the runtime hands it, so
+staging imports no engine (A5.7), and makes the loose-files directory itself; a taken path is
+refused, never reused.
 
 **Repeated scope labels auto-index** (`build_topology`, `build_topology_2`), because the same
 helper is legitimately called twice. First occurrence unnumbered. A repeated *leaf* name within
@@ -406,9 +424,8 @@ one scope is an error — that is a genuine mistake.
 Determinism buys something concrete: the same failure produces the same path, and two runs'
 file listings diff. Run isolation lives in the `run_id` in the remote path.
 
-**A workspace is a workspace.** A `.gdb` is a directory of feature classes, a `.gpkg` a file of
-tables, a plain directory holds shapefiles. The manager owns the join rule; an operation never
-learns which is in use.
+**A workspace is a workspace.** The manager owns the join rule and `staging/workspace.py` the
+one format; an operation never learns which is in use.
 
 ### 4.3 Scratch dump
 
@@ -430,6 +447,9 @@ The same argument covers payloads and stage outputs, which is why it is stated o
 Keep per-pod workspaces separate rather than merging: knowing which partition misbehaved is
 most of the diagnostic value. Ship the trail manifest alongside, and share a prefix with the
 run metadata so one download gets counts, timings, drift, and the features they describe.
+
+A dump opens on Windows without an exporter: every name and path in it meets A34's rules, which
+[§4.2](#42-scratch-workspaces-and-naming) states.
 
 ### 4.4 Retention is the resume window
 
