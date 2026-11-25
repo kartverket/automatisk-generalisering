@@ -12,19 +12,19 @@ class PolygonFeatureChecker(FeatureChecker):
 
     def analyze(self) -> dict[str, Any]:
         """
-        Analyze polygon features against partition features.
+        Analyze polygon features against area geometry.
 
         **For polygon features, we detect:**
         - Count overlapping polygons
         - Calculate overlap area
 
         Returns:
-            Dictionary with statistics for the relevant feature class
+            Dictionary with statistics for the analyzed feature class
         """
         overlap_count = 0
         total_overlap_area = 0.0
 
-        geom = self._get_geometry(self.fc)
+        geom = self._get_area_geometry()
         if geom is None:
             print("Feature class geometry could not be retrieved.")
             return {"overlap_count": 0, "overlap_area": 0.0}

@@ -10,12 +10,21 @@ import arcpy
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from partition_validation.feature_checker_factory import FeatureCheckerFactory
 
+# TODO: Skal bli lineage-basert analyse
+##########################
+# Constants
+##########################
+
+
+GLOBAL_ID = "GLOBAL_ID"  # TODO: Skal bort
+
+
 ##########################
 # Program
 ##########################
 
 
-def analyse_partition_edges(
+def analyze_partition_edges(
     partition_iterator: PartitionIterator,
     input_fc: str,
     output_fc: str,
@@ -24,24 +33,30 @@ def analyse_partition_edges(
     partition_lines: str,
     partition_buffer: str,
     buffer_distance: int = 500,
-    id_field: str = "GLOBAL_ID",
+    id_field: str = GLOBAL_ID,
 ) -> None:
     """
-    Receives the input and output files (feature classes) to a partition iterator and calculates
-    statistical differences between the two datasets to detect potential issues during the process.
-    The differences is written to a json file created dynamically.
+    Analyze partition edges by comparing input and output feature classes.
+
+    Processes partition geometry and calculates statistical differences between
+    input and output datasets to detect potential data quality issues.
+    Results are written to a JSON file.
 
     Args:
-        partition_iterator (PartitionIterator): The partition iterator object containing partition features
-        input_fc (str): Path to the input feature class containing the original data
-        output_fc (str): Path to the output feature class containing the processed data
-        partition_areas (str): Path where the partition areas should be stored
-        partition_areas_dissolved (str): Path where the dissolved partition areas should be stored
-        partition_lines (str): Path where the partition lines should be stored
-        partition_buffer (str): Path where the partition buffer should be stored
-        buffer_distance (int, optional): Distance for buffering partition lines (default: 500)
-        id_field (str, optional): The name of the ID field to use for analysis (default: "GLOBAL_ID")
+        partition_iterator: Partition iterator object containing partition features
+        input_fc: Path to input feature class containing original data
+        output_fc: Path to output feature class containing processed data
+        partition_areas: Output path for partition areas feature class
+        partition_areas_dissolved: Output path for dissolved partition areas feature class
+        partition_lines: Output path for partition lines feature class
+        partition_buffer: Output path for partition buffer feature class
+        buffer_distance: Distance for buffering partition lines (default: 500)
+        id_field: Name of ID field for feature identification (default: "GLOBAL_ID")
     """
+    print(
+        f"\nAnalyzing partition edges for:\n\t- Input: {input_fc}\n\t- Output: {output_fc}"
+    )
+
     fetch_partition_areas(partition_iterator, partition_areas)
     preprocess_partition_lines(
         partition_areas,
@@ -50,7 +65,7 @@ def analyse_partition_edges(
         partition_buffer,
         buffer_distance,
     )
-    results = analyse_partition_differences(
+    results = analyze_partition_differences(
         partition_areas_dissolved, partition_buffer, input_fc, output_fc, id_field
     )
     results.update(
@@ -58,6 +73,7 @@ def analyse_partition_edges(
             "caller": inspect.stack()[1].function,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "buffer_distance": buffer_distance,
+            "unique_id_field": id_field,
         }
     )
     write_partition_analysis_to_file(results)
@@ -71,7 +87,16 @@ def analyse_partition_edges(
 def fetch_partition_areas(
     partition_iterator: PartitionIterator, output_file: str
 ) -> None:
-    """Copies the partition features from the partition iterator to the specified feature class."""
+    """
+    Copy partition features from iterator to feature class.
+
+    Exports partition features from the partition iterator to the specified
+    output feature class and prints export statistics.
+
+    Args:
+        partition_iterator: Partition iterator containing partition features
+        output_file: Output path for the partition areas feature class
+    """
     if arcpy.Exists(partition_iterator.partition_features_all):
         arcpy.management.CopyFeatures(
             in_features=partition_iterator.partition_features_all,
@@ -88,7 +113,19 @@ def preprocess_partition_lines(
     output_buffer: str,
     buffer_distance: int,
 ) -> None:
-    """Creates polylines of the partition features, selects only the relevant ones, and creates one dissolved buffer around them."""
+    """
+    Preprocess partition lines by converting polygons to lines and creating buffer.
+
+    Converts polygon boundaries to lines, filters to keep only internal boundaries,
+    dissolves the polygons, and creates a buffer zone around the lines.
+
+    Args:
+        partition_areas: Input partition areas feature class
+        partition_areas_dissolved: Output path for dissolved partition areas
+        output_line: Output path for partition lines feature class
+        output_buffer: Output path for partition buffer feature class
+        buffer_distance: Distance for buffering partition lines
+    """
     _create_partition_lines(partition_areas, output_line)
 
     arcpy.management.Dissolve(
@@ -109,7 +146,7 @@ def preprocess_partition_lines(
     )
 
 
-def analyse_partition_differences(
+def analyze_partition_differences(
     partition_areas: str,
     partition_buffer: str,
     input_fc: str,
@@ -117,21 +154,25 @@ def analyse_partition_differences(
     id_field: str,
 ) -> dict[str, Any]:
     """
-    Analyzes the partition buffer against the input and output feature classes and returns the results as a dictionary.
+    Analyze partition areas and buffers against input and output feature classes.
+
+    Compares input and output feature classes against partition areas and buffers
+    to identify features affected by partition boundaries. Returns type-specific
+    metrics for each feature class and area type.
 
     Args:
-        partition_areas (str): The partition areas feature class
-        partition_buffer (str): The partition buffer feature class
-        input_fc (str): The input feature class to analyze against the buffer
-        output_fc (str): The output feature class to analyze against the buffer
-        id_field (str): The field used to identify features in the input and output feature classes
+        partition_areas: Partition areas feature class
+        partition_buffer: Partition buffer feature class
+        input_fc: Input feature class to analyze
+        output_fc: Output feature class to analyze
+        id_field: Field name for feature identification
 
     Returns:
-        dict[str, dict[str, int | float]]: A dictionary containing the analysis results.
+        Dictionary with nested metrics: {"input": {...}, "output": {...}, "difference": {...}}
     """
     tmp_lyr = "temp_layer"
 
-    results = {"input": dict(), "output": dict()}
+    results: dict[str, Any] = {"input": {}, "output": {}}
 
     for key, fc in zip(["input", "output"], [input_fc, output_fc]):
         print(f"Processing {key}")
@@ -152,7 +193,7 @@ def analyse_partition_differences(
             # Use factory to create appropriate checker based on feature type
             checker = FeatureCheckerFactory.create(
                 feature_layer=tmp_lyr,
-                fc=area,
+                area_fc=area,
                 id_field=id_field,
             )
             layer_stats[name] = checker.analyze()
@@ -173,12 +214,20 @@ def analyse_partition_differences(
     return results
 
 
-def write_partition_analysis_to_file(results: dict) -> None:
-    """Writes the partition analysis results to a json file."""
+def write_partition_analysis_to_file(results: dict[str, Any]) -> None:
+    """
+    Write partition analysis results to a JSON file.
+
+    Creates a timestamped JSON file containing analysis results with metadata
+    (caller function name, timestamp, buffer distance, ID field).
+
+    Args:
+        results: Dictionary containing analysis results and metadata
+    """
     output_file = f"partition_analysis_{results['caller']}_{results['timestamp'].replace(' ', '_').replace(':', '_')}.json"
     with open(output_file, "w") as f:
         json.dump(results, f, indent=4)
-    print(f"Partition analysis results written to {output_file}")
+    print(f"\nPartition analysis results written to:\n\t- {output_file}\n")
 
 
 ##########################
@@ -188,8 +237,14 @@ def write_partition_analysis_to_file(results: dict) -> None:
 
 def _create_partition_lines(partition_layer: str, output_file: str) -> None:
     """
-    Creates partition lines from the given partition layer, keeps only those having partition features
-    on both sides of the partition border, and stores them in the output file.
+    Create partition lines from polygon boundaries.
+
+    Converts polygon boundaries to lines and removes those without neighbors
+    (i.e., keeps only internal partition boundaries with features on both sides).
+
+    Args:
+        partition_layer: Input partition polygon feature class
+        output_file: Output path for partition lines feature class
     """
     if arcpy.Exists(output_file):
         arcpy.management.Delete(output_file)
@@ -213,20 +268,54 @@ def _create_partition_lines(partition_layer: str, output_file: str) -> None:
     _delete_layer(tmp_lyr)
 
 
-def _estimate_difference(tmp_res: dict) -> dict:
-    difference = {}
+def _estimate_difference(tmp_res: dict[str, Any]) -> dict[str, Any]:
+    """
+    Estimate differences between input and output analysis results.
+
+    Computes metric differences between input and output datasets. For list-type
+    metrics (e.g., feature IDs), returns items in output not in input. For numeric
+    metrics, returns the difference. Handles errors gracefully by setting difference
+    to None for problematic values.
+
+    Args:
+        tmp_res: Dictionary with "input" and "output" keys containing analysis results
+
+    Returns:
+        Dictionary with computed differences for each metric
+    """
+    difference: dict[str, Any] = {}
+    drop_keys = []
 
     for key in tmp_res["input"].keys():
         try:
-            difference[key] = tmp_res["output"].get(key, 0) - tmp_res["input"].get(
-                key, 0
-            )
-        except:
+            if isinstance(tmp_res["input"].get(key, None), list):
+                difference[key] = [
+                    geom_id
+                    for geom_id in tmp_res["output"][key]
+                    if geom_id not in set(tmp_res["input"][key])
+                ]
+                drop_keys.append(key)
+            elif isinstance(tmp_res["input"].get(key, None), dict):
+                continue
+            else:
+                difference[key] = tmp_res["output"].get(key) - tmp_res["input"].get(key)
+        except (KeyError, TypeError, ValueError):
             difference[key] = None
+
+    for key in drop_keys:
+        for layer in ["input", "output"]:
+            if key in tmp_res[layer]:
+                del tmp_res[layer][key]
 
     return difference
 
 
 def _delete_layer(layer: str) -> None:
+    """
+    Delete a temporary feature layer if it exists.
+
+    Args:
+        layer: Name of the layer to delete
+    """
     if arcpy.Exists(layer):
         arcpy.management.Delete(layer)

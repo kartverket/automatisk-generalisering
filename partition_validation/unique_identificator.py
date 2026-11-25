@@ -1,3 +1,5 @@
+# TODO: Scheduled for deletion; migrate to lineage-based persistent ID for features
+
 # Libraries
 
 import uuid
@@ -11,11 +13,14 @@ import arcpy
 
 def add_persistent_id(input_fc: str, field_name: str = "GLOBAL_ID") -> None:
     """
-    Adds a persistent UUID field if it does not already exist, and fills it with unique values for each feature.
+    Add a persistent UUID field to a feature class if it does not exist.
+
+    Adds a persistent UUID field if not already present, then populates
+    all features with unique UUIDs (only filling empty values).
 
     Args:
-        input_fc (str): The input feature class to add the persistent ID to
-        field_name (str, optional): The name of the field to store the UUIDs (default: "GLOBAL_ID")
+        input_fc: Input feature class to add the persistent ID field to
+        field_name: Name of the field to store the UUIDs (default: "GLOBAL_ID")
     """
     existing_fields = [f.name.upper() for f in arcpy.ListFields(input_fc)]
 

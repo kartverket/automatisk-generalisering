@@ -25,12 +25,12 @@ class PointFeatureChecker(FeatureChecker):
 
     def _count_points_in_area(self) -> int:
         """
-        Count point features that fall within the buffer.
+        Count point features that fall within the area.
 
         Returns:
-            Number of points within the buffer
+            Number of points within the area
         """
-        geom = self._get_geometry(self.fc)
+        geom = self._get_area_geometry()
         if geom is None:
             print("Feature class geometry could not be retrieved.")
             return 0

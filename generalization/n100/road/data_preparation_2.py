@@ -64,7 +64,7 @@ from generalization.n100.road.pipeline_checkpoint import PipelineCheckpoint
 
 from typing import Callable
 from custom_tools.general_tools.integrate_diff import IntegrateDiff
-from partition_validation.partition_analyzer import analyse_partition_edges
+from partition_validation.partition_analyzer import analyze_partition_edges
 from partition_validation.unique_identificator import add_persistent_id
 
 
@@ -102,7 +102,7 @@ else:
 if os.environ.get("AREA"):
     AREA_SELECTOR = f"navn IN ('{os.environ.get('AREA')}')"
 else:
-    AREA_SELECTOR = "navn IN ('Loppa')"
+    AREA_SELECTOR = "navn IN ('Bergen')"
 SCALE = dn.scale_n100
 
 SEARCH_DISTANCE = 5000
@@ -275,8 +275,6 @@ def run_thin_roads(
     context_radius_m: int = SEARCH_DISTANCE,
     special_selection_sql=None,
 ):
-    add_persistent_id(input_fc=input_feature)
-
     road = "road"
     processed_road = "processed_road"
 
@@ -334,7 +332,7 @@ def run_thin_roads(
     )
 
     partition_thin_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500,  # feature_count,
+        max_elements_per_partition=feature_count,
         context_radius_meters=context_radius_m,
         run_partition_optimization=True,
     )
@@ -348,17 +346,6 @@ def run_thin_roads(
         ),
     )
     partition_thin_roads.run()
-
-    analyse_partition_edges(
-        partition_iterator=partition_thin_roads,
-        input_fc=input_feature,
-        output_fc=output_feature,
-        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
-        partition_areas_dissolved=Road_N100.partitioning__partition_areas_dissolved__n100_road.value,
-        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
-        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
-        buffer_distance=context_radius_m,
-    )
 
 
 def run_consensus_thin_roads(
@@ -567,7 +554,7 @@ def ramp_partition():
     method_config = core_config.MethodEntriesConfig([ramp_config])
 
     run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500,  # 35_000,
+        max_elements_per_partition=10_000,  # 35_000,
         context_radius_meters=1000,
         run_partition_optimization=False,
     )
@@ -582,7 +569,7 @@ def ramp_partition():
     )
     partition_iterator.run()
 
-    analyse_partition_edges(
+    analyze_partition_edges(
         partition_iterator=partition_iterator,
         input_fc=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         output_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
@@ -665,8 +652,6 @@ def adding_fields():
 
 @timing_decorator
 def collapse_road_detail():
-    add_persistent_id(input_fc=Road_N100.ramps__generalized_ramps__n100_road.value)
-
     road = "road"
     processed_road = "processed_road"
 
@@ -709,7 +694,7 @@ def collapse_road_detail():
     )
 
     collapse_partition_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500,  # OBJECT_LIMIT,
+        max_elements_per_partition=OBJECT_LIMIT,
         context_radius_meters=SEARCH_DISTANCE,
     )
 
@@ -722,17 +707,6 @@ def collapse_road_detail():
         ),
     )
     partition_collapse_road_detail.run()
-
-    analyse_partition_edges(
-        partition_iterator=partition_collapse_road_detail,
-        input_fc=Road_N100.ramps__generalized_ramps__n100_road.value,
-        output_fc=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
-        partition_areas_dissolved=Road_N100.partitioning__partition_areas_dissolved__n100_road.value,
-        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
-        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
-        buffer_distance=SEARCH_DISTANCE,
-    )
 
 
 @timing_decorator
@@ -1000,10 +974,6 @@ def pre_resolve_road_conflicts():
 
 
 def resolve_road_conflicts(data_orc: InputDataOrchestrator):
-    add_persistent_id(
-        input_fc=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value
-    )
-
     road_hierarchy = """def Reclass(vegklasse, typeveg):
         if typeveg in ('bilferje', 'ramps'):
             return 0
@@ -1136,7 +1106,7 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=500,  # 100_000,
+        max_elements_per_partition=100_000,
         context_radius_meters=2000,
         partition_method=core_config.PartitionMethod.VERTICES,
         run_partition_optimization=False,
@@ -1156,17 +1126,6 @@ def resolve_road_conflicts(data_orc: InputDataOrchestrator):
     )
 
     partition_resolve_road_conflicts.run()
-
-    analyse_partition_edges(
-        partition_iterator=partition_resolve_road_conflicts,
-        input_fc=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
-        output_fc=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
-        partition_areas=Road_N100.partitioning__partition_areas__n100_road.value,
-        partition_areas_dissolved=Road_N100.partitioning__partition_areas_dissolved__n100_road.value,
-        partition_lines=Road_N100.partitioning__partition_lines__n100_road.value,
-        partition_buffer=Road_N100.partitioning__partition_buffer__n100_road.value,
-        buffer_distance=2000,
-    )
 
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
