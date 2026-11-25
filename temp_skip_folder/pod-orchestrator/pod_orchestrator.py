@@ -30,9 +30,11 @@ def download_s3_data_if_data_is_empty() -> None:
             f"Expected PVC mount directory does not exist: {DATA_ROOT}"
         )
 
+    """
     if next(DATA_ROOT.iterdir(), None) is not None:
         logger.info("PVC data directory is not empty; skipping initial S3 download")
         return
+    """
 
     environment_names = (
         "SCALITY_ENDPOINT",
@@ -188,7 +190,7 @@ def create_indexed_job(batch_api):
                     containers=[
                         client.V1Container(
                             name="worker",
-                            image="ghcr.io/kartverket/automatisk-generalisering:on_prem",
+                            image="ghcr.io/kartverket/automatisk-generalisering:on_prem_test",
                             image_pull_policy="Always",
                             env=[
                                 client.V1EnvVar(
@@ -498,6 +500,7 @@ def delete_s3_data_if_other_orchestrator_finished(batch_api) -> None:
     """
     Deletes the downloaded data from /data unless the other orchestrator still uses it.
     """
+    """
     other_job_name = os.environ.get("OTHER_ORCHESTRATOR_JOB_NAME")
     if not other_job_name:
         logger.warning(
@@ -512,6 +515,7 @@ def delete_s3_data_if_other_orchestrator_finished(batch_api) -> None:
             DATA_ROOT,
         )
         return
+    """
 
     for folder in S3_DATA_FOLDERS:
         folder_path = DATA_ROOT / folder
@@ -529,10 +533,12 @@ def main():
     logger.info(f"Parallelism: {PARALLELISM}")
     logger.info(f"Run ID: {RUN_ID}")
 
-    download_s3_data_if_data_is_empty()
     load_kube_config()
 
     batch_api = client.BatchV1Api()
+
+    delete_s3_data_if_other_orchestrator_finished(batch_api)
+    download_s3_data_if_data_is_empty()
 
     delete_partition_job(batch_api, wait=True, timeout_seconds=60)
     create_indexed_job(batch_api)
