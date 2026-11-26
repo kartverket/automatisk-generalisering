@@ -31,9 +31,9 @@ The trail is the prefix; the leaf is the last part; two underscores join them
 
 ```mermaid
 flowchart LR
-    op["thin_roads_nested<br/>scratch"] -->|"child('clean')"| clean["clean"]
+    op["scope: the operation's"] -->|"child('clean')"| clean["scope: clean"]
     clean -->|"('exploded')"| exploded["clean__exploded"]
-    clean -->|"child('named')"| named["clean / named"]
+    clean -->|"child('named')"| named["scope: clean, named"]
     named -->|"('kept')"| kept["clean__named__kept"]
 ```
 
@@ -115,7 +115,23 @@ Creates one internal scratch handle at this point in the trail.
   A port that writes a different kind to it raises, so say `DataType.TABLE` where a table is
   meant.
 - Returns a `ScratchHandle` whose `path` is set: the operation workspace joined with the
-  rendered layer name. Pass it to ports as `input` or `output`.
+  rendered layer name. Pass it to ports as `input` or `output`. The handle's `name` is the
+  trail and the leaf joined with `/`, which is not a layer-name character, so a handle's
+  name is never mistaken for the layer it renders to; the layer name joins them with `__`.
+
+<!-- sample: handle_name -->
+```python
+def handle_name() -> ScratchHandle:
+    return (
+        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
+    )
+```
+
+<!-- handle: handle_name -->
+```text
+name: clean/named/kept
+layer: clean__named__kept
+```
 
 ### `scratch.child(label, tag=None)`
 
@@ -730,8 +746,8 @@ singlepart
 
 ```mermaid
 flowchart LR
-    scope["scratch"] -->|"child('clean')"| clean["clean"]
-    clean -->|"child('named')"| named["clean / named"]
+    scope["scope: the operation's"] -->|"child('clean')"| clean["scope: clean"]
+    clean -->|"child('named')"| named["scope: clean, named"]
     named -->|"('kept')"| kept["clean__named__kept"]
 ```
 
@@ -752,9 +768,9 @@ clean__named__kept
 
 ```mermaid
 flowchart LR
-    scope["scratch"] -->|"child('parts')"| p1["parts"]
-    scope -->|"child('parts')"| p2["parts_2"]
-    scope -->|"child('parts')"| p3["parts_3"]
+    scope["scope: the operation's"] -->|"child('parts')"| p1["scope: parts"]
+    scope -->|"child('parts')"| p2["scope: parts_2"]
+    scope -->|"child('parts')"| p3["scope: parts_3"]
 ```
 
 <!-- sample: case_suffix -->

@@ -327,6 +327,16 @@ def case_table() -> ScratchFileManager:
 # end: case_table
 
 
+# sample: handle_name
+def handle_name() -> ScratchHandle:
+    return (
+        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
+    )
+
+
+# end: handle_name
+
+
 # sample: long_labels
 AREAS = "attach_the_administrative_area_attributes_to_every_road_segment_of_the_source"
 TOPOLOGY = "build_the_topology_over_the_dissolved_network_with_degrees_and_components"

@@ -3,7 +3,8 @@
 What: every `<!-- sample: key -->` fence on the page equals the block of the same key in
 `scratch_samples.py`; every `<!-- names: key -->` fence lists the layer names the sample
 issues, in order; every `<!-- manifest: key -->` fence is the manifest entries read back;
-every `<!-- error: key -->` fence is the whole message the sample raises. The page names
+every `<!-- error: key -->` fence is the whole message the sample raises; the one
+`<!-- handle: key -->` fence is a handle's name beside its layer name. The page names
 this test and the two modules it documents name the page, so each side points at the
 other.
 
@@ -34,7 +35,7 @@ DOCUMENTED = (
 
 SAMPLE_BLOCK = re.compile(r"^# sample: (\w+)\n(.*?)^# end: \1\n", re.M | re.S)
 PAGE_FENCE = re.compile(
-    r"^<!-- (sample|names|manifest|error): (\w+) -->\n```(?:python|text)\n(.*?)^```\n",
+    r"^<!-- (sample|names|manifest|error|handle): (\w+) -->\n```(?:python|text)\n(.*?)^```\n",
     re.M | re.S,
 )
 MANIFEST_CASES = ("case_shortened", "case_probe")
@@ -73,6 +74,7 @@ def test_the_page_shows_names_for_every_sample_and_nothing_else() -> None:
     assert shown == {"layout", *samples.OPERATIONS, *samples.CASES}
     assert set(page_fences("manifest")) == set(MANIFEST_CASES)
     assert set(page_fences("error")) == set(samples.ERRORS)
+    assert set(page_fences("handle")) == {"handle_name"}
 
 
 def test_the_layout_is_as_shown() -> None:
@@ -121,6 +123,17 @@ def test_an_error_sample_raises_the_message_shown(key: str) -> None:
     with pytest.raises(kind) as caught:
         trigger()
     assert str(caught.value) == page_fences("error")[key]
+
+
+def test_a_handle_is_named_with_the_trail_separator_and_its_layer_with_two_underscores() -> (
+    None
+):
+    created = samples.handle_name()
+    shown = page_fences("handle")["handle_name"].splitlines()
+    assert shown == [
+        f"name: {created.name}",
+        f"layer: {os.path.basename(os.fspath(created))}",
+    ]
 
 
 def test_the_testing_sample_passes() -> None:
