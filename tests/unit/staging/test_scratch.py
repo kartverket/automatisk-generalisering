@@ -19,8 +19,12 @@ from ag.staging.errors import StagingError, WorkspaceError
 from ag.staging.scratch import ScratchFileManager
 from ag.staging.workspace import FORMAT, LAYER_SEPARATOR
 
-STAGE = "ag.generalization.road.n100:thin_roads"
-CALLS = (f"{STAGE}/dissolve", f"{STAGE}/dissolve_2")
+STAGE = "n100/road/thin_roads"
+"""A stage's qualified name, as T2.13 shapes it; opaque to the manager."""
+
+CALLS = (f"{STAGE}:dissolve", f"{STAGE}:dissolve_2")
+"""Call identities carrying the stage and the operation; the two separators the
+rendering must keep out of a path."""
 
 
 def manager(
@@ -60,11 +64,11 @@ def test_workspace_names_carry_the_rendered_identity_and_the_pod_stem(
     made = manager(tmp_path)
     names = [os.path.basename(made.operation_workspace(c)) for c in CALLS]
     assert names == [
-        f"ag_generalization_road_n100_thin_roads_dissolve__pod00003{FORMAT.suffix}",
-        f"ag_generalization_road_n100_thin_roads_dissolve_2__pod00003{FORMAT.suffix}",
+        f"n100_road_thin_roads_dissolve__pod00003{FORMAT.suffix}",
+        f"n100_road_thin_roads_dissolve_2__pod00003{FORMAT.suffix}",
     ]
     assert os.path.basename(made.stage_workspace()) == (
-        f"ag_generalization_road_n100_thin_roads__pod00003{FORMAT.suffix}"
+        f"n100_road_thin_roads__pod00003{FORMAT.suffix}"
     )
 
 
@@ -101,9 +105,9 @@ def test_an_index_pairs_with_the_partition_role_only(
 def test_an_unknown_call_is_refused(tmp_path: Path) -> None:
     made = manager(tmp_path)
     with pytest.raises(StagingError):
-        made.operation_workspace(f"{STAGE}/other")
+        made.operation_workspace(f"{STAGE}:other")
     with pytest.raises(StagingError):
-        made.scope_for(f"{STAGE}/other")
+        made.scope_for(f"{STAGE}:other")
 
 
 def test_a_repeated_call_identity_is_refused(tmp_path: Path) -> None:
@@ -117,6 +121,14 @@ def test_two_identities_rendering_alike_without_regard_to_case_are_refused(
     with pytest.raises(WorkspaceError) as caught:
         manager(tmp_path, calls=(f"{STAGE}/Op", f"{STAGE}:op"))
     assert caught.value.context.handle is not None
+
+
+def test_a_call_rendering_like_the_stage_is_refused(tmp_path: Path) -> None:
+    """The stage and every call share one pod stem, so a call whose rendered identity
+    equals the stage's would be the stage workspace."""
+    with pytest.raises(WorkspaceError) as caught:
+        manager(tmp_path, calls=(STAGE.replace("/", ":").upper(),))
+    assert caught.value.context.handle == "N100_ROAD_THIN_ROADS"
 
 
 def test_a_scope_is_bound_to_its_call_and_renders_the_trail(tmp_path: Path) -> None:

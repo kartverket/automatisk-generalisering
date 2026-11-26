@@ -120,8 +120,8 @@ work but have different lifetimes and different modules.
 | 14 | T2.9 | Port surface surgery — splits, `DANGLE`, delete `union` | not started |
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
-| 16b | T2.12 | `TableOps.create_workspace` | port half **done** (slice 1c); the manager's use lands with the runner |
-| 16c | T2.13 | Call identity: per-call workspace and scope namespace | not started |
+| 16b | T2.12 | `TableOps.create_workspace` | **done** (slice 1c) |
+| 16c | T2.13 | Call identity: per-call workspace and scope namespace | manager half **done** (slice 1c); `Stage` and the stage entry point not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
 | 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
@@ -1156,7 +1156,7 @@ exists and creates one empty workspace. `WorkspaceFormat` lives in `ports/`, sin
 signature names it; `staging/workspace.py` keeps the join rule, name legality and the name
 budget. `ScratchFileManager.create_workspaces` calls the method through the toolbox `runtime/`
 hands it, once for the stage workspace and once per operation workspace, and creates the
-sidecar directories itself. Both adapters implement it, the in-memory one by recording the
+loose-files directory itself. Both adapters implement it, the in-memory one by recording the
 workspace, and the conformance suite has its cases: the workspace exists afterwards; creating
 one that already exists is a `PortContractError`; a path whose parent is missing is an
 `EngineError` naming the tool.

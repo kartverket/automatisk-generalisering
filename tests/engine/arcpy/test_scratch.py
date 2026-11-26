@@ -22,8 +22,12 @@ from tests.support.cases import lookup, roads
 
 pytestmark = pytest.mark.arcpy
 
-STAGE = "ag.generalization.road.n100:thin_roads"
-CALLS = (f"{STAGE}/dissolve", f"{STAGE}/dissolve_2")
+STAGE = "n100/road/thin_roads"
+"""A stage's qualified name, as T2.13 shapes it; opaque to the manager."""
+
+CALLS = (f"{STAGE}:dissolve", f"{STAGE}:dissolve_2")
+"""Call identities carrying the stage and the operation; the two separators the
+rendering must keep out of a path."""
 
 
 def test_create_workspaces_creates_every_workspace_and_the_loose_files_directory(

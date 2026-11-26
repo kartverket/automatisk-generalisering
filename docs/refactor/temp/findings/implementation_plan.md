@@ -132,7 +132,7 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 
 | module | state | notes | slice |
 |---|---|---|---|
-| `staging/workspace.py` | lift | `normalize_layer_name` landed as `legal_name`, reject-only, with the limits A34 states, measured before the lift (`findings/slice_1c_scratch_manager_evidence.md`). `posixpath` joins are used deliberately; slice 1b checks that ArcPy in the image accepts them for `.gdb` layer paths (§8.2). | 1c; `normalize_layer_name` as a hand-off |
+| `staging/workspace.py` | lift | `normalize_layer_name` landed as `legal_name`, reject-only, with the limits A34 states, measured before the lift (`findings/slice_1c_scratch_manager_evidence.md`). `posixpath` joins are used deliberately; slice 1b checks that ArcPy in the image accepts them for `.gdb` layer paths (§8.2). | 1c |
 | `staging/scratch.py` | lift, one gap | `ScratchFileManager` is the decided design (02-runtime §4.2). `create_workspaces` is unimplemented and its docstring says `CreateFileGDB`, which `staging/` may not call. Decided 2026-09-21 (A5.7): `TableOps.create_workspace`. The manager calls it through the toolbox; implemented in 1c. | 1c |
 | `staging/transfer.py` | stale | Duplicate `ArchiveClient` (above); `stage_down`/`stage_up`/`dump_scratch` unimplemented; `PinnedInput`/`PlannedOutput` typed as `object`. Rewrite in slice 1c for the local case (dump only) and slice 5 for the tree on the volume and the stage boundary (ADR-0021 ST-D26). | 1c (dump), 5 (stage down and up) |
 | `runtime/stage_entry.py` | lift | `run_operations`, `_supply`, `sweep_outputs` are the decided pod dispatch loop. Slice 3 wraps it with the lineage session; the function itself does not change shape. | 1c, 3 |

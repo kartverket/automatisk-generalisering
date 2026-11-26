@@ -8,23 +8,24 @@ internal path it issued against the call, trail and leaf it stands for.
 
 How: a workspace stem is the rendered stage, or the rendered call identity, followed by
 the pod stem, the role's value with the partition index on a partition pod, so a dump
-sorts by stage and call and two pods' workspaces never share a name:
+sorts by stage and call and two pods' workspaces never share a name. With the stage
+`n100/road/thin_roads` and the calls `dissolve` and `dissolve_2` on partition pod 3:
 
-    thin_roads__pod00003.gdb                   declared handles
-    thin_roads__pod00003/                      loose files
-    thin_roads_dissolve__pod00003.gdb          internal scratch of one call
-    thin_roads_dissolve_2__pod00003.gdb        the second call of the same operation
+    n100_road_thin_roads__pod00003.gdb             declared handles
+    n100_road_thin_roads__pod00003/                loose files
+    n100_road_thin_roads_dissolve__pod00003.gdb    internal scratch of one call
+    n100_road_thin_roads_dissolve_2__pod00003.gdb  the second call of the same operation
 
 The stage and the call identities are opaque strings: `Stage` computes the identities
-(A29) and the manager only renders them, refusing a call it was not given and two calls
-whose rendered names agree without regard to case. Every path the manager issues enters
-a map keyed on the casefolded path, because the engine treats two names that differ only
-in case as one and, with overwrite on, the second silently replaces the first (A34): a
-repeated (trail, leaf) in one call raises, a declared handle whose name is case-equal to
-another's raises, and the same declared handle asked twice gets the same path. Every
-path is settled in the constructor, so a bad name fails before anything is created. No
-timestamps: the root starts empty and dies with the pod, and a deterministic path is
-one that two runs' listings can be diffed on.
+(A29) and the manager only renders them, refusing a call it was not given and any two of
+the stage and the calls whose rendered names agree without regard to case. Every path
+the manager issues enters a map keyed on the casefolded path, because the engine treats
+two names that differ only in case as one and, with overwrite on, the second silently
+replaces the first (A34): a repeated (trail, leaf) in one call raises, a declared handle
+whose name is case-equal to another's raises, and the same declared handle asked twice
+gets the same path. Every path is settled in the constructor, so a bad name fails before
+anything is created. No timestamps: the root starts empty and dies with the pod, and a
+deterministic path is one that two runs' listings can be diffed on.
 
 Why: the call sits in the workspace and not in the layer name, so a trail keeps the
 whole layer-name budget. The manager holds the paths and `workspace.py` the spellings,
@@ -97,7 +98,7 @@ class ScratchFileManager:
         )
         self._workspaces = {
             call: workspace_path(root, f"{stem}{STEM_SEPARATOR}{pod}")
-            for call, stem in _render_calls(calls).items()
+            for call, stem in _render_calls(calls, stage=stage).items()
         }
         self._issued: dict[str, _Issued] = {}
         self._declared: dict[str, ScratchHandle] = {}
@@ -184,11 +185,13 @@ def _pod_stem(role: PodRole, partition_index: int | None, /) -> str:
     return f"{role.value}{partition_index:0{PARTITION_INDEX_DIGITS}d}"
 
 
-def _render_calls(calls: Sequence[str], /) -> dict[str, str]:
-    """Each call identity against its rendered stem; a repeated identity, or two whose
-    stems agree without regard to case, is refused."""
+def _render_calls(calls: Sequence[str], *, stage: str) -> dict[str, str]:
+    """Each call identity against its rendered stem. A repeated identity is refused, and
+    so is a stem that agrees, without regard to case, with another call's or with the
+    stage's: the stage and every call share one pod stem, so equal stems would be one
+    workspace."""
     stems: dict[str, str] = {}
-    seen: dict[str, str] = {}
+    seen: dict[str, str] = {render_identity(stage).casefold(): stage}
     for call in calls:
         if call in stems:
             raise StagingError(f"call identity {call!r} is given twice.")
@@ -196,8 +199,8 @@ def _render_calls(calls: Sequence[str], /) -> dict[str, str]:
         other = seen.setdefault(stem.casefold(), call)
         if other != call:
             raise WorkspaceError(
-                f"call identities {other!r} and {call!r} both render to the workspace "
-                f"name {stem!r} without regard to case.",
+                f"identities {other!r} and {call!r} both render to the workspace name "
+                f"{stem!r} without regard to case.",
                 context=ErrorContext(handle=stem),
             )
         stems[call] = stem

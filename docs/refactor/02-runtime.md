@@ -375,16 +375,17 @@ The ScratchFileManager owns every path in the pod scratch root, and nothing else
 
 Putting the call in the *workspace* rather than the layer name keeps the whole layer-name
 budget for the trail and organizes the scratch dump for free. A workspace name is the rendered
-stage or call identity (A29) and the pod's stem, the role with the partition index:
+stage or call identity (A29) and the pod's stem, the role with the partition index; for the
+stage `n100/road/thin_roads` on partition pod 3:
 
 ```
-/tmp/thin_roads__pod00003.gdb/                              declared handles
-/tmp/thin_roads__pod00003/                                  loose files (.lyrx, .csv, logs)
-/tmp/thin_roads_dissolve__pod00003.gdb/                     one call's internal scratch
+/tmp/n100_road_thin_roads__pod00003.gdb/                    declared handles
+/tmp/n100_road_thin_roads__pod00003/                        loose files (.lyrx, .csv, logs)
+/tmp/n100_road_thin_roads_dissolve__pod00003.gdb/           one call's internal scratch
     dissolved
     build_topology__nodes
     build_topology_2__nodes
-/tmp/thin_roads_dissolve_2__pod00003.gdb/                   the second call of the same operation
+/tmp/n100_road_thin_roads_dissolve_2__pod00003.gdb/         the second call of the same operation
 ```
 
 **Nest in the name, not the path.** A trail rendered as a layer-name prefix gives the full
@@ -403,8 +404,8 @@ bound. The checks run on every pod and are measured, not assumed
 **Names are unique without regard to case.** The engine treats two names that differ only in
 case as one and, with overwrite on, the second silently replaces the first. The manager keys
 every path it issues on its casefolded form: a repeated (trail, leaf) within one call raises,
-two declared handles whose names differ only in case raise, and two call identities whose
-rendered workspace names agree without regard to case raise.
+two declared handles whose names differ only in case raise, and any two of the stage and the
+call identities whose rendered workspace names agree without regard to case raise.
 
 **Error, never truncate**, on over-budget names — truncation silently collides. When trails do
 start exceeding budget, render first-two + `t<hash8>` + last-two; the manager's manifest maps
