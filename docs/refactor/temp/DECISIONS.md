@@ -2849,3 +2849,12 @@ workspace name, and the location of a scratch dump. The manager takes the stage'
 qualified name as an opaque string and only renders it. Open: whether one typed value
 in `core/` carries all four, and what it renders to in each place.
 `destination:` `core/pipeline.py` and `staging/scratch.py`.
+
+**B38. Attribute indexes and the internal file name length.** Opened 2026-11-26 with the
+scratch manager. The workspace-name bound rests on the longest file the engine writes
+inside a geodatabase, 48 characters for the system tables; an attribute index adds a file
+named for the index, 14 characters plus the index name (`slice_1c_scratch_manager_evidence.md`,
+row e4), so an index name over 34 characters would be the longest file and a workspace at the
+bound would put it past the Windows file-path limit. Nothing creates an attribute index
+today. Open until something does: whether the bound grows, or index names are capped at 34.
+`destination:` `staging/workspace.py`, `INTERNAL_FILE_NAME_LENGTH`.

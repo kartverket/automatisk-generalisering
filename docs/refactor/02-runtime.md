@@ -407,10 +407,17 @@ every path it issues on its casefolded form: a repeated (trail, leaf) within one
 two declared handles whose names differ only in case raise, and any two of the stage and the
 call identities whose rendered workspace names agree without regard to case raise.
 
-**Error, never truncate**, on over-budget names — truncation silently collides. When trails do
-start exceeding budget, render first-two + `t<hash8>` + last-two; the manager's manifest maps
-every rendered name to its full trail, so an elided name stays readable. That change lives in
-one function.
+**Shorten by whole labels, never cut.** A rendered layer name of 160 characters or less is used
+as it is. A longer one keeps its leaf, then as many labels as fit from the leaf backwards, then
+the first label if there is room, and carries a twelve-digit window of the SHA-256 digest of
+the casefolded full name where labels were dropped: `<first>__t<digits>__<kept>__<leaf>`. The
+decision reads that name alone, so a name that fits is never changed by its neighbours. When
+the shortened name is already issued for a different trail, the manager takes the next window
+of the digest and raises only when all five are taken; a repeated trail is still the collision
+error. The manifest records every issued path with its call, trail, leaf and window, so a
+shortened name is always readable back. Workspace names are never shortened: they keep their
+limit and its error. A leaf too long to sit beside the digest raises, since its length is the
+author's choice.
 
 **The manager names, the port creates.** `create_workspaces` creates the stage workspace and one
 workspace per call through `TableOps.create_workspace` on the toolbox the runtime hands it, so

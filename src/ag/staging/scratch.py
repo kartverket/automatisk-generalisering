@@ -23,8 +23,11 @@ the manager issues enters a map keyed on the casefolded path, because the engine
 two names that differ only in case as one and, with overwrite on, the second silently
 replaces the first (A34): a repeated (trail, leaf) in one call raises, a declared handle
 whose name is case-equal to another's raises, and the same declared handle asked twice
-gets the same path. Every path is settled in the constructor, so a bad name fails before
-anything is created. No timestamps: the root starts empty and dies with the pod, and a
+gets the same path. A layer name over the limit is shortened by `workspace.render_trail`
+and carries a window of the full name's digest; when the shortened name is taken by a
+different trail the manager tries the next window, raises when all are taken, and
+records the window in the manifest, so a reader can reproduce the name. Every workspace
+path is settled in the constructor, so a bad name fails before anything is created. No timestamps: the root starts empty and dies with the pod, and a
 deterministic path is one that two runs' listings can be diffed on.
 
 Why: the call sits in the workspace and not in the layer name, so a trail keeps the
@@ -48,9 +51,12 @@ from ag.core.types import DataType, PodRole
 from ag.ports.table_ops import TableOps
 from ag.staging.errors import StagingError, WorkspaceError
 from ag.staging.workspace import (
+    DIGEST_WINDOWS,
     FORMAT,
+    Digest,
     join,
     loose_files_path,
+    name_digest,
     render_identity,
     render_trail,
     workspace_path,
@@ -65,12 +71,21 @@ PARTITION_INDEX_DIGITS = 5
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class _Issued:
-    """One internal path and what it stands for: the call identity, the trail and the
-    leaf."""
+class Issued:
+    """One internal path and what it stands for: the call identity, the trail, the leaf,
+    and the digest window the name carries when it was shortened. The manifest's value;
+    `window` is what lets a reader reproduce a shortened name."""
 
     path: str
+    call: str
     trail: tuple[str, ...]
+    leaf: str
+    window: int
+
+    @property
+    def identity(self) -> tuple[str, ...]:
+        """(call identity, *trail, leaf): what makes two issues the same name."""
+        return (self.call, *self.trail, self.leaf)
 
 
 class ScratchFileManager:
@@ -85,6 +100,7 @@ class ScratchFileManager:
         role: PodRole,
         partition_index: int | None = None,
         table: TableOps,
+        digest: Digest = name_digest,
     ) -> None:
         if (partition_index is None) == (role is PodRole.POD):
             raise StagingError(
@@ -100,7 +116,8 @@ class ScratchFileManager:
             call: workspace_path(root, f"{stem}{STEM_SEPARATOR}{pod}")
             for call, stem in _render_calls(calls, stage=stage).items()
         }
-        self._issued: dict[str, _Issued] = {}
+        self._digest = digest
+        self._issued: dict[str, Issued] = {}
         self._declared: dict[str, ScratchHandle] = {}
 
     @property
@@ -148,26 +165,38 @@ class ScratchFileManager:
         workspace = self.operation_workspace(call)
 
         def materialize(trail: tuple[str, ...], leaf: str, data_type: DataType) -> str:
-            path = join(workspace, render_trail(trail, leaf))
-            key = path.casefold()
-            before = self._issued.get(key)
-            if before is not None:
-                raise WorkspaceError(
-                    f"scratch path {path!r} was already issued in this pod for "
-                    f"{before.trail!r}; a repeated leaf within one scope is a mistake, "
-                    "and the engine treats two names differing only in case as one. "
-                    "Use scratch.child(...) where two tools need the same leaf.",
-                    context=ErrorContext(handle=path),
-                )
-            self._issued[key] = _Issued(path=path, trail=(call, *trail, leaf))
-            return path
+            identity = _casefolded((call, *trail, leaf))
+            for window in range(DIGEST_WINDOWS):
+                layer = render_trail(trail, leaf, window=window, digest=self._digest)
+                path = join(workspace, layer)
+                key = path.casefold()
+                before = self._issued.get(key)
+                if before is None:
+                    self._issued[key] = Issued(
+                        path=path, call=call, trail=trail, leaf=leaf, window=window
+                    )
+                    return path
+                if _casefolded(before.identity) == identity:
+                    raise WorkspaceError(
+                        f"scratch path {path!r} was already issued in this pod for "
+                        f"{before.identity!r}; a repeated leaf within one scope is a "
+                        "mistake, and the engine treats two names differing only in "
+                        "case as one. Use scratch.child(...) where two tools need the "
+                        "same leaf.",
+                        context=ErrorContext(handle=path),
+                    )
+            raise WorkspaceError(
+                f"every one of the {DIGEST_WINDOWS} shortened names for "
+                f"{(call, *trail, leaf)!r} is taken by another trail in this pod.",
+                context=ErrorContext(handle=join(workspace, render_trail(trail, leaf))),
+            )
 
         return ScratchScope(namespace=call, trail=(), materialize=materialize)
 
-    def manifest(self) -> Mapping[str, tuple[str, ...]]:
-        """Every internal path issued, against (call identity, *trail, leaf). Shipped
-        with the scratch dump so a rendered name is always readable back."""
-        return {issued.path: issued.trail for issued in self._issued.values()}
+    def manifest(self) -> Mapping[str, Issued]:
+        """Every internal path issued, against what it stands for. Shipped with the
+        scratch dump so a rendered name, shortened or not, is always readable back."""
+        return {issued.path: issued for issued in self._issued.values()}
 
     def create_workspaces(self) -> None:
         """Creates the stage workspace, one workspace per call and the loose-files
@@ -176,6 +205,11 @@ class ScratchFileManager:
         for workspace in self._workspaces.values():
             self._table.create_workspace(path=workspace, fmt=FORMAT)
         os.makedirs(self.loose_files())
+
+
+def _casefolded(parts: tuple[str, ...], /) -> tuple[str, ...]:
+    """`parts` casefolded one by one, for comparing identities as the engine would."""
+    return tuple(part.casefold() for part in parts)
 
 
 def _pod_stem(role: PodRole, partition_index: int | None, /) -> str:

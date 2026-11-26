@@ -18,9 +18,9 @@ CASES: tuple[Case, ...] = (
         SCRATCH,
         (
             (
-                "            if before is not None:\n"
-                "                raise WorkspaceError(",
-                "            if False:\n                raise WorkspaceError(",
+                "                if _casefolded(before.identity) == identity:\n"
+                "                    raise WorkspaceError(",
+                "                if False:\n                    raise WorkspaceError(",
             ),
         ),
         tests_in(
@@ -35,10 +35,10 @@ CASES: tuple[Case, ...] = (
         SCRATCH,
         (
             (
-                "            key = path.casefold()\n"
-                "            before = self._issued.get(key)",
-                "            key = render_trail(trail, leaf).casefold()\n"
-                "            before = self._issued.get(key)",
+                "                key = path.casefold()\n"
+                "                before = self._issued.get(key)",
+                "                key = layer.casefold()\n"
+                "                before = self._issued.get(key)",
             ),
         ),
         tests_in(
@@ -51,9 +51,10 @@ CASES: tuple[Case, ...] = (
         SCRATCH,
         (
             (
-                "            key = path.casefold()\n"
-                "            before = self._issued.get(key)",
-                "            key = path\n            before = self._issued.get(key)",
+                "                key = path.casefold()\n"
+                "                before = self._issued.get(key)",
+                "                key = path\n"
+                "                before = self._issued.get(key)",
             ),
         ),
         tests_in(T_SCRATCH, "test_a_leaf_differing_only_in_case_raises"),
@@ -76,13 +77,11 @@ CASES: tuple[Case, ...] = (
     ),
     Case(
         "S5",
-        "layer-name limit not checked",
+        "layer-name limit not checked at the join",
         WORKSPACE,
-        (("    if len(rendered) > LAYER_NAME_LIMIT:", "    if False:"),),
-        tests_in(T_WORKSPACE, "test_render_trail_allows_the_limit_and_refuses_one_over")
-        + tests_in(
-            T_SCRATCH, "test_a_leaf_over_the_layer_limit_raises_without_issuing"
-        ),
+        (("    if len(legal_name(layer)) > LAYER_NAME_LIMIT:", "    if False:"),),
+        tests_in(T_WORKSPACE, "test_join_refuses_a_layer_name_over_the_limit")
+        + tests_in(T_SCRATCH, "test_a_declared_handle_over_the_layer_limit_is_refused"),
     ),
     Case(
         "S6",
@@ -187,6 +186,103 @@ CASES: tuple[Case, ...] = (
             ),
         ),
         tests_in(T_SCRATCH, "test_a_call_rendering_like_the_stage_is_refused"),
+    ),
+    Case(
+        "S14",
+        "over-long layer name not shortened",
+        WORKSPACE,
+        (
+            (
+                "    if len(full) <= LAYER_NAME_LIMIT:\n        return full",
+                "    if True:\n        return full",
+            ),
+        ),
+        tests_in(
+            T_WORKSPACE,
+            "test_a_name_at_the_limit_is_unchanged_and_one_over_is_shortened",
+        )
+        + tests_in(
+            T_SCRATCH, "test_a_long_trail_is_shortened_and_the_manifest_reads_it_back"
+        ),
+    ),
+    Case(
+        "S15",
+        "digest taken over the name with regard to case",
+        WORKSPACE,
+        (
+            (
+                "    return hashlib.sha256(full.casefold().encode()).hexdigest()",
+                "    return hashlib.sha256(full.encode()).hexdigest()",
+            ),
+        ),
+        tests_in(T_WORKSPACE, "test_names_differing_only_in_case_shorten_alike"),
+    ),
+    Case(
+        "S16",
+        "digest taken over the leaf instead of the full name",
+        WORKSPACE,
+        (
+            (
+                "    digits = digest(full)[start : start + DIGEST_LENGTH]",
+                "    digits = digest(leaf)[start : start + DIGEST_LENGTH]",
+            ),
+        ),
+        tests_in(T_WORKSPACE, "test_the_digest_is_of_the_full_name"),
+    ),
+    Case(
+        "S17",
+        "leaf dropped from a shortened name",
+        WORKSPACE,
+        (
+            (
+                "    return LAYER_SEPARATOR.join((*((first,) if fits else ()), mark, "
+                "*kept, leaf))",
+                "    return LAYER_SEPARATOR.join((*((first,) if fits else ()), mark, "
+                "*kept))",
+            ),
+        ),
+        tests_in(
+            T_WORKSPACE,
+            "test_a_shortened_name_keeps_the_leaf_the_tail_and_the_first_label",
+        ),
+    ),
+    Case(
+        "S18",
+        "taken shortened name not probed",
+        SCRATCH,
+        (
+            (
+                "            for window in range(DIGEST_WINDOWS):",
+                "            for window in range(1):",
+            ),
+        ),
+        tests_in(T_SCRATCH, "test_a_taken_shortened_name_probes_the_next_window"),
+    ),
+    Case(
+        "S19",
+        "probe window not recorded in the manifest",
+        SCRATCH,
+        (
+            (
+                "                        path=path, call=call, trail=trail, leaf=leaf, "
+                "window=window",
+                "                        path=path, call=call, trail=trail, leaf=leaf, "
+                "window=0",
+            ),
+        ),
+        tests_in(T_SCRATCH, "test_a_taken_shortened_name_probes_the_next_window"),
+    ),
+    Case(
+        "S20",
+        "probe loop not bounded by the digest's windows",
+        SCRATCH,
+        (
+            (
+                "            for window in range(DIGEST_WINDOWS):",
+                "            for window in range(10**9):",
+            ),
+        ),
+        tests_in(T_SCRATCH, "test_every_window_taken_raises"),
     ),
 )
 

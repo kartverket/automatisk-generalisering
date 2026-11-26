@@ -17,7 +17,15 @@ from ag.core.types import DataType, PodRole
 from ag.ports.errors import PortContractError
 from ag.staging.errors import StagingError, WorkspaceError
 from ag.staging.scratch import ScratchFileManager
-from ag.staging.workspace import FORMAT, LAYER_SEPARATOR
+from ag.staging.workspace import (
+    DIGEST_LENGTH,
+    DIGEST_WINDOWS,
+    FORMAT,
+    LAYER_NAME_LIMIT,
+    LAYER_SEPARATOR,
+    Digest,
+    name_digest,
+)
 
 STAGE = "n100/road/thin_roads"
 """A stage's qualified name, as T2.13 shapes it; opaque to the manager."""
@@ -34,10 +42,12 @@ def manager(
     role: PodRole = PodRole.POD,
     partition_index: int | None = 3,
     store: MemoryStore | None = None,
+    digest: Digest = name_digest,
 ) -> ScratchFileManager:
     return ScratchFileManager(
         root=str(root),
         stage=STAGE,
+        digest=digest,
         calls=calls,
         role=role,
         partition_index=partition_index,
@@ -140,7 +150,10 @@ def test_a_scope_is_bound_to_its_call_and_renders_the_trail(tmp_path: Path) -> N
     assert handle.namespace == CALLS[0]
     expected = LAYER_SEPARATOR.join(("build_2", "sub", "nodes"))
     assert handle.path == f"{made.operation_workspace(CALLS[0])}/{expected}"
-    assert made.manifest() == {handle.path: (CALLS[0], "build_2", "sub", "nodes")}
+    entry = made.manifest()[os.fspath(handle)]
+    assert entry.identity == (CALLS[0], "build_2", "sub", "nodes")
+    assert entry.window == 0
+    assert list(made.manifest()) == [handle.path]
 
 
 def test_the_same_leaf_in_two_calls_gives_two_unequal_handles(tmp_path: Path) -> None:
@@ -154,8 +167,9 @@ def test_the_same_leaf_in_two_calls_gives_two_unequal_handles(tmp_path: Path) ->
 def test_a_repeated_trail_and_leaf_in_one_call_raises(tmp_path: Path) -> None:
     scope = manager(tmp_path).scope_for(CALLS[0])
     scope("x")
-    with pytest.raises(WorkspaceError):
+    with pytest.raises(WorkspaceError) as caught:
         scope("x")
+    assert "already issued" in str(caught.value)
 
 
 def test_a_leaf_differing_only_in_case_raises(tmp_path: Path) -> None:
@@ -165,6 +179,70 @@ def test_a_leaf_differing_only_in_case_raises(tmp_path: Path) -> None:
     with pytest.raises(WorkspaceError) as caught:
         scope("roads")
     assert caught.value.context.handle == f"{made.operation_workspace(CALLS[0])}/roads"
+    assert "already issued" in str(caught.value)
+
+
+LONG = "a" * 80, "b" * 80
+"""Two labels whose trail with any leaf is over the layer limit; shortening keeps the
+second and the leaf and drops the first, so two trails differing in the first label
+shorten to one name but for the digest."""
+
+
+def windows_apart(full: str) -> str:
+    """A digest that is the same for every name, with every window distinct, so every
+    shortened name collides and the probe must move on."""
+    return "".join(
+        str(window) * DIGEST_LENGTH for window in range(DIGEST_WINDOWS)
+    ).ljust(len(name_digest("")), "f")
+
+
+def test_a_long_trail_is_shortened_and_the_manifest_reads_it_back(
+    tmp_path: Path,
+) -> None:
+    made = manager(tmp_path)
+    handle = made.scope_for(CALLS[0]).child(LONG[0]).child(LONG[1])("leaf")
+    layer = os.path.basename(os.fspath(handle))
+    assert len(layer) <= LAYER_NAME_LIMIT
+    assert layer.endswith(f"{LAYER_SEPARATOR}leaf")
+    entry = made.manifest()[os.fspath(handle)]
+    assert entry.identity == (CALLS[0], *LONG, "leaf")
+    assert entry.window == 0
+
+
+def test_a_taken_shortened_name_probes_the_next_window(tmp_path: Path) -> None:
+    made = manager(tmp_path, digest=windows_apart)
+    scope = made.scope_for(CALLS[0])
+    first = scope.child(LONG[0]).child(LONG[1])("leaf")
+    second = scope.child("c" * 80).child(LONG[1])("leaf")
+    assert os.fspath(first) != os.fspath(second)
+    assert made.manifest()[os.fspath(first)].window == 0
+    assert made.manifest()[os.fspath(second)].window == 1
+
+
+def test_every_window_taken_raises(tmp_path: Path) -> None:
+    scope = manager(tmp_path, digest=windows_apart).scope_for(CALLS[0])
+    for window in range(DIGEST_WINDOWS):
+        scope.child(f"m{window}" * 40).child(LONG[1])("leaf")
+    with pytest.raises(WorkspaceError) as caught:
+        scope.child("z" * 80).child(LONG[1])("leaf")
+    assert "taken" in str(caught.value)
+
+
+def test_a_repeated_long_name_raises_and_does_not_probe(tmp_path: Path) -> None:
+    inner = manager(tmp_path, digest=windows_apart).scope_for(CALLS[0]).child(LONG[0])
+    inner = inner.child(LONG[1])
+    inner("leaf")
+    for again in ("leaf", "LEAF"):
+        with pytest.raises(WorkspaceError) as caught:
+            inner(again)
+        assert "already issued" in str(caught.value)
+
+
+def test_a_declared_handle_over_the_layer_limit_is_refused(tmp_path: Path) -> None:
+    made = manager(tmp_path)
+    with pytest.raises(WorkspaceError) as caught:
+        made.handle(ScratchHandle(name="x" * (LAYER_NAME_LIMIT + 1), namespace="p.H"))
+    assert "no trail" in str(caught.value)
 
 
 def test_a_leaf_over_the_layer_limit_raises_without_issuing(tmp_path: Path) -> None:

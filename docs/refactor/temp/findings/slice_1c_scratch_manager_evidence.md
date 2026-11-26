@@ -1,8 +1,8 @@
 # Slice 1c evidence: the scratch manager
 
-**Status:** PARTLY FILLED, 2026-11-25: both scripts have run and the rows the paste shows
-are recorded below; the rows a terminal folded away, and the Explorer steps, are still
-placeholders. Opened for the change that lifts `staging/workspace.py` and `staging/scratch.py` and implements
+**Status:** FILLED, 2026-11-26: both scripts, the two Explorer steps and the marked suite
+have run, and every row is recorded below from the architect's pasted output. Opened for
+the change that lifts `staging/workspace.py` and `staging/scratch.py` and implements
 `ScratchFileManager.create_workspaces` through `TableOps.create_workspace` (A5.7, A29,
 T2.12, T2.13). Before the manager is drafted, two by-hand checks establish the name and
 path limits it will enforce, so the limits are measured rather than assumed. Pod output
@@ -68,37 +68,68 @@ environment for the system (ADR-0018 AR-R10 is not reopened).
 
 ## Engine run: the name limits probe
 
-Run by the architect in the image on 2026-11-25 with the command in the probe's docstring.
-The paste folded 101 lines, so rows a4t, b1 to b8, c1, c2, d1 to d3 and e1 to e4 are
-not recorded yet; what follows is what the visible lines show.
+Run by the architect in the image on 2026-11-26 with the command in the probe's docstring.
 
 - **a. Layer name length.** At 159 and at 160 a feature class and a table were both
   created, `Exists` answered true and the listing gained the requested name (a1f, a1t,
-  a2f, a2t). At 161 both were refused with `EngineError (from ExecuteError)` carrying
-  `ERROR 160331: The table name is invalid`, `Exists` answered false and the listing gained
-  nothing (a3f, a3t). At 200 the feature class was refused with the same classes (a4f; the
-  message and a4t are in the folded lines). So the limit is 160 for both kinds, and an
-  over-long name is refused, not truncated.
-- **b. Characters.** *Placeholder: in the folded lines.*
-- **c. Case.** *Placeholder: in the folded lines.*
-- **d. Workspace name.** *Placeholder: in the folded lines.*
-- **e. Internal file names.** *Placeholder: in the folded lines.*
+  a2f, a2t). At 161 and at 200 both kinds were refused with `EngineError (from
+  ExecuteError)` carrying `ERROR 160331: The table name is invalid`, `Exists` answered
+  false and the listing gained nothing (a3f, a3t, a4f, a4t). So the limit is 160 for both
+  kinds, and an over-long name is refused, not truncated.
+- **b. Characters.** `2nd` and `a-b` were refused with the same ERROR 160331, and
+  `ValidateTableName` would have rewritten them to `T2nd` and `a_b` (b1, b4). `_x`, `x1`
+  and `a__b` were created and returned unchanged by `ValidateTableName` (b2, b3, b8). `aæ`,
+  `aø` and `aå` were created and returned unchanged (b5 to b7). So the engine refuses a
+  leading digit and a hyphen, accepts a leading underscore, a double underscore and the
+  three Norwegian letters, and `ValidateTableName` rewrites rather than refuses. A34's
+  ASCII-only rule is stricter than the engine, by choice: a name must open on both
+  systems and be greppable as written.
+- **c. Case.** With `overwriteOutput` true as the session applies it, `Roads` with a
+  marker field was created (c1), then `roads` was created without error (c2); afterwards
+  `Roads` listed only `OBJECTID`, the marker was gone, and the listing held `roads` alone.
+  So `roads` silently replaced `Roads`: the engine treats two names differing only in case
+  as one. This is the evidence for the manager's case-insensitive comparison.
+- **d. Workspace name.** Geodatabase directories of 250 and 255 bytes were created and
+  answered as workspaces (d1, d2). At 256 bytes `CreateFileGDB` failed with the generic
+  `ERROR 999999: Something unexpected caused the tool to fail`, and nothing existed
+  afterwards (d3). The engine gives no clear message at the filesystem's name limit, which
+  is why the manager checks the length itself.
+- **e. Internal file names.** The longest file in an empty geodatabase was
+  `a#######a.EditingTemplateRelsByDestinationID.atx`, 48 characters among 54 files; it
+  stayed the longest after a feature class (61 files) and after a table with a field (64
+  files) (e1 to e3). An attribute index named `ix_` and 37 x's (40 characters) was created
+  and added `a#######c.ix_x{37}.atx`, 54 characters, among 65 files (e4). So an index adds
+  a file of 14 characters plus the index name, and an index name over 34 characters becomes
+  the longest file. Nothing creates an attribute index today; `INTERNAL_FILE_NAME_LENGTH`
+  stays 48 with this note beside it, and B38 carries the adjustment for when something does.
 
 ## Observation on the architect's machine: Windows paths
 
-Run by the architect on 2026-11-25. Part 1 ran under Pro's Python 3.13, since no other
-Python was on the path; part 2 under the same interpreter. An observation on one machine,
-not an engine result. The paste folded the start of the output, so 1a and the file rows
-of 1b are not recorded yet.
+Run by the architect on 2026-11-26 under Pro's Python 3.13.13 on Windows 10 build 26300,
+base folder 7 characters long. Both parts ran under that interpreter, since no other Python
+was on the path. An observation on one machine, not an engine result.
 
-- **1a.** *Placeholder: in the folded lines.*
-- **1b.** The deepest folder created had a total path of 247 characters, so the folder at
-  248 was not created. The file rows are in the folded lines.
-- **1c.** After the standard library's extraction, the members at 49, 74, 99, 124, 149,
-  174, 199, 224 and 249 characters existed and the member at 274 did not. Whether the
-  extraction raised or skipped is in the folded lines.
-- **Manual steps.** *Placeholder: the architect has not yet reported the Explorer
-  extraction or the copy of the deepest 1b folder.*
+- **1a.** `LongPathsEnabled` was 0: long paths were not enabled, so Python's long-path
+  manifest had no effect and the rows below show the `MAX_PATH` margins.
+- **1b.** A folder at total path 247 was created; 248 and 249 failed with
+  `FileNotFoundError: [WinError 206] The filename or extension is too long`. A file at 258
+  and at 259 was created; 260 failed with `FileNotFoundError: [Errno 2]`. So a file path
+  is bounded at 259 and a folder path at 247.
+- **1c.** The zip held ten members whose extracted totals were 49 to 274 in steps of 25.
+  The standard library's extraction raised `FileNotFoundError: [WinError 3] The system
+  cannot find the path specified` on the 274 member after creating the nine shorter ones:
+  49 to 249 existed afterwards, 274 did not. An over-deep member fails the extraction
+  rather than being skipped.
+- **Explorer, step 1.** Extract All of the same zip showed one error dialog, "The file
+  name(s) would be too long for the destination folder. You can shorten the file name and
+  try again, or try a location that has a shorter path", for a folder item. Afterwards the
+  folders at 45 to 245 and the files at 54 to 254 existed; the tenth folder, which would
+  have been 270, and its file at 279 were not created. The totals are 1c's plus 5, since
+  `explorer_out` is five characters longer than `zip_out`. So Explorer stops at the same
+  247 folder margin as 1b, and reports the failure with a dialog rather than skipping the
+  file silently.
+- **Explorer, step 2.** The deepest 1b folder, at 247, opened in Explorer and copied to
+  `<base>\copied` without error; the copy made the path shorter, not longer.
 - **2a.** The geodatabase at a total path of 140 was created. Feature classes whose
   catalog paths totalled 255, 259, 260, 261 and 300 characters, with names of 114 to 159
   characters, were every one created, present to `Exists`, listed, and opened by a search
@@ -108,31 +139,45 @@ of 1b are not recorded yet.
   261 were created, and a two-character feature class in each was created, present, listed
   and opened; the longest internal file path was read back at each of the four totals. So
   Pro's own file layer writes past 260 on this machine, while the same process's Python
-  stopped at a folder of 248 and lost a zip member at 274: the tools that copy and extract
-  are what bind, not the engine.
+  stopped at a folder of 248 and a file of 260 and lost a zip member at 274, and Explorer
+  stopped at the same folder margin: the limit binds the tools a person copies and extracts
+  with, not the engine.
+
+## Engine run: the marked suite
+
+Run by the architect in the image on 2026-11-26 with the command in
+`docs/contributing/testing.md`: 88 collected, 29 deselected, 59 passed in 146 seconds. The
+two tests of `tests/engine/arcpy/test_scratch.py` were among them: every workspace the
+manager names was created as a workspace through `ArcpyTableOps` with the loose-files
+directory beside the stage workspace, and the engine's internal file names in a fresh
+geodatabase holding a feature class and a table fit `INTERNAL_FILE_NAME_LENGTH`.
 
 ## What the limits settle for the manager
 
-Written from the rows recorded above; the rows still in the folded lines are noted where
-they would bear on a rule. A34 states the rules; `staging/workspace.py` declares the
-numbers.
+A34 states the rules; `staging/workspace.py` declares the numbers.
 
 - **Layer-name budget.** 160, the engine's own limit for both kinds (a2, a3), with no
   path term: catalog paths of 300 opened under Pro (2a), so a layer name counts toward no
-  path limit.
+  path limit. A rendered name over 160 is shortened by whole labels and marked with a
+  window of the full name's digest, never cut (`02-runtime.md` §4.2); a declared handle's
+  name has no trail to drop and is refused over 160.
 - **Workspace name.** Bounded so that a geodatabase's longest internal file, 48
-  characters (2b), fits a file path of 259 under a root allowance of 100: a workspace
-  name of at most 110 characters, suffix included. That bound is below the folder limit
-  less the allowance (247 less 100) and below the Linux name limit of 255 bytes, so one
-  check covers all three; the loose-files directory is the workspace name without its
-  suffix and is covered by the same check, leaving a loose file 52 characters. The file
-  limit of 259 rests on A34 and the 1b file rows, which are still folded; the folder
-  limit of 247 is in the visible 1b line.
+  characters (e1 to e3, 2b), fits a file path of 259 (1b) under a root allowance of 100: a
+  workspace name of at most 110 characters, suffix included. That bound is below the folder
+  limit less the allowance (247 less 100, 1b) and below the Linux name limit of 255 bytes
+  (d2, d3), so one check covers all three; the loose-files directory is the workspace name
+  without its suffix and is covered by the same check, leaving a loose file 52 characters.
+  Workspace names are never shortened. The bound rests on the 48 of the system tables; an
+  attribute index name over 34 characters would exceed it (e4, B38).
 - **Legality.** The manager refuses anything but ASCII letters, digits and underscores
-  starting with a letter or underscore, and never rewrites. Which of those rules the engine
-  itself enforces, and whether it rewrites, is row b, still folded; the manager's rule is
-  the stricter one either way, since a name legal on both systems must be ASCII.
-- **Case.** Row c is still folded; A34's rule, that names are unique without regard to
-  case, is the one the manager applies.
-- **Workspace-stem bound on Linux.** Row d is still folded; the 110-character bound above
-  is well under 255 bytes for an ASCII name, so the row cannot move the rule.
+  starting with a letter or underscore, and never rewrites. The engine itself refuses a
+  leading digit and a hyphen and accepts the Norwegian letters (b1 to b7); the manager's
+  rule is the stricter one, since a name legal on both systems and greppable as written
+  must be ASCII. `ValidateTableName` is never called, because it rewrites (b1, b4).
+- **Case.** Names are unique without regard to case: `roads` silently replaced `Roads`
+  under the session's overwrite setting (c1, c2), so every collision check compares
+  casefolded names, and a shortened name's digest is taken over the casefolded full name
+  so that two case variants shorten alike.
+- **Workspace-stem bound on Linux.** 255 bytes is the filesystem's and the engine fails at
+  256 with a generic error (d3); the 110-character bound above is under it for an ASCII
+  name, so the Linux limit never binds.

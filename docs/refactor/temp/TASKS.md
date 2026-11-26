@@ -157,6 +157,7 @@ work but have different lifetimes and different modules.
 | 45 | T7.7 | Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]` | not started |
 | 46 | T7.8 | `02-runtime` and `03-architecture` without placement or the cloud | not started; before slice 1c merges |
 | 47 | T2.14 | `open_session` contains the engine's import | not started; with the first PR that lands `ag.runtime.pod_entry` or `ag.runtime.local`, before it merges |
+| 48 | T7.9 | Name-length report `[INDEPENDENT]` | not started; under `tools/`, explicit request needed |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -1167,7 +1168,7 @@ slice 1c of `findings/implementation_plan.md`.
 
 **depends on** nothing.
 
-**decision refs** A5.7, B21.
+**decision refs** A5.7, A34, B21, B38.
 
 **doc migration** A5.7 → ADR-0019 PC-6 and `ports/table_ops.py` (landed); the
 `staging/scratch.py` docstring and `02-runtime.md` §4.2 with the runner.
@@ -2670,3 +2671,23 @@ than decided, per the constraint on this pass.
 
 **deferred** B26, failure isolation for payloads: out of scope for the refactor, recorded for
 the orchestrator design.
+
+---
+
+## 48. T7.9 — Name-length report `[INDEPENDENT]`
+
+**status:** not started. Lives under `tools/`, so its build needs the architect's explicit
+request by name.
+
+**what done means** A report-only tool, with no runtime warning, that reads the declared
+pipelines and lists every stage identity, operation function name, scope label and handle
+name by length bucket (15, 20, 25 and so on), each with its file and line; and, for each
+stage, the longest operation workspace name it would render and its room under
+`WORKSPACE_NAME_LIMIT` (`staging/workspace.py`). It tells an author where a trail will be
+shortened or a workspace name refused before a pod does.
+
+**files touched** a module under `tools/` (explicit request), `docs/contributing/`.
+
+**depends on** T2.13.
+
+**decision refs** A29, A34.
