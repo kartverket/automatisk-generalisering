@@ -2684,9 +2684,12 @@ pipelines and lists every stage identity, operation function name, scope label a
 name by length bucket (15, 20, 25 and so on), each with its file and line; and, for each
 stage, the longest operation workspace name it would render and its room under
 `WORKSPACE_NAME_LIMIT` (`staging/workspace.py`). It tells an author where a trail will be
-shortened or a workspace name refused before a pod does.
+shortened or a workspace name refused before a pod does. When it lands,
+`docs/user_guide/scratch.md` gains a section on running it, so the guide names the tool and
+not the other way round.
 
-**files touched** a module under `tools/` (explicit request), `docs/contributing/`.
+**files touched** a module under `tools/` (explicit request), `docs/contributing/`,
+`docs/user_guide/scratch.md`.
 
 **depends on** T2.13.
 

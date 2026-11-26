@@ -4,7 +4,9 @@ What: `ScratchFileManager` names the stage workspace, one operation workspace pe
 and the loose-files directory; materialises a declared handle into the stage workspace
 and binds one `ScratchScope` per call; creates the workspaces through
 `TableOps.create_workspace` and the directory itself; and keeps the manifest, every
-internal path it issued against the call, trail and leaf it stands for.
+internal path it issued against the call, trail and leaf it stands for. The developer's
+guide to scratch is `docs/user_guide/scratch.md`; a change to this module is a change to
+that page.
 
 How: a workspace stem is the rendered stage, or the rendered call identity, followed by
 the pod stem, the role's value with the partition index on a partition pod, so a dump

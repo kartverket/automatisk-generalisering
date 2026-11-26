@@ -2,7 +2,9 @@
 
 What: `ScratchHandle` names a slot in the pod's workspace; `handle()` declares one as a
 class attribute; `In`, `Out`, `Mutates` and `ParentsOut` say what a parameter does with
-the handle it receives; `ScratchScope` hands an operation its internal scratch.
+the handle it receives; `ScratchScope` hands an operation its internal scratch. The
+developer's guide to scratch is `docs/user_guide/scratch.md`; a change to this module is a
+change to that page.
 
 How: a declared handle is named by `__set_name__` from the class attribute it is bound to,
 once, when the class is created, and refuses to be renamed. An internal handle is built by
