@@ -1,4 +1,27 @@
-"""Project path bindings.
+"""
+Project paths bindings.
+
+Derives every project path from one environment variable (GIS_FILES_ROOT),
+which points at the data root containing the canonical project layout.
+
+Canonical layout under GIS_FILES_ROOT — see docs/canonical_layout.md:
+  ag_inputs/        read-only inputs, supplied by data hydration
+    raw_data/       Source data
+      area.gdb        Area source data
+      building.gdb    Building source data
+      matrikkel.gdb   Matrikkel source data
+      railway.gdb     Railway source data
+      road.gdb        Road source data
+    symbology/      .lyrx symbology files
+      n100
+      n250
+      ...
+  ag_outputs/       writable, pipeline-controlled structure
+    n100/           N100 outputs
+    ...
+"""
+
+"""Project path bindings extra info relevant for indexed kubernetes runs
 
 ``GIS_FILES_ROOT`` points at the input directory containing ``raw_data/`` and
 ``symbology/``. ``GIS_OUTPUTS_ROOT`` optionally points at the directory that holds
