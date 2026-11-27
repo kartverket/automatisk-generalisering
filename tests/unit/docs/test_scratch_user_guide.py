@@ -2,7 +2,8 @@
 
 What: every `<!-- sample: key -->` fence on the page equals the block of the same key in
 `scratch_samples.py`; every `<!-- names: key -->` fence lists the layer names the sample
-issues, in order; every `<!-- manifest: key -->` fence is the manifest entries read back;
+issues, in order, and the two layout fences list the paths one pod's root holds and the
+workspaces of every pod of the stage; every `<!-- manifest: key -->` fence is the manifest entries read back;
 every `<!-- error: key -->` fence is the whole message the sample raises; every
 `<!-- pattern: key -->` fence is the pattern of that name in `ag.core.handles`; the one
 `<!-- handle: key -->` fence is a handle's name beside its layer name. The page names
@@ -79,7 +80,7 @@ def test_every_sample_block_is_on_the_page_and_equal() -> None:
 
 def test_the_page_shows_names_for_every_sample_and_nothing_else() -> None:
     shown = set(page_fences("names"))
-    assert shown == {"layout", *samples.OPERATIONS, *samples.CASES}
+    assert shown == {"layout", "roots", *samples.OPERATIONS, *samples.CASES}
     assert set(page_fences("manifest")) == set(MANIFEST_CASES)
     assert set(page_fences("error")) == set(samples.ERRORS)
     assert set(page_fences("pattern")) == set(PATTERNS)
@@ -87,13 +88,44 @@ def test_the_page_shows_names_for_every_sample_and_nothing_else() -> None:
 
 
 def test_the_layout_is_as_shown() -> None:
-    pod = samples.partition_pod(MemoryStore())
+    """The root's three entries and what two of them hold: the declared handles of the
+    setup's handle class and the layers the nested sample issues."""
+    store = MemoryStore()
+    pod = samples.partition_pod(store)
+    source = pod.handle(samples.Roads.source)
+    case = multilines()
+    store.write(source, schema=case.schema, rows=case.rows)
+    thinned = pod.handle(samples.Roads.thinned)
+    samples.OPERATIONS["nested"](
+        source=source,
+        output=thinned,
+        tb=samples.memory_toolbox(store),
+        scratch=pod.scope_for(samples.CALL),
+    )
     shown = page_fences("names")["layout"].splitlines()
     assert shown == [
         pod.stage_workspace(),
+        os.fspath(source),
+        os.fspath(thinned),
         pod.loose_files(),
         pod.operation_workspace(samples.CALL),
+        *pod.manifest(),
     ]
+
+
+def test_the_pod_roots_are_as_shown() -> None:
+    """One group per pod, blank-line separated: its stage workspace, its loose-files
+    directory and one operation workspace per call it runs."""
+    shown = page_fences("names")["roots"].splitlines()
+    groups = [
+        [
+            pod.stage_workspace(),
+            pod.loose_files(),
+            *map(pod.operation_workspace, pod.calls),
+        ]
+        for pod in samples.pod_roots()
+    ]
+    assert shown == [line for group in groups for line in (*group, "")][:-1]
 
 
 @pytest.mark.parametrize("key", sorted(samples.OPERATIONS))

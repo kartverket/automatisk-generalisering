@@ -95,6 +95,30 @@ def partition_pod(
 # end: setup
 
 
+def pod_roots() -> list[ScratchFileManager]:
+    """One manager per pod of the stage, in the order the pods run: fan-out, partition
+    pods 1 and 2, fan-in. Only a partition pod runs the stage's operations (02-runtime
+    section 1.2), so only those two are given the call."""
+    table = MemoryTableOps(store=MemoryStore())
+    return [
+        ScratchFileManager(
+            root="/scratch", stage=STAGE, calls=(), role=PodRole.FAN_OUT, table=table
+        ),
+        partition_pod(MemoryStore()),
+        ScratchFileManager(
+            root="/scratch",
+            stage=STAGE,
+            calls=(CALL,),
+            role=ROLE,
+            partition_index=2,
+            table=table,
+        ),
+        ScratchFileManager(
+            root="/scratch", stage=STAGE, calls=(), role=PodRole.FAN_IN, table=table
+        ),
+    ]
+
+
 # sample: handle_name
 def handle_name() -> ScratchHandle:
     return (

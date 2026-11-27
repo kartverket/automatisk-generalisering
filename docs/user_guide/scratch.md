@@ -38,25 +38,92 @@ flowchart LR
 ```
 
 Partition pod 1's scratch root for the stage `n100/road/thin_roads`, running one call,
-`thin_roads`. The three entries are siblings in that one root: the stage workspace holds
-the declared handles; the operation workspace holds the call's layers, beside the stage
-workspace and not under it; the loose-files directory holds what a workspace cannot, layer
-files, CSV, logs. The stem at the end of each name, `__pod00001`, says which pod wrote it,
-not which folder it is in. The fan-out pod and the fan-in pod each have a root of their
-own, laid out the same way, with names ending `__fan_out` and `__fan_in`.
+`thin_roads`. A call is one run of one operation in the stage, identified as
+`n100/road/thin_roads:thin_roads`; a second run of the same operation in the stage is
+`thin_roads_2` and gets a workspace of its own. The three entries are siblings in that one
+root. The stage workspace holds the declared handles, here `source` and `thinned`, under
+their class-attribute names and with no trail. The operation workspace holds the feature
+classes and tables the call made through `scratch(...)`, named by their trails, beside the
+stage workspace and not under it; the call is in the workspace name, not the layer name.
+The loose-files directory holds what a workspace cannot: layer files, CSV, logs. The stem
+at the end of each name, `__pod00001`, says which pod wrote it, not which folder it is in.
 
 ```mermaid
 flowchart TB
-    root["/scratch<br/>partition pod 1's scratch root"] --> stage["n100_road_thin_roads__pod00001.gdb<br/>stage workspace: declared handles"]
-    root --> loose["n100_road_thin_roads__pod00001/<br/>loose files"]
-    root --> op["n100_road_thin_roads_thin_roads__pod00001.gdb<br/>operation workspace: the call's layers"]
+    root["/scratch<br/>partition pod 1's scratch root"]
+    root --> stage
+    root --> loose["n100_road_thin_roads__pod00001/<br/>loose files: .lyrx, .csv, logs"]
+    root --> op
+    subgraph stage["n100_road_thin_roads__pod00001.gdb: stage workspace, the declared handles"]
+        source["source"]
+        thinned["thinned"]
+    end
+    subgraph op["n100_road_thin_roads_thin_roads__pod00001.gdb: operation workspace, the call's internal scratch"]
+        exploded["clean__exploded"]
+        kept["clean__named__kept"]
+    end
 ```
 
 <!-- names: layout -->
 ```text
 /scratch/n100_road_thin_roads__pod00001.gdb
+/scratch/n100_road_thin_roads__pod00001.gdb/source
+/scratch/n100_road_thin_roads__pod00001.gdb/thinned
 /scratch/n100_road_thin_roads__pod00001
 /scratch/n100_road_thin_roads_thin_roads__pod00001.gdb
+/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__exploded
+/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__named__kept
+```
+
+Four pods, four roots. Each root is the `/scratch` of its own pod, and no pod sees
+another's: data moves between pods only through the stage's transfer directories
+(ADR-0021 ST-D26), never through a root. Every root is laid out the same way, with the
+pod's stem on every name. The partition pods run the stage's operations
+([02-runtime §1.2](../refactor/02-runtime.md#12-pod-tiers)), so each has an operation
+workspace per call it runs; the fan-out pod partitions and the fan-in pod merges, and
+neither runs a call, so neither has one.
+
+```mermaid
+flowchart LR
+    subgraph fan_out["fan-out pod"]
+        fo_stage["n100_road_thin_roads__fan_out.gdb"]
+        fo_loose["n100_road_thin_roads__fan_out/"]
+    end
+    subgraph pod1["partition pod 1"]
+        p1_stage["n100_road_thin_roads__pod00001.gdb"]
+        p1_loose["n100_road_thin_roads__pod00001/"]
+        p1_op["n100_road_thin_roads_thin_roads__pod00001.gdb"]
+    end
+    subgraph pod2["partition pod 2"]
+        p2_stage["n100_road_thin_roads__pod00002.gdb"]
+        p2_loose["n100_road_thin_roads__pod00002/"]
+        p2_op["n100_road_thin_roads_thin_roads__pod00002.gdb"]
+    end
+    subgraph fan_in["fan-in pod"]
+        fi_stage["n100_road_thin_roads__fan_in.gdb"]
+        fi_loose["n100_road_thin_roads__fan_in/"]
+    end
+    fan_out -.->|"transfer directory"| pod1
+    fan_out -.->|"transfer directory"| pod2
+    pod1 -.->|"transfer directory"| fan_in
+    pod2 -.->|"transfer directory"| fan_in
+```
+
+<!-- names: roots -->
+```text
+/scratch/n100_road_thin_roads__fan_out.gdb
+/scratch/n100_road_thin_roads__fan_out
+
+/scratch/n100_road_thin_roads__pod00001.gdb
+/scratch/n100_road_thin_roads__pod00001
+/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb
+
+/scratch/n100_road_thin_roads__pod00002.gdb
+/scratch/n100_road_thin_roads__pod00002
+/scratch/n100_road_thin_roads_thin_roads__pod00002.gdb
+
+/scratch/n100_road_thin_roads__fan_in.gdb
+/scratch/n100_road_thin_roads__fan_in
 ```
 
 ## When to use what
