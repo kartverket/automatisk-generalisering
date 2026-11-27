@@ -49,6 +49,10 @@ STAGE = "n100/road/thin_roads"
 CALL = f"{STAGE}:thin_roads"
 """The identity of the one operation call the sample pod runs."""
 
+ROLE = PodRole.POD
+INDEX = 1
+"""The sample pod is partition pod 1: the pod an operation usually runs on."""
+
 NAMED = Attr.cmp("name", Comparison.NE, "")
 """The one predicate every sample selects with: the roads that carry a name."""
 
@@ -74,15 +78,16 @@ def memory_toolbox(store: MemoryStore) -> Toolbox:
     )
 
 
-def fan_in_pod(
+def partition_pod(
     store: MemoryStore, *, calls: tuple[str, ...] = (CALL,)
 ) -> ScratchFileManager:
-    """The manager the stage's fan-in pod would hold, over the same store."""
+    """The manager partition pod 1 of the stage would hold, over the same store."""
     return ScratchFileManager(
         root="/scratch",
         stage=STAGE,
         calls=calls,
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=store),
     )
 
@@ -93,7 +98,10 @@ def fan_in_pod(
 # sample: handle_name
 def handle_name() -> ScratchHandle:
     return (
-        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
+        partition_pod(MemoryStore())
+        .scope_for(CALL)
+        .child("clean")
+        .child("named")("kept")
     )
 
 
@@ -259,7 +267,7 @@ def thin_roads_nested(
 def test_parts_explodes_into_its_own_scratch() -> None:
     store = MemoryStore()
     tb = memory_toolbox(store)
-    pod = fan_in_pod(store)
+    pod = partition_pod(store)
     source = pod.handle(Roads.source)
     case = multilines()
     store.write(source, schema=case.schema, rows=case.rows)
@@ -273,7 +281,7 @@ def test_parts_explodes_into_its_own_scratch() -> None:
 
     assert tb.table.exists(input=pod.handle(Roads.thinned))
     assert list(pod.manifest()) == [
-        "/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/exploded"
+        "/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/exploded"
     ]
 
 
@@ -282,7 +290,7 @@ def test_parts_explodes_into_its_own_scratch() -> None:
 
 # sample: case_unchanged
 def case_unchanged() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.scope_for(CALL)("singlepart")
     return pod
 
@@ -292,7 +300,7 @@ def case_unchanged() -> ScratchFileManager:
 
 # sample: case_nested
 def case_nested() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.scope_for(CALL).child("clean").child("named")("kept")
     return pod
 
@@ -302,7 +310,7 @@ def case_nested() -> ScratchFileManager:
 
 # sample: case_suffix
 def case_suffix() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL)
     scratch.child("parts")("exploded")
     scratch.child("parts")("exploded")
@@ -315,7 +323,7 @@ def case_suffix() -> ScratchFileManager:
 
 # sample: case_tagged
 def case_tagged() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL)
     scratch.child("parts")("exploded")
     scratch.child("parts", tag="reranked")("exploded")
@@ -328,7 +336,7 @@ def case_tagged() -> ScratchFileManager:
 
 # sample: case_table
 def case_table() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     counts = pod.scope_for(CALL)("counts", DataType.TABLE)
     assert counts.data_type is DataType.TABLE
     return pod
@@ -347,7 +355,7 @@ TOPOLOGY = "build_the_topology_over_the_dissolved_network_with_degrees_and_compo
 
 # sample: case_shortened
 def case_shortened() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL).child("clean").child(AREAS).child(TOPOLOGY)
     scratch("nodes")
     scratch("nodes_with_their_degree_and_component_recorded_for_the_second_pass")
@@ -374,7 +382,8 @@ def probing_pod(store: MemoryStore) -> ScratchFileManager:
         root="/scratch",
         stage=STAGE,
         calls=(CALL,),
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=store),
         digest=windows_apart,
     )
@@ -397,7 +406,7 @@ def case_probe() -> ScratchFileManager:
 
 # sample: error_bad_segment
 def error_bad_segment() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL)("road-parts")
+    partition_pod(MemoryStore()).scope_for(CALL)("road-parts")
 
 
 # end: error_bad_segment
@@ -405,7 +414,7 @@ def error_bad_segment() -> None:
 
 # sample: error_digit_first
 def error_digit_first() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
+    partition_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
 
 
 # end: error_digit_first
@@ -421,7 +430,7 @@ def error_unbound() -> None:
 
 # sample: error_repeated_leaf
 def error_repeated_leaf() -> None:
-    scratch = fan_in_pod(MemoryStore()).scope_for(CALL)
+    scratch = partition_pod(MemoryStore()).scope_for(CALL)
     scratch("parts")
     scratch("Parts")
 
@@ -431,7 +440,7 @@ def error_repeated_leaf() -> None:
 
 # sample: error_leaf_too_long
 def error_leaf_too_long() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
+    partition_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
 
 
 # end: error_leaf_too_long
@@ -449,7 +458,7 @@ def error_every_window_taken() -> None:
 
 # sample: error_declared_over_limit
 def error_declared_over_limit() -> None:
-    fan_in_pod(MemoryStore()).handle(
+    partition_pod(MemoryStore()).handle(
         ScratchHandle(name="x" * 161, namespace="guide.Roads")
     )
 
@@ -459,7 +468,7 @@ def error_declared_over_limit() -> None:
 
 # sample: error_illegal_declared
 def error_illegal_declared() -> None:
-    fan_in_pod(MemoryStore()).handle(
+    partition_pod(MemoryStore()).handle(
         ScratchHandle(name="veier_æ", namespace="guide.Roads")
     )
 
@@ -477,7 +486,7 @@ class Upper(Handles):
 
 
 def error_declared_case() -> None:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.handle(Lower.roads)
     pod.handle(Upper.Roads)
 
@@ -491,7 +500,8 @@ def error_workspace_too_long() -> None:
         root="/scratch",
         stage=STAGE + "/" + "x" * 100,
         calls=(),
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=MemoryStore()),
     )
 
@@ -501,7 +511,7 @@ def error_workspace_too_long() -> None:
 
 # sample: error_alike
 def error_alike() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
+    partition_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
 
 
 # end: error_alike
@@ -509,7 +519,7 @@ def error_alike() -> None:
 
 # sample: error_unknown_call
 def error_unknown_call() -> None:
-    fan_in_pod(MemoryStore()).scope_for(f"{STAGE}:other")
+    partition_pod(MemoryStore()).scope_for(f"{STAGE}:other")
 
 
 # end: error_unknown_call
@@ -517,7 +527,7 @@ def error_unknown_call() -> None:
 
 # sample: error_repeated_call
 def error_repeated_call() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, CALL))
+    partition_pod(MemoryStore(), calls=(CALL, CALL))
 
 
 # end: error_repeated_call

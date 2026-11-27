@@ -87,7 +87,7 @@ def test_the_page_shows_names_for_every_sample_and_nothing_else() -> None:
 
 
 def test_the_layout_is_as_shown() -> None:
-    pod = samples.fan_in_pod(MemoryStore())
+    pod = samples.partition_pod(MemoryStore())
     shown = page_fences("names")["layout"].splitlines()
     assert shown == [
         pod.stage_workspace(),
@@ -100,7 +100,7 @@ def test_the_layout_is_as_shown() -> None:
 def test_an_operation_sample_issues_the_names_shown(key: str) -> None:
     store = MemoryStore()
     tb = samples.memory_toolbox(store)
-    pod = samples.fan_in_pod(store)
+    pod = samples.partition_pod(store)
     source = pod.handle(samples.Roads.source)
     case = multilines()
     store.write(source, schema=case.schema, rows=case.rows)

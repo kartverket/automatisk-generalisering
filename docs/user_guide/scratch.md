@@ -37,23 +37,26 @@ flowchart LR
     named -->|"('kept')"| kept["clean__named__kept"]
 ```
 
-The pod scratch root for the stage `n100/road/thin_roads` on its fan-in pod with one call,
-`thin_roads`. The stage workspace holds the declared handles, one operation workspace per
-call holds that call's scratch, and the loose-files directory beside the stage workspace
-holds what a workspace cannot: layer files, CSV, logs.
+Partition pod 1's scratch root for the stage `n100/road/thin_roads`, running one call,
+`thin_roads`. The three entries are siblings in that one root: the stage workspace holds
+the declared handles; the operation workspace holds the call's layers, beside the stage
+workspace and not under it; the loose-files directory holds what a workspace cannot, layer
+files, CSV, logs. The stem at the end of each name, `__pod00001`, says which pod wrote it,
+not which folder it is in. The fan-out pod and the fan-in pod each have a root of their
+own, laid out the same way, with names ending `__fan_out` and `__fan_in`.
 
 ```mermaid
 flowchart TB
-    root["/scratch<br/>pod scratch root"] --> stage["n100_road_thin_roads__fan_in.gdb<br/>stage workspace"]
-    root --> loose["n100_road_thin_roads__fan_in/<br/>loose files"]
-    root --> op["n100_road_thin_roads_thin_roads__fan_in.gdb<br/>operation workspace"]
+    root["/scratch<br/>partition pod 1's scratch root"] --> stage["n100_road_thin_roads__pod00001.gdb<br/>stage workspace: declared handles"]
+    root --> loose["n100_road_thin_roads__pod00001/<br/>loose files"]
+    root --> op["n100_road_thin_roads_thin_roads__pod00001.gdb<br/>operation workspace: the call's layers"]
 ```
 
 <!-- names: layout -->
 ```text
-/scratch/n100_road_thin_roads__fan_in.gdb
-/scratch/n100_road_thin_roads__fan_in
-/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb
+/scratch/n100_road_thin_roads__pod00001.gdb
+/scratch/n100_road_thin_roads__pod00001
+/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb
 ```
 
 ## When to use what
@@ -156,13 +159,16 @@ Creates one internal scratch handle at this point in the trail.
   trail and the leaf joined with `/`, which is not a layer-name character, so a handle's
   name is never mistaken for the layer it renders to; the layer name joins them with `__`.
 
-The sample uses `fan_in_pod` and `CALL` from the setup under [Code samples](#code-samples).
+The sample uses `partition_pod` and `CALL` from the setup under [Code samples](#code-samples).
 
 <!-- sample: handle_name -->
 ```python
 def handle_name() -> ScratchHandle:
     return (
-        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
+        partition_pod(MemoryStore())
+        .scope_for(CALL)
+        .child("clean")
+        .child("named")("kept")
     )
 ```
 
@@ -215,7 +221,7 @@ from tests.support.cases import multilines
 
 The setup every sample shares: the stage and call the samples spell, the one predicate they
 select with, the stage's declared handles, a toolbox over the in-memory fakes, and the
-manager a fan-in pod of the stage would hold. `GraphOps` and `CartographicOps` have no
+manager partition pod 1 of the stage would hold. `GraphOps` and `CartographicOps` have no
 members yet, so any object serves as the graph fake.
 
 <!-- sample: setup -->
@@ -225,6 +231,10 @@ STAGE = "n100/road/thin_roads"
 
 CALL = f"{STAGE}:thin_roads"
 """The identity of the one operation call the sample pod runs."""
+
+ROLE = PodRole.POD
+INDEX = 1
+"""The sample pod is partition pod 1: the pod an operation usually runs on."""
 
 NAMED = Attr.cmp("name", Comparison.NE, "")
 """The one predicate every sample selects with: the roads that carry a name."""
@@ -251,15 +261,16 @@ def memory_toolbox(store: MemoryStore) -> Toolbox:
     )
 
 
-def fan_in_pod(
+def partition_pod(
     store: MemoryStore, *, calls: tuple[str, ...] = (CALL,)
 ) -> ScratchFileManager:
-    """The manager the stage's fan-in pod would hold, over the same store."""
+    """The manager partition pod 1 of the stage would hold, over the same store."""
     return ScratchFileManager(
         root="/scratch",
         stage=STAGE,
         calls=calls,
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=store),
     )
 ```
@@ -514,7 +525,7 @@ store writes without a created workspace, so the test never touches the disk;
 def test_parts_explodes_into_its_own_scratch() -> None:
     store = MemoryStore()
     tb = memory_toolbox(store)
-    pod = fan_in_pod(store)
+    pod = partition_pod(store)
     source = pod.handle(Roads.source)
     case = multilines()
     store.write(source, schema=case.schema, rows=case.rows)
@@ -528,7 +539,7 @@ def test_parts_explodes_into_its_own_scratch() -> None:
 
     assert tb.table.exists(input=pod.handle(Roads.thinned))
     assert list(pod.manifest()) == [
-        "/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/exploded"
+        "/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/exploded"
     ]
 ```
 
@@ -542,7 +553,7 @@ The names are what a reader sees in the operation workspace of a scratch dump.
 <!-- sample: case_unchanged -->
 ```python
 def case_unchanged() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.scope_for(CALL)("singlepart")
     return pod
 ```
@@ -564,7 +575,7 @@ flowchart LR
 <!-- sample: case_nested -->
 ```python
 def case_nested() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.scope_for(CALL).child("clean").child("named")("kept")
     return pod
 ```
@@ -586,7 +597,7 @@ flowchart LR
 <!-- sample: case_suffix -->
 ```python
 def case_suffix() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL)
     scratch.child("parts")("exploded")
     scratch.child("parts")("exploded")
@@ -610,7 +621,7 @@ the other moves to the next free index.
 <!-- sample: case_tagged -->
 ```python
 def case_tagged() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL)
     scratch.child("parts")("exploded")
     scratch.child("parts", tag="reranked")("exploded")
@@ -632,7 +643,7 @@ The kind is the handle's, declared where it is created. The name is rendered the
 <!-- sample: case_table -->
 ```python
 def case_table() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     counts = pod.scope_for(CALL)("counts", DataType.TABLE)
     assert counts.data_type is DataType.TABLE
     return pod
@@ -663,7 +674,7 @@ TOPOLOGY = "build_the_topology_over_the_dissolved_network_with_degrees_and_compo
 <!-- sample: case_shortened -->
 ```python
 def case_shortened() -> ScratchFileManager:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     scratch = pod.scope_for(CALL).child("clean").child(AREAS).child(TOPOLOGY)
     scratch("nodes")
     scratch("nodes_with_their_degree_and_component_recorded_for_the_second_pass")
@@ -685,9 +696,9 @@ The manifest reads each back to its call, trail, leaf and window:
 
 <!-- manifest: case_shortened -->
 ```text
-Issued(path='/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/clean__t83ccdf818e30__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=0)
-Issued(path='/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/tbfb4d71d2c6e__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes_with_their_degree_and_component_recorded_for_the_second_pass', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes_with_their_degree_and_component_recorded_for_the_second_pass', window=0)
-Issued(path='/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/clean__tc326f709eb5d__nodes_with_their_degree_their_component_the_rank_of_the_longest_road_touching_them_and_the_sweep_that_recorded_them', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes_with_their_degree_their_component_the_rank_of_the_longest_road_touching_them_and_the_sweep_that_recorded_them', window=0)
+Issued(path='/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__t83ccdf818e30__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=0)
+Issued(path='/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/tbfb4d71d2c6e__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes_with_their_degree_and_component_recorded_for_the_second_pass', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes_with_their_degree_and_component_recorded_for_the_second_pass', window=0)
+Issued(path='/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__tc326f709eb5d__nodes_with_their_degree_their_component_the_rank_of_the_longest_road_touching_them_and_the_sweep_that_recorded_them', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes_with_their_degree_their_component_the_rank_of_the_longest_road_touching_them_and_the_sweep_that_recorded_them', window=0)
 ```
 
 ### Two trails apart only in a dropped label
@@ -712,7 +723,8 @@ def probing_pod(store: MemoryStore) -> ScratchFileManager:
         root="/scratch",
         stage=STAGE,
         calls=(CALL,),
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=store),
         digest=windows_apart,
     )
@@ -736,8 +748,8 @@ clean__t111111111111__build_the_topology_over_the_dissolved_network_with_degrees
 
 <!-- manifest: case_probe -->
 ```text
-Issued(path='/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/clean__t000000000000__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=0)
-Issued(path='/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/clean__t111111111111__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source_again', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=1)
+Issued(path='/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__t000000000000__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=0)
+Issued(path='/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/clean__t111111111111__build_the_topology_over_the_dissolved_network_with_degrees_and_components__nodes', call='n100/road/thin_roads:thin_roads', trail=('clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source_again', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components'), leaf='nodes', window=1)
 ```
 
 ### Two names apart only in case
@@ -787,7 +799,7 @@ Raised at the call, in the operation or helper that made it.
 <!-- sample: error_bad_segment -->
 ```python
 def error_bad_segment() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL)("road-parts")
+    partition_pod(MemoryStore()).scope_for(CALL)("road-parts")
 ```
 
 <!-- error: error_bad_segment -->
@@ -802,7 +814,7 @@ scope leaf 'road-parts' must be letters, digits and single underscores, and a la
 <!-- sample: error_digit_first -->
 ```python
 def error_digit_first() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
+    partition_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
 ```
 
 <!-- error: error_digit_first -->
@@ -835,14 +847,14 @@ scratch('singlepart') was called on a scope the runtime never bound. The stage e
 <!-- sample: error_repeated_leaf -->
 ```python
 def error_repeated_leaf() -> None:
-    scratch = fan_in_pod(MemoryStore()).scope_for(CALL)
+    scratch = partition_pod(MemoryStore()).scope_for(CALL)
     scratch("parts")
     scratch("Parts")
 ```
 
 <!-- error: error_repeated_leaf -->
 ```text
-scratch path '/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/Parts' was already issued in this pod for ('n100/road/thin_roads:thin_roads', 'parts'); a repeated leaf within one scope is a mistake, and the engine treats two names differing only in case as one. Use scratch.child(...) where two tools need the same leaf.
+scratch path '/scratch/n100_road_thin_roads_thin_roads__pod00001.gdb/Parts' was already issued in this pod for ('n100/road/thin_roads:thin_roads', 'parts'); a repeated leaf within one scope is a mistake, and the engine treats two names differing only in case as one. Use scratch.child(...) where two tools need the same leaf.
 ```
 
 - A leaf too long to sit beside the digest when the name is shortened. Fix: shorten the
@@ -851,7 +863,7 @@ scratch path '/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/Parts' was al
 <!-- sample: error_leaf_too_long -->
 ```python
 def error_leaf_too_long() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
+    partition_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
 ```
 
 <!-- error: error_leaf_too_long -->
@@ -886,7 +898,7 @@ every one of the 5 shortened names for ('n100/road/thin_roads:thin_roads', 'clea
 <!-- sample: error_declared_over_limit -->
 ```python
 def error_declared_over_limit() -> None:
-    fan_in_pod(MemoryStore()).handle(
+    partition_pod(MemoryStore()).handle(
         ScratchHandle(name="x" * 161, namespace="guide.Roads")
     )
 ```
@@ -902,7 +914,7 @@ layer name 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 <!-- sample: error_illegal_declared -->
 ```python
 def error_illegal_declared() -> None:
-    fan_in_pod(MemoryStore()).handle(
+    partition_pod(MemoryStore()).handle(
         ScratchHandle(name="veier_æ", namespace="guide.Roads")
     )
 ```
@@ -926,14 +938,14 @@ class Upper(Handles):
 
 
 def error_declared_case() -> None:
-    pod = fan_in_pod(MemoryStore())
+    pod = partition_pod(MemoryStore())
     pod.handle(Lower.roads)
     pod.handle(Upper.Roads)
 ```
 
 <!-- error: error_declared_case -->
 ```text
-ScratchHandle(tests.unit.docs.scratch_samples.Upper.Roads) would be at '/scratch/n100_road_thin_roads__fan_in.gdb/Roads', which ScratchHandle(tests.unit.docs.scratch_samples.Lower.roads) already holds without regard to case; the engine treats the two names as one.
+ScratchHandle(tests.unit.docs.scratch_samples.Upper.Roads) would be at '/scratch/n100_road_thin_roads__pod00001.gdb/Roads', which ScratchHandle(tests.unit.docs.scratch_samples.Lower.roads) already holds without regard to case; the engine treats the two names as one.
 ```
 
 ### Errors the manager raises before any operation runs
@@ -952,14 +964,15 @@ def error_workspace_too_long() -> None:
         root="/scratch",
         stage=STAGE + "/" + "x" * 100,
         calls=(),
-        role=PodRole.FAN_IN,
+        role=ROLE,
+        partition_index=INDEX,
         table=MemoryTableOps(store=MemoryStore()),
     )
 ```
 
 <!-- error: error_workspace_too_long -->
 ```text
-workspace name 'n100_road_thin_roads_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx__fan_in.gdb' is 133 characters, over 110: its internal files would not fit a Windows path of 259 under a root of 100.
+workspace name 'n100_road_thin_roads_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx__pod00001.gdb' is 135 characters, over 110: its internal files would not fit a Windows path of 259 under a root of 100.
 ```
 
 - `WorkspaceError`: two identities, or the stage and a call, whose rendered workspace names
@@ -968,7 +981,7 @@ workspace name 'n100_road_thin_roads_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 <!-- sample: error_alike -->
 ```python
 def error_alike() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
+    partition_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
 ```
 
 <!-- error: error_alike -->
@@ -981,7 +994,7 @@ identities 'n100/road/thin_roads:thin_roads' and 'n100/road/thin_roads:Thin_Road
 <!-- sample: error_unknown_call -->
 ```python
 def error_unknown_call() -> None:
-    fan_in_pod(MemoryStore()).scope_for(f"{STAGE}:other")
+    partition_pod(MemoryStore()).scope_for(f"{STAGE}:other")
 ```
 
 <!-- error: error_unknown_call -->
@@ -994,7 +1007,7 @@ call identity 'n100/road/thin_roads:other' is not one this pod runs: ('n100/road
 <!-- sample: error_repeated_call -->
 ```python
 def error_repeated_call() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, CALL))
+    partition_pod(MemoryStore(), calls=(CALL, CALL))
 ```
 
 <!-- error: error_repeated_call -->
