@@ -10,7 +10,7 @@ from data_orchestrator.orchestrator import InputDataOrchestrator
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
-from paths import require
+from paths import require, road_result_path
 
 from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_SQLResources, N100_Symbology, N100_Values
@@ -171,7 +171,9 @@ def data_selection(
         building.Grunnriss_N10: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         building.TuristHytte_N10: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         matrikkel.bygning: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
-        Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value: Building_N100.data_selection___displacement_feature___n100_building.value,
+        road_result_path(
+            Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value
+        ): Building_N100.data_selection___displacement_feature___n100_building.value,
         building.AnleggsLinje_N50: Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 

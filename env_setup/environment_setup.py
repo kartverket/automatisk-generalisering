@@ -19,7 +19,7 @@ from env_setup.global_config import (
     scale_n500,
 )
 from env_setup.project_layout import ProjectLayout
-from paths import require, DEFAULT_PROJECT_WORKSPACE, GIS_FILES_ROOT
+from paths import require, DEFAULT_PROJECT_WORKSPACE, GIS_OUTPUTS_ROOT
 
 project_spatial_reference = 25833
 
@@ -146,7 +146,7 @@ class ProjectDirectorySetup:
     _setup_done_globally = False
 
     def __init__(self, layout: ProjectLayout | None = None):
-        self.layout = layout or ProjectLayout(output_root=GIS_FILES_ROOT.parent)
+        self.layout = layout or ProjectLayout(output_root=GIS_OUTPUTS_ROOT)
         self.scales = [
             scale_n10,
             scale_n50,

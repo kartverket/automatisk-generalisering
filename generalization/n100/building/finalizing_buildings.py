@@ -5,7 +5,7 @@ import arcpy
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 # Importing custom files
-from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
 
@@ -115,8 +115,20 @@ def building_polygons_to_line():
     """
     Converts building polygons to lines, to creat omrisslinje feature.
     """
+    polygons = Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value
+    joined_lines = Building_N100.finalizing_buildings___polygon_to_line_joined_fields___n100_building.value
+
+    # PolygonToLine creates no output for empty input, which can happen after partitioning.
+    if not file_utilities.feature_has_rows(polygons):
+        file_utilities.create_feature_class(
+            template_feature=polygons,
+            new_feature=joined_lines,
+            geometry_type="POLYLINE",
+        )
+        return
+
     arcpy.management.PolygonToLine(
-        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        in_features=polygons,
         out_feature_class=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
         neighbor_option="IDENTIFY_NEIGHBORS",
     )

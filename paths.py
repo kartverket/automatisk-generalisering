@@ -21,6 +21,17 @@ Canonical layout under GIS_FILES_ROOT — see docs/canonical_layout.md:
     ...
 """
 
+"""Project path bindings extra info relevant for indexed kubernetes runs
+
+``GIS_FILES_ROOT`` points at the input directory containing ``raw_data/`` and
+``symbology/``. ``GIS_OUTPUTS_ROOT`` optionally points at the directory that holds
+``ag_outputs/``; set it to a writable location such as ``/tmp/GIS_Files`` when the
+inputs are on a read-only mount. When unset, the parent of ``GIS_FILES_ROOT`` is used.
+``GIS_ROAD_RESULTS_ROOT`` optionally points at the directory holding the road pipeline's
+``ag_outputs/`` (for example the PVC, when ``GIS_OUTPUTS_ROOT`` is pod-local). When unset,
+``GIS_OUTPUTS_ROOT`` is used.
+"""
+
 ###########################
 # Libraries
 ###########################
@@ -66,4 +77,18 @@ load_env()
 
 DEFAULT_PROJECT_WORKSPACE = Path(require("DEFAULT_PROJECT_WORKSPACE"))
 GIS_FILES_ROOT = Path(require("GIS_FILES_ROOT"))
+GIS_OUTPUTS_ROOT = (
+    Path(os.environ["GIS_OUTPUTS_ROOT"])
+    if "GIS_OUTPUTS_ROOT" in os.environ
+    else GIS_FILES_ROOT.parent
+)
+GIS_ROAD_RESULTS_ROOT = Path(
+    os.environ.get("GIS_ROAD_RESULTS_ROOT", str(GIS_OUTPUTS_ROOT))
+)
 PYTHONPATH = Path(require("PYTHONPATH"))
+
+
+def road_result_path(output_path: str) -> str:
+    """Rebase a path under ``GIS_OUTPUTS_ROOT`` onto ``GIS_ROAD_RESULTS_ROOT``."""
+    relative = Path(output_path).relative_to(GIS_OUTPUTS_ROOT)
+    return str(GIS_ROAD_RESULTS_ROOT / relative)

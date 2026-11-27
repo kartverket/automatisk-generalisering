@@ -1,3 +1,5 @@
+import logging
+
 import arcpy
 
 from composition_configs import core_config, logic_config
@@ -5,7 +7,7 @@ from constants.n100_constants import N100_SQLResources, N100_Symbology
 
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
@@ -18,6 +20,8 @@ from env_setup import environment_setup
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
+
+logger = logging.getLogger(__name__)
 
 
 @timing_decorator
@@ -161,6 +165,7 @@ def resolve_building_conflicts_polygon(data_orc: InputDataOrchestrator):
                 object=building,
                 tag=rbc_points,
                 path=Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
+                geometry_type="POINT",
             ),
         ]
     )
@@ -304,13 +309,26 @@ def intersecting_building_polygons_to_point():
 def merging_invisible_intersecting_points():
     """
     Merges points from intersecting building polygons and invisible polygons.
+
+    Inputs without features are skipped. When the partition iterator produced nothing, the
+    invisible-polygons output is an empty placeholder with the input's polygon geometry,
+    which Merge rejects next to point inputs. The intersecting points always exist (they
+    come from FeatureToPoint), so they are the fallback when every input is empty.
     """
     print("Merging points...")
+    candidate_inputs = [
+        Building_N100.polygon_resolve_building_conflicts___intersecting_polygons_to_points___n100_building.value,
+        Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
+    ]
+    inputs_with_rows = [
+        path for path in candidate_inputs if file_utilities.feature_has_rows(path)
+    ]
+    for path in candidate_inputs:
+        if path not in inputs_with_rows:
+            logger.warning(f"Skipping empty or missing merge input: {path}")
+
     arcpy.management.Merge(
-        inputs=[
-            Building_N100.polygon_resolve_building_conflicts___intersecting_polygons_to_points___n100_building.value,
-            Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
-        ],
+        inputs=inputs_with_rows or candidate_inputs[:1],
         output=Building_N100.polygon_resolve_building_conflicts___final_merged_points___n100_building.value,
     )
 

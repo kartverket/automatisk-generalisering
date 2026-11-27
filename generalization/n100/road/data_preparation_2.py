@@ -525,6 +525,7 @@ def ramp_partition():
                 tag="output",
                 path=Road_N100.ramps__potential_points__n100_road.value,
                 extraction_method=core_config.OutputExtractionMethod.CLIP,
+                geometry_type="POINT",
             ),
             core_config.OutputEntry.vector_output(
                 object=removed_dangles,
