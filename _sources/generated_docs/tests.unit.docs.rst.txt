@@ -1,0 +1,29 @@
+tests.unit.docs package
+=======================
+
+Submodules
+----------
+
+tests.unit.docs.scratch\_samples module
+---------------------------------------
+
+.. automodule:: tests.unit.docs.scratch_samples
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.docs.test\_scratch\_user\_guide module
+-------------------------------------------------
+
+.. automodule:: tests.unit.docs.test_scratch_user_guide
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.docs
+   :members:
+   :show-inheritance:
+   :undoc-members:

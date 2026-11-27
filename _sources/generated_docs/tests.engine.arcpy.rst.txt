@@ -44,6 +44,14 @@ tests.engine.arcpy.test\_row\_io module
    :show-inheritance:
    :undoc-members:
 
+tests.engine.arcpy.test\_scratch module
+---------------------------------------
+
+.. automodule:: tests.engine.arcpy.test_scratch
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 tests.engine.arcpy.test\_session module
 ---------------------------------------
 

@@ -9,8 +9,10 @@ Subpackages
 
    tests.unit.adapters
    tests.unit.core
+   tests.unit.docs
    tests.unit.lineage
    tests.unit.ports
+   tests.unit.staging
    tests.unit.tools
 
 Module contents

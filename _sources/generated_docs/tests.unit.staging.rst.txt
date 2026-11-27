@@ -1,0 +1,29 @@
+tests.unit.staging package
+==========================
+
+Submodules
+----------
+
+tests.unit.staging.test\_scratch module
+---------------------------------------
+
+.. automodule:: tests.unit.staging.test_scratch
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.unit.staging.test\_workspace module
+-----------------------------------------
+
+.. automodule:: tests.unit.staging.test_workspace
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.unit.staging
+   :members:
+   :show-inheritance:
+   :undoc-members:
