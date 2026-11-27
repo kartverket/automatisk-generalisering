@@ -51,7 +51,9 @@ When type hints and descriptive naming already communicate the intent, these sec
 A docstring cites the ADR id for a rule it relies on, at the end of the sentence the rule
 supports: `ADR-0017 RS-D5`. It does not restate the ADR's Direction, its alternatives or its
 argument, and it names no slice, task, A-id or temp document. The ADRs are in
-`docs/decisions/`.
+`docs/decisions/`. A module whose use is documented by a page under `docs/user_guide/` names
+that page once, in its module docstring, so a change to the module is read as a change to
+the page.
 
 ### 6. Avoid documenting what the code already expresses
 

@@ -238,6 +238,20 @@ def test_a_leaf_that_cannot_be_a_layer_name_part_is_refused() -> None:
             root(bad)
 
 
+def test_a_label_or_leaf_starting_with_a_digit_is_refused_and_a_tag_is_not() -> None:
+    """A label first in the trail opens the layer name, and a layer name starts with a
+    letter or an underscore; a tag follows its label, so `child("pass", tag="2")` reads
+    like the automatic index."""
+    root = _scope("op")
+    with pytest.raises(ValueError, match="scope label '2pass' .* starts with a letter"):
+        root.child("2pass")
+    with pytest.raises(ValueError, match="scope leaf '2nd' .* starts with a letter"):
+        root("2nd")
+    assert root.child("pass", tag="2").trail[-1] == "pass_2"
+    assert root.child("kept_3").trail[-1] == "kept_3"
+    assert root("sweep_3").name == "sweep_3"
+
+
 def test_a_scope_has_identity_equality_and_is_hashable() -> None:
     one = _scope("op")
     other = _scope("op")

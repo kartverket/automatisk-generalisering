@@ -2,7 +2,9 @@
 
 What: `ScratchHandle` names a slot in the pod's workspace; `handle()` declares one as a
 class attribute; `In`, `Out`, `Mutates` and `ParentsOut` say what a parameter does with
-the handle it receives; `ScratchScope` hands an operation its internal scratch.
+the handle it receives; `ScratchScope` hands an operation its internal scratch. The
+developer's guide to scratch is `docs/user_guide/scratch.md`; a change to this module is a
+change to that page.
 
 How: a declared handle is named by `__set_name__` from the class attribute it is bound to,
 once, when the class is created, and refuses to be renamed. An internal handle is built by
@@ -34,10 +36,16 @@ TRAIL_SEPARATOR = "/"
 """Joins trail and leaf into an internal handle's name. Not a legal layer-name character,
 so an internal handle's name is never mistaken for the layer the scratch manager renders."""
 
-_SEGMENT = re.compile(r"[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*")
-"""A scope label, tag or leaf: letters, digits and single underscores, so it renders into
-a layer name as it is, never contains the trail separator, and never collides with the
-separator the renderer uses."""
+LABEL_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*")
+"""A scope label or leaf: a letter first, then letters, digits and single underscores. It
+renders into a layer name as it is, never contains the trail separator, never collides
+with the separator the renderer uses, and opens a layer name legally when it is first in
+the trail, since a layer name starts with a letter or an underscore."""
+
+TAG_PATTERN = re.compile(r"[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*")
+"""A scope tag: letters, digits and single underscores. A tag follows its label and an
+underscore, so it may start with a digit, and `child("pass", tag="2")` reads like the
+automatic index."""
 
 
 @dataclass(frozen=True)
@@ -207,7 +215,7 @@ class ScratchScope(Injected):
         """
         if self.materialize is _unbound:
             raise InjectionError(_unbound_message(call=f"scratch({name!r})"))
-        _check_segment(text=name, what="leaf")
+        _check_segment(text=name, what="leaf", pattern=LABEL_PATTERN)
         path = self.materialize(self.trail, name, data_type)
         return ScratchHandle(
             name=TRAIL_SEPARATOR.join((*self.trail, name)),
@@ -231,9 +239,9 @@ class ScratchScope(Injected):
         """
         if self.materialize is _unbound:
             raise InjectionError(_unbound_message(call=f"scratch.child({label!r})"))
-        _check_segment(text=label, what="label")
+        _check_segment(text=label, what="label", pattern=LABEL_PATTERN)
         if tag is not None:
-            _check_segment(text=tag, what="tag")
+            _check_segment(text=tag, what="tag", pattern=TAG_PATTERN)
         key = f"{label}_{tag}" if tag else label
         segment = key
         count = 1
@@ -248,12 +256,15 @@ class ScratchScope(Injected):
         )
 
 
-def _check_segment(*, text: str, what: str) -> None:
-    """Rejects a label, tag or leaf that cannot be one part of a layer name."""
-    if _SEGMENT.fullmatch(text) is None:
+def _check_segment(*, text: str, what: str, pattern: re.Pattern[str]) -> None:
+    """Rejects a label, tag or leaf that cannot be one part of a layer name. `what` is
+    the word in the message; `pattern` is the rule, so renaming the one never changes the
+    other."""
+    if pattern.fullmatch(text) is None:
         raise ValueError(
-            f"scope {what} {text!r} must be letters, digits and single underscores; "
-            "it becomes part of a layer name."
+            f"scope {what} {text!r} must be letters, digits and single underscores, "
+            "and a label or a leaf starts with a letter; it becomes part of a layer "
+            "name."
         )
 
 

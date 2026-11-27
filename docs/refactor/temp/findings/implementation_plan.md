@@ -132,11 +132,11 @@ Legend (state of the template module): **lift** = move with small edits; **rewor
 
 | module | state | notes | slice |
 |---|---|---|---|
-| `staging/workspace.py` | lift | `normalize_layer_name` unimplemented and specified; hand-off. `posixpath` joins are used deliberately; slice 1b checks that ArcPy in the image accepts them for `.gdb` layer paths (§8.2). | 1c; `normalize_layer_name` as a hand-off |
+| `staging/workspace.py` | lift | `normalize_layer_name` landed as `legal_name`, reject-only, with the limits A34 states, measured before the lift (`findings/slice_1c_scratch_manager_evidence.md`). `posixpath` joins are used deliberately; slice 1b checks that ArcPy in the image accepts them for `.gdb` layer paths (§8.2). | 1c |
 | `staging/scratch.py` | lift, one gap | `ScratchFileManager` is the decided design (02-runtime §4.2). `create_workspaces` is unimplemented and its docstring says `CreateFileGDB`, which `staging/` may not call. Decided 2026-09-21 (A5.7): `TableOps.create_workspace`. The manager calls it through the toolbox; implemented in 1c. | 1c |
 | `staging/transfer.py` | stale | Duplicate `ArchiveClient` (above); `stage_down`/`stage_up`/`dump_scratch` unimplemented; `PinnedInput`/`PlannedOutput` typed as `object`. Rewrite in slice 1c for the local case (dump only) and slice 5 for the tree on the volume and the stage boundary (ADR-0021 ST-D26). | 1c (dump), 5 (stage down and up) |
 | `runtime/stage_entry.py` | lift | `run_operations`, `_supply`, `sweep_outputs` are the decided pod dispatch loop. Slice 3 wraps it with the lineage session; the function itself does not change shape. | 1c, 3 |
-| `runtime/env.py`, `runtime/pod.py`, `runtime/pod_entry.py`, `runtime/local.py` | **new** | The settings object; the entry names and the role enum; the engine entry; the fake entry (§7.1, §7.5, ADR-0018 AR-D25). | 1c |
+| `runtime/env.py`, `runtime/pod.py`, `runtime/pod_entry.py`, `runtime/local.py` | **new** | The settings object; the entry names; the engine entry; the fake entry (§7.1, §7.5, ADR-0018 AR-D25). The pod-role enum is `core/types.py`'s `PodRole`, since the scratch manager renders it. | 1c |
 | `runtime/fan_out.py`, `fan_in.py`, `partition.py`, `ingest.py` | **new** | slice 5 | 5 |
 | `orchestrator/execute.py` | lift as stub | `execute` takes one `ClusterClient`, not a map by environment. Outside this pass except the dispatch registry's counter (T3.3), which is orchestration and lands as a small module in slice 5. | 5 |
 | `observability/` | **new** | JSONL records, `ContextVar` context, timing (03-architecture §6). Minimal in slice 3, merge in slice 5. | 3, 5 |
@@ -1363,12 +1363,13 @@ docstring says so.
 | adapter | `ag/adapters/errors.py` | `AdapterDefectError(AgError)`: the adapter itself is wrong, never a data condition. A **sibling** of `PortError`, not a subclass: code that handles `PortError` must never swallow a defect in the adapter | `LocatorContractError` (a cross-key pair from a locator), `CapabilityError` (a method called that the record says is unsupported, other than parents) |
 | lineage | `ag/lineage/errors.py` | `LineageError(AgError)` | `LineageFieldError` (B10: column absent, duplicate, wrong type; A11.12: null on `CARRY`), `DesignCeilingError`, `ResourceCeilingError` (A11.4a, two types because the fixes differ), `ParentsOnUnbearingSubjectError` (A11.15 d), `ForeignIdError` (A25), `CompletenessError` (A16), `UntrackedWriteError` (A12.7a) |
 | domain | `ag/generalization/errors.py` (importable by `helpers/` and `operations/` alike) | `DomainError(AgError)` | `DataContractError` (an operation's assumption about the data failed: `_node_id`'s "feature_id must be LONG"); nothing else until an operation needs it |
-| runtime | `ag/runtime/errors.py` | `StageRunError(AgError)` | `OutputMissing` (a bare `RuntimeError` subclass in the template), `WorkspaceError` (leaf collision, over-budget name), `StageInputMissing` |
+| staging | `ag/staging/errors.py` | `StagingError(AgError)` | `WorkspaceError` (an illegal or over-long name, two names the engine treats as one, a workspace the manager was not asked for); raised in a pod by code `ag.runtime` imports, so not a `StageRunError` |
+| runtime | `ag/runtime/errors.py` | `StageRunError(AgError)` | `OutputMissing` (a bare `RuntimeError` subclass in the template), `StageInputMissing` |
 
 This table is reconciled with `template_review.md` §5, which lists every raise site in the
 template and what it becomes; the template has no error module of its own.
 
-Six modules, one base each, about sixteen leaf types. Adding a port method adds none of them:
+Seven modules, one base each, about sixteen leaf types. Adding a port method adds none of them:
 its failure modes are `EngineError` (the tool failed), `PortContractError` (the caller broke the
 docstring), or one of the three parents errors. A new exception type is justified only by a new
 *recovery*: a caller that would catch it differently from its siblings.
@@ -1482,7 +1483,8 @@ of which port methods a stage calls. The record names methods, never mechanisms.
 
 Three modules under `runtime/` (ADR-0018 AR-D25). `runtime/stage_entry.py` holds the stage
 function, which takes a `Stage` object. `runtime/pod.py` declares both entry module names and
-the pod's role enum (fan-out, partition, fan-in) with no imports, and
+imports only `ag.core.types`, whose `PodRole` (fan-out, pod, fan-in) the scratch manager
+renders into every workspace name, and
 `tests/unit/runtime/test_pod.py` asserts each entry's `__name__` equals its constant.
 `ag.runtime.pod_entry` composes the engine through `compose.arcpy_ports` and nothing else; in
 this slice it is run directly, as a process in the image, and from slice 5 the dispatch

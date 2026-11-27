@@ -120,8 +120,8 @@ work but have different lifetimes and different modules.
 | 14 | T2.9 | Port surface surgery — splits, `DANGLE`, delete `union` | not started |
 | 15 | T2.10 | `dissolve(statistics=…)` and the `ranks` fix | not started |
 | 16 | T2.4 | Parents out-param and column constants | not started |
-| 16b | T2.12 | `TableOps.create_workspace` | port half **done** (slice 1c); the manager's use lands with the runner |
-| 16c | T2.13 | Call identity: per-call workspace and scope namespace | not started |
+| 16b | T2.12 | `TableOps.create_workspace` | **done** (slice 1c) |
+| 16c | T2.13 | Call identity: per-call workspace and scope namespace | manager half **done** (slice 1c); `Stage` and the stage entry point not started |
 | 17 | T3.1 | Native index behind the port | not started |
 | 18 | T3.3 | Dispatch minter-id registry | not started |
 | 19 | T3.4 | Ingest step and cross-run re-allocation | not started |
@@ -157,6 +157,7 @@ work but have different lifetimes and different modules.
 | 45 | T7.7 | Legacy lint baseline: the remaining entries, per directory `[INDEPENDENT]` | not started |
 | 46 | T7.8 | `02-runtime` and `03-architecture` without placement or the cloud | not started; before slice 1c merges |
 | 47 | T2.14 | `open_session` contains the engine's import | not started; with the first PR that lands `ag.runtime.pod_entry` or `ag.runtime.local`, before it merges |
+| 48 | T7.9 | Name-length report `[INDEPENDENT]` | not started; under `tools/`, explicit request needed |
 | — | B2 | Q-C investigation `[INDEPENDENT]` | not started |
 
 ---
@@ -1148,14 +1149,15 @@ because `source` already means `ExternalSource` in this repository.
 
 ## 16b. T2.12 — `TableOps.create_workspace`
 
-**status:** port half done (slice 1c); the manager's use lands with the runner.
+**status:** done (slice 1c): the port, both adapters, the conformance cases and the
+manager's call through the toolbox.
 
 **what done means** `TableOps.create_workspace(*, path: str, fmt: WorkspaceFormat) -> None`
 exists and creates one empty workspace. `WorkspaceFormat` lives in `ports/`, since a port
 signature names it; `staging/workspace.py` keeps the join rule, name legality and the name
 budget. `ScratchFileManager.create_workspaces` calls the method through the toolbox `runtime/`
 hands it, once for the stage workspace and once per operation workspace, and creates the
-sidecar directories itself. Both adapters implement it, the in-memory one by recording the
+loose-files directory itself. Both adapters implement it, the in-memory one by recording the
 workspace, and the conformance suite has its cases: the workspace exists afterwards; creating
 one that already exists is a `PortContractError`; a path whose parent is missing is an
 `EngineError` naming the tool.
@@ -1166,7 +1168,7 @@ slice 1c of `findings/implementation_plan.md`.
 
 **depends on** nothing.
 
-**decision refs** A5.7, B21.
+**decision refs** A5.7, A34, B21, B38.
 
 **doc migration** A5.7 → ADR-0019 PC-6 and `ports/table_ops.py` (landed); the
 `staging/scratch.py` docstring and `02-runtime.md` §4.2 with the runner.
@@ -1175,7 +1177,11 @@ slice 1c of `findings/implementation_plan.md`.
 
 ## 16c. T2.13 — Call identity: per-call workspace and scope namespace
 
-**status:** not started
+**status:** manager half done (slice 1c); the `Stage` check and the stage entry point's
+binding not started. Still to land here: the per-file check on a loose file, its path from
+the scratch root against the Windows file-path limit less the root allowance (A34), with
+the first method that hands out such a path; `staging/workspace.py` checks the directory
+now.
 
 **what done means** `Stage` gives each `OperationCall` a call identity in declaration order:
 the operation's short name, with `_2`, `_3`, ... on repeats, and rejects at import two
@@ -1199,7 +1205,7 @@ scope's namespace and names internal handles by trail and leaf; nothing there ch
 
 **depends on** nothing.
 
-**decision refs** A29, A15.3.
+**decision refs** A29, A15.3, A34, B37.
 
 **doc migration** A29 → the `Stage` docstring in `core/pipeline.py`, the `staging/scratch.py`
 docstring and `02-runtime.md` §4.2.
@@ -2665,3 +2671,26 @@ than decided, per the constraint on this pass.
 
 **deferred** B26, failure isolation for payloads: out of scope for the refactor, recorded for
 the orchestrator design.
+
+---
+
+## 48. T7.9 — Name-length report `[INDEPENDENT]`
+
+**status:** not started. Lives under `tools/`, so its build needs the architect's explicit
+request by name.
+
+**what done means** A report-only tool, with no runtime warning, that reads the declared
+pipelines and lists every stage identity, operation function name, scope label and handle
+name by length bucket (15, 20, 25 and so on), each with its file and line; and, for each
+stage, the longest operation workspace name it would render and its room under
+`WORKSPACE_NAME_LIMIT` (`staging/workspace.py`). It tells an author where a trail will be
+shortened or a workspace name refused before a pod does. When it lands,
+`docs/user_guide/scratch.md` gains a section on running it, so the guide names the tool and
+not the other way round.
+
+**files touched** a module under `tools/` (explicit request), `docs/contributing/`,
+`docs/user_guide/scratch.md`.
+
+**depends on** T2.13.
+
+**decision refs** A29, A34.
