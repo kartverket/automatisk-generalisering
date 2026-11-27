@@ -90,6 +90,16 @@ def fan_in_pod(
 # end: setup
 
 
+# sample: handle_name
+def handle_name() -> ScratchHandle:
+    return (
+        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
+    )
+
+
+# end: handle_name
+
+
 # sample: minimal
 @operation
 def thin_roads(
@@ -325,16 +335,6 @@ def case_table() -> ScratchFileManager:
 
 
 # end: case_table
-
-
-# sample: handle_name
-def handle_name() -> ScratchHandle:
-    return (
-        fan_in_pod(MemoryStore()).scope_for(CALL).child("clean").child("named")("kept")
-    )
-
-
-# end: handle_name
 
 
 # sample: long_labels

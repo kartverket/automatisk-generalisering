@@ -144,236 +144,6 @@ Descends one level, for a helper or a group of steps that names its own intermed
 - Returns a new `ScratchScope` with the segment appended to the trail. A segment already
   issued in this scope takes the lowest free index, `_2`, `_3` and so on.
 
-### Errors the scope raises
-
-Raised at the call, in the operation or helper that made it.
-
-- `ValueError`: a label, tag or leaf that cannot be part of a layer name. Fix: spell it with
-  letters, digits and single underscores.
-
-<!-- sample: error_bad_segment -->
-```python
-def error_bad_segment() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL)("road-parts")
-```
-
-<!-- error: error_bad_segment -->
-```text
-scope leaf 'road-parts' must be letters, digits and single underscores; it becomes part of a layer name.
-```
-
-- `InjectionError`: the scope was never bound. The operation was called directly with its
-  default, or something constructed a scope by hand. Fix: let the runtime inject it; in a
-  test, take a scope from a manager, as the testing sample below does.
-
-<!-- sample: error_unbound -->
-```python
-def error_unbound() -> None:
-    INJECTED("singlepart")
-```
-
-<!-- error: error_unbound -->
-```text
-scratch('singlepart') was called on a scope the runtime never bound. The stage entry point must hand its own scope to any operation whose signature declares `scratch: ScratchScope = INJECTED`.
-```
-
-### Errors the manager raises for a scratch call
-
-`WorkspaceError`, raised at the `scratch(...)` call that asked for the name.
-
-- A repeated leaf in one scope, in any case. Fix: give the second handle its own leaf, or
-  give the helper a `child`.
-
-<!-- sample: error_repeated_leaf -->
-```python
-def error_repeated_leaf() -> None:
-    scratch = fan_in_pod(MemoryStore()).scope_for(CALL)
-    scratch("parts")
-    scratch("Parts")
-```
-
-<!-- error: error_repeated_leaf -->
-```text
-scratch path '/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/Parts' was already issued in this pod for ('n100/road/thin_roads:thin_roads', 'parts'); a repeated leaf within one scope is a mistake, and the engine treats two names differing only in case as one. Use scratch.child(...) where two tools need the same leaf.
-```
-
-- A leaf too long to sit beside the digest when the name is shortened. Fix: shorten the
-  leaf; it is the author's to choose.
-
-<!-- sample: error_leaf_too_long -->
-```python
-def error_leaf_too_long() -> None:
-    fan_in_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
-```
-
-<!-- error: error_leaf_too_long -->
-```text
-leaf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' is 154 characters; beside the digest of its trail the geodatabase's limit of 160 leaves 145. A leaf's length is the author's choice: shorten it.
-```
-
-- Every window of the digest taken by other trails whose shortened names agree. Fix:
-  shorten a label so the trails differ in a kept part. In practice this needs digests that
-  collide; the sample forces it with a stand-in digest, see the naming examples.
-
-<!-- sample: error_every_window_taken -->
-```python
-def error_every_window_taken() -> None:
-    scratch = probing_pod(MemoryStore()).scope_for(CALL).child("clean")
-    for suffix in ("", "_2", "_3", "_4", "_5", "_6"):
-        scratch.child(AREAS + suffix).child(TOPOLOGY)("nodes")
-```
-
-<!-- error: error_every_window_taken -->
-```text
-every one of the 5 shortened names for ('n100/road/thin_roads:thin_roads', 'clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source_6', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components', 'nodes') is taken by another trail in this pod.
-```
-
-### Errors the manager raises for a declared handle
-
-`WorkspaceError`, raised when the runtime materialises the stage's declared handles.
-
-- A declared name over 160 characters. It has no trail to drop, so it cannot be shortened.
-  Fix: rename the class attribute.
-
-<!-- sample: error_declared_over_limit -->
-```python
-def error_declared_over_limit() -> None:
-    fan_in_pod(MemoryStore()).handle(
-        ScratchHandle(name="x" * 161, namespace="guide.Roads")
-    )
-```
-
-<!-- error: error_declared_over_limit -->
-```text
-layer name 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' is 161 characters, over the geodatabase's 160. A declared handle's name has no trail to shorten: rename it.
-```
-
-- A declared name that is not ASCII letters, digits and underscores starting with a letter
-  or underscore. Fix: rename the class attribute; `veier_ae` where `veier_æ` was meant.
-
-<!-- sample: error_illegal_declared -->
-```python
-def error_illegal_declared() -> None:
-    fan_in_pod(MemoryStore()).handle(
-        ScratchHandle(name="veier_æ", namespace="guide.Roads")
-    )
-```
-
-<!-- error: error_illegal_declared -->
-```text
-name 'veier_æ' is not ASCII letters, digits and underscores starting with a letter or underscore, which every workspace, layer and loose file needs to open on Linux and on Windows.
-```
-
-- Two declared handles whose names differ only in case, in one or two handle classes. Fix:
-  rename one.
-
-<!-- sample: error_declared_case -->
-```python
-class Lower(Handles):
-    roads = handle()
-
-
-class Upper(Handles):
-    Roads = handle()
-
-
-def error_declared_case() -> None:
-    pod = fan_in_pod(MemoryStore())
-    pod.handle(Lower.roads)
-    pod.handle(Upper.Roads)
-```
-
-<!-- error: error_declared_case -->
-```text
-ScratchHandle(tests.unit.docs.scratch_samples.Upper.Roads) would be at '/scratch/n100_road_thin_roads__fan_in.gdb/Roads', which ScratchHandle(tests.unit.docs.scratch_samples.Lower.roads) already holds without regard to case; the engine treats the two names as one.
-```
-
-### Errors the manager raises before any operation runs
-
-Raised in the manager's constructor or when a scope is asked for. An author meets the first
-two by naming; the rest are the runtime's wiring and are listed so the messages are
-recognisable.
-
-- `WorkspaceError`: a workspace name over 110 characters. The name is the rendered stage or
-  call identity and the pod stem. Fix: a shorter stage name or operation function name.
-
-<!-- sample: error_workspace_too_long -->
-```python
-def error_workspace_too_long() -> None:
-    ScratchFileManager(
-        root="/scratch",
-        stage=STAGE + "/" + "x" * 100,
-        calls=(),
-        role=PodRole.FAN_IN,
-        table=MemoryTableOps(store=MemoryStore()),
-    )
-```
-
-<!-- error: error_workspace_too_long -->
-```text
-workspace name 'n100_road_thin_roads_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx__fan_in.gdb' is 133 characters, over 110: its internal files would not fit a Windows path of 259 under a root of 100.
-```
-
-- `WorkspaceError`: two identities, or the stage and a call, whose rendered workspace names
-  agree without regard to case. Fix: rename one operation.
-
-<!-- sample: error_alike -->
-```python
-def error_alike() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
-```
-
-<!-- error: error_alike -->
-```text
-identities 'n100/road/thin_roads:thin_roads' and 'n100/road/thin_roads:Thin_Roads' both render to the workspace name 'n100_road_thin_roads_Thin_Roads' without regard to case.
-```
-
-- `StagingError`: a call identity the pod was not given.
-
-<!-- sample: error_unknown_call -->
-```python
-def error_unknown_call() -> None:
-    fan_in_pod(MemoryStore()).scope_for(f"{STAGE}:other")
-```
-
-<!-- error: error_unknown_call -->
-```text
-call identity 'n100/road/thin_roads:other' is not one this pod runs: ('n100/road/thin_roads:thin_roads',).
-```
-
-- `StagingError`: a call identity given twice.
-
-<!-- sample: error_repeated_call -->
-```python
-def error_repeated_call() -> None:
-    fan_in_pod(MemoryStore(), calls=(CALL, CALL))
-```
-
-<!-- error: error_repeated_call -->
-```text
-call identity 'n100/road/thin_roads:thin_roads' is given twice.
-```
-
-- `StagingError`: a partition index on a pod that is not a partition pod, or none on one
-  that is.
-
-<!-- sample: error_role_index -->
-```python
-def error_role_index() -> None:
-    ScratchFileManager(
-        root="/scratch",
-        stage=STAGE,
-        calls=(CALL,),
-        role=PodRole.POD,
-        table=MemoryTableOps(store=MemoryStore()),
-    )
-```
-
-<!-- error: error_role_index -->
-```text
-role 'pod' with partition index None: only a 'pod' pod has an index, and every one does.
-```
-
 ## Code samples
 
 Every sample is complete: with the imports and the setup below it runs as printed. The
@@ -973,6 +743,242 @@ Each limit is declared once in `src/ag/staging/workspace.py` and measured, not a
   itself writes past them; the limit protects the copy and the extraction.
 - 100 characters of root allowance: the room reserved for the path above the pod scratch
   root, so a dump copied under a short folder opens.
+
+## Errors
+
+Each error with the code that raises it, the whole message as the fakes render it, and
+the fix. The snippets use the setup from the code samples and, for the digest, the stand-in
+from the naming examples.
+
+### Errors the scope raises
+
+Raised at the call, in the operation or helper that made it.
+
+- `ValueError`: a label, tag or leaf that cannot be part of a layer name. Fix: spell it with
+  letters, digits and single underscores.
+
+<!-- sample: error_bad_segment -->
+```python
+def error_bad_segment() -> None:
+    fan_in_pod(MemoryStore()).scope_for(CALL)("road-parts")
+```
+
+<!-- error: error_bad_segment -->
+```text
+scope leaf 'road-parts' must be letters, digits and single underscores; it becomes part of a layer name.
+```
+
+- `InjectionError`: the scope was never bound. The operation was called directly with its
+  default, or something constructed a scope by hand. Fix: let the runtime inject it; in a
+  test, take a scope from a manager, as the testing sample above does.
+
+<!-- sample: error_unbound -->
+```python
+def error_unbound() -> None:
+    INJECTED("singlepart")
+```
+
+<!-- error: error_unbound -->
+```text
+scratch('singlepart') was called on a scope the runtime never bound. The stage entry point must hand its own scope to any operation whose signature declares `scratch: ScratchScope = INJECTED`.
+```
+
+### Errors the manager raises for a scratch call
+
+`WorkspaceError`, raised at the `scratch(...)` call that asked for the name.
+
+- A repeated leaf in one scope, in any case. Fix: give the second handle its own leaf, or
+  give the helper a `child`.
+
+<!-- sample: error_repeated_leaf -->
+```python
+def error_repeated_leaf() -> None:
+    scratch = fan_in_pod(MemoryStore()).scope_for(CALL)
+    scratch("parts")
+    scratch("Parts")
+```
+
+<!-- error: error_repeated_leaf -->
+```text
+scratch path '/scratch/n100_road_thin_roads_thin_roads__fan_in.gdb/Parts' was already issued in this pod for ('n100/road/thin_roads:thin_roads', 'parts'); a repeated leaf within one scope is a mistake, and the engine treats two names differing only in case as one. Use scratch.child(...) where two tools need the same leaf.
+```
+
+- A leaf too long to sit beside the digest when the name is shortened. Fix: shorten the
+  leaf; it is the author's to choose.
+
+<!-- sample: error_leaf_too_long -->
+```python
+def error_leaf_too_long() -> None:
+    fan_in_pod(MemoryStore()).scope_for(CALL).child("clean")("x" * 154)
+```
+
+<!-- error: error_leaf_too_long -->
+```text
+leaf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' is 154 characters; beside the digest of its trail the geodatabase's limit of 160 leaves 145. A leaf's length is the author's choice: shorten it.
+```
+
+- Every window of the digest taken by other trails whose shortened names agree. Fix:
+  shorten a label so the trails differ in a kept part. In practice this needs digests that
+  collide; the sample forces it with the stand-in digest from the naming examples.
+
+<!-- sample: error_every_window_taken -->
+```python
+def error_every_window_taken() -> None:
+    scratch = probing_pod(MemoryStore()).scope_for(CALL).child("clean")
+    for suffix in ("", "_2", "_3", "_4", "_5", "_6"):
+        scratch.child(AREAS + suffix).child(TOPOLOGY)("nodes")
+```
+
+<!-- error: error_every_window_taken -->
+```text
+every one of the 5 shortened names for ('n100/road/thin_roads:thin_roads', 'clean', 'attach_the_administrative_area_attributes_to_every_road_segment_of_the_source_6', 'build_the_topology_over_the_dissolved_network_with_degrees_and_components', 'nodes') is taken by another trail in this pod.
+```
+
+### Errors the manager raises for a declared handle
+
+`WorkspaceError`, raised when the runtime materialises the stage's declared handles.
+
+- A declared name over 160 characters. It has no trail to drop, so it cannot be shortened.
+  Fix: rename the class attribute.
+
+<!-- sample: error_declared_over_limit -->
+```python
+def error_declared_over_limit() -> None:
+    fan_in_pod(MemoryStore()).handle(
+        ScratchHandle(name="x" * 161, namespace="guide.Roads")
+    )
+```
+
+<!-- error: error_declared_over_limit -->
+```text
+layer name 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' is 161 characters, over the geodatabase's 160. A declared handle's name has no trail to shorten: rename it.
+```
+
+- A declared name that is not ASCII letters, digits and underscores starting with a letter
+  or underscore. Fix: rename the class attribute; `veier_ae` where `veier_æ` was meant.
+
+<!-- sample: error_illegal_declared -->
+```python
+def error_illegal_declared() -> None:
+    fan_in_pod(MemoryStore()).handle(
+        ScratchHandle(name="veier_æ", namespace="guide.Roads")
+    )
+```
+
+<!-- error: error_illegal_declared -->
+```text
+name 'veier_æ' is not ASCII letters, digits and underscores starting with a letter or underscore, which every workspace, layer and loose file needs to open on Linux and on Windows.
+```
+
+- Two declared handles whose names differ only in case, in one or two handle classes. Fix:
+  rename one.
+
+<!-- sample: error_declared_case -->
+```python
+class Lower(Handles):
+    roads = handle()
+
+
+class Upper(Handles):
+    Roads = handle()
+
+
+def error_declared_case() -> None:
+    pod = fan_in_pod(MemoryStore())
+    pod.handle(Lower.roads)
+    pod.handle(Upper.Roads)
+```
+
+<!-- error: error_declared_case -->
+```text
+ScratchHandle(tests.unit.docs.scratch_samples.Upper.Roads) would be at '/scratch/n100_road_thin_roads__fan_in.gdb/Roads', which ScratchHandle(tests.unit.docs.scratch_samples.Lower.roads) already holds without regard to case; the engine treats the two names as one.
+```
+
+### Errors the manager raises before any operation runs
+
+Raised in the manager's constructor or when a scope is asked for. An author meets the first
+two by naming; the rest are the runtime's wiring and are listed so the messages are
+recognisable.
+
+- `WorkspaceError`: a workspace name over 110 characters. The name is the rendered stage or
+  call identity and the pod stem. Fix: a shorter stage name or operation function name.
+
+<!-- sample: error_workspace_too_long -->
+```python
+def error_workspace_too_long() -> None:
+    ScratchFileManager(
+        root="/scratch",
+        stage=STAGE + "/" + "x" * 100,
+        calls=(),
+        role=PodRole.FAN_IN,
+        table=MemoryTableOps(store=MemoryStore()),
+    )
+```
+
+<!-- error: error_workspace_too_long -->
+```text
+workspace name 'n100_road_thin_roads_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx__fan_in.gdb' is 133 characters, over 110: its internal files would not fit a Windows path of 259 under a root of 100.
+```
+
+- `WorkspaceError`: two identities, or the stage and a call, whose rendered workspace names
+  agree without regard to case. Fix: rename one operation.
+
+<!-- sample: error_alike -->
+```python
+def error_alike() -> None:
+    fan_in_pod(MemoryStore(), calls=(CALL, f"{STAGE}:Thin_Roads"))
+```
+
+<!-- error: error_alike -->
+```text
+identities 'n100/road/thin_roads:thin_roads' and 'n100/road/thin_roads:Thin_Roads' both render to the workspace name 'n100_road_thin_roads_Thin_Roads' without regard to case.
+```
+
+- `StagingError`: a call identity the pod was not given.
+
+<!-- sample: error_unknown_call -->
+```python
+def error_unknown_call() -> None:
+    fan_in_pod(MemoryStore()).scope_for(f"{STAGE}:other")
+```
+
+<!-- error: error_unknown_call -->
+```text
+call identity 'n100/road/thin_roads:other' is not one this pod runs: ('n100/road/thin_roads:thin_roads',).
+```
+
+- `StagingError`: a call identity given twice.
+
+<!-- sample: error_repeated_call -->
+```python
+def error_repeated_call() -> None:
+    fan_in_pod(MemoryStore(), calls=(CALL, CALL))
+```
+
+<!-- error: error_repeated_call -->
+```text
+call identity 'n100/road/thin_roads:thin_roads' is given twice.
+```
+
+- `StagingError`: a partition index on a pod that is not a partition pod, or none on one
+  that is.
+
+<!-- sample: error_role_index -->
+```python
+def error_role_index() -> None:
+    ScratchFileManager(
+        root="/scratch",
+        stage=STAGE,
+        calls=(CALL,),
+        role=PodRole.POD,
+        table=MemoryTableOps(store=MemoryStore()),
+    )
+```
+
+<!-- error: error_role_index -->
+```text
+role 'pod' with partition index None: only a 'pod' pod has an index, and every one does.
+```
 
 ## Related topics
 
