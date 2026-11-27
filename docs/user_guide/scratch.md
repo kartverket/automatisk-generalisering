@@ -54,11 +54,11 @@ flowchart LR
     root --> stage
     root --> loose["n100_road_thin_roads__pod00001/<br/>loose files: .lyrx, .csv, logs"]
     root --> op
-    subgraph stage["n100_road_thin_roads__pod00001.gdb<br/>stage workspace: the declared handles"]
+    subgraph stage["stage workspace: n100_road_thin_roads__pod00001.gdb"]
         source["source"]
         thinned["thinned"]
     end
-    subgraph op["n100_road_thin_roads_thin_roads__pod00001.gdb<br/>operation workspace: the call's internal scratch"]
+    subgraph op["operation workspace: n100_road_thin_roads_thin_roads__pod00001.gdb"]
         exploded["clean__exploded"]
         kept["clean__named__kept"]
     end
@@ -85,20 +85,10 @@ neither runs a call, so neither has one.
 
 ```mermaid
 flowchart TB
-    subgraph fan_out["fan-out pod"]
-        fo_stage["n100_road_thin_roads__fan_out.gdb"] ~~~ fo_loose["n100_road_thin_roads__fan_out/"]
-    end
-    subgraph pod1["partition pod 1"]
-        p1_stage["n100_road_thin_roads__pod00001.gdb"] ~~~ p1_loose["n100_road_thin_roads__pod00001/"]
-        p1_loose ~~~ p1_op["n100_road_thin_roads_thin_roads__pod00001.gdb"]
-    end
-    subgraph pod2["partition pod 2"]
-        p2_stage["n100_road_thin_roads__pod00002.gdb"] ~~~ p2_loose["n100_road_thin_roads__pod00002/"]
-        p2_loose ~~~ p2_op["n100_road_thin_roads_thin_roads__pod00002.gdb"]
-    end
-    subgraph fan_in["fan-in pod"]
-        fi_stage["n100_road_thin_roads__fan_in.gdb"] ~~~ fi_loose["n100_road_thin_roads__fan_in/"]
-    end
+    fan_out["fan-out pod<br/>n100_road_thin_roads__fan_out.gdb<br/>n100_road_thin_roads__fan_out/"]
+    pod1["partition pod 1<br/>n100_road_thin_roads__pod00001.gdb<br/>n100_road_thin_roads__pod00001/<br/>n100_road_thin_roads_thin_roads__pod00001.gdb"]
+    pod2["partition pod 2<br/>n100_road_thin_roads__pod00002.gdb<br/>n100_road_thin_roads__pod00002/<br/>n100_road_thin_roads_thin_roads__pod00002.gdb"]
+    fan_in["fan-in pod<br/>n100_road_thin_roads__fan_in.gdb<br/>n100_road_thin_roads__fan_in/"]
     fan_out -.->|"transfer directory"| pod1
     fan_out -.->|"transfer directory"| pod2
     pod1 -.->|"transfer directory"| fan_in
