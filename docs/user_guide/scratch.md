@@ -49,16 +49,16 @@ The loose-files directory holds what a workspace cannot: layer files, CSV, logs.
 at the end of each name, `__pod00001`, says which pod wrote it, not which folder it is in.
 
 ```mermaid
-flowchart TB
+flowchart LR
     root["/scratch<br/>partition pod 1's scratch root"]
     root --> stage
     root --> loose["n100_road_thin_roads__pod00001/<br/>loose files: .lyrx, .csv, logs"]
     root --> op
-    subgraph stage["n100_road_thin_roads__pod00001.gdb: stage workspace, the declared handles"]
+    subgraph stage["n100_road_thin_roads__pod00001.gdb<br/>stage workspace: the declared handles"]
         source["source"]
         thinned["thinned"]
     end
-    subgraph op["n100_road_thin_roads_thin_roads__pod00001.gdb: operation workspace, the call's internal scratch"]
+    subgraph op["n100_road_thin_roads_thin_roads__pod00001.gdb<br/>operation workspace: the call's internal scratch"]
         exploded["clean__exploded"]
         kept["clean__named__kept"]
     end
@@ -84,24 +84,20 @@ workspace per call it runs; the fan-out pod partitions and the fan-in pod merges
 neither runs a call, so neither has one.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph fan_out["fan-out pod"]
-        fo_stage["n100_road_thin_roads__fan_out.gdb"]
-        fo_loose["n100_road_thin_roads__fan_out/"]
+        fo_stage["n100_road_thin_roads__fan_out.gdb"] ~~~ fo_loose["n100_road_thin_roads__fan_out/"]
     end
     subgraph pod1["partition pod 1"]
-        p1_stage["n100_road_thin_roads__pod00001.gdb"]
-        p1_loose["n100_road_thin_roads__pod00001/"]
-        p1_op["n100_road_thin_roads_thin_roads__pod00001.gdb"]
+        p1_stage["n100_road_thin_roads__pod00001.gdb"] ~~~ p1_loose["n100_road_thin_roads__pod00001/"]
+        p1_loose ~~~ p1_op["n100_road_thin_roads_thin_roads__pod00001.gdb"]
     end
     subgraph pod2["partition pod 2"]
-        p2_stage["n100_road_thin_roads__pod00002.gdb"]
-        p2_loose["n100_road_thin_roads__pod00002/"]
-        p2_op["n100_road_thin_roads_thin_roads__pod00002.gdb"]
+        p2_stage["n100_road_thin_roads__pod00002.gdb"] ~~~ p2_loose["n100_road_thin_roads__pod00002/"]
+        p2_loose ~~~ p2_op["n100_road_thin_roads_thin_roads__pod00002.gdb"]
     end
     subgraph fan_in["fan-in pod"]
-        fi_stage["n100_road_thin_roads__fan_in.gdb"]
-        fi_loose["n100_road_thin_roads__fan_in/"]
+        fi_stage["n100_road_thin_roads__fan_in.gdb"] ~~~ fi_loose["n100_road_thin_roads__fan_in/"]
     end
     fan_out -.->|"transfer directory"| pod1
     fan_out -.->|"transfer directory"| pod2
