@@ -403,6 +403,14 @@ def error_bad_segment() -> None:
 # end: error_bad_segment
 
 
+# sample: error_digit_first
+def error_digit_first() -> None:
+    fan_in_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
+
+
+# end: error_digit_first
+
+
 # sample: error_unbound
 def error_unbound() -> None:
     INJECTED("singlepart")
@@ -563,6 +571,7 @@ CASES: dict[str, Case] = {
 
 ERRORS: dict[str, tuple[type[Exception], Callable[[], None]]] = {
     "error_bad_segment": (ValueError, error_bad_segment),
+    "error_digit_first": (ValueError, error_digit_first),
     "error_unbound": (InjectionError, error_unbound),
     "error_repeated_leaf": (WorkspaceError, error_repeated_leaf),
     "error_leaf_too_long": (WorkspaceError, error_leaf_too_long),

@@ -72,12 +72,48 @@ flowchart TB
   every stage output and anything one operation writes for another to read. Declared
   handles are not scratch and carry no trail.
 
+## Best practice and pitfalls
+
+- Short, meaningful labels: the helper's purpose in two or three words, not its whole
+  signature. A label is read in every name below it.
+- Leaves that say what the layer holds: `singlepart`, `named_a`, `kept`. A leaf is read
+  beside the other leaves of the same scope.
+- Lean stage and operation function names. A workspace name is the rendered stage or call
+  identity and the pod stem, and over 110 characters it raises before any operation runs.
+- Never keep a scope on an object, a module or a class that outlives the call. A scope is
+  not a value but a live allocator: it belongs to one call of one operation, counts the
+  labels that call has issued, and hands out paths inside that call's workspace. Used from
+  a later call, it would still count and name for the first one, so the later call's layers
+  would land in the first call's workspace under the first call's trail, and a repeated
+  label would get its `_2` for the wrong reason. Take `scratch` as a parameter and pass
+  `scratch.child(...)` on. A class that binds `tb` and `scratch` once for a large tool is
+  fine when it is built inside the call and dies with it (ADR-0020 OP-D21).
+- The manager is never passed to an operation. An operation sees a scope and a toolbox and
+  nothing of workspaces or paths.
+
 ## Usage notes
 
-- A label, a tag and a leaf are letters, digits and single underscores:
-  `[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*`. Two underscores in a row are refused, because two
-  underscores separate the parts of a layer name. Anything else, a hyphen, a dot, a space,
-  a Norwegian letter, is refused with a `ValueError` at the call, never rewritten.
+A label and a leaf start with a letter, then letters, digits and single underscores:
+
+<!-- pattern: LABEL_PATTERN -->
+```text
+[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*
+```
+
+A tag is letters, digits and single underscores and may start with a digit, since it
+follows its label and an underscore: `child("pass", tag="2")` is the segment `pass_2`.
+
+<!-- pattern: TAG_PATTERN -->
+```text
+[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*
+```
+
+Both are declared once, in `src/ag/core/handles.py`. Two underscores in a row are refused,
+because two underscores separate the parts of a layer name. A digit first in a label or a
+leaf is refused, because a layer name starts with a letter or an underscore and the first
+label of a trail opens one. Anything else, a hyphen, a dot, a space, a Norwegian letter, is
+refused with a `ValueError` at the call, never rewritten.
+
 - A repeated leaf in one scope raises. `scratch("parts")` twice at the same point of the
   trail would be two equal handles naming the same file; the second call is the mistake,
   and the error says to use `scratch.child(...)` where two tools need the same leaf.
@@ -109,8 +145,9 @@ flowchart TB
 
 Creates one internal scratch handle at this point in the trail.
 
-- `name` (`str`): the leaf. Letters, digits and single underscores. It becomes the last
-  part of the layer name, and the handle's name is the trail and the leaf joined.
+- `name` (`str`): the leaf. A letter first, then letters, digits and single underscores.
+  It becomes the last part of the layer name, and the handle's name is the trail and the
+  leaf joined.
 - `data_type` (`DataType`, default `FEATURE_CLASS`): the kind of dataset the handle names.
   A port that writes a different kind to it raises, so say `DataType.TABLE` where a table is
   meant.
@@ -118,6 +155,8 @@ Creates one internal scratch handle at this point in the trail.
   rendered layer name. Pass it to ports as `input` or `output`. The handle's `name` is the
   trail and the leaf joined with `/`, which is not a layer-name character, so a handle's
   name is never mistaken for the layer it renders to; the layer name joins them with `__`.
+
+The sample uses `fan_in_pod` and `CALL` from the setup under [Code samples](#code-samples).
 
 <!-- sample: handle_name -->
 ```python
@@ -137,10 +176,11 @@ layer: clean__named__kept
 
 Descends one level, for a helper or a group of steps that names its own intermediates.
 
-- `label` (`str`): the segment the helper's names will carry. Letters, digits and single
-  underscores.
+- `label` (`str`): the segment the helper's names will carry. A letter first, then
+  letters, digits and single underscores.
 - `tag` (`str | None`, default `None`): joined to the label with one underscore when
-  given, so `child("parts", tag="reranked")` is the segment `parts_reranked`.
+  given, so `child("parts", tag="reranked")` is the segment `parts_reranked`. Letters,
+  digits and single underscores; a digit first is allowed.
 - Returns a new `ScratchScope` with the segment appended to the trail. A segment already
   issued in this scope takes the lowest free index, `_2`, `_3` and so on.
 
@@ -713,19 +753,6 @@ handle up to assert what a helper named; while debugging, map a layer seen in an
 workspace to the code that made it, shortened or not. The window says which twelve-digit
 slice of the digest the name carries; `0` is the first and the usual one.
 
-## Best practice and pitfalls
-
-- Short, meaningful labels: the helper's purpose in two or three words, not its whole
-  signature. A label is read in every name below it.
-- Leaves that say what the layer holds: `singlepart`, `named_a`, `kept`. A leaf is read
-  beside the other leaves of the same scope.
-- Lean stage and operation function names. A workspace name is the rendered stage or call
-  identity and the pod stem, and over 110 characters it raises before any operation runs.
-- No scope on an object. A scope is a live allocator bound to one call; stored, it outlives
-  the call and names the next call's scratch into the wrong workspace.
-- The manager is never passed to an operation. An operation sees a scope and a toolbox and
-  nothing of workspaces or paths.
-
 ## Limits
 
 Each limit is declared once in `src/ag/staging/workspace.py` and measured, not assumed
@@ -755,7 +782,7 @@ from the naming examples.
 Raised at the call, in the operation or helper that made it.
 
 - `ValueError`: a label, tag or leaf that cannot be part of a layer name. Fix: spell it with
-  letters, digits and single underscores.
+  letters, digits and single underscores, a letter first for a label or a leaf.
 
 <!-- sample: error_bad_segment -->
 ```python
@@ -765,7 +792,22 @@ def error_bad_segment() -> None:
 
 <!-- error: error_bad_segment -->
 ```text
-scope leaf 'road-parts' must be letters, digits and single underscores; it becomes part of a layer name.
+scope leaf 'road-parts' must be letters, digits and single underscores, and a label or a leaf starts with a letter; it becomes part of a layer name.
+```
+
+- `ValueError`: a label or a leaf that starts with a digit. Fix: start with a letter. A
+  number that is the point of the name goes in a tag, `child("pass", tag="2")`, which
+  follows its label and may start with a digit.
+
+<!-- sample: error_digit_first -->
+```python
+def error_digit_first() -> None:
+    fan_in_pod(MemoryStore()).scope_for(CALL).child("2nd_pass")
+```
+
+<!-- error: error_digit_first -->
+```text
+scope label '2nd_pass' must be letters, digits and single underscores, and a label or a leaf starts with a letter; it becomes part of a layer name.
 ```
 
 - `InjectionError`: the scope was never bound. The operation was called directly with its

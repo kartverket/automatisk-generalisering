@@ -287,7 +287,7 @@ CASES: tuple[Case, ...] = (
         "H5",
         "label, tag and leaf not validated",
         HANDLES,
-        (("    if _SEGMENT.fullmatch(text) is None:", "    if False:"),),
+        (("    if pattern.fullmatch(text) is None:", "    if False:"),),
         tests_in(
             T_HANDLES,
             "test_a_label_or_tag_that_cannot_be_a_layer_name_part_is_refused",
@@ -336,8 +336,28 @@ CASES: tuple[Case, ...] = (
         "H9",
         "leaf not validated",
         HANDLES,
-        (('        _check_segment(text=name, what="leaf")\n', ""),),
+        (
+            (
+                '        _check_segment(text=name, what="leaf", pattern=LABEL_PATTERN)\n',
+                "",
+            ),
+        ),
         tests_in(T_HANDLES, "test_a_leaf_that_cannot_be_a_layer_name_part_is_refused"),
+    ),
+    Case(
+        "H11",
+        "a label or leaf may start with a digit",
+        HANDLES,
+        (
+            (
+                'LABEL_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*")',
+                'LABEL_PATTERN = re.compile(r"[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*")',
+            ),
+        ),
+        tests_in(
+            T_HANDLES,
+            "test_a_label_or_leaf_starting_with_a_digit_is_refused_and_a_tag_is_not",
+        ),
     ),
     Case(
         "H10",

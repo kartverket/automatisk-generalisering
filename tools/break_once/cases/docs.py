@@ -1,7 +1,7 @@
 """Cases for the user guides: `tests/unit/docs/test_scratch_user_guide.py` holds the page
 `docs/user_guide/scratch.md` to the code it documents, so each way the two can part is
-broken once here: a rendered name, an error message, a sample block, and the links the
-page and the modules carry to each other.
+broken once here: a rendered name, an error message, a sample block, a quoted pattern, and
+the links the page and the modules carry to each other.
 """
 
 from __future__ import annotations
@@ -73,6 +73,22 @@ CASES: tuple[Case, ...] = (
             ),
         ),
         tests_in(T_GUIDE, "test_the_page_and_the_modules_name_each_other"),
+    ),
+    Case(
+        "D6",
+        "a pattern the page quotes no longer equals the one declared",
+        HANDLES,
+        (
+            (
+                'LABEL_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*")',
+                'LABEL_PATTERN = re.compile(r"[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*")',
+            ),
+        ),
+        tests_in(
+            T_GUIDE,
+            "test_a_pattern_is_quoted_as_declared[LABEL_PATTERN]",
+            "test_an_error_sample_raises_the_message_shown[error_digit_first]",
+        ),
     ),
 )
 

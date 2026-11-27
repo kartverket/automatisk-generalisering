@@ -3,7 +3,8 @@
 What: every `<!-- sample: key -->` fence on the page equals the block of the same key in
 `scratch_samples.py`; every `<!-- names: key -->` fence lists the layer names the sample
 issues, in order; every `<!-- manifest: key -->` fence is the manifest entries read back;
-every `<!-- error: key -->` fence is the whole message the sample raises; the one
+every `<!-- error: key -->` fence is the whole message the sample raises; every
+`<!-- pattern: key -->` fence is the pattern of that name in `ag.core.handles`; the one
 `<!-- handle: key -->` fence is a handle's name beside its layer name. The page names
 this test and the two modules it documents name the page, so each side points at the
 other.
@@ -22,6 +23,7 @@ from pathlib import Path
 import pytest
 
 from ag.adapters.fakes.memory.store import MemoryStore
+from ag.core import handles
 from tests.support.cases import multilines
 from tests.unit.docs import scratch_samples as samples
 
@@ -35,11 +37,17 @@ DOCUMENTED = (
 
 SAMPLE_BLOCK = re.compile(r"^# sample: (\w+)\n(.*?)^# end: \1\n", re.M | re.S)
 PAGE_FENCE = re.compile(
-    r"^<!-- (sample|names|manifest|error|handle): (\w+) -->\n```(?:python|text)\n(.*?)^```\n",
+    r"^<!-- (sample|names|manifest|error|pattern|handle): (\w+) -->\n"
+    r"```(?:python|text)\n(.*?)^```\n",
     re.M | re.S,
 )
 MANIFEST_CASES = ("case_shortened", "case_probe")
 """The naming cases whose manifest entries the page shows."""
+PATTERNS = {
+    "LABEL_PATTERN": handles.LABEL_PATTERN,
+    "TAG_PATTERN": handles.TAG_PATTERN,
+}
+"""The patterns the page quotes, by the name each is declared under."""
 
 
 def module_blocks() -> dict[str, str]:
@@ -74,6 +82,7 @@ def test_the_page_shows_names_for_every_sample_and_nothing_else() -> None:
     assert shown == {"layout", *samples.OPERATIONS, *samples.CASES}
     assert set(page_fences("manifest")) == set(MANIFEST_CASES)
     assert set(page_fences("error")) == set(samples.ERRORS)
+    assert set(page_fences("pattern")) == set(PATTERNS)
     assert set(page_fences("handle")) == {"handle_name"}
 
 
@@ -123,6 +132,11 @@ def test_an_error_sample_raises_the_message_shown(key: str) -> None:
     with pytest.raises(kind) as caught:
         trigger()
     assert str(caught.value) == page_fences("error")[key]
+
+
+@pytest.mark.parametrize("key", sorted(PATTERNS))
+def test_a_pattern_is_quoted_as_declared(key: str) -> None:
+    assert page_fences("pattern")[key] == PATTERNS[key].pattern
 
 
 def test_a_handle_is_named_with_the_trail_separator_and_its_layer_with_two_underscores() -> (
