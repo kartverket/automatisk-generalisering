@@ -107,6 +107,7 @@ class OutputEntry:
     tag: str
     path: str
     extraction_method: OutputExtractionMethod = OutputExtractionMethod.SELECTION
+    geometry_type: Optional[str] = None
     """
     Represents a single output feature to be produced in partitioned processing.
 
@@ -120,6 +121,9 @@ class OutputEntry:
         path: Path where the output dataset will be written.
         extraction_method: How this output's per-partition slice is produced before
             being appended to the final output. Only meaningful for vector outputs.
+        geometry_type: Geometry of the output (e.g. 'POINT') when it differs from the
+            input object's geometry. Used for the empty placeholder created when no
+            partition produced features. Defaults to the input object's geometry.
     """
 
     @classmethod
@@ -129,6 +133,7 @@ class OutputEntry:
         tag: str,
         path: str,
         extraction_method: OutputExtractionMethod = OutputExtractionMethod.SELECTION,
+        geometry_type: Optional[str] = None,
     ) -> "OutputEntry":
         """Create a vector output entry."""
         return cls(
@@ -137,6 +142,7 @@ class OutputEntry:
             tag=tag,
             path=path,
             extraction_method=extraction_method,
+            geometry_type=geometry_type,
         )
 
 
@@ -162,6 +168,7 @@ class ResolvedOutputEntry:
     path: str
     data_type: DataType
     extraction_method: OutputExtractionMethod
+    geometry_type: Optional[str] = None
 
 
 @dataclass(frozen=True)

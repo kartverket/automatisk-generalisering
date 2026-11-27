@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Union
+from typing import Optional, Union
 
 import arcpy
 
@@ -99,12 +99,22 @@ class FeatureClassCreator:
         print("Appended geometry to the feature class.")
 
 
-def create_feature_class(template_feature: str, new_feature: str) -> None:
-    """Creates a new feature from a templete feature class"""
+def create_feature_class(
+    template_feature: str, new_feature: str, geometry_type: Optional[str] = None
+) -> None:
+    """
+    Creates a new feature class from a template feature class.
+
+    `geometry_type` overrides the template's geometry (e.g. 'POINT'); the schema and
+    spatial reference still come from the template.
+    """
     out_path, out_name = os.path.split(new_feature)
     delete_feature(input_feature=new_feature)
     arcpy.management.CreateFeatureclass(
-        out_path=out_path, out_name=out_name, template=template_feature
+        out_path=out_path,
+        out_name=out_name,
+        geometry_type=geometry_type,
+        template=template_feature,
     )
 
 

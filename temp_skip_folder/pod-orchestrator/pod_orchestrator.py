@@ -22,6 +22,7 @@ CHECKPOINTS_FOLDER = "checkpoints"
 S3_DATA_FOLDERS = (GIS_FILES_FOLDER, CHECKPOINTS_FOLDER)
 DATA_PVC_CLAIM_NAME = "auto-gen-scratch-pvc"
 WORKER_GIS_OUTPUTS_ROOT = f"/tmp/{GIS_FILES_FOLDER}"
+ROAD_RESULTS_ROOT = str(DATA_ROOT / GIS_FILES_FOLDER)
 
 
 def download_s3_data_if_data_is_empty() -> None:
@@ -123,8 +124,7 @@ PARTITION_JOB_NAME = f"{RUN_ID}-partitions"
 
 # Temporary zip, extracted data and outputs coexist in /tmp.
 EPHEMERAL_STORAGE = "2Gi"
-WORKER_MEMORY_REQUEST = "8Gi"
-WORKER_MEMORY_LIMIT = "16Gi"
+WORKER_MEMORY_LIMIT = "32Gi"
 
 
 def load_kube_config():
@@ -235,6 +235,10 @@ def create_indexed_job(batch_api):
                                     name="GIS_OUTPUTS_ROOT",
                                     value=WORKER_GIS_OUTPUTS_ROOT,
                                 ),
+                                client.V1EnvVar(
+                                    name="GIS_ROAD_RESULTS_ROOT",
+                                    value=ROAD_RESULTS_ROOT,
+                                ),
                             ],
                             env_from=[
                                 client.V1EnvFromSource(
@@ -260,7 +264,6 @@ def create_indexed_job(batch_api):
                             ],
                             resources=client.V1ResourceRequirements(
                                 requests={
-                                    "memory": WORKER_MEMORY_REQUEST,
                                     "ephemeral-storage": EPHEMERAL_STORAGE,
                                 },
                                 limits={

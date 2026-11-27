@@ -406,6 +406,7 @@ class PartitionIterator:
                 path=e.path,
                 data_type=e.data_type,
                 extraction_method=e.extraction_method,
+                geometry_type=e.geometry_type,
             )
             for e in partition_io_config.output_config.entries
         ]
@@ -2071,6 +2072,9 @@ class PartitionIterator:
                     partition_id=partition_id,
                 )
                 if not inputs_present_in_partition:
+                    logger.warning(
+                        f"No processing input in partition {partition_id}, skipping it"
+                    )
                     continue
 
                 self.process_all_context_inputs(
@@ -2095,6 +2099,34 @@ class PartitionIterator:
                 self.work_file_manager_iteration_files.delete_created_files()
                 self.work_file_manager_resolved_files.delete_created_files()
                 self.track_iteration_time(partition_id, inputs_present_in_partition)
+
+        self._ensure_final_outputs_exist()
+
+    def _ensure_final_outputs_exist(self) -> None:
+        """
+        Creates an empty final output for every vector output that no partition produced,
+        using the schema of the entry's input object and the entry's geometry type, if set. Downstream steps can then rely on
+        the output existing even when the input was too sparse to yield any features.
+        """
+        for entry in self._output_vector_items():
+            if arcpy.Exists(entry.path):
+                continue
+
+            prepared = self.input_catalog.get(entry.object)
+            if prepared is None or not prepared.active_path:
+                logger.warning(
+                    f"No input schema to create empty final output for {entry.object}:{entry.tag}"
+                )
+                continue
+
+            file_utilities.create_feature_class(
+                template_feature=prepared.active_path,
+                new_feature=entry.path,
+                geometry_type=entry.geometry_type,
+            )
+            logger.warning(
+                f"No features produced, created empty final output for {entry.object}:{entry.tag}"
+            )
 
     @timing_decorator
     def run(self):
